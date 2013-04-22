@@ -38,9 +38,9 @@
 #include <windows.h>
 #include <shellapi.h>
 #include <commdlg.h>
-#include <commctrl.h> 
+#include <commctrl.h>
 #include <winuser.h>
-#include <tchar.h> 
+#include <tchar.h>
 
 #ifndef TBSTYLE_FLAT
 #define TBSTYLE_FLAT 0x0800
@@ -71,33 +71,7 @@ extern atoi(const char*);
 #include "include/consts.h"
 #include "include/strings.h"
 #include "include/outmacros.h"
-
-///// Typedefs /////
-#include <pshpack1.h>
-typedef struct DLGTEMPLATEEX
-{
-	WORD dlgVer;
-	WORD signature;
-	DWORD helpID;
-	DWORD exStyle;
-	DWORD style;
-	WORD cDlgItems;
-	short x;
-	short y;
-	short cx;
-	short cy;
-} DLGTEMPLATEEX, *LPDLGTEMPLATEEX;
-#include <poppack.h>
-
-#ifndef USE_RICH_EDIT
-typedef struct _charrange
-{
-	LONG	cpMin;
-	LONG	cpMax;
-} CHARRANGE;
-#endif
-
-typedef BOOL (WINAPI *SLWA)(HWND hwnd, COLORREF crKey, BYTE bAlpha, DWORD dwFlags);
+#include "include/typedefs.h"
 
 ///// Globals /////
 
@@ -159,64 +133,6 @@ CHAR szBOM_UTF_8[] = "\xEF\xBB\xBF";  // 0xEF, 0xBB, 0xBF / "\357\273\277" - lea
 CHAR szBOM_UTF_16[] = "\377\376";  // 0xFF, 0xFE - leave off _T() macro.
 CHAR szBOM_UTF_16_BE[] = "\376\377";  // 0xFE, 0xFF - leave off _T() macro.
 
-typedef struct tag_options {
-	BOOL bQuickExit;
-	BOOL bSaveWindowPlacement;
-	BOOL bSaveMenuSettings;
-	BOOL bSaveDirectory;
-	BOOL bLaunchClose;
-	int nTabStops;
-	int nPrimaryFont;
-	int nSecondaryFont;
-	int nLaunchSave;
-	RECT rMargins;
-	LOGFONT PrimaryFont, SecondaryFont;
-	TCHAR szBrowser[MAXFN];
-	TCHAR szArgs[MAXARGS];
-	TCHAR szBrowser2[MAXFN];
-	TCHAR szArgs2[MAXARGS];
-	TCHAR szQuote[MAXQUOTE];
-	BOOL bFindAutoWrap;
-	BOOL bAutoIndent;
-	BOOL bInsertSpaces;
-	BOOL bNoCaptionDir;
-	BOOL bHideGotoOffset;
-	BOOL bRecentOnOwn;
-	BOOL bDontInsertTime;
-	BOOL bNoWarningPrompt;
-	BOOL bUnFlatToolbar;
-	BOOL bStickyWindow;
-	BOOL bReadOnlyMenu;
-	UINT nStatusFontWidth;
-	UINT nSelectionMarginWidth;
-	UINT nMaxMRU;
-	UINT nFormatIndex;
-	UINT nTransparentPct;
-	BOOL bSystemColours;
-	BOOL bSystemColours2;
-	COLORREF BackColour, FontColour;
-	COLORREF BackColour2, FontColour2;
-	BOOL bNoSmartHome;
-	BOOL bNoAutoSaveExt;
-	BOOL bContextCursor;
-	BOOL bCurrentFindFont;
-#ifndef USE_RICH_EDIT
-	BOOL bDefaultPrintFont;
-	BOOL bAlwaysLaunch;
-#else
-	BOOL bSuppressUndoBufferPrompt;
-	BOOL bLinkDoubleClick;
-	BOOL bHideScrollbars;
-#endif
-	BOOL bNoFaves;
-	BOOL bPrintWithSecondaryFont;
-	BOOL bNoSaveHistory;
-	BOOL bNoFindAutoSelect;
-	TCHAR szLangPlugin[MAXFN];
-	TCHAR MacroArray[10][MAXMACRO];
-	TCHAR szFavDir[MAXFN];
-} option_struct;
-
 option_struct options;
 
 ///// Prototypes /////
@@ -276,7 +192,7 @@ LPTSTR GetString(UINT uID)
 HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin)
 {
 	HINSTANCE hinstTemp;
-	
+
 	hinstTemp = LoadLibrary(szPlugin);
 	if (hinstTemp == NULL) {
 		ERROROUT(GetString(IDS_INVALID_PLUGIN_ERROR));
@@ -362,8 +278,8 @@ BOOL EncodeWithEscapeSeqs(TCHAR* szText)
 		default:
 			szStore[j++] = szText[i];
 		}
-		if (j >= MAXMACRO - 1) { 
-			return FALSE; 
+		if (j >= MAXMACRO - 1) {
+			return FALSE;
 		}
 	}
 	szStore[j] = '\0';
@@ -733,7 +649,7 @@ BOOL SaveCurrentFileAs(void)
 		ofn.lpstrFilter = szCustomFilter;
 		ofn.lpstrDefExt = _T("txt");
 	}
-	
+
 	ofn.lpstrCustomFilter = (LPTSTR)NULL;
 	ofn.nMaxCustFilter = 0L;
 	ofn.nFilterIndex = 1L;
@@ -746,7 +662,7 @@ BOOL SaveCurrentFileAs(void)
 
 	ofn.lpstrFile = szTmp;
 	ofn.nMaxFile = sizeof(szTmp);
-	
+
 	ofn.lpstrFileTitle = (LPTSTR)NULL;
 	ofn.nMaxFileTitle = 0L;
 	ofn.lpstrInitialDir = szDir;
@@ -775,7 +691,7 @@ BOOL SaveCurrentFileAs(void)
 BOOL SaveCurrentFile(void)
 {
 	SetCurrentDirectory(szDir);
-	
+
 	if (lstrlen(szFile) > 0) {
 		TCHAR szTmp[MAXFN];
 		DWORD dwResult = GetFileAttributes(szFile);
@@ -786,7 +702,7 @@ BOOL SaveCurrentFile(void)
 		}
 		if (bReadOnly) {
 			if (MessageBox(hwnd, GetString(IDS_READONLY_WARNING), STR_METAPAD, MB_ICONEXCLAMATION | MB_OKCANCEL) == IDOK) {
-				return SaveCurrentFileAs();			
+				return SaveCurrentFileAs();
 			}
 			return FALSE;
 		}
@@ -890,7 +806,7 @@ void CreateToolbar(void)
 		dwStyle |= TBSTYLE_FLAT;
 
 	toolbar = CreateToolbarEx(hwnd, dwStyle,
-		ID_TOOLBAR, CUSTOMBMPBASE, HINST_COMMCTRL, IDB_STD_SMALL_COLOR, 
+		ID_TOOLBAR, CUSTOMBMPBASE, HINST_COMMCTRL, IDB_STD_SMALL_COLOR,
 		(LPCTBBUTTON)&tbButtons, NUMBUTTONS, 0, 0, 16, 16, sizeof(TBBUTTON));
 
 	if (SendMessage(toolbar, TB_ADDBITMAP, (WPARAM)NUMCUSTOMBITMAPS, (LPARAM)&tbab) < 0)
@@ -940,7 +856,7 @@ void CreateStatusbar(void)
 void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 {
 #ifdef USE_RICH_EDIT
-	DWORD dwStyle = 
+	DWORD dwStyle =
 					ES_AUTOHSCROLL |
 					ES_AUTOVSCROLL |
 					ES_NOHIDESEL |
@@ -978,7 +894,7 @@ void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 	wpOrigEditProc = (WNDPROC) SetWindowLong(client, GWL_WNDPROC, (LONG) EditProc);
 #else
 	DWORD dwStyle = ES_NOHIDESEL | WS_VSCROLL | ES_MULTILINE | WS_CHILD;
-	
+
 	if (!bWrap)
 		dwStyle |= WS_HSCROLL;
 
@@ -1108,7 +1024,7 @@ void UpdateStatus(void)
 	*((LPWORD)szBuffer) = (USHORT)(lLineLen + 1);
 	SendMessage(client, EM_GETLINE, (WPARAM)lLine, (LPARAM) (LPCTSTR)szBuffer);
 	szBuffer[lLineLen] = '\0';
-	
+
 	lLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lLine, 0);
 	while (lLineLen && szBuffer[i] && i < cr.cpMax - lLineIndex) {
 		if (szBuffer[i] == '\t')
@@ -1281,7 +1197,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 				SetPixel(clientDC, 5, -(1+nFontHeight/2) + nFontHeight * nLine, RGB(255, 0, 255));
 				SetPixel(clientDC, 4, -(2+nFontHeight/2) + nFontHeight * nLine, RGB(255, 0, 255));
 			}
-			
+
 			ReleaseDC(client, clientDC);
 			return lRes;
 		}
@@ -1378,7 +1294,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 			CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
 			if (options.bAutoIndent) {
 				int i = 0;
-				LONG lLineLen, lLine;	
+				LONG lLineLen, lLine;
 				LPTSTR szBuffer, szIndent;
 				CHARRANGE cr;
 
@@ -1392,7 +1308,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 				lLineLen = CallWindowProc(wpOrigEditProc, client, EM_LINELENGTH, (WPARAM)cr.cpMin, 0);
 
 				lLineLen = CallWindowProc(wpOrigEditProc, client, EM_LINELENGTH, (WPARAM)cr.cpMin - 1, 0);
-				
+
 				szBuffer = (LPTSTR) GlobalAlloc(GPTR, (lLineLen+2) * sizeof(TCHAR));
 				szIndent = (LPTSTR) GlobalAlloc(GPTR, (lLineLen+2) * sizeof(TCHAR));
 
@@ -1435,40 +1351,40 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 			if (!bReplacingAll)
 				SendMessage(hwndEdit, WM_SETREDRAW, (WPARAM)TRUE, 0);
 			SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-			
+
 			return lTmp;
 		}
-	} 
+	}
 	return CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
 }
- 
-BOOL CALLBACK AbortDlgProc(HDC hdc, int nCode) 
-{ 
-	MSG msg; 
- 
-	while (PeekMessage((LPMSG) &msg, (HWND) NULL, 0, 0, PM_REMOVE)) { 
-		if (!IsDialogMessage(hdlgCancel, (LPMSG) &msg)) { 
-			TranslateMessage((LPMSG) &msg); 
-			DispatchMessage((LPMSG) &msg); 
-		} 
-	} 
+
+BOOL CALLBACK AbortDlgProc(HDC hdc, int nCode)
+{
+	MSG msg;
+
+	while (PeekMessage((LPMSG) &msg, (HWND) NULL, 0, 0, PM_REMOVE)) {
+		if (!IsDialogMessage(hdlgCancel, (LPMSG) &msg)) {
+			TranslateMessage((LPMSG) &msg);
+			DispatchMessage((LPMSG) &msg);
+		}
+	}
 	return bPrint;
 }
 
 LRESULT CALLBACK AbortPrintJob(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{ 
-	switch (message) { 
+{
+	switch (message) {
 		case WM_INITDIALOG:
 			CenterWindow(hwndDlg);
-			SetDlgItemText(hwndDlg, IDD_FILE, szFile); 
-			return TRUE; 
+			SetDlgItemText(hwndDlg, IDD_FILE, szFile);
+			return TRUE;
 		case WM_COMMAND:
-			bPrint = FALSE; 
-			return TRUE; 
-		default: 
+			bPrint = FALSE;
+			return TRUE;
+		default:
 			return FALSE;
-	} 
-} 
+	}
+}
 
 int FixShortFilename(TCHAR *szSrc, TCHAR *szDest)
 {
@@ -1498,8 +1414,8 @@ int FixShortFilename(TCHAR *szSrc, TCHAR *szDest)
 				}
 			}
 		}
-	
-		_tcsncpy(sDir, szDest, nDestPos);		
+
+		_tcsncpy(sDir, szDest, nDestPos);
 		sDir[nDestPos] = '*';
 		sDir[nDestPos + 1] = '\0';
 
@@ -1546,10 +1462,10 @@ void ExpandFilename(LPTSTR szBuffer)
 		if (pdest) {
 			result = pdest - szBuffer + 1;
 			lstrcpyn(szDir, szBuffer, result);
-		}		
+		}
 		if (szDir[lstrlen(szDir) - 1] != _T('\\'))
 			lstrcat(szDir, _T("\\"));
-		
+
 		if (!options.bNoCaptionDir) {
 			lstrcat(szCaptionFile, szDir);
 		}
@@ -1629,18 +1545,18 @@ void PrintContents()
 		}
 	}
 	lStringLen = lstrlen(szBuffer);
-	
-	bPrint = TRUE; 
+
+	bPrint = TRUE;
 
 	if (SetAbortProc(pd.hDC, AbortDlgProc) == SP_ERROR) {
 		ERROROUT(GetString(IDS_PRINT_ABORT_ERROR));
 		return;
 	}
- 
-	hdlgCancel = CreateDialog(hinstLang, MAKEINTRESOURCE(IDD_ABORT_PRINT), hwnd, (DLGPROC) AbortPrintJob); 
+
+	hdlgCancel = CreateDialog(hinstLang, MAKEINTRESOURCE(IDD_ABORT_PRINT), hwnd, (DLGPROC) AbortPrintJob);
 	ShowWindow(hdlgCancel, SW_SHOW);
- 
-	EnableWindow(hwnd, FALSE); 
+
+	EnableWindow(hwnd, FALSE);
 
 	bUseDefault = options.bDefaultPrintFont;
 
@@ -1652,7 +1568,7 @@ void PrintContents()
 	if (!bUseDefault) {
 		long lScale = 1;
 		int nPrinter, nScreen;
-		
+
 		clientDC = GetDC(client);
 		nPrinter = GetDeviceCaps(pd.hDC, LOGPIXELSY);
 		nScreen = GetDeviceCaps(clientDC, LOGPIXELSY);
@@ -1683,14 +1599,14 @@ void PrintContents()
 	ZeroMemory(&di, sizeof(DOCINFO));
 	di.cbSize = sizeof(DOCINFO);
 	di.lpszDocName = szFile;
-	
+
 	nError = StartDoc(pd.hDC, &di);
 	if (nError <= 0) {
 		ReportLastError();
 		ERROROUT(GetString(IDS_PRINT_START_ERROR));
 		goto Error;
 	}
-	
+
 	/*
 	rectdev.left = rectdev.top = 0;
 	rectdev.right = GetDeviceCaps(pd.hDC, HORZRES);
@@ -1701,7 +1617,7 @@ void PrintContents()
 	rectdev.top = (long)(options.rMargins.top / 1000. * 1440);
 	rectdev.right = GetDeviceCaps(pd.hDC, HORZRES) - (long)(options.rMargins.right / 1000. * 1440);
 	rectdev.bottom = GetDeviceCaps(pd.hDC, VERTRES) - (long)(options.rMargins.bottom / 1000. * 1440);
-*/	
+*/
 	{
 		int nDPIx = GetDeviceCaps(pd.hDC, LOGPIXELSX);
 		int nDPIy = GetDeviceCaps(pd.hDC, LOGPIXELSY);
@@ -1762,7 +1678,7 @@ void PrintContents()
 		ReportLastError();
 		ERROROUT(GetString(IDS_PRINT_ERROR));
 	}
-	
+
 Error:
 	if (!options.bDefaultPrintFont) {
 		SelectObject(pd.hDC, oldfont);
@@ -1820,7 +1736,7 @@ void PrintContents(void)
 			ERROROUT(GetString(IDS_PRINTER_NOT_FOUND));
 			return;
 		}
-		
+
 		if (x) {
 			TCHAR szBuff[50];
 			wsprintf(szBuff, GetString(IDS_PRINT_INIT_ERROR), x);
@@ -1828,18 +1744,18 @@ void PrintContents(void)
 		}
 		return;
 	}
-	
+
 	bPrint = TRUE;
 
 	if (SetAbortProc(pd.hDC, AbortDlgProc) == SP_ERROR) {
 		ERROROUT(GetString(IDS_PRINT_ABORT_ERROR));
 		return;
 	}
- 
-	hdlgCancel = CreateDialog(hinstLang, MAKEINTRESOURCE(IDD_ABORT_PRINT), hwnd, (DLGPROC) AbortPrintJob); 
+
+	hdlgCancel = CreateDialog(hinstLang, MAKEINTRESOURCE(IDD_ABORT_PRINT), hwnd, (DLGPROC) AbortPrintJob);
 	ShowWindow(hdlgCancel, SW_SHOW);
- 
-	EnableWindow(hwnd, FALSE); 
+
+	EnableWindow(hwnd, FALSE);
 
 	nHorizRes = GetDeviceCaps(pd.hDC, HORZRES);
 	nVertRes = GetDeviceCaps(pd.hDC, VERTRES);
@@ -1880,7 +1796,7 @@ void PrintContents(void)
 			ERROROUT(GetString(IDS_PRINT_START_ERROR));
 			goto Error;
 		}
-		
+
 		do {
 			nError = StartPage(pd.hDC);
 			if (nError <= 0) break;
@@ -1935,7 +1851,7 @@ void ReportLastError(void)
 void LaunchPrimaryExternalViewer(void)
 {
 	TCHAR szLaunch[MAXFN] = {'\0'};
-	
+
 	lstrcat(szLaunch, options.szArgs);
 	lstrcat(szLaunch, _T(" \""));
 	lstrcat(szLaunch, szFile);
@@ -1947,7 +1863,7 @@ void LaunchPrimaryExternalViewer(void)
 void LaunchSecondaryExternalViewer(void)
 {
 	TCHAR szLaunch[MAXFN] = {'\0'};
-	
+
 	lstrcat(szLaunch, options.szArgs2);
 	lstrcat(szLaunch, _T(" \""));
 	lstrcat(szLaunch, szFile);
@@ -2085,7 +2001,7 @@ void LoadOptions(void)
 		DWORD dwBufferSize;
 
 		dwBufferSize = sizeof(int);
-		
+
 		LoadOptionNumeric(key, _T("bHideGotoOffset"), (LPBYTE)&options.bHideGotoOffset, dwBufferSize);
 		LoadOptionNumeric(key, _T("bSystemColours"), (LPBYTE)&options.bSystemColours, dwBufferSize);
 		LoadOptionNumeric(key, _T("bSystemColours2"), (LPBYTE)&options.bSystemColours2, dwBufferSize);
@@ -2103,7 +2019,7 @@ void LoadOptions(void)
 		LoadOptionNumeric(key, _T("bStickyWindow"), (LPBYTE)&options.bStickyWindow, dwBufferSize);
 		LoadOptionNumeric(key, _T("bReadOnlyMenu"), (LPBYTE)&options.bReadOnlyMenu, dwBufferSize);
 //		LoadOptionNumeric(key, _T("nStatusFontWidth"), (LPBYTE)&options.nStatusFontWidth, dwBufferSize);
-		LoadOptionNumeric(key, _T("nSelectionMarginWidth"), (LPBYTE)&options.nSelectionMarginWidth, dwBufferSize);		
+		LoadOptionNumeric(key, _T("nSelectionMarginWidth"), (LPBYTE)&options.nSelectionMarginWidth, dwBufferSize);
 		LoadOptionNumeric(key, _T("nMaxMRU"), (LPBYTE)&options.nMaxMRU, dwBufferSize);
 		LoadOptionNumeric(key, _T("nFormatIndex"), (LPBYTE)&options.nFormatIndex, dwBufferSize);
 		LoadOptionNumeric(key, _T("nTransparentPct"), (LPBYTE)&options.nTransparentPct, dwBufferSize);
@@ -2159,19 +2075,19 @@ void LoadOptions(void)
 		else {
 			char keyname[14];
 			int i;
-	
+
 			for (i = 0; i < 10; ++i) {
 				wsprintf(keyname, "szMacroArray%d", i);
 				LoadBoundedOptionString(key, keyname, (LPBYTE)&options.MacroArray[i], MAXMACRO);
 			}
 		}
-		
+
 		dwBufferSize = sizeof(COLORREF);
 		LoadOptionBinary(key, _T("BackColour"), (LPBYTE)&options.BackColour, dwBufferSize);
 		LoadOptionBinary(key, _T("FontColour"), (LPBYTE)&options.FontColour, dwBufferSize);
 		LoadOptionBinary(key, _T("BackColour2"), (LPBYTE)&options.BackColour2, dwBufferSize);
 		LoadOptionBinary(key, _T("FontColour2"), (LPBYTE)&options.FontColour2, dwBufferSize);
-		
+
 		dwBufferSize = sizeof(RECT);
 		LoadOptionBinary(key, _T("rMargins"), (LPBYTE)&options.rMargins, dwBufferSize);
 
@@ -2262,7 +2178,7 @@ void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 	}
 }
 
-BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD cbData) 
+BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD cbData)
 {
 	if (hKey) {
 		return (RegSetValueEx(hKey, name, 0, dwType, lpData, cbData) == ERROR_SUCCESS);
@@ -2389,11 +2305,11 @@ void SaveOptions(void)
 	writeSucceeded &= SaveOption(key, _T("BackColour2"), REG_BINARY, (LPBYTE)&options.BackColour2, sizeof(COLORREF));
 	writeSucceeded &= SaveOption(key, _T("FontColour2"), REG_BINARY, (LPBYTE)&options.FontColour2, sizeof(COLORREF));
 	writeSucceeded &= SaveOption(key, _T("rMargins"), REG_BINARY, (LPBYTE)&options.rMargins, sizeof(RECT));
-	
+
 	if (!writeSucceeded) {
 		ReportLastError();
 	}
-	
+
 	if (key) {
 		RegCloseKey(key);
 	}
@@ -2457,7 +2373,7 @@ void LoadMenusAndData(void)
 			LoadOptionNumeric(key, _T("bNoFindHidden"), (LPBYTE)&bNoFindHidden, sizeof(BOOL));
 		}
 		LoadOptionString(key, _T("FileFilter"), (LPBYTE)&szCustomFilter, sizeof(szCustomFilter));
-		
+
 		if (!options.bNoSaveHistory) {
 #ifdef BUILD_METAPAD_UNICODE
 			dwBufferSize = sizeof(TCHAR) * NUMFINDS * MAXFIND;
@@ -2481,7 +2397,7 @@ void LoadMenusAndData(void)
 					LoadBoundedOptionString(key, keyname, (LPBYTE)&ReplaceArray[i], MAXFIND);
 				}
 			}
-#endif	
+#endif
 		}
 
 		if (options.bSaveDirectory) {
@@ -2564,7 +2480,7 @@ void SaveMenusAndData(void)
 		SaveOption(key, _T("bCloseAfterFind"), REG_DWORD, (LPBYTE)&bCloseAfterFind, sizeof(BOOL));
 		SaveOption(key, _T("bNoFindHidden"), REG_DWORD, (LPBYTE)&bNoFindHidden, sizeof(BOOL));
 	}
-	
+
 	if (!options.bNoSaveHistory) {
 #ifdef BUILD_METAPAD_UNICODE
 		SaveOption(key, _T("FindArray_U"), REG_BINARY, (LPBYTE)&FindArray, sizeof(TCHAR) * NUMFINDS * MAXFIND);
@@ -2612,7 +2528,7 @@ void SaveMRUInfo(LPCTSTR szFullPath)
 	UINT i = 1;
 
 	if (options.nMaxMRU == 0)
-		return;	
+		return;
 
 	if (!g_bIniMode && RegCreateKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
 		ReportLastError();
@@ -2622,7 +2538,7 @@ void SaveMRUInfo(LPCTSTR szFullPath)
 	wsprintf(szKey, _T("mru_%d"), nMRUTop);
 	dwBufferSize = sizeof(szBuffer);
 	LoadOptionNumeric(key, szKey, (LPBYTE)(&szBuffer), dwBufferSize);
-	
+
 	if (lstrcmp(szFullPath, szBuffer) != 0) {
 		if (++nMRUTop > options.nMaxMRU) {
 			nMRUTop = 1;
@@ -2673,7 +2589,7 @@ void PopulateFavourites(void)
 
 	mio.cbSize = sizeof(MENUITEMINFO);
 	mio.fMask = MIIM_TYPE | MIIM_ID;
-	
+
 	if (GetPrivateProfileString(STR_FAV_APPNAME, NULL, NULL, szBuffer, MAXFAVESIZE, szFav)) {
 		bHasFaves = TRUE;
 		for (i = 0, j = 0, cnt = accel = 1; /*cnt <= MAXFAVES*/; ++j, ++i) {
@@ -2722,7 +2638,7 @@ void PopulateMRUList(void)
 			EnableMenuItem(hmenu, 1, MF_BYPOSITION | MF_GRAYED);
 		else
 			EnableMenuItem(GetSubMenu(hmenu, 0), RECENTPOS, MF_BYPOSITION | MF_GRAYED);
-		return;	
+		return;
 	}
 	else {
 		if (options.bRecentOnOwn)
@@ -2737,7 +2653,7 @@ void PopulateMRUList(void)
 	if (g_bIniMode || nPrevSave == REG_OPENED_EXISTING_KEY) {
 		UINT i, num = 1, cnt = 0;
 		DWORD dwBufferSize = sizeof(int);
-		
+
 		while (GetMenuItemCount(hsub)) {
 			DeleteMenu(hsub, 0, MF_BYPOSITION);
 		}
@@ -2974,7 +2890,7 @@ void FixTextBufferLE(LPTSTR* pszBuffer)
 #endif
 
 int ConvertAndSetWindowText(LPTSTR szText)
-{	
+{
 	UINT i = 0, cnt = 0, mcnt = 0, j;
 	LPTSTR szBuffer = NULL;
 
@@ -3005,7 +2921,7 @@ int ConvertAndSetWindowText(LPTSTR szText)
 			if (szText[i] == '\r' && szText[i+1] != '\n')
 				szText[i] = '\n';
 		}
-		
+
 		if (szText[i] == '\r') szText[i] = '\n';
 
 		cnt += mcnt;
@@ -3047,7 +2963,7 @@ int ConvertAndSetWindowText(LPTSTR szText)
 		}
 #else
 		SetWindowText(client, szBuffer);
-#endif	
+#endif
 		GlobalFree((HGLOBAL) szBuffer);
 	}
 #ifdef STREAMING
@@ -3063,8 +2979,8 @@ int ConvertAndSetWindowText(LPTSTR szText)
 		SetWindowText(client, szText);
 /*
 typedef struct _settextex {
-	DWORD flags; 
-	UINT codepage; 
+	DWORD flags;
+	UINT codepage;
 } SETTEXTEX;
 
 SETTEXTEX ste;
@@ -3099,7 +3015,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 	if (*plBufferLength >= SIZEOFBOM_UTF_8) {
 
 		bResult = ReadFile(hFile, *ppBuffer, SIZEOFBOM_UTF_8, &dwBytesRead, NULL);
-		if (!bResult || dwBytesRead != (DWORD)SIZEOFBOM_UTF_8)	
+		if (!bResult || dwBytesRead != (DWORD)SIZEOFBOM_UTF_8)
 			ReportLastError();
 
 		if (IsBOM(*ppBuffer, TYPE_UTF_8)) {
@@ -3130,7 +3046,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 	}
 
 	bResult = ReadFile(hFile, *ppBuffer, *plBufferLength, &dwBytesRead, NULL);
-	if (!bResult || dwBytesRead != (DWORD)*plBufferLength)	
+	if (!bResult || dwBytesRead != (DWORD)*plBufferLength)
 		ReportLastError();
 
 	// check if unicode even if no bom
@@ -3158,7 +3074,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 		*plBufferLength = *plBufferLength / 2;
 
 #ifndef BUILD_METAPAD_UNICODE
-		nBytesNeeded = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)*ppBuffer, 
+		nBytesNeeded = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)*ppBuffer,
 			*plBufferLength, NULL, 0, NULL, NULL);
 
 		pNewBuffer = (PBYTE) GlobalAlloc(GPTR, nBytesNeeded+1);
@@ -3178,7 +3094,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 
 		GlobalFree((HGLOBAL)*ppBuffer);
 		*ppBuffer = pNewBuffer;
-#endif				
+#endif
 	}
 
 	return dwBytesRead;
@@ -3356,7 +3272,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 	SetTabStops();
 	SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
 
-	if (pBuffer[0] == '.' && 
+	if (pBuffer[0] == '.' &&
 		pBuffer[1] == 'L' &&
 		pBuffer[2] == 'O' &&
 		pBuffer[3] == 'G') {
@@ -3428,7 +3344,7 @@ void RichModeToDos(LPTSTR *szBuffer)
 			j++; i++;
 		}
 		szNewBuffer[j] = '\0';
-	
+
 		GlobalFree((HGLOBAL) *szBuffer);
 		*szBuffer = szNewBuffer;
 	}
@@ -3456,7 +3372,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 #ifdef USE_RICH_EDIT
 		{
 			TEXTRANGE tr;
-			
+
 			tr.chrg.cpMin = 0;
 			tr.chrg.cpMax = -1;
 			tr.lpstrText = szBuffer;
@@ -3480,7 +3396,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 #ifdef BUILD_METAPAD_UNICODE
 			pNewBuffer = szBuffer;
 #else
-			nBytesNeeded = 2 * (1+MultiByteToWideChar(CP_ACP, 0, (LPCSTR)szBuffer, 
+			nBytesNeeded = 2 * (1+MultiByteToWideChar(CP_ACP, 0, (LPCSTR)szBuffer,
 				lFileSize, NULL, 0));
 
 			pNewBuffer = (LPTSTR) GlobalAlloc(GPTR, nBytesNeeded+1);
@@ -3720,7 +3636,7 @@ void SetTabStops(void)
 
 	nTmp = nWidth * 15 * options.nTabStops;
 
-	ZeroMemory(&pf, sizeof(pf)); 
+	ZeroMemory(&pf, sizeof(pf));
 	pf.cbSize = sizeof(PARAFORMAT);
 	SendMessage(client, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
 
@@ -3734,13 +3650,13 @@ void SetTabStops(void)
 	ReleaseDC(client, clientDC);
 
 	bDirtyFile = TRUE;
-	
+
 	if (!SendMessage(client, EM_SETPARAFORMAT, 0, (LPARAM)(PARAFORMAT FAR *)&pf))
 		ERROROUT(GetString(IDS_PARA_FORMAT_ERROR));
 
 	bDirtyFile = bOldDirty;
 
-	SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);	
+	SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 	SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
 	InvalidateRect(hwnd, NULL, TRUE);
 #else
@@ -3760,7 +3676,7 @@ LPCTSTR GetShadowBuffer(void)
 			lpszShadow = (LPTSTR) GlobalAlloc(GPTR, nSize * sizeof(TCHAR));
 			nShadowSize = nSize;
 		}
-		
+
 #ifdef USE_RICH_EDIT
 		{
 			TEXTRANGE tr;
@@ -3775,7 +3691,7 @@ LPCTSTR GetShadowBuffer(void)
 #endif
 		SendMessage(client, EM_SETMODIFY, (WPARAM) FALSE, 0);
 	}
-	
+
 	return lpszShadow;
 }
 
@@ -3794,7 +3710,7 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 		nFlags |= FR_MATCHCASE;
 
 	ft.lpstrText = (LPTSTR)szText;
-	
+
 	if (bDown) {
 		if (bFromTop)
 			ft.chrg.cpMin = 0;
@@ -3810,7 +3726,7 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 
 			lLine = SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)cr.cpMin);
 			lLines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
-			
+
 			if (lLine == lLines - 1) {
 				return FALSE;
 			}
@@ -3861,7 +3777,7 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 	CMPFUNC pfnCompare = bCase ? lstrcmp : lstrcmpi;
 
 	lSize = GetWindowTextLength(client);
-	
+
 	if (!szBuffer) {
 		ReportLastError();
 		return FALSE;
@@ -3977,7 +3893,7 @@ void FixMRUMenus(void)
 	mio.cbSize = sizeof(MENUITEMINFO);
 	mio.fMask = MIIM_TYPE | MIIM_SUBMENU;
 	mio.fType = MFT_STRING;
-	mio.hSubMenu = CreateMenu();	
+	mio.hSubMenu = CreateMenu();
 
 	if (options.bRecentOnOwn) {
 		mio.dwTypeData = GetString(IDS_RECENT_MENU);
@@ -4099,7 +4015,7 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 						else {
 							hicon = LoadIcon(hinstThis, MAKEINTRESOURCE(IDI_EYE));
 							SetDlgItemText(hwndDlg, IDC_STATICX, STR_ABOUT_HACKER);
-				
+
 							{
 								HMENU hmenu = GetSubMenu(GetSubMenu(GetMenu(hwnd), EDITPOS), CONVERTPOS);
 
@@ -4116,7 +4032,7 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 								InsertMenuItem(hmenu, 1, TRUE, &mio);
 							}
 						}
-						
+
 						SetClassLong(GetParent(hwndDlg), GCL_HICON, (LONG) hicon);
 						SendDlgItemMessage(hwndDlg, IDC_DLGICON, STM_SETICON, (WPARAM)hicon, 0);
 						bIcon = !bIcon;
@@ -4193,7 +4109,7 @@ BOOL CALLBACK GotoDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 				case IDOK: {
 					LONG lLine, lCol = 0;
 					TCHAR szLine[10];
-					
+
 					GetDlgItemText(hwndDlg, IDC_LINE, szLine, 10);
 					lLine = _ttol(szLine);
 					if (!options.bHideGotoOffset) {
@@ -4295,7 +4211,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 					ERROROUT(GetString(IDS_MAX_RECENT_WARNING));
 					SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_MAX_MRU));
 					SetWindowLong (hwndDlg, DWL_MSGRESULT, TRUE);
-				}								
+				}
 				return TRUE;
 			}
 		case PSN_APPLY:
@@ -4410,7 +4326,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 			SendDlgItemMessage(hwndDlg, IDC_MACRO_9, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
 			SendDlgItemMessage(hwndDlg, IDC_MACRO_10, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
 			SetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, options.szLangPlugin);
-			
+
 			SetDlgItemText(hwndDlg, IDC_MACRO_1, options.MacroArray[0]);
 			SetDlgItemText(hwndDlg, IDC_MACRO_2, options.MacroArray[1]);
 			SetDlgItemText(hwndDlg, IDC_MACRO_3, options.MacroArray[2]);
@@ -4611,7 +4527,7 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 					SetWindowLong (hwndDlg, DWL_MSGRESULT, TRUE);
 				}
 				*/
-				
+
 				GetDlgItemText(hwndDlg, IDC_EDIT_SM_WIDTH, szInt, 10);
 				nTmp = _ttoi(szInt);
 				if (nTmp < 0 || nTmp > 300) {
@@ -4619,7 +4535,7 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 					SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_SM_WIDTH));
 					SetWindowLong (hwndDlg, DWL_MSGRESULT, TRUE);
 				}
-				
+
 
 				GetDlgItemText(hwndDlg, IDC_EDIT_TRANSPARENT, szInt, 10);
 				nTmp = _ttoi(szInt);
@@ -4648,7 +4564,7 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 				GetDlgItemText(hwndDlg, IDC_EDIT_TRANSPARENT, szInt, 5);
 				nTmp = _ttoi(szInt);
 				options.nTransparentPct = nTmp;
-				
+
 				if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_FONT_PRIMARY, BM_GETCHECK, 0, 0))
 					options.nPrimaryFont = 0;
 				else
@@ -4876,7 +4792,7 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 	case WM_INITDIALOG:
 		{
 			TCHAR szInt[5];
-		
+
 			CenterWindow(hwndSheet);
 
 			SendDlgItemMessage(hwndDlg, IDC_EDIT_BROWSER, EM_LIMITTEXT, (WPARAM)MAXFN-1, 0);
@@ -5020,7 +4936,7 @@ int CALLBACK SheetInitProc(HWND hwndDlg, UINT uMsg, LPARAM lParam)
 		hwndSheet = hwndDlg;
 	}
 	return TRUE;
-}	
+}
 
 LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
@@ -5028,7 +4944,7 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 		LoadFileFromMenu(LOWORD(wParam), FALSE);
 		return FALSE;
 	}
-	
+
 	switch(Msg) {
 //	case WM_ERASEBKGND:
 //		return (LRESULT)1;
@@ -5086,7 +5002,7 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 
 		if (bShowToolbar)
 			SendMessage(toolbar, WM_SIZE, 0, 0);
-		
+
 		break;
 	}
 #ifndef USE_RICH_EDIT
@@ -5125,7 +5041,7 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 		INT nPos = LOWORD(lParam);
 		if ((BOOL)HIWORD(lParam) == TRUE)
 			break;
-		
+
 		if (nPos == EDITPOS) {
 			CHARRANGE cr;
 
@@ -5582,7 +5498,7 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 				/*
 				if (bOldDirty && bDirtyFile && !SendMessage(client, EM_CANUNDO, 0, 0)) {
 					TCHAR szBuffer[MAXFN];
-					
+
 					bDirtyFile = FALSE;
 					GetWindowText(hwndMain, szBuffer, GetWindowTextLength(hwndMain) + 1);
 					SetWindowText(hwndMain, szBuffer + 3);
@@ -5618,7 +5534,7 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 						if (hMem) {
 							DWORD dwLastError;
 							szOrig = GlobalLock(hMem);
-				
+
 							hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (lstrlen(szOrig) + 2));
 							szNew = GlobalLock(hMem2);
 							if (szNew && szOrig) {
@@ -5704,7 +5620,7 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 						ReportLastError();
 						break;
 					}
-					
+
 					if (OpenClipboard(NULL)) {
 						EmptyClipboard();
 						SetClipboardData(CF_TEXT, hMem);
@@ -5787,7 +5703,7 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 #endif
 					lStartLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lStartLine, 0);
 					lLineLen = SendMessage(client, EM_LINELENGTH, (WPARAM)lStartLineIndex, 0);
-					
+
 					szTemp = (LPTSTR) GlobalAlloc(GPTR, (lLineLen+2) * sizeof(TCHAR));
 					*((LPWORD)szTemp) = (USHORT)(lLineLen + 1);
 					SendMessage(client, EM_GETLINE, (WPARAM)lStartLine, (LPARAM)(LPCTSTR)szTemp);
@@ -5796,7 +5712,7 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 					for (i = 0; i < lLineLen; ++i)
 						if (szTemp[i] != '\t' && szTemp[i] != ' ')
 							break;
-					
+
 					if (cr.cpMin - lStartLineIndex == i)
 						cr.cpMin = cr.cpMax = lStartLineIndex;
 					else
@@ -5982,7 +5898,7 @@ endinsertfile:
 				{
 					TCHAR szTmp[MAXFN];
 					int nRes;
-						
+
 					if (!options.bReadOnlyMenu) break;
 
 					bReadOnly = !GetCheckedState(GetMenu(hwndMain), ID_READONLY, FALSE);
@@ -6002,9 +5918,9 @@ endinsertfile:
 						bReadOnly = !bReadOnly;
 						break;
 					}
-					
+
 					GetWindowText(hwndMain, szTmp, GetWindowTextLength(hwndMain) + 1);
-					
+
 					if (bReadOnly) {
 						lstrcat(szTmp, _T(" "));
 						lstrcat(szTmp, GetString(IDS_READONLY_INDICATOR));
@@ -6134,11 +6050,11 @@ endinsertfile:
 								FixMRUMenus();
 								PopulateMRUList();
 							}
-							
+
 							if (oldOptions.bUnFlatToolbar != options.bUnFlatToolbar) {
 								DestroyWindow(toolbar);
 								CreateToolbar();
-							}								
+							}
 
 							if ((memcmp((LPVOID)(LPVOID)(bPrimaryFont ? &oldOptions.PrimaryFont : &oldOptions.SecondaryFont), (LPVOID)(bPrimaryFont ? &options.PrimaryFont : &options.SecondaryFont), sizeof(LOGFONT)) != 0) ||
 								(oldOptions.nTabStops != options.nTabStops) ||
@@ -6291,7 +6207,7 @@ endinsertfile:
 						SetWindowLong(client, GWL_STYLE, GetWindowLong(client, GWL_STYLE) & ~WS_HSCROLL);
 					else if (!options.bHideScrollbars)
 						SetWindowLong(client, GWL_STYLE, GetWindowLong(client, GWL_STYLE) | WS_HSCROLL);
-					
+
 					SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 #else
 					LONG lFileSize = GetWindowTextLength(client);
@@ -6310,7 +6226,7 @@ endinsertfile:
 						ReportLastError();
 
 					CreateClient(hwnd, _T(""), bWordWrap);
-					
+
 					SetWindowText(client, szBuffer);
 
 					SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
@@ -6346,7 +6262,7 @@ endinsertfile:
 					TCHAR buf[200];
 
 					GetModuleFileName(hinst, buf, MAXFN);
-					
+
 					pch = _tcsrchr(buf, _T('\\'));
 					++pch;
 					*pch = '\0';
@@ -6357,7 +6273,7 @@ endinsertfile:
 				}
 				break;
 			*/
-			case ID_STRIPCHAR: 
+			case ID_STRIPCHAR:
 			case ID_INDENT:
 			case ID_UNINDENT: {
 				LONG lStartLine, lEndLine, lStartLineIndex, lEndLineIndex, lMaxLine, lEndLineLen;
@@ -6393,7 +6309,7 @@ endinsertfile:
 					//ERROROUT(_T("This function will not work with word wrap enabled."));
 					//break;
 				}
-				
+
 				lStartLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lStartLine, 0);
 				lEndLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lEndLine, 0);
 				lMaxLine = SendMessage(client, EM_GETLINECOUNT, 0, 0) - 1;
@@ -6409,9 +6325,9 @@ endinsertfile:
 				else {
 					lstrcpy(szPrefix, _T("\t"));
 				}
-				
+
 				lEndLineLen = SendMessage(client, EM_LINELENGTH, (WPARAM)lEndLineIndex, 0);
-				if ((lEndLine == lMaxLine) && (cr.cpMin != cr.cpMax) && (cr.cpMax != lEndLineIndex) && 
+				if ((lEndLine == lMaxLine) && (cr.cpMin != cr.cpMax) && (cr.cpMax != lEndLineIndex) &&
 					((lEndLine != lStartLine) || (cr.cpMin == lEndLineIndex && (cr.cpMax - cr.cpMin - 1) == lEndLineLen))) {
 					bEnd = TRUE;
 				}
@@ -6475,7 +6391,7 @@ endinsertfile:
 #endif
 					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szBuffer);
 					if (SendMessage(client, EM_GETLINECOUNT, 0, 0) > lBefore) {
-						SendMessage(client, EM_UNDO, 0, 0);							
+						SendMessage(client, EM_UNDO, 0, 0);
 					}
 					else {
 						lEndLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lEndLine, 0);
@@ -6557,12 +6473,12 @@ endinsertfile:
 					psd.hInstance = hinstLang;
 					psd.rtMargin = options.rMargins;
 					psd.lpPageSetupTemplateName = MAKEINTRESOURCE(IDD_PAGE_SETUP);
-					
+
 					if (!GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IMEASURE, (LPTSTR)&szLocale, sizeof(szLocale))) {
 						ReportLastError();
 					}
 					bMetric = (lstrcmp(szLocale, _T("0")) == 0);
-					
+
 					if (bMetric) {
 						psd.rtMargin.bottom = (long)(psd.rtMargin.bottom * 2.54);
 						psd.rtMargin.top = (long)(psd.rtMargin.top * 2.54);
@@ -6751,7 +6667,7 @@ endinsertfile:
 
 						szDest[lstrlen(szSrc)] = '\0';
 						for (i = lstrlen(szSrc)-1, j = i; i >= 0; --i) {
-							
+
 							if (bStrip) {
 								if (szSrc[i] == '\t' || szSrc[i] == ' ') {
 									continue;
@@ -6775,7 +6691,7 @@ endinsertfile:
 					{
 						LONG i;
 						lstrcpy(szDest, szSrc);
-						
+
 						for (i = 0; i < nSize; i++) {
 							if (_istascii(szDest[i])) {
 								switch ((TCHAR)CharLower((LPTSTR)szDest[i])) {
@@ -6805,7 +6721,7 @@ endinsertfile:
 						}
 					}
 					break;
-				case ID_MAKE_LOWER:	
+				case ID_MAKE_LOWER:
 					lstrcpy(szDest, szSrc);
 					CharLowerBuff(szDest, nSize);
 					break;
@@ -7113,7 +7029,7 @@ endinsertfile:
 					LPTSTR szTemp;
 					CHARRANGE cr;
 					HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
-								
+
 					lFileSize = GetWindowTextLength(client);
 					lMaxLine = SendMessage(client, EM_GETLINECOUNT, 0, 0);
 					szBuffer = (LPTSTR) GlobalAlloc(GPTR, (lFileSize + lMaxLine + 1) * sizeof(TCHAR));
@@ -7163,13 +7079,13 @@ endinsertfile:
 			case ID_CONTROL_SHIFT_ENTER:
 #ifdef USE_RICH_EDIT
 			{
-				BYTE keys[256]; 
-				GetKeyboardState(keys); 
-				keys[VK_SHIFT] &= 0x7F; 
-				SetKeyboardState(keys); 
-				SendMessage(client, WM_KEYDOWN, (WPARAM)VK_RETURN, 0); 
-				keys[VK_SHIFT] |= 0x80; 
-				SetKeyboardState(keys); 
+				BYTE keys[256];
+				GetKeyboardState(keys);
+				keys[VK_SHIFT] &= 0x7F;
+				SetKeyboardState(keys);
+				SendMessage(client, WM_KEYDOWN, (WPARAM)VK_RETURN, 0);
+				keys[VK_SHIFT] |= 0x80;
+				SetKeyboardState(keys);
 			}
 #else
 				SendMessage(client, WM_CHAR, (WPARAM)'\r', 0);
@@ -7230,10 +7146,10 @@ endinsertfile:
 			}
 
 			bFinding = (lstrcmp(lpfr->lpstrFindWhat, _T("dummy_find")) == 0);
-			
+
 			SendDlgItemMessage(hdlgFind, ID_DROP_FIND, WM_GETTEXT, MAXFIND, (WPARAM)szBuffer);
 			lstrcpy(lpfr->lpstrFindWhat, szBuffer);
-						
+
 			nIdx = SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_FINDSTRINGEXACT, 0, (WPARAM)szBuffer);
 			if (nIdx == CB_ERR) {
 				if (SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_GETCOUNT, 0, 0) >= NUMFINDS) {
@@ -7258,7 +7174,7 @@ endinsertfile:
 				}
 				SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_INSERTSTRING, 0, (WPARAM)lpfr->lpstrReplaceWith);
 				SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_SETCURSEL, (LPARAM)0, 0);
-			
+
 				if (!bNoFindHidden) {
 					ParseForEscapeSeqs(lpfr->lpstrReplaceWith);
 				}
@@ -7277,7 +7193,7 @@ endinsertfile:
 				TCHAR szMsg[25];
 				CHARRANGE cr, store = {0,0};
 				BOOL bSelection = BST_CHECKED == SendDlgItemMessage(hdlgFind, IDC_RADIO_SELECTION, BM_GETCHECK, 0, 0);
-				
+
 				if (bSelection) {
 #ifdef USE_RICH_EDIT
 					SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
@@ -7354,7 +7270,7 @@ endinsertfile:
 #else
 				SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
-				
+
 				SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
 
 				InvalidateRect(client, NULL, TRUE);
@@ -7431,7 +7347,7 @@ endinsertfile:
 				}
 			}
 			SendMessage(client, EM_SCROLLCARET, 0, 0);
-		
+
 			return FALSE;
 		}
 		return DefWindowProc(hwndMain, Msg, wParam, lParam);
@@ -7517,7 +7433,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		TCHAR* pch;
 		GetModuleFileName(hinstThis, szMetapadIni, MAXFN);
-			
+
 		pch = _tcsrchr(szMetapadIni, _T('\\'));
 		++pch;
 		*pch = '\0';
@@ -7592,11 +7508,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		left = top = width = height = CW_USEDEFAULT;
 		nCmdShow = SW_SHOWNORMAL;
 	}
-	
+
 	/*
 	{
 		OSVERSIONINFO vi;
-		
+
 		vi.dwOSVersionInfoSize = sizeof(vi);
 		GetVersionEx(&vi);
 		if (vi.dwPlatformId == VER_PLATFORM_WIN32_NT && vi.dwMajorVersion >= 5) {
@@ -7667,7 +7583,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 /*
 	if (bWin2k) {
 		HMODULE mh;
-			
+
 		mh = GetModuleHandle(_T("user32.dll"));
 		SetLWA = (SLWA)(GetProcAddress(mh, _T("SetLayeredWindowAttributes")));
 		if (SetLWA) {
@@ -7684,10 +7600,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 */
 	{
 		HMODULE hm;
-			
+
 		hm = GetModuleHandle(_T("user32.dll"));
 		SetLWA = (SLWA)(GetProcAddress(hm, _T("SetLayeredWindowAttributes")));
-	
+
 		if (SetLWA) {
 			SetLWA(hwnd, 0, 255, LWA_ALPHA);
 		}
@@ -7696,7 +7612,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			DeleteMenu(hsub, 4, MF_BYPOSITION);
 		}
 	}
-	
+
 	accel = LoadAccelerators(hinstLang, MAKEINTRESOURCE(IDR_ACCELERATOR));
 	if (!accel) {
 		ReportLastError();
@@ -7791,7 +7707,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (options.szFavDir[0] == '\0' || (handle = FindFirstFile(options.szFavDir, &FindFileData)) == INVALID_HANDLE_VALUE) {
 			TCHAR* pch;
 			GetModuleFileName(hInstance, szFav, MAXFN);
-			
+
 			pch = _tcsrchr(szFav, _T('\\'));
 			++pch;
 			*pch = '\0';
@@ -7811,12 +7727,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if (lstrlen(szCmdLine) > 0) {
 		int nCmdLen;
-	
+
 		nCmdLen = lstrlen(szCmdLine);
 
 		if (nCmdLen > 1 && szCmdLine[0] == '/') {
 			TCHAR chOption = (TCHAR)CharLower((LPTSTR)szCmdLine[1]);
-			
+
 			if (chOption == 'p') {
 				if (szCmdLine[3] == _T('\"') && szCmdLine[nCmdLen - 1] == _T('\"'))
 					lstrcpyn(szFile, szCmdLine + 4, nCmdLen - 1);
@@ -7874,7 +7790,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		bLoading = TRUE;
 
 		GetFullPathName(szFile, MAXFN, szFile, NULL);
-		
+
 		ExpandFilename(szFile);
 #ifdef USE_RICH_EDIT
 		{
