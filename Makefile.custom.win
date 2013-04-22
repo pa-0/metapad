@@ -9,8 +9,8 @@ RICHEDIT = USE_RICH_EDIT
 WXLIBNAME = wxmsw28
 CC        = gcc.exe --define $(RICHEDIT)
 WINDRES   = "windres.exe" --define $(RICHEDIT)
-OBJ       = Objects/MingW/metapad.o Objects/MingW/metapad_private.res
-LINKOBJ   = "Objects/MingW/metapad.o" Objects/MingW/metapad_private.res
+OBJ       = Objects/MingW/metapad.o Objects/MingW/metapad_private.res Objects/MingW/cdecode.o Objects/MingW/cencode.o
+LINKOBJ   = "Objects/MingW/metapad.o" Objects/MingW/metapad_private.res Objects/MingW/cdecode.o Objects/MingW/cencode.o
 LIBS      = -lcomctl32 -lkernel32 -luser32 -lgdi32 -lcomdlg32 -ladvapi32 -lshell32 -mwindows
 INCS      = 
 CXXINCS   = 
@@ -41,5 +41,11 @@ $(BIN): $(OBJ)
 Objects/MingW/metapad.o: $(GLOBALDEPS) metapad.c resource.h
 	$(CC) -c metapad.c -o Objects/MingW/metapad.o $(CFLAGS)
 
-Objects/MingW/metapad_private.res: Objects/MingW/metapad_private.rc metapad.rc 
-	$(WINDRES) --input-format=rc -o Objects/MingW/metapad_private.res $(RCINCS) Objects/MingW/METAPA~1.RC -O coff
+Objects/MingW/metapad_private.res: Objects/MingW/metapad_private.res metapad.rc 
+	$(WINDRES) --input-format=rc -o Objects/MingW/metapad_private.res $(RCINCS) metapad.rc -O coff
+
+Objects/MingW/cencode.o: $(GLOBALDEPS) cencode.c
+	$(CC) -c cencode.c -o Objects/MingW/cencode.o $(CFLAGS)
+
+Objects/MingW/cdecode.o: $(GLOBALDEPS) cdecode.c
+	$(CC) -c cdecode.c -o Objects/MingW/cdecode.o $(CFLAGS)
