@@ -38,7 +38,7 @@ $(BIN): $(OBJ)
 	$(LINK) $(LINKOBJ) -o "$(BIN)" $(LIBS)
 	strip $(BIN) 
 
-metapad.o: $(GLOBALDEPS) metapad.c resource.h
+metapad.o: $(GLOBALDEPS) metapad.c include/resource.h
 	$(CC) -c metapad.c -o metapad.o $(CFLAGS)
 
 metapad_private.res: metapad_private.res metapad.rc 

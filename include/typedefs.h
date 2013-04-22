@@ -1,6 +1,7 @@
 #ifndef TYPEDEFS_H
 #define TYPEDEFS_H
 
+#include "const.h"
 #include <pshpack1.h>
 typedef struct DLGTEMPLATEEX
 {

@@ -50,7 +50,7 @@
 #include <richedit.h>
 #endif
 
-#include "resource.h"
+#include "include/resource.h"
 
 #if defined(__MINGW32__)
  #define PROPSHEETHEADER_V1_SIZE 40
