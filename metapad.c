@@ -75,6 +75,8 @@ extern atoi(const char*);
 
 ///// Globals /////
 
+#include "include/globals.h"
+
 SLWA SetLWA = NULL;
 HINSTANCE hinstThis = NULL;
 HINSTANCE hinstLang = NULL;
@@ -84,49 +86,10 @@ HWND status = NULL;
 HWND toolbar = NULL;
 HWND hdlgCancel = NULL;
 HWND hdlgFind = NULL;
-HANDLE hthread;
 HMENU hrecentmenu = NULL;
 HFONT hfontmain = NULL;
 HFONT hfontfind = NULL;
-WNDPROC wpOrigEditProc;
-WNDPROC wpOrigFindProc;
-TCHAR szCaptionFile[MAXFN], szFile[MAXFN];
-TCHAR szFav[MAXFN];
-TCHAR szMetapadIni[MAXFN];
-TCHAR szDir[MAXFN];
-TCHAR szFindText[MAXFIND];
-TCHAR szReplaceText[MAXFIND];
-TCHAR szStatusMessage[MAXSTRING];
-TCHAR _szString[MAXSTRING];
-LPTSTR lpszShadow;
-BOOL bDirtyFile, bLoading, bMatchCase, bDown, bWholeWord, bUnix, bReadOnly, bBinaryFile;
-BOOL bWordWrap, bPrimaryFont, bPrint, bSmartSelect, bShowStatus /*, bWin2k*/;
-BOOL bReplacingAll, bShowToolbar, bAlwaysOnTop, bCloseAfterFind, bHasFaves, bNoFindHidden;
-BOOL bTransparent;
-//BOOL bLinkMenu;
-UINT nMRUTop;
-UINT nShadowSize;
-UINT uFindReplaceMsg;
-int nStatusHeight, nToolbarHeight;
-TCHAR szCustomFilter[2*MAXSTRING];
-BOOL bInsertMode, bHideMessage;
-int nReplaceMax;
-HWND hwndSheet;
-TCHAR FindArray[NUMFINDS][MAXFIND];
-TCHAR ReplaceArray[NUMFINDS][MAXFIND];
-int nEncodingType;
-BOOL g_bDisablePluginVersionChecking;
 BOOL g_bIniMode = FALSE;
-
-#ifdef USE_RICH_EDIT
-BOOL bUpdated, bHyperlinks;
-#endif
-
-#ifndef USE_RICH_EDIT
-HBRUSH BackBrush;
-BOOL bQuitApp;
-#endif
-
 int _fltused = 0x9875; // see CMISCDAT.C for more info on this
 
 CHAR szBOM_UTF_8[] = "\xEF\xBB\xBF";  // 0xEF, 0xBB, 0xBF / "\357\273\277" - leave off _T() macro.
