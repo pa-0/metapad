@@ -55,11 +55,11 @@
 #if defined(__MINGW32__)
  #define PROPSHEETHEADER_V1_SIZE 40
 #else
- #include "w32crt.h"
+ #include "include/w32crt.h"
 #endif
 
-#include "cencode.h"
-#include "cdecode.h"
+#include "include/cencode.h"
+#include "include/cdecode.h"
 
 extern atol(const char*);
 extern atoi(const char*);
