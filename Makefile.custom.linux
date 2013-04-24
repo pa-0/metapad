@@ -9,8 +9,8 @@ RICHEDIT = USE_RICH_EDIT
 WXLIBNAME = wxmsw28
 CC        = i586-mingw32msvc-gcc --define $(RICHEDIT)
 WINDRES   = "i586-mingw32msvc-windres" --define $(RICHEDIT)
-OBJ       = metapad.o metapad_private.res cdecode.o cencode.o
-LINKOBJ   = "metapad.o" metapad_private.res cdecode.o cencode.o
+OBJ       = metapad.o metapad_private.res cdecode.o cencode.o language_plugin.o
+LINKOBJ   = "metapad.o" metapad_private.res cdecode.o cencode.o language_plugin.o
 LIBS      = -lcomctl32 -lkernel32 -luser32 -lgdi32 -lcomdlg32 -ladvapi32 -lshell32 -mwindows
 INCS      = 
 CXXINCS   = 
@@ -49,3 +49,6 @@ cencode.o: $(GLOBALDEPS) cencode.c
 
 cdecode.o: $(GLOBALDEPS) cdecode.c
 	$(CC) -c cdecode.c -o cdecode.o $(CFLAGS)
+
+language_plugin.o: $(GLOBALDEPS) language_plugin.c
+	$(CC) -c language_plugin.c -o language_plugin.o $(CFLAGS)

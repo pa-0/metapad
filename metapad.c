@@ -72,11 +72,11 @@ extern atoi(const char*);
 #include "include/strings.h"
 #include "include/outmacros.h"
 #include "include/typedefs.h"
-
+#include "include/language_plugin.h"
 ///// Globals /////
 
 #include "include/globals.h"
-
+#include "include/tmp_protos.h"
 SLWA SetLWA = NULL;
 HINSTANCE hinstThis = NULL;
 HINSTANCE hinstLang = NULL;
@@ -98,122 +98,12 @@ CHAR szBOM_UTF_16_BE[] = "\376\377";  // 0xFE, 0xFF - leave off _T() macro.
 
 option_struct options;
 
-///// Prototypes /////
-
-void MakeNewFile(void);
-BOOL SaveIfDirty(void);
-BOOL GetCheckedState(HMENU hmenu, UINT nID, BOOL bToggle);
-void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap);
-LPCTSTR GetShadowBuffer(void);
-BOOL CALLBACK AbortDlgProc(HDC hdc, int nCode);
-LRESULT CALLBACK AbortPrintJob(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
-BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWord, BOOL bCase, BOOL bFromTop);
-void ExpandFilename(LPTSTR szBuffer);
-void PrintContents(void);
-void ReportLastError(void);
-void LaunchPrimaryExternalViewer(void);
-void LaunchSecondaryExternalViewer(void);
-void LoadOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
-void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
-BOOL LoadOptionNumeric(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
-void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
-void LoadOptions(void);
-void SaveOptions(void);
-void LoadWindowPlacement(int* left, int* top, int* width, int* height, int* nShow);
-void SaveWindowPlacement(HWND hWndSave);
-void CenterWindow(HWND hwndCenter);
-void SelectWord(BOOL bFinding, BOOL bSmart, BOOL bAutoSelect);
-void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU);
-BOOL SaveFile(LPCTSTR szFilename);
-void SetFont(HFONT* phfnt, BOOL bPrimary);
-void SetTabStops(void);
-void NextWord(BOOL bRight, BOOL bSelect);
-void UpdateStatus(void);
-BOOL SetClientFont(BOOL bPrimary);
-BOOL SearchFile(LPCTSTR szText, BOOL bMatchCase, BOOL bReplaceAll, BOOL bDown, BOOL bWholeWord);
-BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam);
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
-LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void PopulateMRUList(void);
-void SaveMRUInfo(LPCTSTR szFullPath);
-void SwitchReadOnly(BOOL bNewVal);
-BOOL EncodeWithEscapeSeqs(TCHAR* szText);
-
 ///// Implementation /////
 
 LPTSTR GetString(UINT uID)
 {
 	LoadString(hinstLang, uID, _szString, MAXSTRING);
 	return _szString;
-}
-
-HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin)
-{
-	HINSTANCE hinstTemp;
-
-	hinstTemp = LoadLibrary(szPlugin);
-	if (hinstTemp == NULL) {
-		ERROROUT(GetString(IDS_INVALID_PLUGIN_ERROR));
-		return NULL;
-	}
-
-	{
-		TCHAR szVersionThis[25];
-		TCHAR szVersionPlug[25];
-
-		if (LoadString(hinstTemp, IDS_VERSION_SYNCH, szVersionPlug, 25) == 0) {
-			ERROROUT(GetString(IDS_BAD_STRING_PLUGIN_ERROR));
-			FreeLibrary(hinstTemp);
-			return NULL;
-		}
-		LoadString(hinstThis, IDS_VERSION_SYNCH, szVersionThis, 25);
-		if (!g_bDisablePluginVersionChecking && lstrcmpi(szVersionThis, szVersionPlug) != 0) {
-			TCHAR szVersionError[550];
-			wsprintf(szVersionError, GetString(IDS_PLUGIN_MISMATCH_ERROR), szVersionPlug, szVersionThis);
-			ERROROUT(szVersionError);
-		}
-	}
-
-	return hinstTemp;
-}
-
-
-void FindAndLoadLanguagePlugin(void)
-{
-	HINSTANCE hinstTemp;
-
-	hinstLang = hinstThis;
-
-	if (options.szLangPlugin[0] == '\0')
-		return;
-
-	{
-		WIN32_FIND_DATA FileData;
-		HANDLE hSearch;
-
-		hSearch = FindFirstFile(options.szLangPlugin, &FileData);
-		if (hSearch == INVALID_HANDLE_VALUE) {
-			ERROROUT(_T("Could not find the language plugin DLL."));
-			goto badplugin;
-		}
-		else {
-			FindClose(hSearch);
-		}
-	}
-
-	hinstTemp = LoadAndVerifyLanguagePlugin(options.szLangPlugin);
-	if (hinstTemp) {
-		hinstLang = hinstTemp;
-		return;
-	}
-
-badplugin:
-	ERROROUT(_T("Temporarily reverting language to Default (English)\n\nCheck the language plugin setting."));
 }
 
 BOOL EncodeWithEscapeSeqs(TCHAR* szText)
