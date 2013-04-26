@@ -112,7 +112,7 @@ BOOL EncodeWithEscapeSeqs(TCHAR* szText)
 	INT i,j;
 	BOOL bSlashFound = FALSE;
 
-	for (i = 0, j = 0; szText[i] && i < MAXMACRO; ++i) {
+	for (i = 0, j = 0; i < MAXMACRO && szText[i]; ++i) {
 		switch (szText[i]) {
 		case '\n':
 			break;
@@ -146,7 +146,7 @@ void ParseForEscapeSeqs(TCHAR* szText)
 	INT i,j;
 	BOOL bSlashFound = FALSE;
 
-	for (i = 0, j = 0; szText[i] && i < MAXMACRO; ++i) {
+	for (i = 0, j = 0;i < MAXMACRO && szText[i]; ++i) {
 		if (bSlashFound) {
 			switch (szText[i]) {
 			case 'n':
@@ -879,7 +879,7 @@ void UpdateStatus(void)
 	szBuffer[lLineLen] = '\0';
 
 	lLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lLine, 0);
-	while (lLineLen && szBuffer[i] && i < cr.cpMax - lLineIndex) {
+	while (lLineLen && i < (cr.cpMax - lLineIndex) && szBuffer[i]) {
 		if (szBuffer[i] == '\t')
 			lCol += options.nTabStops - (lCol-1) % options.nTabStops;
 		else
@@ -1309,10 +1309,10 @@ void ExpandFilename(LPTSTR szBuffer)
 	hSearch = FindFirstFile(szBuffer, &FileData);
 	szCaptionFile[0] = _T('\0');
 	if (hSearch != INVALID_HANDLE_VALUE) {
-		int result;
 		LPCTSTR pdest;
 		pdest = _tcsrchr(szBuffer, _T('\\'));
 		if (pdest) {
+			int result;
 			result = pdest - szBuffer + 1;
 			lstrcpyn(szDir, szBuffer, result);
 		}
@@ -6218,7 +6218,7 @@ endinsertfile:
 							}
 							else if (szTemp[0] == ' ') {
 								diff = 1;
-								while (szTemp[diff] == ' ' && diff < options.nTabStops)
+								while (diff < options.nTabStops && szTemp[diff] == ' ')
 									diff++;
 							}
 							lstrcpy(szBuffer+j, szTemp + diff);
@@ -6980,7 +6980,7 @@ endinsertfile:
 		if (Msg == uFindReplaceMsg) {
 			LPFINDREPLACE lpfr = (LPFINDREPLACE)lParam;
 			TCHAR szBuffer[MAXFIND];
-			int i, nIdx;
+			int nIdx;
 			BOOL bFinding = FALSE;
 #ifdef USE_RICH_EDIT
 			BOOL bFixCRProblem = FALSE;
@@ -6989,6 +6989,7 @@ endinsertfile:
 #endif
 
 			if (lpfr->Flags & FR_DIALOGTERM) {
+				int i;
 				for (i = 0; i < NUMFINDS; i++) {
 					SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_GETLBTEXT, i, (WPARAM)FindArray[i]);
 					if (lpfr->lpstrReplaceWith != NULL)
