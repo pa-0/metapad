@@ -22,12 +22,19 @@
 #include <windows.h>
 #include <tchar.h>
 
-#include "include/globals.h"
+#include "include/typedefs.h"
 #include "include/resource.h"
 #include "include/outmacros.h"
 #include "include/strings.h"
 #include "include/language_plugin.h"
 #include "include/tmp_protos.h"
+
+extern HWND hwnd;
+extern BOOL g_bDisablePluginVersionChecking;
+extern HINSTANCE hinstThis;
+extern HINSTANCE hinstLang;
+
+extern option_struct options;
 
 HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin)
 {
