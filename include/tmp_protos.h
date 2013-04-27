@@ -36,8 +36,6 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 void ExpandFilename(LPTSTR szBuffer);
 void PrintContents(void);
 void ReportLastError(void);
-void LaunchPrimaryExternalViewer(void);
-void LaunchSecondaryExternalViewer(void);
 void LoadOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
 void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
 BOOL LoadOptionNumeric(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
