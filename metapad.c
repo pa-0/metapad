@@ -58,7 +58,6 @@
  #include "include/w32crt.h"
 #endif
 
-#include "include/cencode.h"
 #include "include/cdecode.h"
 
 extern atol(const char*);

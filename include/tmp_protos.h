@@ -41,9 +41,7 @@ void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 BOOL LoadOptionNumeric(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
 void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
 void LoadOptions(void);
-void SaveOptions(void);
 void LoadWindowPlacement(int* left, int* top, int* width, int* height, int* nShow);
-void SaveWindowPlacement(HWND hWndSave);
 void CenterWindow(HWND hwndCenter);
 void SelectWord(BOOL bFinding, BOOL bSmart, BOOL bAutoSelect);
 void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU);
