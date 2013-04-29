@@ -82,9 +82,12 @@
 #define TYPE_UTF_16 2
 #define TYPE_UTF_16_BE 3
 
-#define WS_EX_LAYERED 0x00080000
 #define LWA_COLORKEY 0x00000001
 #define LWA_ALPHA 0x00000002
+
+#ifndef WS_EX_LAYERED
+#define WS_EX_LAYERED 0x00080000
+#endif
 
 #endif
 

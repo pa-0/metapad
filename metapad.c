@@ -6178,25 +6178,32 @@ endinsertfile:
 
 						for (i = 0; i < nSize; i++) {
 							if (_istascii(szDest[i])) {
-								switch ((TCHAR)CharLower((LPTSTR)szDest[i])) {
+								switch (szDest[i]) {
 								case 'a':
+								case 'A':
 									szDest[i] = '4';
 									break;
+								case 'T':
 								case 't':
 									szDest[i] = '7';
 									break;
+								case 'E':
 								case 'e':
 									szDest[i] = '3';
 									break;
+								case 'L':
 								case 'l':
 									szDest[i] = '1';
 									break;
+								case 'S':
 								case 's':
 									szDest[i] = '5';
 									break;
+								case 'G':
 								case 'g':
 									szDest[i] = '6';
 									break;
+								case 'O':
 								case 'o':
 									szDest[i] = '0';
 									break;
@@ -6929,23 +6936,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		int nCmdLen = lstrlen(szCmdLine);
 		if (nCmdLen > 1 && szCmdLine[0] == '/') {
 
-			TCHAR chOption = (TCHAR)CharLower((LPTSTR)szCmdLine[1]);
-			if (chOption == 's') {
+			TCHAR chOption = szCmdLine[1];
+			if (chOption == 's' || chOption == 'S') {
 				bSkipLanguagePlugin = TRUE;
 				szCmdLine += 2;
 				if (szCmdLine[0] == ' ') ++szCmdLine;
 			}
-			else if (chOption == 'v') {
+			else if (chOption == 'v' || chOption == 'V') {
 				g_bDisablePluginVersionChecking = TRUE;
 				szCmdLine += 2;
 				if (szCmdLine[0] == ' ') ++szCmdLine;
 			}
-			else if (chOption == 'i') {
+			else if (chOption == 'i' || chOption == 'I') {
 				g_bIniMode = TRUE;
 				szCmdLine += 2;
 				if (szCmdLine[0] == ' ') ++szCmdLine;
 			}
-			else if (chOption == 'm') {
+			else if (chOption == 'm' || chOption == 'M') {
 				LoadOptions();
 				g_bIniMode = TRUE;
 				SaveOptions();
@@ -7216,9 +7223,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		nCmdLen = lstrlen(szCmdLine);
 
 		if (nCmdLen > 1 && szCmdLine[0] == '/') {
-			TCHAR chOption = (TCHAR)CharLower((LPTSTR)szCmdLine[1]);
+			TCHAR chOption = szCmdLine[1];
 
-			if (chOption == 'p') {
+			if (chOption == 'p' || chOption == 'P') {
 				if (szCmdLine[3] == _T('\"') && szCmdLine[nCmdLen - 1] == _T('\"'))
 					lstrcpyn(szFile, szCmdLine + 4, nCmdLen - 1);
 				else
@@ -7230,7 +7237,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				CleanUp();
 				return TRUE;
 			}
-			else if (chOption == 'g') {
+			else if (chOption == 'g' || chOption == 'G') {
 				TCHAR szNum[6];
 				int nRlen, nClen;
 
@@ -7249,7 +7256,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else
 					lstrcpyn(szFile, szCmdLine + nClen + nRlen + 5, nCmdLen + 1);
 			}
-			else if (chOption == 'e') {
+			else if (chOption == 'e' || chOption == 'E') {
 				if (szCmdLine[3] == _T('\"') && szCmdLine[nCmdLen - 1] == _T('\"'))
 					lstrcpyn(szFile, szCmdLine + 4, nCmdLen - 1);
 				else
