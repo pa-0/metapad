@@ -94,10 +94,6 @@ HFONT hfontfind = NULL;
 BOOL g_bIniMode = FALSE;
 int _fltused = 0x9875; // see CMISCDAT.C for more info on this
 
-const CHAR const szBOM_UTF_8[SIZEOFBOM_UTF_8] = "\xEF\xBB\xBF";  // 0xEF, 0xBB, 0xBF / "\357\273\277" - leave off _T() macro.
-const CHAR const szBOM_UTF_16[SIZEOFBOM_UTF_16] = "\377\376";  // 0xFF, 0xFE - leave off _T() macro.
-const CHAR const szBOM_UTF_16_BE[SIZEOFBOM_UTF_16] = "\376\377";  // 0xFE, 0xFF - leave off _T() macro.
-
 option_struct options;
 
 ///// Implementation /////
@@ -3140,9 +3136,13 @@ BOOL SaveFile(LPCTSTR szFilename)
 
 		if (nEncodingType == TYPE_UTF_16_BE) {
 			ReverseBytes((PBYTE)pNewBuffer, nBytesNeeded);
+			const CHAR const szBOM_UTF_16_BE[SIZEOFBOM_UTF_16] = "\376\377";
+			// 0xFE, 0xFF - leave off _T() macro.
 			WriteFile(hFile, szBOM_UTF_16_BE, SIZEOFBOM_UTF_16, &dwActualBytesWritten, NULL);
 		}
 		else if (nEncodingType == TYPE_UTF_16) {
+			const CHAR const szBOM_UTF_16[SIZEOFBOM_UTF_16] = "\377\376";
+			// 0xFF, 0xFE - leave off _T() macro.
 			WriteFile(hFile, szBOM_UTF_16, SIZEOFBOM_UTF_16, &dwActualBytesWritten, NULL);
 		}
 
@@ -3185,6 +3185,8 @@ BOOL SaveFile(LPCTSTR szFilename)
 		}
 #endif
 		if (nEncodingType == TYPE_UTF_8) {
+			const CHAR const szBOM_UTF_8[SIZEOFBOM_UTF_8] = "\xEF\xBB\xBF";
+			// 0xEF, 0xBB, 0xBF / "\357\273\277" - leave off _T() macro.
 			WriteFile(hFile, szBOM_UTF_8, SIZEOFBOM_UTF_8, &dwActualBytesWritten, NULL);
 
 			if (dwActualBytesWritten != SIZEOFBOM_UTF_8) {
