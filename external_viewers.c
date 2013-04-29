@@ -82,7 +82,7 @@ BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
 	return TRUE;
 }
 
-static void LaunchPrimaryExternalViewer(void)
+void LaunchPrimaryExternalViewer(void)
 {
 	TCHAR szLaunch[MAXFN] = {'\0'};
 
