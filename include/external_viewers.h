@@ -23,8 +23,6 @@
 #define EXTERNAL_VIEWERS_H
 
 BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine);
-void LaunchPrimaryExternalViewer(void);
-void LaunchSecondaryExternalViewer(void);
 void LaunchInViewer(BOOL bCustom, BOOL bSecondary);
 
 #endif

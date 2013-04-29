@@ -82,7 +82,7 @@ BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
 	return TRUE;
 }
 
-void LaunchPrimaryExternalViewer(void)
+static void LaunchPrimaryExternalViewer(void)
 {
 	TCHAR szLaunch[MAXFN] = {'\0'};
 
@@ -94,7 +94,7 @@ void LaunchPrimaryExternalViewer(void)
 		ERROROUT(GetString(IDS_PRIMARY_VIEWER_ERROR));
 }
 
-void LaunchSecondaryExternalViewer(void)
+static void LaunchSecondaryExternalViewer(void)
 {
 	TCHAR szLaunch[MAXFN] = {'\0'};
 
