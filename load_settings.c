@@ -22,7 +22,11 @@
 #include <windows.h>
 #include <tchar.h>
 #ifdef BUILD_METAPAD_UNICODE
+#define _UNICODE
 #include <wchar.h>
+#else
+#undef _UNICODE
+#undef UNICODE
 #endif
 
 #include "include/consts.h"
@@ -54,9 +58,9 @@ extern BOOL bCloseAfterFind;
 extern BOOL bNoFindHidden;
 extern option_struct options;
 
-void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
+static void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
 void LoadOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
-void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
+static void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
 
 void LoadOptions(void)
 {
@@ -244,7 +248,7 @@ void LoadOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 	}
 }
 
-void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
+static void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 {
 	if (hKey) {
 		RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData);
@@ -282,7 +286,7 @@ BOOL LoadOptionNumeric(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 	}
 }
 
-void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
+static void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 {
 	if (hKey) {
 		RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData);
