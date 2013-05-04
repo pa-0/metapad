@@ -19,12 +19,12 @@
 /*                                                                          */
 /****************************************************************************/
 
-#ifndef SAVE_OPTIONS_H
-#define SAVE_OPTIONS_H
+#ifndef SAVE_SETTINGS_H
+#define SAVE_SETTINGS_H
 
 BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD cbData);
 void SaveWindowPlacement(HWND hWndSave);
 void SaveOptions(void);
-BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD cbData);
+void SaveMenusAndData(void);
 
 #endif
