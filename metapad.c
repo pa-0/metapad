@@ -58,8 +58,6 @@
  #include "include/w32crt.h"
 #endif
 
-#include "include/cdecode.h"
-
 extern atol(const char*);
 
 #pragma intrinsic(memset)
@@ -2863,7 +2861,6 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 
 		cr.cpMin = SendMessage(client, EM_FINDTEXT, (WPARAM)nFlags, (LPARAM)&ft);
 
-#ifdef USE_RICH_EDIT
 		if (strchr(szText, '\r')) {
 			LONG lLine, lLines;
 
@@ -2874,7 +2871,6 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 				return FALSE;
 			}
 		}
-#endif
 
 		if (cr.cpMin == -1)
 			return FALSE;
