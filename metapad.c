@@ -70,8 +70,8 @@ extern atol(const char*);
 #include "include/typedefs.h"
 #include "include/language_plugin.h"
 #include "include/external_viewers.h"
-#include "include/save_settings.h"
-#include "include/load_settings.h"
+#include "include/settings_save.h"
+#include "include/settings_load.h"
 
 ///// Globals /////
 

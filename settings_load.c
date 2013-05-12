@@ -33,6 +33,7 @@
 #include "include/strings.h"
 #include "include/typedefs.h"
 #include "include/cdecode.h"
+#include "include/settings_load.h"
 
 #ifdef USE_RICH_EDIT
 extern BOOL bHyperlinks;
@@ -59,7 +60,6 @@ extern BOOL bNoFindHidden;
 extern option_struct options;
 
 static void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
-void LoadOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
 static void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
 
 void LoadOptions(void)

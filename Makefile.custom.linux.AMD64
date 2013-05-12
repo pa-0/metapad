@@ -6,25 +6,16 @@
 #RICHEDIT = USE_RICH_EDIT
 RICHEDIT = NO_RICH_EDIT
 
-UNICODE = BUILD_METAPAD_UNICODE
-#UNICODE = NO_UNICODE
-
-#STREAMING = STREAMING
-STREAMING = NO_STREAMING
-
-BOOKMARKS = NO_USE_BOOKMARKS
-#BOOKMARKS = USE_BOOKMARKS
-
 WXLIBNAME = wxmsw28
-CC        = i586-mingw32msvc-gcc --define "$(RICHEDIT) $(UNICODE) $(BOOKMARKS) $(STREAMING)"
-WINDRES   = "i586-mingw32msvc-windres" --define "$(RICHEDIT) $(UNICODE) $(BOOKMARKS) $(STREAMING)"
+CC        = x86_64-w64-mingw32-gcc --define $(RICHEDIT)
+WINDRES   = "x86_64-w64-mingw32-windres" --define $(RICHEDIT)
 OBJ       = metapad.o metapad_private.res cdecode.o cencode.o language_plugin.o external_viewers.o settings_save.o settings_load.o
 LINKOBJ   = "metapad.o" metapad_private.res cdecode.o cencode.o language_plugin.o external_viewers.o settings_save.o settings_load.o
-LIBS      = -mwindows -lcomctl32
+LIBS      = -lcomctl32 -mwindows
 INCS      = 
 CXXINCS   = 
 RCINCS    = 
-BIN       = metapad.exe
+BIN       = metapad_64.exe
 
 #DEFINES   = -D__GNUWIN32__ -D_DEBUG -D_MBCS -DWIN32 -D_WINDOWS
 DEFINES   = -D__GNUWIN32__  -DNDEBUG -D_MBCS -DWIN32 -D_WINDOWS
@@ -33,9 +24,9 @@ DEFINES   = -D__GNUWIN32__  -DNDEBUG -D_MBCS -DWIN32 -D_WINDOWS
 #CFLAGS    = $(INCS) $(DEFINES)  -c 
 CFLAGS    = $(INCS) $(DEFINES) -c -O2
 
-GPROF     = i586-mingw32msvc-gprof
+GPROF     = x86_64-w64-mingw32-gprof
 RM        = rm -f
-LINK      = i586-mingw32msvc-g++
+LINK      = x86_64-w64-mingw32-g++
 
 .PHONY: all all-before all-after clean clean-custom
 all: all-before $(BIN) all-after

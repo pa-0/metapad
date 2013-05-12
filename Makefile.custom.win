@@ -9,8 +9,8 @@ RICHEDIT = USE_RICH_EDIT
 WXLIBNAME = wxmsw28
 CC        = gcc.exe --define $(RICHEDIT)
 WINDRES   = "windres.exe" --define $(RICHEDIT)
-OBJ       = Objects/MingW/metapad.o Objects/MingW/metapad_private.res Objects/MingW/cdecode.o Objects/MingW/cencode.o Objects/MingW/language_plugin.o Objects/MingW/external_viewers.o Objects/MingW/save_settings.o Objects/MingW/load_settings.o
-LINKOBJ   = "Objects/MingW/metapad.o" Objects/MingW/metapad_private.res Objects/MingW/cdecode.o Objects/MingW/cencode.o Objects/MingW/language_plugin.o Objects/MingW/external_viewers.o Objects/MingW/save_settings.o Objects/MingW/load_settings.o
+OBJ       = Objects/MingW/metapad.o Objects/MingW/metapad_private.res Objects/MingW/cdecode.o Objects/MingW/cencode.o Objects/MingW/language_plugin.o Objects/MingW/external_viewers.o Objects/MingW/settings_save.o Objects/MingW/settings_load.o
+LINKOBJ   = "Objects/MingW/metapad.o" Objects/MingW/metapad_private.res Objects/MingW/cdecode.o Objects/MingW/cencode.o Objects/MingW/language_plugin.o Objects/MingW/external_viewers.o Objects/MingW/settings_save.o Objects/MingW/settings_load.o
 LIBS      = -lcomctl32 -mwindows
 INCS      = 
 CXXINCS   = 
@@ -56,8 +56,8 @@ Objects/MingW/language_plugin.o: $(GLOBALDEPS) language_plugin.c
 Objects/MingW/external_viewers.o: $(GLOBALDEPS) external_viewers.c
 	$(CC) -c external_viewers.c -o Objects/MingW/external_viewers.o $(CFLAGS)
 
-Objects/MingW/save_settings.o: $(GLOBALDEPS) save_settings.c
-	$(CC) -c save_settings.c -o Objects/MingW/save_settings.o $(CFLAGS)
+Objects/MingW/settings_save.o: $(GLOBALDEPS) settings_save.c
+	$(CC) -c settings_save.c -o Objects/MingW/settings_save.o $(CFLAGS)
 
-Objects/MingW/load_settings.o: $(GLOBALDEPS) load_settings.c
-	$(CC) -c load_settings.c -o Objects/MingW/load_settings.o $(CFLAGS)
+Objects/MingW/settings_load.o: $(GLOBALDEPS) settings_load.c
+	$(CC) -c settings_load.c -o Objects/MingW/settings_load.o $(CFLAGS)
