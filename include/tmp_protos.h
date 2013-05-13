@@ -26,7 +26,6 @@
 
 LPTSTR GetString(UINT uID);
 void MakeNewFile(void);
-BOOL SaveIfDirty(void);
 BOOL GetCheckedState(HMENU hmenu, UINT nID, BOOL bToggle);
 void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap);
 LPCTSTR GetShadowBuffer(void);
@@ -39,7 +38,6 @@ void ReportLastError(void);
 void CenterWindow(HWND hwndCenter);
 void SelectWord(BOOL bFinding, BOOL bSmart, BOOL bAutoSelect);
 void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU);
-BOOL SaveFile(LPCTSTR szFilename);
 void SetFont(HFONT* phfnt, BOOL bPrimary);
 void SetTabStops(void);
 void NextWord(BOOL bRight, BOOL bSelect);

@@ -19,13 +19,16 @@
 /*                                                                          */
 /****************************************************************************/
 
+#define WIN32_LEAN_AND_MEAN
+#define _WIN32_WINNT 0x0400
+
 #include <windows.h>
 #include <tchar.h>
+#include <shellapi.h>
 
 #include "include/typedefs.h"
 #include "include/tmp_protos.h"
 #include "include/external_viewers.h"
-
 #include "include/strings.h"
 #include "include/outmacros.h"
 #include "include/resource.h"
