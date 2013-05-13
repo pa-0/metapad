@@ -18,8 +18,8 @@ BOOKMARKS = NO_USE_BOOKMARKS
 WXLIBNAME = wxmsw28
 CC        = i586-mingw32msvc-gcc --define "$(RICHEDIT) $(UNICODE) $(BOOKMARKS) $(STREAMING)"
 WINDRES   = "i586-mingw32msvc-windres" --define "$(RICHEDIT) $(UNICODE) $(BOOKMARKS) $(STREAMING)"
-OBJ       = metapad.o metapad_private.res cdecode.o cencode.o language_plugin.o external_viewers.o settings_save.o settings_load.o
-LINKOBJ   = "metapad.o" metapad_private.res cdecode.o cencode.o language_plugin.o external_viewers.o settings_save.o settings_load.o
+OBJ       = metapad.o metapad_private.res cdecode.o cencode.o language_plugin.o external_viewers.o settings_save.o settings_load.o file_save.o
+LINKOBJ   = "metapad.o" metapad_private.res cdecode.o cencode.o language_plugin.o external_viewers.o settings_save.o settings_load.o file_save.o
 LIBS      = -mwindows -lcomctl32
 INCS      = 
 CXXINCS   = 
@@ -29,7 +29,7 @@ BIN       = metapad.exe
 #DEFINES   = -D__GNUWIN32__ -D_DEBUG -D_MBCS -DWIN32 -D_WINDOWS
 DEFINES   = -D__GNUWIN32__  -DNDEBUG -D_MBCS -DWIN32 -D_WINDOWS
 
-#CFLAGS    = $(INCS) $(DEFINES) -W /Od /FD -c   
+#CFLAGS    = $(INCS) $(DEFINES) -W /Od /FD -c  
 #CFLAGS    = $(INCS) $(DEFINES)  -c 
 CFLAGS    = $(INCS) $(DEFINES) -c -O2
 
@@ -48,25 +48,28 @@ $(BIN): $(OBJ)
 #	strip $(BIN) 
 
 metapad.o: $(GLOBALDEPS) metapad.c include/resource.h
-	$(CC) -c  metapad.c -o metapad.o $(CFLAGS)
+	$(CC) -c metapad.c -o metapad.o $(CFLAGS)
 
 metapad_private.res: metapad_private.res metapad.rc 
 	$(WINDRES) --input-format=rc -o metapad_private.res $(RCINCS) metapad.rc -O coff
 
 cencode.o: $(GLOBALDEPS) cencode.c
-	$(CC) -c  cencode.c -o cencode.o $(CFLAGS)
+	$(CC) -c cencode.c -o cencode.o $(CFLAGS)
 
 cdecode.o: $(GLOBALDEPS) cdecode.c
-	$(CC) -c  cdecode.c -o cdecode.o $(CFLAGS)
+	$(CC) -c cdecode.c -o cdecode.o $(CFLAGS)
 
 language_plugin.o: $(GLOBALDEPS) language_plugin.c
-	$(CC) -c  language_plugin.c -o language_plugin.o $(CFLAGS)
+	$(CC) -c language_plugin.c -o language_plugin.o $(CFLAGS)
 
 external_viewers.o: $(GLOBALDEPS) external_viewers.c
-	$(CC) -c  external_viewers.c -o external_viewers.o $(CFLAGS)
+	$(CC) -c external_viewers.c -o external_viewers.o $(CFLAGS)
 
 settings_save.o: $(GLOBALDEPS) settings_save.c
-	$(CC) -c  settings_save.c -o settings_save.o $(CFLAGS)
+	$(CC) -c settings_save.c -o settings_save.o $(CFLAGS)
 
-settings_load.o: $(GLOBALDEPS)  settings_load.c
-	$(CC) -c  settings_load.c -o  settings_load.o $(CFLAGS)
+settings_load.o: $(GLOBALDEPS) settings_load.c
+	$(CC) -c settings_load.c -o settings_load.o $(CFLAGS)
+
+file_save.o: $(GLOBALDEPS) file_save.c
+	$(CC) -c file_save.c -o file_save.o $(CFLAGS)

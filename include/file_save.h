@@ -19,12 +19,12 @@
 /*                                                                          */
 /****************************************************************************/
 
-#ifndef SETTINGS_SAVE_H
-#define SETTINGS_SAVE_H
+#ifndef FILE_SAVE_H
+#define FILE_SAVE_H
 
-BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD cbData);
-void SaveWindowPlacement(HWND hWndSave);
-void SaveOptions(void);
-void SaveMenusAndData(void);
+void FixFilterString(LPTSTR szIn);
+BOOL SaveCurrentFileAs(void);
+BOOL SaveCurrentFile(void);
+BOOL SaveIfDirty(void);
 
 #endif
