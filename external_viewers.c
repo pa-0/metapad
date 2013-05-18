@@ -41,7 +41,13 @@ extern BOOL bDirtyFile;
 
 extern option_struct options;
 
-
+/**
+ * Try to execute a third party program.
+ *
+ * @param Path to program.
+ * @param Arguments to pass to program.
+ * @return TRUE if succesful, FALSE otherwise.
+ */
 BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
 {
 	TCHAR szCmdLine[1024];
@@ -85,6 +91,9 @@ BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
 	return TRUE;
 }
 
+/**
+ * Launch the primary external viewer.
+ */
 void LaunchPrimaryExternalViewer(void)
 {
 	TCHAR szLaunch[MAXFN] = {'\0'};
@@ -97,6 +106,9 @@ void LaunchPrimaryExternalViewer(void)
 		ERROROUT(GetString(IDS_PRIMARY_VIEWER_ERROR));
 }
 
+/**
+ * Launch the secondary external viewer.
+ */
 static void LaunchSecondaryExternalViewer(void)
 {
 	TCHAR szLaunch[MAXFN] = {'\0'};
@@ -109,6 +121,12 @@ static void LaunchSecondaryExternalViewer(void)
 		ERROROUT(GetString(IDS_SECONDARY_VIEWER_ERROR));
 }
 
+/**
+ * Opens current file on an external viewer.
+ *
+ * @param TRUE to use one of the custom viewers, FALSE to use associated program.
+ * @param TRUE to use secondary viewer, FALSE to use primary viewer. Ignored if the first parameter is set to FALSE.
+ */
 void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 {
 	if (bCustom) {
