@@ -39,6 +39,12 @@ extern HINSTANCE hinstLang;
 
 extern option_struct options;
 
+/**
+ * Loads and verify a language plugin.
+ *
+ * @param szPlugin Path to language plugin.
+ * @return NULL if unable to load the plugin, an instance to the plugin otherwise.
+ */
 HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin)
 {
 	HINSTANCE hinstTemp;
@@ -69,7 +75,12 @@ HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin)
 	return hinstTemp;
 }
 
-
+/**
+ * Finds and loads a language plugin, which path is stored in options.szLangPlugin.
+ * 
+ * Finds and loads a language plugin, which path is stored in options.szLangPlugin.
+ * Defaults to english if unable to load a plugin.
+ */
 void FindAndLoadLanguagePlugin(void)
 {
 	HINSTANCE hinstTemp;

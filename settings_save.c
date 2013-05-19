@@ -58,14 +58,26 @@ extern TCHAR szDir[MAXFN];
 #ifdef USE_RICH_EDIT
 extern BOOL bHyperlinks;
 #endif
-
+/**
+ * Save an option.
+ *
+ * @param hKey A handle to an open registry key. If NULL, SaveOption stores the option in an ini file.
+ * @param name Name of the value to be set.
+ * @param dwType The type of data pointed to by the lpData parameter.
+ * @param lpData The data to be stored.
+ * @param cbData The size of the information pointed to by the lpData parameter, in bytes.
+ * @return TRUE if the value was stored successfully, FALSE otherwise.
+ */
 BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD cbData)
 {
 	if (hKey) {
-		return (RegSetValueEx(hKey, name, 0, dwType, lpData, cbData) == ERROR_SUCCESS);
+		if (RegSetValueEx(hKey, name, 0, dwType, lpData, cbData) != ERROR_SUCCESS){
+			ReportLastError();
+			return FALSE;
+		} else return TRUE;
 	}
 	else {
-		BOOLEAN succeeded = TRUE;
+		BOOLEAN writeSucceeded = TRUE;
 		switch (dwType) {
 			case REG_DWORD: {
 				char val[10];
@@ -75,11 +87,11 @@ BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD 
 				int32 = (int32 << 8) + lpData[1];
 				int32 = (int32 << 8) + lpData[0];
 				wsprintf(val, "%d", int32);
-				succeeded = WritePrivateProfileString("Options", name, val, szMetapadIni);
+				writeSucceeded = WritePrivateProfileString("Options", name, val, szMetapadIni);
 				break;
 			}
 			case REG_SZ:
-				succeeded = WritePrivateProfileString("Options", name, (char*)lpData, szMetapadIni);
+				writeSucceeded = WritePrivateProfileString("Options", name, (char*)lpData, szMetapadIni);
 				break;
 			case REG_BINARY: {
 				base64_encodestate state_in;
@@ -93,21 +105,29 @@ BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD 
 						szBuffer[i] = '-';
 					}
 				}
-				succeeded = WritePrivateProfileString("Options", name, szBuffer, szMetapadIni);
+				writeSucceeded = WritePrivateProfileString("Options", name, szBuffer, szMetapadIni);
 				break;
 			}
 		}
-		return succeeded;
+		return writeSucceeded;
 	}
 }
-
+/**
+ * Save all of metapad's options.
+ *
+ * If g_bIniMode is set to FALSE, open a registry key and pass it as argument for
+ * SaveOption. Otherwise, sends NULL as hKey argument.
+ */
 void SaveOptions(void)
 {
 	HKEY key = NULL;
 	BOOL writeSucceeded = TRUE;
 
 	if (!g_bIniMode) {
-		RegCreateKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL);
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
+			ReportLastError();
+			return;
+		}
 	}
 
 	writeSucceeded &= SaveOption(key, _T("bSystemColours"), REG_DWORD, (LPBYTE)&options.bSystemColours, sizeof(BOOL));
@@ -194,7 +214,14 @@ void SaveOptions(void)
 		RegCloseKey(key);
 	}
 }
-
+/**
+ * Save a window's placement.
+ *
+ * Saves the placement of a windows into registry, or to an ini file pointed by
+ * szMetapadIni if g_bIniMode is TRUE.
+ *
+ * @param hWndSave Handle to the window which placement is to be saved.
+ */
 void SaveWindowPlacement(HWND hWndSave)
 {
 	HKEY key = NULL;

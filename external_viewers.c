@@ -46,7 +46,7 @@ extern option_struct options;
  *
  * @param lpExecutable Path to program executable.
  * @param lpCommandLine Command line arguments to pass to program.
- * @return TRUE if succesful, FALSE otherwise.
+ * @return TRUE if successful, FALSE otherwise.
  */
 BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
 {
@@ -122,10 +122,10 @@ static void LaunchSecondaryExternalViewer(void)
 }
 
 /**
- * Opens current file on an external viewer.
+ * Open current file on an external viewer.
  *
  * @param bCustom TRUE to use one of the custom viewers, FALSE to use associated program.
- * @param bSecondary TRUE to use secondary viewer, FALSE to use primary viewer. Ignored if the first parameter is set to FALSE.
+ * @param bSecondary TRUE to use secondary viewer, FALSE to use primary viewer. Ignored if the bCustom is FALSE.
  */
 void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 {
