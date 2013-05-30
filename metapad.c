@@ -19,6 +19,11 @@
 /*                                                                          */
 /****************************************************************************/
 
+/**
+ * @file metapad.c
+ * @brief Currently, most of the project's code is here.
+ */
+
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0400
 
@@ -178,8 +183,8 @@ void ParseForEscapeSeqs(TCHAR* szText)
 /**
  * Check if a byte is the byte order mark.
  *
- * @param pb The byte to check.
- * @param bomType The type of BOM to be checked for. Valid values are TYPE_UTF_8, TYPE_UTF_16 and TYPE_UTF_16_BE.
+ * @param[in] pb The byte to check.
+ * @param[in] bomType The type of BOM to be checked for. Valid values are TYPE_UTF_8, TYPE_UTF_16 and TYPE_UTF_16_BE.
  * @return TRUE if pb is BOM, FALSE otherwise.
  */
 BOOL IsBOM(PBYTE pb, int bomType)
@@ -208,8 +213,8 @@ BOOL IsBOM(PBYTE pb, int bomType)
 /**
  * Reverse byte pairs.
  *
- * @param buffer Pointer to the start of the data to be reversed.
- * @param size Size of the data to be reversed.
+ * @param[in/out] buffer Pointer to the start of the data to be reversed.
+ * @param[in] size Size of the data to be reversed.
  */
 void ReverseBytes(PBYTE buffer, LONG size)
 {
@@ -339,7 +344,7 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 }
 
 /**
- * Cleanup memory.
+ * Cleanup objects.
  */
 void CleanUp(void)
 {

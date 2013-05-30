@@ -60,6 +60,11 @@ static inline void ConvertToUnix(LPTSTR szBuffer);
 static inline void RichModeToDos(LPTSTR *szBuffer);
 #endif
 
+/**
+ * Replace '|' with '\0', and adds a '\0' at the end.
+ *
+ * @param[in/out] szIn String to fix.
+ */
 void FixFilterString(LPTSTR szIn)
 {
 	int i;
@@ -72,6 +77,11 @@ void FixFilterString(LPTSTR szIn)
 	szIn[i+1] = '\0';
 }
 
+/**
+ * Save the current file in a file to be defined by the user.
+ *
+ * @return TRUE if successfully saved, FALSE if unable to save or cancelled.
+ */
 BOOL SaveCurrentFileAs(void)
 {
 	OPENFILENAME ofn;
@@ -129,6 +139,11 @@ BOOL SaveCurrentFileAs(void)
 		return FALSE;
 }
 
+/**
+ * Save current file.
+ *
+ * @return TRUE if successful, FALSE otherwise.
+ */
 BOOL SaveCurrentFile(void)
 {
 	SetCurrentDirectory(szDir);
@@ -160,6 +175,14 @@ BOOL SaveCurrentFile(void)
 		return SaveCurrentFileAs();
 }
 
+/**
+ * If the current file has been modified, prompt a message box asking the user
+ * if saving the changes is wanted.
+ *
+ * @return If the file hasn't been modified, TRUE. If the file has been modified
+ * and the save is successful or unwanted, TRUE.
+ * If the save is unsuccessful or the user chooses CANCEL, return FALSE.
+ */
 BOOL SaveIfDirty(void)
 {
 	if (bDirtyFile) {
@@ -183,6 +206,12 @@ BOOL SaveIfDirty(void)
 	return TRUE;
 }
 
+/**
+ * Save a file.
+ *
+ * @param[in] szFilename A string containing the target file's name.
+ * @return TRUE if successful, FALSE otherwise.
+ */
 BOOL SaveFile(LPCTSTR szFilename)
 {
 	HANDLE hFile;
@@ -322,6 +351,12 @@ BOOL SaveFile(LPCTSTR szFilename)
 }
 
 #ifndef USE_RICH_EDIT
+/**
+ * Convert a string from rich text mode to Unix mode.
+ *
+ * @param[in/out] szBuffer String to convert.
+ * @note This conversion consist in removing carriage returns.
+ */
 void ConvertToUnix(LPTSTR szBuffer)
 {
 	UINT i = 0, j = 0;
@@ -340,6 +375,12 @@ void ConvertToUnix(LPTSTR szBuffer)
 	GlobalFree((HGLOBAL)szTemp);
 }
 #else
+/**
+ * Convert a string from rich text mode to DOS mode.
+ *
+ * @param[in/out] szBuffer Pointer to the string to convert.
+ * @note This conversion consists in adding line breaks after carriage returns.
+ */
 void RichModeToDos(LPTSTR *szBuffer)
 {
 	int cnt = 0;

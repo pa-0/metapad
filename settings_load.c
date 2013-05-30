@@ -67,6 +67,15 @@ extern BOOL bCloseAfterFind;
 extern BOOL bNoFindHidden;
 extern option_struct options;
 
+/**
+ * Load a binary option.
+ *
+ * @param hKey A handle to an open registry key. If NULL, loads the option from an ini file.
+ * @param name Name of the value to get.
+ * @param lpData Pointer to the place to store the data.
+ * @param cbData The size of lpData, in bytes.
+ * @return TRUE if the value was loaded successfully, FALSE otherwise.
+ */
 static void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 {
 	if (hKey) {
@@ -89,6 +98,15 @@ static void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 	}
 }
 
+/**
+ * Load a bounded option string.
+ *
+ * @param hKey A handle to an open registry key. If NULL, loads the option from an ini file.
+ * @param name Name of the value to get.
+ * @param lpData Pointer to the place to store the data.
+ * @param cbData The size of lpData, in bytes.
+ * @return TRUE if the value was loaded successfully, FALSE otherwise.
+ */
 static void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 {
 	if (hKey) {
@@ -286,6 +304,15 @@ void LoadOptions(void)
 #endif
 }
 
+/**
+ * Load a string option.
+ *
+ * @param hKey A handle to an open registry key. If NULL, loads the option from an ini file.
+ * @param name Name of the value to get.
+ * @param lpData Pointer to the place to store the data.
+ * @param cbData The size of lpData, in bytes.
+ * @return TRUE if the value was loaded successfully, FALSE otherwise.
+ */
 void LoadOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 {
 	if (hKey) {
@@ -296,6 +323,15 @@ void LoadOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 	}
 }
 
+/**
+ * Load a numeric option.
+ *
+ * @param hKey A handle to an open registry key. If NULL, loads the option from an ini file.
+ * @param name Name of the value to get.
+ * @param lpData Pointer to the place to store the data.
+ * @param cbData The size of lpData, in bytes.
+ * @return TRUE if the value was loaded successfully, FALSE otherwise.
+ */
 BOOL LoadOptionNumeric(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 {
 	if (hKey) {
@@ -317,6 +353,15 @@ BOOL LoadOptionNumeric(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 	}
 }
 
+/**
+ * Load main window's placement.
+ *
+ * @param[in] left Pointer to window's left border position.
+ * @param[in] top Pointer to window's top border position.
+ * @param[in] width Pointer to window's width.
+ * @param[in] height Pointer to window's height.
+ * @param[in] nShow Pointer to window's showing controls.
+ */
 void LoadWindowPlacement(int* left, int* top, int* width, int* height, int* nShow)
 {
 	HKEY key = NULL;

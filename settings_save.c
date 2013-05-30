@@ -63,14 +63,15 @@ extern TCHAR szDir[MAXFN];
 #ifdef USE_RICH_EDIT
 extern BOOL bHyperlinks;
 #endif
+
 /**
  * Save an option.
  *
- * @param hKey A handle to an open registry key. If NULL, SaveOption stores the option in an ini file.
- * @param name Name of the value to be set.
- * @param dwType The type of data pointed to by the lpData parameter.
- * @param lpData The data to be stored.
- * @param cbData The size of the information pointed to by the lpData parameter, in bytes.
+ * @param[in] hKey A handle to an open registry key. If NULL, SaveOption stores the option in an ini file.
+ * @param[in] name Name of the value to be set.
+ * @param[in] dwType The type of lpData.
+ * @param[in] lpData The data to be stored.
+ * @param[in] cbData The size of lpData, in bytes.
  * @return TRUE if the value was stored successfully, FALSE otherwise.
  */
 BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD cbData)
@@ -117,6 +118,7 @@ BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD 
 		return writeSucceeded;
 	}
 }
+
 /**
  * Save all of metapad's options.
  */
@@ -216,10 +218,11 @@ void SaveOptions(void)
 		RegCloseKey(key);
 	}
 }
+
 /**
  * Save a window's placement.
  *
- * @param hWndSave Handle to the window which placement is to be saved.
+ * @param[in] hWndSave Handle to the window which placement is to be saved.
  */
 void SaveWindowPlacement(HWND hWndSave)
 {
@@ -267,6 +270,9 @@ void SaveWindowPlacement(HWND hWndSave)
 	}
 }
 
+/**
+ * Save metapad's menus and data.
+ */
 void SaveMenusAndData(void)
 {
 	HKEY key = NULL;
