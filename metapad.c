@@ -175,6 +175,13 @@ void ParseForEscapeSeqs(TCHAR* szText)
 	lstrcpy(szText, szStore);
 }
 
+/**
+ * Check if a byte is the byte order mark.
+ *
+ * @param pb The byte to check.
+ * @param bomType The type of BOM to be checked for. Valid values are TYPE_UTF_8, TYPE_UTF_16 and TYPE_UTF_16_BE.
+ * @return TRUE if pb is BOM, FALSE otherwise.
+ */
 BOOL IsBOM(PBYTE pb, int bomType)
 {
 	if (bomType == TYPE_UTF_8) {
@@ -198,6 +205,12 @@ BOOL IsBOM(PBYTE pb, int bomType)
 	return FALSE;
 }
 
+/**
+ * Reverse byte pairs.
+ *
+ * @param buffer Pointer to the start of the data to be reversed.
+ * @param size Size of the data to be reversed.
+ */
 void ReverseBytes(PBYTE buffer, LONG size)
 {
 	BYTE temp;
@@ -325,6 +338,9 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 	}
 }
 
+/**
+ * Cleanup memory.
+ */
 void CleanUp(void)
 {
 	if (hrecentmenu)
@@ -501,7 +517,6 @@ void CreateToolbar(void)
 		nToolbarHeight = rect.bottom - rect.top;
 	}
 }
-
 
 void CreateStatusbar(void)
 {
@@ -4354,6 +4369,8 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 						// unknown error - used to popup a message here
 						// but removed it since it was happening spuriously
 						// and did not actually affect the copy (multiple incoming copy msgs?)
+						// Restored the error code. If the bug returns, I'll try to find a proper fix.
+                        ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
 						break;
 					}
 					else {

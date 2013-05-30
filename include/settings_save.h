@@ -19,6 +19,11 @@
 /*                                                                          */
 /****************************************************************************/
 
+/**
+ * @file settings_save.h
+ * @brief Settings saving protos.
+ */
+
 #ifndef SETTINGS_SAVE_H
 #define SETTINGS_SAVE_H
 

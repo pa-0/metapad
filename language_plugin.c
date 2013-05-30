@@ -19,6 +19,11 @@
 /*                                                                          */
 /****************************************************************************/
 
+/**
+ * @file language_plugin.c
+ * @brief Language plugin loading functions.
+ */
+
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0400
 
@@ -40,7 +45,7 @@ extern HINSTANCE hinstLang;
 extern option_struct options;
 
 /**
- * Loads and verify a language plugin.
+ * Load and verify a language plugin.
  *
  * @param szPlugin Path to language plugin.
  * @return NULL if unable to load the plugin, an instance to the plugin otherwise.
@@ -76,10 +81,10 @@ HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin)
 }
 
 /**
- * Finds and loads a language plugin, which path is stored in options.szLangPlugin.
- * 
- * Finds and loads a language plugin, which path is stored in options.szLangPlugin.
- * Defaults to english if unable to load a plugin.
+ * Find and load a language plugin.
+ *
+ * @note Plugin's path is stored in options.szLangPlugin.
+ * @note Default to english if unable to load a plugin.
  */
 void FindAndLoadLanguagePlugin(void)
 {

@@ -19,6 +19,11 @@
 /*                                                                          */
 /****************************************************************************/
 
+/**
+ * @file settings_load.h
+ * @brief Settings loading protos.
+ */
+
 #ifndef SETTINGS_LOAD_H
 #define SETTINGS_LOAD_H
 

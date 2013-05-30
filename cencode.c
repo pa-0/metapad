@@ -1,15 +1,20 @@
-/*
-cencoder.c - c source to a base64 encoding algorithm implementation
-
-This is part of the libb64 project, and has been placed in the public domain.
-For details, see http://sourceforge.net/projects/libb64
-*/
+/**
+ * @file cencoder.c
+ * @brief Base64 encoding functions.
+ * @note This is derived from the libb64 project, and has been placed in the public domain.
+ * <a href="http://sourceforge.net/projects/libb64"> More info in project's page.</a> 
+ */
 
 #include "include/cencode.h"
 
 const int CHARS_PER_LINE = 500;
 const char FILLER = '=';
 
+/**
+ * Initialize a base64_encodestate struct.
+ *
+ * @param[out] state_in Pointer to the struct to be initialized.
+ */
 void base64_init_encodestate(base64_encodestate* state_in)
 {
 	state_in->step = step_A;
@@ -17,6 +22,12 @@ void base64_init_encodestate(base64_encodestate* state_in)
 	state_in->stepcount = 0;
 }
 
+/**
+ * Encode a byte.
+ *
+ * @param[in] value_in Value to encode.
+ * @return Encoded value.
+ */
 char base64_encode_value(char value_in)
 {
 	static const char* encoding = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -24,6 +35,15 @@ char base64_encode_value(char value_in)
 	return encoding[(int)value_in];
 }
 
+/**
+ * Encode a text string.
+ *
+ * @param[in] plaintext_in Pointer to the string to encode.
+ * @param[in] length_in Size of the string to encode.
+ * @param[out] code_out Pointer to an array of bytes to contain the encoded bytes.
+ * @param[in] state_in Pointer to the inpu string's base64_encodestate struct.
+ * @return Size of the array of encoded bytes.
+ */
 int base64_encode_block(const char* plaintext_in, int length_in, char* code_out, base64_encodestate* state_in)
 {
 	const char* plainchar = plaintext_in;
@@ -85,6 +105,13 @@ int base64_encode_block(const char* plaintext_in, int length_in, char* code_out,
 	return codechar - code_out;
 }
 
+/**
+ * Encode the end of a block.
+ *
+ * @param[out] code_out Pointer to the array in which the encoded end will be stored.
+ * @param[in] state_in Pointer to the input block's base64_encodestate struct.
+ * @return Size of the encoded output.
+ */
 int base64_encode_blockend(char* code_out, base64_encodestate* state_in)
 {
 	char* codechar = code_out;
@@ -107,4 +134,3 @@ int base64_encode_blockend(char* code_out, base64_encodestate* state_in)
 	
 	return codechar - code_out;
 }
-

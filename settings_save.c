@@ -19,6 +19,11 @@
 /*                                                                          */
 /****************************************************************************/
 
+/**
+ * @file settings_save.c
+ * @brief Settings saving functions.
+ */
+
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0400
 
@@ -114,9 +119,6 @@ BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD 
 }
 /**
  * Save all of metapad's options.
- *
- * If g_bIniMode is set to FALSE, open a registry key and pass it as argument for
- * SaveOption. Otherwise, sends NULL as hKey argument.
  */
 void SaveOptions(void)
 {
@@ -216,9 +218,6 @@ void SaveOptions(void)
 }
 /**
  * Save a window's placement.
- *
- * Saves the placement of a windows into registry, or to an ini file pointed by
- * szMetapadIni if g_bIniMode is TRUE.
  *
  * @param hWndSave Handle to the window which placement is to be saved.
  */

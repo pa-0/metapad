@@ -19,6 +19,11 @@
 /*                                                                          */
 /****************************************************************************/
 
+/**
+ * @file file_save.h
+ * @brief File saving protos.
+ */
+
 #ifndef FILE_SAVE_H
 #define FILE_SAVE_H
 

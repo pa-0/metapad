@@ -19,6 +19,11 @@
 /*                                                                          */
 /****************************************************************************/
 
+/**
+ * @file settings_load.c
+ * @brief Settings loading functions.
+ */
+
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0400
 
@@ -62,9 +67,48 @@ extern BOOL bCloseAfterFind;
 extern BOOL bNoFindHidden;
 extern option_struct options;
 
-static void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
-static void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
+static void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
+{
+	if (hKey) {
+		RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData);
+	}
+	else {
+		base64_decodestate state;
+		char *szBuffer = (LPTSTR)GlobalAlloc(GPTR, cbData * sizeof(TCHAR) * 2);
 
+		if (GetPrivateProfileString("Options", name, (char*)lpData, szBuffer, cbData * 2, szMetapadIni) > 0) {
+			int i;
+			for (i = 0; i < lstrlen(szBuffer); ++i) {
+				if (szBuffer[i] == '-') {
+					szBuffer[i] = '=';
+				}
+			}
+			base64_init_decodestate(&state);
+			base64_decode_block(szBuffer, lstrlen(szBuffer), (char*)lpData, &state);
+		}
+	}
+}
+
+static void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
+{
+	if (hKey) {
+		RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData);
+	}
+	else {
+		char *bounded = (LPTSTR)GlobalAlloc(GPTR, cbData + 2);
+		GetPrivateProfileString("Options", name, bounded, bounded, cbData + 2, szMetapadIni);
+		if (lstrlen(bounded) >= 2 && bounded[0] == '[' && bounded[lstrlen(bounded)-1] == ']') {
+			strncpy((char*)lpData, bounded+1, lstrlen(bounded) - 2);
+		}
+		else {
+			strncpy((char*)lpData, bounded, lstrlen(bounded));
+		}
+	}
+}
+
+/**
+ * Load metapad's options.
+ */
 void LoadOptions(void)
 {
 	HKEY key = NULL;
@@ -126,6 +170,7 @@ void LoadOptions(void)
 
 	if (!g_bIniMode) {
 		if (RegOpenKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, KEY_ALL_ACCESS, &key) != ERROR_SUCCESS) {
+			ReportLastError();
 			return;
 		}
 	}
@@ -251,23 +296,6 @@ void LoadOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 	}
 }
 
-static void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
-{
-	if (hKey) {
-		RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData);
-	}
-	else {
-		char *bounded = (LPTSTR)GlobalAlloc(GPTR, cbData + 2);
-		GetPrivateProfileString("Options", name, bounded, bounded, cbData + 2, szMetapadIni);
-		if (lstrlen(bounded) >= 2 && bounded[0] == '[' && bounded[lstrlen(bounded)-1] == ']') {
-			strncpy((char*)lpData, bounded+1, lstrlen(bounded) - 2);
-		}
-		else {
-			strncpy((char*)lpData, bounded, lstrlen(bounded));
-		}
-	}
-}
-
 BOOL LoadOptionNumeric(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 {
 	if (hKey) {
@@ -285,28 +313,6 @@ BOOL LoadOptionNumeric(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 		}
 		else {
 			return FALSE;
-		}
-	}
-}
-
-static void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
-{
-	if (hKey) {
-		RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData);
-	}
-	else {
-		base64_decodestate state;
-		char *szBuffer = (LPTSTR)GlobalAlloc(GPTR, cbData * sizeof(TCHAR) * 2);
-
-		if (GetPrivateProfileString("Options", name, (char*)lpData, szBuffer, cbData * 2, szMetapadIni) > 0) {
-			int i;
-			for (i = 0; i < lstrlen(szBuffer); ++i) {
-				if (szBuffer[i] == '-') {
-					szBuffer[i] = '=';
-				}
-			}
-			base64_init_decodestate(&state);
-			base64_decode_block(szBuffer, lstrlen(szBuffer), (char*)lpData, &state);
 		}
 	}
 }
@@ -342,6 +348,9 @@ void LoadWindowPlacement(int* left, int* top, int* width, int* height, int* nSho
 	}
 }
 
+/**
+ * Load metapad's menus and data.
+ */
 void LoadMenusAndData(void)
 {
 	HKEY key = NULL;

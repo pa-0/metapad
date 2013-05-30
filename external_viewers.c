@@ -19,6 +19,11 @@
 /*                                                                          */
 /****************************************************************************/
 
+/**
+ * @file external_viewers.c
+ * @brief External viewers functions.
+ */
+
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0400
 

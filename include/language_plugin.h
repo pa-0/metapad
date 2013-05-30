@@ -19,6 +19,11 @@
 /*                                                                          */
 /****************************************************************************/
 
+/**
+ * @file language_plugin.h
+ * @brief Language plugin loading protos.
+ */
+
 #ifndef LANGUAGE_PLUGIN_H
 #define LANGUAGE_PLUGIN_H
 

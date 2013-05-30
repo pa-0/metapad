@@ -19,6 +19,11 @@
 /*                                                                          */
 /****************************************************************************/
 
+/**
+ * @file external_viewers.h
+ * @brief External viewers protos.
+ */
+
 #ifndef EXTERNAL_VIEWERS_H
 #define EXTERNAL_VIEWERS_H
 
