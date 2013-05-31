@@ -63,7 +63,7 @@ static inline void RichModeToDos(LPTSTR *szBuffer);
 /**
  * Replace '|' with '\0', and adds a '\0' at the end.
  *
- * @param[in/out] szIn String to fix.
+ * @param[in] szIn String to fix.
  */
 void FixFilterString(LPTSTR szIn)
 {
@@ -352,9 +352,9 @@ BOOL SaveFile(LPCTSTR szFilename)
 
 #ifndef USE_RICH_EDIT
 /**
- * Convert a string from rich text mode to Unix mode.
+ * Convert a string from DOS mode to Unix mode.
  *
- * @param[in/out] szBuffer String to convert.
+ * @param[in] szBuffer String to convert.
  * @note This conversion consist in removing carriage returns.
  */
 void ConvertToUnix(LPTSTR szBuffer)
@@ -378,7 +378,7 @@ void ConvertToUnix(LPTSTR szBuffer)
 /**
  * Convert a string from rich text mode to DOS mode.
  *
- * @param[in/out] szBuffer Pointer to the string to convert.
+ * @param[in] szBuffer Pointer to the string to convert.
  * @note This conversion consists in adding line breaks after carriage returns.
  */
 void RichModeToDos(LPTSTR *szBuffer)

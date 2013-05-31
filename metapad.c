@@ -181,9 +181,9 @@ void ParseForEscapeSeqs(TCHAR* szText)
 }
 
 /**
- * Check if a byte is the byte order mark.
+ * Check if a set of bytes is the byte order mark.
  *
- * @param[in] pb The byte to check.
+ * @param[in] pb Pointer to the starting byte to check.
  * @param[in] bomType The type of BOM to be checked for. Valid values are TYPE_UTF_8, TYPE_UTF_16 and TYPE_UTF_16_BE.
  * @return TRUE if pb is BOM, FALSE otherwise.
  */
@@ -213,7 +213,7 @@ BOOL IsBOM(PBYTE pb, int bomType)
 /**
  * Reverse byte pairs.
  *
- * @param[in/out] buffer Pointer to the start of the data to be reversed.
+ * @param[in] buffer Pointer to the start of the data to be reversed.
  * @param[in] size Size of the data to be reversed.
  */
 void ReverseBytes(PBYTE buffer, LONG size)
@@ -229,6 +229,11 @@ void ReverseBytes(PBYTE buffer, LONG size)
 	}
 }
 
+/**
+ * Calculate the size of the current file.
+ *
+ * @return Current file's size.
+ */
 long CalculateFileSize(void)
 {
 	long nBytes;
@@ -428,11 +433,21 @@ void MakeNewFile(void)
 	bLoading = FALSE;
 }
 
+/**
+ * Get status bar height.
+ *
+ * @return Statusbar's height if bShowStatus, 0 otherwise.
+ */
 int GetStatusHeight(void)
 {
 	return (bShowStatus ? nStatusHeight : 0);
 }
 
+/**
+ * Get toolbar height.
+ *
+ * @return Toolbar's height if bShowToolbar, 0 otherwise.
+ */
 int GetToolbarHeight(void)
 {
 	return (bShowToolbar ? nToolbarHeight : 0);
@@ -4371,11 +4386,13 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 					}
 
 					if (!OpenClipboard(hwnd)) {
-						// unknown error - used to popup a message here
-						// but removed it since it was happening spuriously
-						// and did not actually affect the copy (multiple incoming copy msgs?)
-						// Restored the error code. If the bug returns, I'll try to find a proper fix.
-                        ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
+						/**
+						 * @bug The following error pops up spuriously for some users,
+						 * but doesn't actually affect the copy.
+						 * Might be related to an incorrect assumption about how the
+						 * clipboard works or to multiple copy messages.
+						 */
+						ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
 						break;
 					}
 					else {
@@ -4418,7 +4435,11 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 						CloseClipboard();
 					}
 #else // old cut/copy
-
+/**
+ * @FIXME Huge block of unused code. It's here probably as a means of testing
+ * the currently used code. Might be wise to remove. It also includes some
+ * commented out sections.
+ */
 					HGLOBAL hMem;
 					LPTSTR strTmp;
 					LPTSTR szSrc;
