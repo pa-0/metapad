@@ -57,13 +57,15 @@
 
 #include "include/resource.h"
 
-#if defined(__MINGW32__)
+#if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
  #define PROPSHEETHEADER_V1_SIZE 40
-#else
+#elif !defined(__MINGW32__)
  #include "include/w32crt.h"
 #endif
 
+#if !defined(__MINGW64__)
 extern atol(const char*);
+#endif
 
 #pragma intrinsic(memset)
 
@@ -568,7 +570,7 @@ void CreateStatusbar(void)
 		nStatusHeight = rect.bottom - rect.top - 5;
 	}
 
-	SendMessage(status, SB_SETPARTS, NUMPANES, (DWORD)(LPINT)nPaneSizes);
+	SendMessage(status, SB_SETPARTS, NUMPANES, (DWORD_PTR)(LPINT)nPaneSizes);
 }
 
 void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
@@ -609,7 +611,7 @@ void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 	// sort of fixes font problems but cannot set tab size
 	//SendMessage(client, EM_SETTEXTMODE, (WPARAM)TM_PLAINTEXT, 0);
 
-	wpOrigEditProc = (WNDPROC) SetWindowLong(client, GWL_WNDPROC, (LONG) EditProc);
+	wpOrigEditProc = (WNDPROC) SetWindowLongPtr(client, GWLP_WNDPROC, (LONG) EditProc);
 #else
 	DWORD dwStyle = ES_NOHIDESEL | WS_VSCROLL | ES_MULTILINE | WS_CHILD;
 
@@ -633,7 +635,7 @@ void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 		NULL);
 
 	SendMessage(client, EM_LIMITTEXT, 0, 0);
-	wpOrigEditProc = (WNDPROC) SetWindowLong(client, GWL_WNDPROC, (LONG) EditProc);
+	wpOrigEditProc = (WNDPROC) SetWindowLongPtr(client, GWLP_WNDPROC, (LONG_PTR) EditProc);
 #endif
 }
 
@@ -765,7 +767,7 @@ void UpdateStatus(void)
 	nPaneSizes[SBPANE_MESSAGE] = nPaneSizes[SBPANE_MESSAGE - 1] + 1000;//(int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane));
 	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_MESSAGE | SBT_NOBORDERS, (LPARAM)(bHideMessage ? "" : szStatusMessage));
 
-	SendMessage(status, SB_SETPARTS, NUMPANES, (DWORD)(LPINT)nPaneSizes);
+	SendMessage(status, SB_SETPARTS, NUMPANES, (DWORD_PTR)(LPINT)nPaneSizes);
 	GlobalFree((HGLOBAL)szBuffer);
 }
 
@@ -2660,7 +2662,7 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 	}
 
 	while (lpszStop != szBuffer && lpsz <= lpszStop - (bDown ? 0 : nFindLen-1) && (!bDown || (bDown && lpszFound == NULL))) {
-		if ((bCase && *lpsz == *szText) || (TCHAR)(DWORD)CharLower((LPTSTR)(DWORD)(BYTE)*lpsz) == (TCHAR)(DWORD)CharLower((LPTSTR)(DWORD)(BYTE)*szText)) {
+		if ((bCase && *lpsz == *szText) || (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*lpsz) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szText)) {
 			LPTSTR lpch = (LPTSTR)(lpsz + nFindLen);
 			TCHAR chSave = *lpch;
 			int nResult;
@@ -2895,7 +2897,7 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 							}
 						}
 
-						SetClassLong(GetParent(hwndDlg), GCL_HICON, (LONG) hicon);
+						SetClassLongPtr(GetParent(hwndDlg), GCLP_HICON, (LONG_PTR) hicon);
 						SendDlgItemMessage(hwndDlg, IDC_DLGICON, STM_SETICON, (WPARAM)hicon, 0);
 						bIcon = !bIcon;
 
@@ -3072,7 +3074,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 				if (nTmp < 0 || nTmp > 16) {
 					ERROROUT(GetString(IDS_MAX_RECENT_WARNING));
 					SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_MAX_MRU));
-					SetWindowLong (hwndDlg, DWL_MSGRESULT, TRUE);
+					SetWindowLong (hwndDlg, DWLP_MSGRESULT, TRUE);
 				}
 				return TRUE;
 			}
@@ -3220,7 +3222,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 					if (szPlugin[0] == '\0') {
 						ERROROUT(GetString(IDS_SELECT_PLUGIN_WARNING));
 						SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_LANG_PLUGIN));
-						SetWindowLong(hwndDlg, DWL_MSGRESULT, TRUE);
+						SetWindowLongPtr(hwndDlg, DWLP_MSGRESULT, TRUE);
 					}
 				}
 				return TRUE;
@@ -3386,7 +3388,7 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 				if (nTmp < 1 || nTmp > 1000) {
 					ERROROUT("Enter a font size between 1 and 1000");
 					SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_SB_FONT_WIDTH));
-					SetWindowLong (hwndDlg, DWL_MSGRESULT, TRUE);
+					SetWindowLong (hwndDlg, DWLP_MSGRESULT, TRUE);
 				}
 				*/
 
@@ -3395,7 +3397,7 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 				if (nTmp < 0 || nTmp > 300) {
 					ERROROUT(GetString(IDS_MARGIN_WIDTH_WARNING));
 					SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_SM_WIDTH));
-					SetWindowLong (hwndDlg, DWL_MSGRESULT, TRUE);
+					SetWindowLong (hwndDlg, DWLP_MSGRESULT, TRUE);
 				}
 
 
@@ -3404,7 +3406,7 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 				if (SetLWA && (nTmp < 1 || nTmp > 99)) {
 					ERROROUT(GetString(IDS_TRANSPARENCY_WARNING));
 					SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_TRANSPARENT));
-					SetWindowLong (hwndDlg, DWL_MSGRESULT, TRUE);
+					SetWindowLong (hwndDlg, DWLP_MSGRESULT, TRUE);
 				}
 
 				return TRUE;
@@ -3474,21 +3476,21 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 	case WM_CTLCOLORBTN:
 		if (GetDlgItem(hwndDlg, IDC_COLOUR_BACK) == (HWND)lParam) {
 			SetBkColor((HDC)wParam, TmpBackColour);
-			return (BOOL)hbackbrush;
+			return (BOOL)(!(!hbackbrush));
 		}
 		if (GetDlgItem(hwndDlg, IDC_COLOUR_FONT) == (HWND)lParam) {
 			SetBkColor((HDC)wParam, TmpFontColour);
-			return (BOOL)hfontbrush;
+			return (BOOL)(!(!hfontbrush));
 		}
 		if (GetDlgItem(hwndDlg, IDC_COLOUR_BACK2) == (HWND)lParam) {
 			SetBkColor((HDC)wParam, TmpBackColour2);
-			return (BOOL)hbackbrush2;
+			return (BOOL)(!(!hbackbrush2));
 		}
 		if (GetDlgItem(hwndDlg, IDC_COLOUR_FONT2) == (HWND)lParam) {
 			SetBkColor((HDC)wParam, TmpFontColour2);
-			return (BOOL)hfontbrush2;
+			return (BOOL)(!(!hfontbrush2));
 		}
-		return (BOOL)NULL;
+		return (BOOL)(!(!NULL));
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDC_COLOUR_BACK:
@@ -3698,7 +3700,7 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 				if (nTmp < 1 || nTmp > 100) {
 					ERROROUT(GetString(IDS_TAB_SIZE_WARNING));
 					SetFocus(GetDlgItem(hwndDlg, IDC_TAB_STOP));
-					SetWindowLong (hwndDlg, DWL_MSGRESULT, TRUE);
+					SetWindowLong (hwndDlg, DWLP_MSGRESULT, TRUE);
 				}
 				return TRUE;
 			}
@@ -3800,7 +3802,7 @@ int CALLBACK SheetInitProc(HWND hwndDlg, UINT uMsg, LPARAM lParam)
 	return TRUE;
 }
 
-LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	if (Msg == WM_COMMAND && ID_FAV_RANGE_BASE < LOWORD(wParam) && LOWORD(wParam) <= ID_FAV_RANGE_MAX) {
 		LoadFileFromMenu(LOWORD(wParam), FALSE);
@@ -3853,7 +3855,7 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 		if (client == NULL) break;
 		SetWindowPos(client, 0, 0, GetToolbarHeight(), LOWORD(lParam), HIWORD(lParam) - GetStatusHeight() - GetToolbarHeight(), SWP_SHOWWINDOW);
 		if (bWordWrap) {
-			SetWindowLong(client, GWL_STYLE, GetWindowLong(client, GWL_STYLE) & ~WS_HSCROLL);
+			SetWindowLongPtr(client, GWL_STYLE, GetWindowLongPtr(client, GWL_STYLE) & ~WS_HSCROLL);
 			SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 			UpdateStatus();
 		}
@@ -3884,7 +3886,7 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 			if (BackBrush)
 				DeleteObject(BackBrush);
 			BackBrush = CreateSolidBrush(bPrimaryFont ? options.BackColour : options.BackColour2);
-			return (long)BackBrush;
+			return (LONG_PTR)BackBrush;
 		}
 		break;
 #endif
@@ -4217,7 +4219,7 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 
 				hdlgFind = FindText(&fr);
 
-				wpOrigFindProc = (WNDPROC)SetWindowLong(hdlgFind, GWL_WNDPROC, (LONG)FindProc);
+				wpOrigFindProc = (WNDPROC)SetWindowLongPtr(hdlgFind, GWLP_WNDPROC, (LONG_PTR)FindProc);
 
 				{
 					CHARRANGE cr;
@@ -4289,7 +4291,7 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 
 				hdlgFind = ReplaceText(&fr);
 
-				wpOrigFindProc = (WNDPROC)SetWindowLong(hdlgFind, GWL_WNDPROC, (LONG)FindProc);
+				wpOrigFindProc = (WNDPROC)SetWindowLongPtr(hdlgFind, GWLP_WNDPROC, (LONG_PTR)FindProc);
 
 				{
 					CHARRANGE cr;
@@ -4646,11 +4648,11 @@ LONG WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 				if (SetLWA) {
 					bTransparent = !GetCheckedState(GetMenu(hwndMain), ID_TRANSPARENT, TRUE);
 					if (bTransparent) {
-						SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+						SetWindowLongPtr(hwnd, GWL_EXSTYLE, GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
 						SetLWA(hwnd, 0, (BYTE)((255 * (100 - options.nTransparentPct)) / 100), LWA_ALPHA);
 					}
 					else {
-						SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
+						SetWindowLongPtr(hwnd, GWL_EXSTYLE, GetWindowLongPtr(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
 						RedrawWindow(hwnd, NULL, NULL, RDW_UPDATENOW | RDW_ALLCHILDREN | RDW_ERASE | RDW_INVALIDATE | RDW_FRAME);
 					}
 				}
@@ -5074,9 +5076,9 @@ endinsertfile:
 					SendMessage(client, EM_SCROLLCARET, 0, 0);
 
 					if (bWordWrap)
-						SetWindowLong(client, GWL_STYLE, GetWindowLong(client, GWL_STYLE) & ~WS_HSCROLL);
+						SetWindowLongPtr(client, GWL_STYLE, GetWindowLongPtr(client, GWL_STYLE) & ~WS_HSCROLL);
 					else if (!options.bHideScrollbars)
-						SetWindowLong(client, GWL_STYLE, GetWindowLong(client, GWL_STYLE) | WS_HSCROLL);
+						SetWindowLongPtr(client, GWL_STYLE, GetWindowLongPtr(client, GWL_STYLE) | WS_HSCROLL);
 
 					SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 #else
@@ -6260,7 +6262,7 @@ DWORD WINAPI LoadThread(LPVOID lpParameter)
 
 #ifdef USE_RICH_EDIT
 	if (!bWordWrap && !options.bHideScrollbars) { // Hack for initially drawing hscrollbar for Richedit
-		SetWindowLong(client, GWL_STYLE, GetWindowLong(client, GWL_STYLE) | WS_HSCROLL);
+		SetWindowLongPtr(client, GWL_STYLE, GetWindowLongPtr(client, GWL_STYLE) | WS_HSCROLL);
 		SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 	}
 #endif
@@ -6534,7 +6536,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (bTransparent && SetLWA) {
 		mio.fState = MFS_CHECKED;
 		SetMenuItemInfo(hmenu, ID_TRANSPARENT, 0, &mio);
-		SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+		SetWindowLongPtr(hwnd, GWL_EXSTYLE, GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
 		SetLWA(hwnd, 0, (BYTE)((255 * (100 - options.nTransparentPct)) / 100), LWA_ALPHA);
 	}
 	if (bShowStatus) {
@@ -6700,7 +6702,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #ifdef USE_RICH_EDIT
 	if (!bWordWrap && !options.bHideScrollbars) { // Hack for initially drawing hscrollbar for Richedit
-		SetWindowLong(client, GWL_STYLE, GetWindowLong(client, GWL_STYLE) | WS_HSCROLL);
+		SetWindowLongPtr(client, GWL_STYLE, GetWindowLongPtr(client, GWL_STYLE) | WS_HSCROLL);
 		SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 	}
 #endif
