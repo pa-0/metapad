@@ -35,11 +35,6 @@
 #undef UNICODE
 #endif
 
-/* Experimental/not working yet */
-//#define STREAMING
-//#define USE_BOOKMARKS
-//#define BUILD_METAPAD_UNICODE
-
 #include <windows.h>
 #include <shellapi.h>
 #include <commdlg.h>
