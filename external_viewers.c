@@ -71,7 +71,7 @@ BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
 	wsprintf(szCmdLine, lpFormat, lpExecutable, lpCommandLine);
 
 	if (lstrcmpi(lpExecutable + (lstrlen(lpExecutable) - 4), ".exe") != 0) {
-		if ((int)ShellExecute(NULL, NULL, lpExecutable, szCmdLine, szDir, SW_SHOWNORMAL) <= 32) {
+		if ((INT_PTR)ShellExecute(NULL, NULL, lpExecutable, szCmdLine, szDir, SW_SHOWNORMAL) <= 32) {
 			return FALSE;
 		}
 	}
@@ -174,7 +174,7 @@ void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 			}
 		}
 		else {
-			int ret = (int)ShellExecute(NULL, _T("open"), szFile, NULL, szDir, SW_SHOW);
+			INT_PTR ret = (INT_PTR)ShellExecute(NULL, _T("open"), szFile, NULL, szDir, SW_SHOW);
 			if (ret <= 32) {
 				switch (ret) {
 				case SE_ERR_NOASSOC:

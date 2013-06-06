@@ -20,13 +20,13 @@ BIN       = metapad_64.exe
 #DEFINES   = -D__GNUWIN32__ -D_DEBUG -D_MBCS -DWIN32 -D_WINDOWS
 DEFINES   = -D__GNUWIN32__  -DNDEBUG -D_MBCS -DWIN32 -D_WINDOWS
 
-#CFLAGS    = $(INCS) $(DEFINES) -W /Od /FD -c  
+CFLAGS    = $(INCS) $(DEFINES) -Wall -Wextra -g -pg -c 
 #CFLAGS    = $(INCS) $(DEFINES)  -c 
-CFLAGS    = $(INCS) $(DEFINES) -c -O2
+#CFLAGS    = $(INCS) $(DEFINES) -c -O2
 
 GPROF     = x86_64-w64-mingw32-gprof
 RM        = rm -f
-LINK      = x86_64-w64-mingw32-g++
+LINK      = x86_64-w64-mingw32-g++ -pg
 
 .PHONY: all all-before all-after clean clean-custom
 all: all-before $(BIN) all-after
