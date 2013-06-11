@@ -1267,6 +1267,7 @@ void PrintContents()
 	bPrint = TRUE;
 
 	if (SetAbortProc(pd.hDC, AbortDlgProc) == SP_ERROR) {
+		GlobalFree( szBuffer );
 		ERROROUT(GetString(IDS_PRINT_ABORT_ERROR));
 		return;
 	}
