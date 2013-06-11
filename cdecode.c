@@ -23,7 +23,7 @@ int base64_decode_value(char value_in)
 					40,41,42,43,44,45,46,47,48,49,50,51};
 	static const char decoding_size = sizeof(decoding);
 	value_in -= 43;
-	if (value_in < 0 || value_in > (decoding_size - 1)) return -1;
+	if (value_in < 0 || value_in >= decoding_size) return -1;
 	return decoding[(int)value_in];
 }
 
