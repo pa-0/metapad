@@ -4908,7 +4908,7 @@ endinsertfile:
 						}
 */
 						retval = PropertySheet(&psh);
-						if (retval) {
+						if (retval > 0) {
 							SaveOptions();
 
 							if (options.bLaunchClose && options.nLaunchSave == 2) {
