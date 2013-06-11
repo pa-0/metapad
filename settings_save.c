@@ -259,11 +259,15 @@ void SaveWindowPlacement(HWND hWndSave)
 		}
 	}
 
-	SaveOption(key, _T("w_WindowState"), REG_DWORD, (LPBYTE)&max, sizeof(int));
-	SaveOption(key, _T("w_Left"), REG_DWORD, (LPBYTE)&left, sizeof(int));
-	SaveOption(key, _T("w_Top"), REG_DWORD, (LPBYTE)&top, sizeof(int));
-	SaveOption(key, _T("w_Width"), REG_DWORD, (LPBYTE)&width, sizeof(int));
-	SaveOption(key, _T("w_Height"), REG_DWORD, (LPBYTE)&height, sizeof(int));
+	writeSucceeded &= SaveOption(key, _T("w_WindowState"), REG_DWORD, (LPBYTE)&max, sizeof(int));
+	writeSucceeded &= SaveOption(key, _T("w_Left"), REG_DWORD, (LPBYTE)&left, sizeof(int));
+	writeSucceeded &= SaveOption(key, _T("w_Top"), REG_DWORD, (LPBYTE)&top, sizeof(int));
+	writeSucceeded &= SaveOption(key, _T("w_Width"), REG_DWORD, (LPBYTE)&width, sizeof(int));
+	writeSucceeded &= SaveOption(key, _T("w_Height"), REG_DWORD, (LPBYTE)&height, sizeof(int));
+
+	if (!writeSucceeded) {
+		ReportLastError();
+	}
 
 	if (key != NULL) {
 		RegCloseKey(key);
@@ -334,4 +338,3 @@ void SaveMenusAndData(void)
 		RegCloseKey(key);
 	}
 }
-

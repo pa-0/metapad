@@ -59,8 +59,9 @@
 #endif
 
 #if !defined(__MINGW64__)
-extern atol(const char*);
+extern long atol(const char*);
 #endif
+extern int atoi(const char*);
 
 #pragma intrinsic(memset)
 
@@ -109,7 +110,6 @@ BOOL EncodeWithEscapeSeqs(TCHAR* szText)
 {
 	TCHAR szStore[MAXMACRO];
 	INT i,j;
-	BOOL bSlashFound = FALSE;
 
 	for (i = 0, j = 0; i < MAXMACRO && szText[i]; ++i) {
 		switch (szText[i]) {
@@ -549,7 +549,7 @@ void CreateStatusbar(void)
 		(HMENU) ID_STATUSBAR,
 		hinstThis,
 		NULL);
-
+	/** @FIXME Commented out code. */
 	/*
 	if (!hstatusfont) {
 		hstatusfont = CreateFont(8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, VARIABLE_PITCH | FF_SWISS, "MS Sans Serif");
@@ -602,7 +602,7 @@ void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 	SendMessage(client, EM_AUTOURLDETECT, (WPARAM)bHyperlinks, 0);
 	SendMessage(client, EM_SETEVENTMASK, 0, (LPARAM)(ENM_LINK | ENM_CHANGE));
 	SendMessage(client, EM_EXLIMITTEXT, 0, (LPARAM)(DWORD)0x7fffffff);
-
+	/** @FIXME Commented out code. */
 	// sort of fixes font problems but cannot set tab size
 	//SendMessage(client, EM_SETTEXTMODE, (WPARAM)TM_PLAINTEXT, 0);
 
@@ -612,7 +612,7 @@ void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 
 	if (!bWrap)
 		dwStyle |= WS_HSCROLL;
-
+	/** @FIXME Commented out code. */
 	/*
 	if (bReadOnly)
 		dwStyle |= ES_READONLY;
@@ -712,7 +712,7 @@ void UpdateStatus(void)
 	nPaneSizes[SBPANE_INS] = nPaneSizes[SBPANE_INS - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane));
 	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_INS, (LPARAM)(LPTSTR)szPane);
 #endif
-
+	/** @FIXME Commented out code. */
 	/*
 	nPaneSizes[SBPANE_READ] = nPaneSizes[SBPANE_READ - 1] + 2 * options.nStatusFontWidth + 4;
 	if (bReadOnly)
@@ -751,7 +751,7 @@ void UpdateStatus(void)
 	wsprintf(szPane, _T(" Col: %d"), lCol);
 	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_COL, (LPARAM)(LPTSTR)szPane);
 	nPaneSizes[SBPANE_COL] = nPaneSizes[SBPANE_COL - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
-
+	/** @FIXME Commented out code. */
 	/*
 	if (bHideMessage)
 		szPane[0] = '\0';
@@ -899,7 +899,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 			if (!GetTextMetrics(clientDC, &tm))
 				ReportLastError();
-
+			/** @FIXME Commented out code. */
 			nFontHeight = (tm.tmHeight /*- tm.tmInternalLeading*/);
 
 			nVis = CallWindowProc(wpOrigEditProc, hwndEdit, EM_GETFIRSTVISIBLELINE, 0, 0);
@@ -950,6 +950,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 			SelectWord(FALSE, bSmartSelect, TRUE);
 			return 0;
 		}
+/** @FIXME Commented out code. */
 //		if (!bSmartSelect) {
 /*		}
 		else {
@@ -967,7 +968,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 #ifndef USE_RICH_EDIT
 			DeleteMenu(hsub, 1, MF_BYPOSITION);
 #endif
-
+/** @FIXME Commented code. */
 /*			if (bLinkMenu) {
 				bLinkMenu = FALSE;
 			}
@@ -1321,7 +1322,7 @@ void PrintContents()
 		ERROROUT(GetString(IDS_PRINT_START_ERROR));
 		goto Error;
 	}
-
+	/** @FIXME Several commented out blocks of code. */
 	/*
 	rectdev.left = rectdev.top = 0;
 	rectdev.right = GetDeviceCaps(pd.hDC, HORZRES);
@@ -1556,6 +1557,7 @@ void ReportLastError(void)
 	MessageBox(NULL, lpMsgBuf, STR_METAPAD, MB_OK | MB_ICONSTOP);
 
 	LocalFree(lpMsgBuf);
+/** @FIXME Commented out code. */
 /*
 #ifndef	_DEBUG
 	PostQuitMessage(0);
@@ -1637,6 +1639,8 @@ void PopulateFavourites(void)
 
 	if (GetPrivateProfileString(STR_FAV_APPNAME, NULL, NULL, szBuffer, MAXFAVESIZE, szFav)) {
 		bHasFaves = TRUE;
+		/** @FIXME Commented out condition for a for loop. The whole
+				block is probably never executed. */
 		for (i = 0, j = 0, cnt = accel = 1; /*cnt <= MAXFAVES*/; ++j, ++i) {
 			szName[j] = szBuffer[i];
 			if (szBuffer[i] == '\0') {
@@ -1949,7 +1953,7 @@ int ConvertAndSetWindowText(LPTSTR szText)
 			++mcnt;
 		++i;
 	}
-
+	/** @FIXME Commented out code. */
 	/*
 	if (mcnt && cnt) {
 		ERROROUT("Malformed text file detected!");
@@ -2022,6 +2026,7 @@ int ConvertAndSetWindowText(LPTSTR szText)
 #else
 	else {
 		SetWindowText(client, szText);
+/** @FIXME Commented out code. */
 /*
 typedef struct _settextex {
 	DWORD flags;

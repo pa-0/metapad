@@ -5,40 +5,42 @@ cmake_minimum_required ( VERSION 2.6 )
 
 if ( WIN32 )
 
-if ( MINGW || BORLAND || WATCOM )
-	set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows -pg -s" )
+if ( MINGW OR BORLAND OR WATCOM )
+	set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows -pg" )
 	set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -g -pg" )
-	set ( DEFINE "-D" )
+	set ( FLAG "-" )
 else ( MSVC )
-	set ( DEFINE "/D" )
+	set ( FLAG "/" )
 endif ()
 
+set( LIBS ${LIBS} msvcrt comctl32 )
+
 if ( DEBUG )
-	add_definitions( ${DEFINE}DEBUG )
+	add_definitions( ${FLAG}DDEBUG )
 	message( "DEBUG defined." )
 endif ()
 
 if ( RICH_EDIT )
-	add_definitions ( ${DEFINE}USE_RICH_EDIT )
+	add_definitions ( ${FLAG}DUSE_RICH_EDIT )
 	message ( "Using Rich Edit Control." )
 else ()
 	message ( "Using Edit Proc Control." )
 endif ()
 
 if ( UNICODE )
-	add_definitions( ${DEFINE}USE_METAPAD_UNICODE )
+	add_definitions( ${FLAG}DUSE_METAPAD_UNICODE )
 	message( "[EXPERIMENTAL] Unicode support enabled." )
 else ()
-	add_definitions( ${DEFINE}N_UNICODE ${DEFINE}NUNICODE )
+	add_definitions( ${FLAG}DN_UNICODE ${FLAG}DNUNICODE )
 endif ()
 
 if ( STREAMING )
-	add_definitions ( ${DEFINE}STREAMING )
+	add_definitions ( ${FLAG}DSTREAMING )
 	message ( "[EXPERIMENTAL] Streaming support enabled." )
 endif ()
 
 if ( BOOKMARKS )
-	add_definitions ( ${DEFINE}BOOKMARKS )
+	add_definitions ( ${FLAG}DBOOKMARKS )
 	message ( "[EXPERIMENTAL] Bookmarks support enabled." )
 endif ()
 
@@ -63,7 +65,7 @@ set ( RESOURCE ${CMAKE_SOURCE_DIR}/metapad.rc )
 
 add_executable( ${EXE_NAME} ${SOURCE} ${HEADER} ${RESOURCE} )
 
-target_link_libraries( ${EXE_NAME} msvcrt comctl32 )
+target_link_libraries( ${EXE_NAME} ${LIBS} )
 
 else ()
 	message (FATAL_ERROR "Unsupported Platform")

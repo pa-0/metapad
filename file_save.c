@@ -241,7 +241,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 			SendMessage(client, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
 		}
 #else
-		GetWindowText(client, szBuffer, lFileSize+1);
+	GetWindowText(client, szBuffer, lFileSize+1);
 #endif
 
 	if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE) {

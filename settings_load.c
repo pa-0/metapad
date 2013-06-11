@@ -47,7 +47,7 @@
 extern BOOL bHyperlinks;
 #endif
 
-extern atoi(const char*);
+extern int atoi(const char*);
 
 extern TCHAR szCustomFilter[2*MAXSTRING];
 extern TCHAR szDir[MAXFN];
@@ -121,6 +121,7 @@ static void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD 
 		else {
 			strncpy((char*)lpData, bounded, lstrlen(bounded));
 		}
+		GlobalFree(bounded);
 	}
 }
 
