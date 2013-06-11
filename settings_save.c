@@ -112,6 +112,7 @@ BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD 
 					}
 				}
 				writeSucceeded = WritePrivateProfileString("Options", name, szBuffer, szMetapadIni);
+				GlobalFree(szBuffer);
 				break;
 			}
 		}

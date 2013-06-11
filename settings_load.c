@@ -95,6 +95,7 @@ static void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 			base64_init_decodestate(&state);
 			base64_decode_block(szBuffer, lstrlen(szBuffer), (char*)lpData, &state);
 		}
+		GlobalFree(szBuffer);
 	}
 }
 
