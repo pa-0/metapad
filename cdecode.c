@@ -2,7 +2,7 @@
  * @file cdecoder.c
  * @brief Base64 decoding functions.
  * @note This is derived from the libb64 project, and has been placed in the public domain.
- * <a href="http://sourceforge.net/projects/libb64"> More info in project's page.</a> 
+ * <a href="http://sourceforge.net/projects/libb64"> More info in project's page.</a>
  */
 
 #include "include/cdecode.h"
@@ -23,7 +23,7 @@ int base64_decode_value(char value_in)
 					40,41,42,43,44,45,46,47,48,49,50,51};
 	static const char decoding_size = sizeof(decoding);
 	value_in -= 43;
-	if (value_in < 0 || value_in > decoding_size) return -1;
+	if (value_in < 0 || value_in > (decoding_size - 1)) return -1;
 	return decoding[(int)value_in];
 }
 
@@ -52,9 +52,9 @@ int base64_decode_block(const char* code_in, const int length_in, char* plaintex
 	const char* codechar = code_in;
 	char* plainchar = plaintext_out;
 	char fragment;
-	
+
 	*plainchar = state_in->plainchar;
-	
+
 	switch (state_in->step)
 	{
 		while (1)
