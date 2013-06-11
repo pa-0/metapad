@@ -264,7 +264,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 			if (pNewBuffer == NULL)
 				ReportLastError();
 
-			if (!MultiByteToWideChar(CP_ACP, 0,	(LPCSTR)szBuffer, lFileSize,
+			else if (!MultiByteToWideChar(CP_ACP, 0,	(LPCSTR)szBuffer, lFileSize,
 				(LPWSTR)pNewBuffer, nBytesNeeded)) {
 				ReportLastError();
 				ERROROUT(GetString(IDS_UNICODE_STRING_ERROR));
@@ -272,7 +272,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 #endif
 		}
 
-		if (nEncodingType == TYPE_UTF_16_BE) {
+		if ((nEncodingType == TYPE_UTF_16_BE) && pNewBuffer) {
 			ReverseBytes((PBYTE)pNewBuffer, nBytesNeeded);
 			const CHAR const szBOM_UTF_16_BE[SIZEOFBOM_UTF_16] = "\376\377";
 			// 0xFE, 0xFF - leave off _T() macro.

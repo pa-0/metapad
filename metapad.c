@@ -2054,8 +2054,12 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 	*plBufferLength = GetFileSize(hFile, NULL);
 
 	*ppBuffer = (PBYTE) GlobalAlloc(GPTR, (*plBufferLength+2) * sizeof(TCHAR));
-	if (*ppBuffer == NULL)
+	if (*ppBuffer == NULL) {
 		ReportLastError();
+		return 0;	/** @FIXME Should make a better error handling for this.
+				 *  Returning -1 and checking for this value on the callers
+				 *  might make sense. */
+	}
 
 	ZeroMemory(*ppBuffer, (*plBufferLength+2) * sizeof(TCHAR));
 
