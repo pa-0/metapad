@@ -40,6 +40,7 @@
 #include "include/typedefs.h"
 #include "include/tmp_protos.h"
 
+extern HANDLE globalHeap;
 extern HWND hwnd;
 extern HWND client;
 extern BOOL bDirtyFile;
@@ -222,7 +223,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 	LPTSTR pNewBuffer = NULL;
 
 	lFileSize = GetWindowTextLength(client) * sizeof(TCHAR);
-	szBuffer = (LPTSTR) GlobalAlloc(GPTR, lFileSize + (1 * sizeof(TCHAR)));
+	szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, lFileSize + (1 * sizeof(TCHAR)));
 
 	hFile = (HANDLE)CreateFile(szFilename, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
@@ -260,7 +261,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 			nBytesNeeded = 2 * (1+MultiByteToWideChar(CP_ACP, 0, (LPCSTR)szBuffer,
 				lFileSize, NULL, 0));
 
-			pNewBuffer = (LPTSTR) GlobalAlloc(GPTR, nBytesNeeded+1);
+			pNewBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+1);
 			if (pNewBuffer == NULL)
 				ReportLastError();
 
@@ -294,7 +295,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 			}
 			lFileSize = nBytesNeeded-2;
 #ifndef BUILD_METAPAD_UNICODE
-			GlobalFree((HGLOBAL)pNewBuffer);
+			HeapFree(globalHeap, 0, (HGLOBAL)pNewBuffer);
 #endif
 		}
 		else {
@@ -341,7 +342,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 	CloseHandle(hFile);
 
 	SetCursor(hcur);
-	GlobalFree((HGLOBAL)szBuffer);
+	HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
 	if (dwActualBytesWritten != (DWORD)lFileSize) {
 		ERROROUT(GetString(IDS_ERROR_LOCKED));
 		return FALSE;
@@ -360,7 +361,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 void ConvertToUnix(LPTSTR szBuffer)
 {
 	UINT i = 0, j = 0;
-	LPTSTR szTemp = (LPTSTR) GlobalAlloc(GPTR, (lstrlen(szBuffer)+1) * sizeof(TCHAR));
+	LPTSTR szTemp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(szBuffer)+1) * sizeof(TCHAR));
 
 	lstrcpy(szTemp, szBuffer);
 
@@ -372,7 +373,7 @@ void ConvertToUnix(LPTSTR szBuffer)
 		i++;
 	}
 	szBuffer[j] = '\0';
-	GlobalFree((HGLOBAL)szTemp);
+	HeapFree(globalHeap, 0, (HGLOBAL)szTemp);
 }
 #else
 /**
@@ -393,8 +394,7 @@ void RichModeToDos(LPTSTR *szBuffer)
 	}
 
 	if (cnt) {
-		LPTSTR szNewBuffer = (LPTSTR)GlobalAlloc(GPTR, (lstrlen(*szBuffer)+cnt+2) * sizeof(TCHAR));
-		ZeroMemory(szNewBuffer, (lstrlen(*szBuffer)+cnt+2) * sizeof(TCHAR));
+		LPTSTR szNewBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(*szBuffer)+cnt+2) * sizeof(TCHAR));
 		i = j = 0;
 		while ((*szBuffer)[i] != '\0') {
 			if ((*szBuffer)[i] == '\r') {
@@ -408,7 +408,7 @@ void RichModeToDos(LPTSTR *szBuffer)
 		}
 		szNewBuffer[j] = '\0';
 
-		GlobalFree((HGLOBAL) *szBuffer);
+		HeapFree(globalHeap, 0, (HGLOBAL) *szBuffer);
 		*szBuffer = szNewBuffer;
 	}
 }

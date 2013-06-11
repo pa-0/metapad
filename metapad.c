@@ -84,6 +84,7 @@ extern int atoi(const char*);
 #include "include/globals.h"
 #include "include/tmp_protos.h"
 SLWA SetLWA = NULL;
+HANDLE globalHeap = NULL;
 HINSTANCE hinstThis = NULL;
 HINSTANCE hinstLang = NULL;
 HWND hwnd = NULL;
@@ -355,7 +356,7 @@ void CleanUp(void)
 	if (hrecentmenu)
 		DestroyMenu(hrecentmenu);
 	if (lpszShadow)
-		GlobalFree((HGLOBAL) lpszShadow);
+		HeapFree(globalHeap, 0, (HGLOBAL) lpszShadow);
 	if (hfontmain)
 		DeleteObject(hfontmain);
 	if (hfontfind)
@@ -737,7 +738,7 @@ void UpdateStatus(void)
 	nPaneSizes[SBPANE_LINE] = nPaneSizes[SBPANE_LINE - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
 
 	lLineLen = SendMessage(client, EM_LINELENGTH, (WPARAM)cr.cpMax, 0);
-	szBuffer = (LPTSTR) GlobalAlloc(GPTR, (lLineLen+2) * sizeof(TCHAR));
+	szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
 	*((LPWORD)szBuffer) = (USHORT)(lLineLen + 1);
 	SendMessage(client, EM_GETLINE, (WPARAM)lLine, (LPARAM) (LPCTSTR)szBuffer);
 	szBuffer[lLineLen] = '\0';
@@ -765,7 +766,7 @@ void UpdateStatus(void)
 	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_MESSAGE | SBT_NOBORDERS, (LPARAM)(bHideMessage ? "" : szStatusMessage));
 
 	SendMessage(status, SB_SETPARTS, NUMPANES, (DWORD_PTR)(LPINT)nPaneSizes);
-	GlobalFree((HGLOBAL)szBuffer);
+	HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
 }
 
 LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1027,8 +1028,8 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 				lLineLen = CallWindowProc(wpOrigEditProc, client, EM_LINELENGTH, (WPARAM)cr.cpMin - 1, 0);
 
-				szBuffer = (LPTSTR) GlobalAlloc(GPTR, (lLineLen+2) * sizeof(TCHAR));
-				szIndent = (LPTSTR) GlobalAlloc(GPTR, (lLineLen+2) * sizeof(TCHAR));
+				szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
+				szIndent = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
 
 				*((LPWORD)szBuffer) = (USHORT)(lLineLen + 1);
 				CallWindowProc(wpOrigEditProc, client, EM_GETLINE, (WPARAM)lLine - 1, (LPARAM)(LPCTSTR)szBuffer);
@@ -1039,8 +1040,8 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 				}
 				szIndent[i] = '\0';
 				CallWindowProc(wpOrigEditProc, client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szIndent);
-				GlobalFree((HGLOBAL)szBuffer);
-				GlobalFree((HGLOBAL)szIndent);
+				HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
+				HeapFree(globalHeap, 0, (HGLOBAL)szIndent);
 			}
 			return 0;
 		}
@@ -1252,7 +1253,7 @@ void PrintContents()
 	}
 
 	if (pd.Flags & PD_SELECTION) {
-		szBuffer = (LPTSTR) GlobalAlloc(GPTR, (cr.cpMax - cr.cpMin + 1) * sizeof(TCHAR));
+		szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (cr.cpMax - cr.cpMin + 1) * sizeof(TCHAR));
 		GetClientRange(cr.cpMin, cr.cpMax, szBuffer);
 	}
 	else {
@@ -1267,7 +1268,7 @@ void PrintContents()
 	bPrint = TRUE;
 
 	if (SetAbortProc(pd.hDC, AbortDlgProc) == SP_ERROR) {
-		GlobalFree( szBuffer );
+		HeapFree(globalHeap, 0, szBuffer);
 		ERROROUT(GetString(IDS_PRINT_ABORT_ERROR));
 		return;
 	}
@@ -1404,7 +1405,7 @@ Error:
 		DeleteObject(hprintfont);
 	}
 	if (pd.Flags & PD_SELECTION) {
-		GlobalFree((HGLOBAL)szBuffer);
+		HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
 	}
 
 	EnableWindow(hwnd, TRUE);
@@ -1767,7 +1768,7 @@ void SelectWord(BOOL bFinding, BOOL bSmart, BOOL bAutoSelect)
 	if (lLine == SendMessage(client, EM_LINEFROMCHAR, (WPARAM)cr.cpMax, 0)) {
 #endif
 		lLineLen = SendMessage(client, EM_LINELENGTH, (WPARAM)cr.cpMin, 0);
-		szBuffer = (LPTSTR) GlobalAlloc(GPTR, (lLineLen+2) * sizeof(TCHAR));
+		szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
 		*((LPWORD)szBuffer) = (USHORT)(lLineLen + 1);
 		SendMessage(client, EM_GETLINE, (WPARAM)lLine, (LPARAM) (LPCTSTR)szBuffer);
 		szBuffer[lLineLen] = '\0';
@@ -1826,7 +1827,7 @@ void SelectWord(BOOL bFinding, BOOL bSmart, BOOL bAutoSelect)
 			SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
 		}
-		GlobalFree((HGLOBAL)szBuffer);
+		HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
 		UpdateStatus();
 	}
 }
@@ -1864,7 +1865,7 @@ int FixTextBuffer(LPTSTR szText)
 {
 	int cnt = 0;
 	int i = 0, j = 0;
-	LPTSTR szNew = (LPTSTR)GlobalAlloc(GPTR, (lstrlen(szText) + 1) * sizeof(TCHAR));
+	LPTSTR szNew = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(szText) + 1) * sizeof(TCHAR));
 
 	if (lstrlen(szText) < 3) {
 		if (szText[i]) szNew[j++] = szText[i++];
@@ -1886,7 +1887,7 @@ int FixTextBuffer(LPTSTR szText)
 
 	if (cnt) lstrcpy(szText, szNew);
 
-	GlobalFree((HGLOBAL)szNew);
+	HeapFree(globalHeap, 0, (HGLOBAL)szNew);
 
 	if (cnt) {
 		if (!options.bNoWarningPrompt) {
@@ -1914,8 +1915,7 @@ void FixTextBufferLE(LPTSTR* pszBuffer)
 		++i;
 	}
 
-	szNewBuffer = (LPTSTR)GlobalAlloc(GPTR, (lstrlen(*pszBuffer)+cnt+2) * sizeof(TCHAR));
-	ZeroMemory(szNewBuffer, (lstrlen(*pszBuffer)+cnt+2) * sizeof(TCHAR));
+	szNewBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(*pszBuffer)+cnt+2) * sizeof(TCHAR));
 	i = j = 0;
 	if ((*pszBuffer)[0] == '\n') {
 		szNewBuffer[0] = '\r';
@@ -1987,8 +1987,7 @@ int ConvertAndSetWindowText(LPTSTR szText)
 		else {
 			bUnix = TRUE;
 		}
-		szBuffer = (LPTSTR)GlobalAlloc(GPTR, (lstrlen(szText)+cnt+2) * sizeof(TCHAR));
-		ZeroMemory(szBuffer, (lstrlen(szText)+cnt+2) * sizeof(TCHAR));
+		szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(szText)+cnt+2) * sizeof(TCHAR));
 		i = j = 0;
 		if (szText[0] == '\n') {
 			szBuffer[0] = '\r';
@@ -2016,7 +2015,7 @@ int ConvertAndSetWindowText(LPTSTR szText)
 #else
 		SetWindowText(client, szBuffer);
 #endif
-		GlobalFree((HGLOBAL) szBuffer);
+		HeapFree(globalHeap, 0, (HGLOBAL) szBuffer);
 	}
 #ifdef STREAMING
 	else {
@@ -2056,7 +2055,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 
 	*plBufferLength = GetFileSize(hFile, NULL);
 
-	*ppBuffer = (PBYTE) GlobalAlloc(GPTR, (*plBufferLength+2) * sizeof(TCHAR));
+	*ppBuffer = (PBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (*plBufferLength+2) * sizeof(TCHAR));
 	if (*ppBuffer == NULL) {
 		ReportLastError();
 		return 0;	/** @FIXME Should make a better error handling for this.
@@ -2134,7 +2133,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 		nBytesNeeded = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)*ppBuffer,
 			*plBufferLength, NULL, 0, NULL, NULL);
 
-		pNewBuffer = (PBYTE) GlobalAlloc(GPTR, nBytesNeeded+1);
+		pNewBuffer = (PBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+1);
 		if (pNewBuffer == NULL)
 			ReportLastError();
 
@@ -2149,7 +2148,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 			ERROROUT(GetString(IDS_UNICODE_CHARS_WARNING));
 		}
 
-		GlobalFree((HGLOBAL)*ppBuffer);
+		HeapFree(globalHeap, 0, (HGLOBAL)*ppBuffer);
 		*ppBuffer = pNewBuffer;
 #endif
 	}
@@ -2351,7 +2350,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 	bHideMessage = TRUE;
 	UpdateStatus();
 	CloseHandle(hFile);
-	GlobalFree((HGLOBAL) pBuffer);
+	HeapFree(globalHeap, 0, (HGLOBAL) pBuffer);
 	InvalidateRect(client, NULL, TRUE);
 	SetCursor(hcur);
 }
@@ -2545,8 +2544,8 @@ LPCTSTR GetShadowBuffer(void)
 		UINT nSize = GetWindowTextLength(client)+1;
 		if (nSize > nShadowSize) {
 			if (lpszShadow != NULL)
-				GlobalFree((HGLOBAL) lpszShadow);
-			lpszShadow = (LPTSTR) GlobalAlloc(GPTR, nSize * sizeof(TCHAR));
+				HeapFree(globalHeap, 0, (HGLOBAL) lpszShadow);
+			lpszShadow = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nSize * sizeof(TCHAR));
 			nShadowSize = nSize;
 		}
 
@@ -4083,12 +4082,12 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 						tr.chrg.cpMin = pLink->chrg.cpMin;
 						tr.chrg.cpMax = pLink->chrg.cpMax;
-						tr.lpstrText = (LPTSTR) GlobalAlloc(GPTR, (pLink->chrg.cpMax - pLink->chrg.cpMin + 1) * sizeof(TCHAR));
+						tr.lpstrText = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (pLink->chrg.cpMax - pLink->chrg.cpMin + 1) * sizeof(TCHAR));
 
 						SendMessage(client, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
 
 						ShellExecute(NULL, NULL, tr.lpstrText, NULL, NULL, SW_SHOWNORMAL);
-						GlobalFree((HGLOBAL)tr.lpstrText);
+						HeapFree(globalHeap, 0, (HGLOBAL)tr.lpstrText);
 						break;
 					}
 				}
@@ -4396,7 +4395,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 					if (!OpenClipboard(hwnd)) {
 						/**
-						 * @bug The following error pops up spuriously for some users,
+						 * @BUG The following error pops up spuriously for some users,
 						 * but doesn't actually affect the copy.
 						 * Might be related to an incorrect assumption about how the
 						 * clipboard works or to multiple copy messages.
@@ -4583,7 +4582,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					lStartLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lStartLine, 0);
 					lLineLen = SendMessage(client, EM_LINELENGTH, (WPARAM)lStartLineIndex, 0);
 
-					szTemp = (LPTSTR) GlobalAlloc(GPTR, (lLineLen+2) * sizeof(TCHAR));
+					szTemp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
 					*((LPWORD)szTemp) = (USHORT)(lLineLen + 1);
 					SendMessage(client, EM_GETLINE, (WPARAM)lStartLine, (LPARAM)(LPCTSTR)szTemp);
 					szTemp[lLineLen] = '\0';
@@ -4602,7 +4601,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 #else
 					SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
-					GlobalFree((HGLOBAL)szTemp);
+					HeapFree(globalHeap, 0, (HGLOBAL)szTemp);
 					SendMessage(client, EM_SCROLLCARET, 0, 0);
 				}
 				break;
@@ -4749,7 +4748,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 #endif
 endinsertfile:
 					CloseHandle(hFile);
-					if (pBuffer) GlobalFree((HGLOBAL) pBuffer);
+					if (pBuffer) HeapFree(globalHeap, 0, (HGLOBAL) pBuffer);
 					SetCursor(hcur);
 				}
 				break;
@@ -5094,7 +5093,7 @@ endinsertfile:
 					RECT rect;
 					CHARRANGE cr;
 
-					szBuffer = (LPTSTR) GlobalAlloc(GPTR, (lFileSize+1) * sizeof(TCHAR));
+					szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lFileSize+1) * sizeof(TCHAR));
 
 					bWordWrap = !GetCheckedState(GetMenu(hwnd), ID_EDIT_WORDWRAP, TRUE);
 
@@ -5110,7 +5109,7 @@ endinsertfile:
 
 					SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 
-					GlobalFree((HGLOBAL)szBuffer);
+					HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
 					SetClientFont(bPrimaryFont);
 
 					GetClientRect(hwnd, &rect);
@@ -5157,7 +5156,7 @@ endinsertfile:
 			case ID_UNINDENT: {
 				LONG lStartLine, lEndLine, lStartLineIndex, lEndLineIndex, lMaxLine, lEndLineLen;
 				BOOL bIndent = LOWORD(wParam) == ID_INDENT;
-				LPTSTR szPrefix = (LPTSTR) GlobalAlloc(GPTR, (options.nTabStops+1) * sizeof(TCHAR));
+				LPTSTR szPrefix = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (options.nTabStops+1) * sizeof(TCHAR));
 				BOOL bEnd = FALSE;
 				BOOL bStrip = LOWORD(wParam) == ID_STRIPCHAR;
 				CHARRANGE cr;
@@ -5221,7 +5220,7 @@ endinsertfile:
 						lEndLineIndex = lTmp;
 						++lEndLine;
 					}
-					szBuffer = (LPTSTR) GlobalAlloc(GPTR, (1 + lFileSize + (lMaxLine + 1) * options.nTabStops) * sizeof(TCHAR));
+					szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (1 + lFileSize + (lMaxLine + 1) * options.nTabStops) * sizeof(TCHAR));
 					szBuffer[0] = '\0';
 
 					for (i = lStartLine; i < lEndLine; i++) {
@@ -5229,7 +5228,7 @@ endinsertfile:
 						lLineLen = SendMessage(client, EM_LINELENGTH, (WPARAM)iIndex, 0);
 
 						diff = 0;
-						szTemp = (LPTSTR) GlobalAlloc(GPTR, (lLineLen+2) * sizeof(TCHAR));
+						szTemp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
 						*((LPWORD)szTemp) = (USHORT)(lLineLen + 1); // + 1 to fix weird xp bug (skipping length 1 lines)!!
 						SendMessage(client, EM_GETLINE, (WPARAM)i, (LPARAM)(LPCTSTR)szTemp);
 						szTemp[lLineLen] = '\0';
@@ -5257,7 +5256,7 @@ endinsertfile:
 							szBuffer[lLineLen+j+1-diff] = '\n';
 							j += lLineLen + 2 - diff;
 						}
-						GlobalFree((HGLOBAL)szTemp);
+						HeapFree(globalHeap, 0, (HGLOBAL)szTemp);
 					}
 
 					lBefore = SendMessage(client, EM_GETLINECOUNT, 0, 0);
@@ -5282,14 +5281,14 @@ endinsertfile:
 						SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
 					}
-					GlobalFree((HGLOBAL)szBuffer);
+					HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
 				}
 				else {
 					if (bIndent) {
 						SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szPrefix);
 					}
 				}
-				GlobalFree((HGLOBAL)szPrefix);
+				HeapFree(globalHeap, 0, (HGLOBAL)szPrefix);
 
 				if (bRewrap) {
 					SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_EDIT_WORDWRAP, 0), 0);
@@ -5422,8 +5421,8 @@ endinsertfile:
 				}
 				nSize = cr.cpMax - cr.cpMin + 1;
 
-				szSrc = (LPTSTR) GlobalAlloc(GPTR, nSize * sizeof(TCHAR));
-				szDest = (LPTSTR) GlobalAlloc(GPTR, nSize * sizeof(TCHAR));
+				szSrc = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nSize * sizeof(TCHAR));
+				szDest = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nSize * sizeof(TCHAR));
 
 #ifdef USE_RICH_EDIT
 				SendMessage(client, EM_GETSELTEXT, 0, (LPARAM)szSrc);
@@ -5482,8 +5481,8 @@ endinsertfile:
 #endif
 						}
 
-						GlobalFree((HGLOBAL)szDest);
-						szDest = (LPTSTR) GlobalAlloc(GPTR, nSize * sizeof(TCHAR) + nLines * nQuoteLen);
+						HeapFree(globalHeap, 0, (HGLOBAL)szDest);
+						szDest = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nSize * sizeof(TCHAR) + nLines * nQuoteLen);
 
 						lstrcpy(szDest, options.szQuote);
 						for (i = 0, j = nQuoteLen; i < nSize-1; ++i) {
@@ -5699,8 +5698,8 @@ endinsertfile:
 #else
 				SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
-				GlobalFree((HGLOBAL)szDest);
-				GlobalFree((HGLOBAL)szSrc);
+				HeapFree(globalHeap, 0, (HGLOBAL)szDest);
+				HeapFree(globalHeap, 0, (HGLOBAL)szSrc);
 				SetCursor(hcur);
 				break;
 			}
@@ -5918,13 +5917,13 @@ endinsertfile:
 
 					lFileSize = GetWindowTextLength(client);
 					lMaxLine = SendMessage(client, EM_GETLINECOUNT, 0, 0);
-					szBuffer = (LPTSTR) GlobalAlloc(GPTR, (lFileSize + lMaxLine + 1) * sizeof(TCHAR));
+					szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lFileSize + lMaxLine + 1) * sizeof(TCHAR));
 
 					for (i = 0; i < lMaxLine; i++) {
 						iIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)i, 0);
 						lLineLen = SendMessage(client, EM_LINELENGTH, (WPARAM)iIndex, 0);
 
-						szTemp = (LPTSTR) GlobalAlloc(GPTR, (lLineLen+3) * sizeof(TCHAR));
+						szTemp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+3) * sizeof(TCHAR));
 						*((LPWORD)szTemp) = (USHORT)(lLineLen + 1);
 						SendMessage(client, EM_GETLINE, (WPARAM)i, (LPARAM)(LPCTSTR)szTemp);
 						szTemp[lLineLen] = '\0';
@@ -5936,7 +5935,7 @@ endinsertfile:
 							lstrcat(szBuffer, _T("\r\n"));
 #endif
 						}
-						GlobalFree((HGLOBAL)szTemp);
+						HeapFree(globalHeap, 0, (HGLOBAL)szTemp);
 					}
 
 					cr.cpMin = 0;
@@ -5956,7 +5955,7 @@ endinsertfile:
 					SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
 					SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
-					GlobalFree((HGLOBAL)szBuffer);
+					HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
 					InvalidateRect(client, NULL, TRUE);
 					SetCursor(hcur);
 				}
@@ -6309,6 +6308,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	hinstThis = hInstance;
+	globalHeap = GetProcessHeap();
 
 #ifdef BUILD_METAPAD_UNICODE
 	szCmdLine = GetCommandLine();

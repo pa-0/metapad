@@ -49,6 +49,7 @@ extern BOOL bHyperlinks;
 
 extern int atoi(const char*);
 
+extern HANDLE globalHeap;
 extern TCHAR szCustomFilter[2*MAXSTRING];
 extern TCHAR szDir[MAXFN];
 extern TCHAR szReplaceText[MAXFIND];
@@ -83,7 +84,7 @@ static void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 	}
 	else {
 		base64_decodestate state;
-		char *szBuffer = (LPTSTR)GlobalAlloc(GPTR, cbData * sizeof(TCHAR) * 2);
+		char *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, cbData * sizeof(TCHAR) * 2);
 
 		if (GetPrivateProfileString("Options", name, (char*)lpData, szBuffer, cbData * 2, szMetapadIni) > 0) {
 			int i;
@@ -95,7 +96,7 @@ static void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
 			base64_init_decodestate(&state);
 			base64_decode_block(szBuffer, lstrlen(szBuffer), (char*)lpData, &state);
 		}
-		GlobalFree(szBuffer);
+		HeapFree(globalHeap, 0, szBuffer);
 	}
 }
 
@@ -114,7 +115,7 @@ static void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD 
 		RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData);
 	}
 	else {
-		char *bounded = (LPTSTR)GlobalAlloc(GPTR, cbData + 2);
+		char *bounded = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, cbData + 2);
 		GetPrivateProfileString("Options", name, bounded, bounded, cbData + 2, szMetapadIni);
 		if (lstrlen(bounded) >= 2 && bounded[0] == '[' && bounded[lstrlen(bounded)-1] == ']') {
 			strncpy((char*)lpData, bounded+1, lstrlen(bounded) - 2);
@@ -122,7 +123,7 @@ static void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD 
 		else {
 			strncpy((char*)lpData, bounded, lstrlen(bounded));
 		}
-		GlobalFree(bounded);
+		HeapFree(globalHeap, 0, bounded);
 	}
 }
 

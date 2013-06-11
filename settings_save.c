@@ -44,6 +44,7 @@
 #include "include/strings.h"
 #include "include/typedefs.h"
 
+extern HANDLE globalHeap;
 extern TCHAR szMetapadIni[MAXFN];
 extern option_struct options;
 extern BOOL bWordWrap;
@@ -102,7 +103,7 @@ BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD 
 			case REG_BINARY: {
 				base64_encodestate state_in;
 				INT i;
-				char *szBuffer = (LPTSTR)GlobalAlloc(GPTR, 2 * cbData * sizeof(TCHAR));
+				char *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, 2 * cbData * sizeof(TCHAR));
 				ZeroMemory(szBuffer, 2 * cbData * sizeof(TCHAR));
 				base64_init_encodestate(&state_in);
 				base64_encode_block((char*)lpData, cbData, szBuffer, &state_in);
@@ -112,7 +113,7 @@ BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD 
 					}
 				}
 				writeSucceeded = WritePrivateProfileString("Options", name, szBuffer, szMetapadIni);
-				GlobalFree(szBuffer);
+				HeapFree(globalHeap, 0, szBuffer);
 				break;
 			}
 		}
