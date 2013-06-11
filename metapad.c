@@ -63,7 +63,9 @@ extern long atol(const char*);
 #endif
 extern int atoi(const char*);
 
+#ifdef _MSC_VER
 #pragma intrinsic(memset)
+#endif
 
 //#pragma comment(linker, "/OPT:NOWIN98" )
 
