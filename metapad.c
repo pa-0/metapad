@@ -28,7 +28,6 @@
 #define _WIN32_WINNT 0x0400
 
 #ifdef BUILD_METAPAD_UNICODE
-#define _UNICODE
 #include <wchar.h>
 #endif
 
@@ -658,7 +657,11 @@ void UpdateStatus(void)
 		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_CUT, MAKELONG((cr.cpMin != cr.cpMax), 0));
 		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_COPY, MAKELONG((cr.cpMin != cr.cpMax), 0));
 		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_UNDO, MAKELONG(SendMessage(client, EM_CANUNDO, 0, 0), 0));
+#ifdef BUILD_METAPAD_UNICODE
+		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_PASTE, MAKELONG(IsClipboardFormatAvailable(CF_UNICODETEXT), 0));
+#else
 		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_PASTE, MAKELONG(IsClipboardFormatAvailable(CF_TEXT), 0));
+#endif
 #ifdef USE_RICH_EDIT
 		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_REDO, MAKELONG(SendMessage(client, EM_CANREDO, 0, 0), 0));
 #endif
@@ -3911,8 +3914,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 		if (nPos == EDITPOS) {
 			CHARRANGE cr;
-
+#ifdef BUILD_METAPAD_UNICODE
+			if (IsClipboardFormatAvailable(CF_UNICODETEXT))
+#else
 			if (IsClipboardFormatAvailable(CF_TEXT))
+#endif
 				EnableMenuItem(hmenuPopup, ID_MYEDIT_PASTE, MF_BYCOMMAND | MF_ENABLED);
 			else
 				EnableMenuItem(hmenuPopup, ID_MYEDIT_PASTE, MF_BYCOMMAND | MF_GRAYED);
@@ -4375,7 +4381,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				UpdateStatus();
 				break;
 			}
-#ifdef USE_RICH_EDIT
+#if defined(USE_RICH_EDIT) || defined(BUILD_METAPAD_UNICODE)
 			case ID_MYEDIT_CUT:
 			case ID_MYEDIT_COPY:
 				{
@@ -4401,40 +4407,51 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						break;
 					}
 					else {
-						hMem = GetClipboardData(CF_TEXT);
-						if (hMem) {
+#ifdef BUILD_METAPAD_UNICODE
+						if (hMem = GetClipboardData(CF_UNICODETEXT)) {
+#else
+						if (hMem = GetClipboardData(CF_TEXT)) {
+#endif
 							DWORD dwLastError;
 							szOrig = GlobalLock(hMem);
-
-							hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (lstrlen(szOrig) + 2));
-							szNew = GlobalLock(hMem2);
-							if (szNew && szOrig) {
-								lstrcpy(szNew, szOrig);
+							if( szOrig ) {
+								hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (lstrlen(szOrig) + 2));
+								szNew = GlobalLock(hMem2);
+								if (szNew) {
+									lstrcpy(szNew, szOrig);
+								}
+								else {
+									ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
+									break;
+								}
+								SetLastError(NO_ERROR);
+								if (!GlobalUnlock(hMem) && (dwLastError = GetLastError()) != NO_ERROR) {
+									ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
+									SetLastError(dwLastError);
+									ReportLastError();
+									break;
+								}
+								if (!GlobalUnlock(hMem2) && (dwLastError = GetLastError()) != NO_ERROR) {
+									ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
+									SetLastError(dwLastError);
+									ReportLastError();
+									break;
+								}
+								if (!EmptyClipboard()) {
+									ReportLastError();
+									break;
+								}
+#ifdef BUILD_METAPAD_UNICODE
+								if (!SetClipboardData(CF_UNICODETEXT, hMem2)) {
+#else
+								if (!SetClipboardData(CF_TEXT, hMem2)) {
+#endif
+									ReportLastError();
+									break;
+								}
 							}
 							else {
 								ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
-								break;
-							}
-							SetLastError(NO_ERROR);
-							if (!GlobalUnlock(hMem) && (dwLastError = GetLastError()) != NO_ERROR) {
-								ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
-								SetLastError(dwLastError);
-								ReportLastError();
-								break;
-							}
-							if (!GlobalUnlock(hMem2) && (dwLastError = GetLastError()) != NO_ERROR) {
-								ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
-								SetLastError(dwLastError);
-								ReportLastError();
-								break;
-							}
-							if (!EmptyClipboard()) {
-								ReportLastError();
-								break;
-							}
-							if (!SetClipboardData(CF_TEXT, hMem2)) {
-								ReportLastError();
-								break;
 							}
 						}
 						CloseClipboard();
@@ -4498,7 +4515,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 					if (OpenClipboard(NULL)) {
 						EmptyClipboard();
+#ifdef BUILD_METAPAD_UNICODE
+						SetClipboardData(CF_UNICODETEXT, hMem);
+#else
 						SetClipboardData(CF_TEXT, hMem);
+#endif
 						CloseClipboard();
 					}
 					else {
@@ -4511,7 +4532,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 	HGLOBAL hMem;
 	LPTSTR szTmp;
 	OpenClipboard(NULL);
+#ifdef BUILD_METAPAD_UNICODE
+	hMem = GetClipboardData(CF_UNICODETEXT);
+#else
 	hMem = GetClipboardData(CF_TEXT);
+#endif
 	if (hMem) {
 		szTmp = GlobalLock(hMem);
 		DBGOUT(szTmp, "clipboard contents");
@@ -4539,11 +4564,15 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 #endif
 			case ID_MYEDIT_PASTE: {
-#ifdef USE_RICH_EDIT
+#if defined(USE_RICH_EDIT) || defined(BUILD_METAPAD_UNICODE)
 				HGLOBAL hMem;
 				LPTSTR szTmp;
 				OpenClipboard(NULL);
+#ifdef BUILD_METAPAD_UNICODE
+				hMem = GetClipboardData(CF_UNICODETEXT);
+#else
 				hMem = GetClipboardData(CF_TEXT);
+#endif
 				if (hMem) {
 					szTmp = GlobalLock(hMem);
 					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szTmp);
