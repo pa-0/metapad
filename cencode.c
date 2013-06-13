@@ -2,7 +2,7 @@
  * @file cencoder.c
  * @brief Base64 encoding functions.
  * @note This is derived from the libb64 project, and has been placed in the public domain.
- * <a href="http://sourceforge.net/projects/libb64"> More info in project's page.</a> 
+ * <a href="http://sourceforge.net/projects/libb64"> More info in project's page.</a>
  */
 
 #include "include/cencode.h"
@@ -41,7 +41,7 @@ char base64_encode_value(char value_in)
  * @param[in] plaintext_in Pointer to the string to encode.
  * @param[in] length_in Size of the string to encode.
  * @param[out] code_out Pointer to an array of bytes to contain the encoded bytes.
- * @param[in] state_in Pointer to the inpu string's base64_encodestate struct.
+ * @param[in] state_in Pointer to the input string's base64_encodestate struct.
  * @return Size of the array of encoded bytes.
  */
 int base64_encode_block(const char* plaintext_in, int length_in, char* code_out, base64_encodestate* state_in)
@@ -51,9 +51,9 @@ int base64_encode_block(const char* plaintext_in, int length_in, char* code_out,
 	char* codechar = code_out;
 	char result;
 	char fragment;
-	
+
 	result = state_in->result;
-	
+
 	switch (state_in->step)
 	{
 		while (1)
@@ -92,7 +92,7 @@ int base64_encode_block(const char* plaintext_in, int length_in, char* code_out,
 			*codechar++ = base64_encode_value(result);
 			result  = (fragment & 0x03f) >> 0;
 			*codechar++ = base64_encode_value(result);
-			
+
 			++(state_in->stepcount);
 			if (state_in->stepcount == CHARS_PER_LINE/4)
 			{
@@ -115,7 +115,7 @@ int base64_encode_block(const char* plaintext_in, int length_in, char* code_out,
 int base64_encode_blockend(char* code_out, base64_encodestate* state_in)
 {
 	char* codechar = code_out;
-	
+
 	switch (state_in->step)
 	{
 	case step_B:
@@ -131,6 +131,6 @@ int base64_encode_blockend(char* code_out, base64_encodestate* state_in)
 		break;
 	}
 	//*codechar++ = '\n';
-	
+
 	return codechar - code_out;
 }
