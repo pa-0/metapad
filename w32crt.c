@@ -27,11 +27,9 @@
 
 #ifdef UNICODE
 #include <wchar.h>
-
-void __cdecl wWinMainCRTStartup(void)
-#else
-void __cdecl WinMainCRTStartup(void)
 #endif
+
+void __cdecl _tWinMainCRTStartup(void)
 {
     int mainret;
     LPTSTR lpszCommandLine;
