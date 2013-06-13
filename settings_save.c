@@ -31,15 +31,12 @@
 #include <tchar.h>
 
 #ifdef BUILD_METAPAD_UNICODE
-#define _UNICODE
 #include <wchar.h>
 #else
-#undef _UNICODE
-#undef UNICODE
+#include "include/cencode.h"
 #endif
 
 #include "include/tmp_protos.h"
-#include "include/cencode.h"
 #include "include/consts.h"
 #include "include/strings.h"
 #include "include/typedefs.h"
@@ -75,7 +72,7 @@ extern BOOL bHyperlinks;
  * @param[in] cbData The size of lpData, in bytes.
  * @return TRUE if the value was stored successfully, FALSE otherwise.
  */
-BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD cbData)
+BOOL SaveOption(HKEY hKey, LPCTSTR name, DWORD dwType, CONST LPBYTE lpData, DWORD cbData)
 {
 	if (hKey) {
 		if (RegSetValueEx(hKey, name, 0, dwType, lpData, cbData) != ERROR_SUCCESS){
@@ -87,32 +84,35 @@ BOOL SaveOption(HKEY hKey, LPCSTR name, DWORD dwType, CONST BYTE* lpData, DWORD 
 		BOOLEAN writeSucceeded = TRUE;
 		switch (dwType) {
 			case REG_DWORD: {
-				char val[10];
+				TCHAR val[10];
 				int int32 = 0;
 				int32 = (int32 << 8) + lpData[3];
 				int32 = (int32 << 8) + lpData[2];
 				int32 = (int32 << 8) + lpData[1];
 				int32 = (int32 << 8) + lpData[0];
-				wsprintf(val, "%d", int32);
-				writeSucceeded = WritePrivateProfileString("Options", name, val, szMetapadIni);
+				wsprintf(val, _T("%d"), int32);
+				writeSucceeded = WritePrivateProfileString(_T("Options"), name, val, szMetapadIni);
 				break;
 			}
 			case REG_SZ:
-				writeSucceeded = WritePrivateProfileString("Options", name, (char*)lpData, szMetapadIni);
+				writeSucceeded = WritePrivateProfileString(_T("Options"), name, (TCHAR*)lpData, szMetapadIni);
 				break;
 			case REG_BINARY: {
+#ifndef BUILD_METAPAD_UNICODE
 				base64_encodestate state_in;
+#endif
 				INT i;
-				char *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, 2 * cbData * sizeof(TCHAR));
-				ZeroMemory(szBuffer, 2 * cbData * sizeof(TCHAR));
+				TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, 2 * cbData * sizeof(TCHAR));
+#ifndef BUILD_METAPAD_UNICODE
 				base64_init_encodestate(&state_in);
-				base64_encode_block((char*)lpData, cbData, szBuffer, &state_in);
+				base64_encode_block((const char*)lpData, cbData, (char*)szBuffer, &state_in);
+#endif
 				for (i = 0; i < lstrlen(szBuffer); ++i) {
-					if (szBuffer[i] == '=') {
-						szBuffer[i] = '-';
+					if (szBuffer[i] == _T('=')) {
+						szBuffer[i] = _T('-');
 					}
 				}
-				writeSucceeded = WritePrivateProfileString("Options", name, szBuffer, szMetapadIni);
+				writeSucceeded = WritePrivateProfileString(_T("Options"), name, (TCHAR*)szBuffer, szMetapadIni);
 				HeapFree(globalHeap, 0, szBuffer);
 				break;
 			}
@@ -197,12 +197,12 @@ void SaveOptions(void)
 		writeSucceeded &= SaveOption(key, _T("MacroArray"), REG_BINARY, (LPBYTE)&options.MacroArray, sizeof(options.MacroArray));
 	}
 	else {
-		char keyname[14];
+		TCHAR keyname[14];
 		int i;
-		char bounded[MAXMACRO + 2];
+		TCHAR bounded[MAXMACRO + 2];
 		for (i = 0; i < 10; ++i) {
-			wsprintf(keyname, "szMacroArray%d", i);
-			wsprintf(bounded, "[%s]", options.MacroArray[i]);
+			wsprintf(keyname, _T("szMacroArray%d"), i);
+			wsprintf(bounded, _T("[%s]"), options.MacroArray[i]);
 			writeSucceeded &= SaveOption(key, keyname, REG_SZ, (LPBYTE)&bounded, MAXMACRO);
 		}
 	}
@@ -308,24 +308,24 @@ void SaveMenusAndData(void)
 #ifdef BUILD_METAPAD_UNICODE
 		SaveOption(key, _T("FindArray_U"), REG_BINARY, (LPBYTE)&FindArray, sizeof(TCHAR) * NUMFINDS * MAXFIND);
 		SaveOption(key, _T("ReplaceArray_U"), REG_BINARY, (LPBYTE)&ReplaceArray, sizeof(TCHAR) * NUMFINDS * MAXFIND);
-		ASSERT(0);
+//		ASSERT(0);
 #else
 		if (key) {
 			SaveOption(key, _T("FindArray"), REG_BINARY, (LPBYTE)&FindArray, sizeof(FindArray));
 			SaveOption(key, _T("ReplaceArray"), REG_BINARY, (LPBYTE)&ReplaceArray, sizeof(ReplaceArray));
 		}
 		else {
-			char keyname[16];
-			char bounded[MAXFIND + 2];
+			TCHAR keyname[16];
+			TCHAR bounded[MAXFIND + 2];
 			int i;
 			for (i = 0; i < 10; ++i) {
-				wsprintf(keyname, "szFindArray%d", i);
-				wsprintf(bounded, "[%s]", &FindArray[i]);
+				wsprintf(keyname, _T("szFindArray%d"), i);
+				wsprintf(bounded, _T("[%s]"), &FindArray[i]);
 				SaveOption(key, keyname, REG_SZ, (LPBYTE)bounded, MAXFIND);
 			}
 			for (i = 0; i < 10; ++i) {
-				wsprintf(keyname, "szReplaceArray%d", i);
-				wsprintf(bounded, "[%s]", &ReplaceArray[i]);
+				wsprintf(keyname, _T("szReplaceArray%d"), i);
+				wsprintf(bounded, _T("[%s]"), &ReplaceArray[i]);
 				SaveOption(key, keyname, REG_SZ, (LPBYTE)bounded, MAXFIND);
 			}
 		}

@@ -11,6 +11,7 @@ if ( MINGW OR BORLAND OR WATCOM )
 	set ( FLAG "-" )
 else ( MSVC )
 	set ( FLAG "/" )
+	set ( SOURCE ${SOURCE} ${CMAKE_SOURCE_DIR}/w32crt.c )
 endif ()
 
 set( LIBS ${LIBS} msvcrt comctl32 )
@@ -28,7 +29,12 @@ else ()
 endif ()
 
 if ( UNICODE )
-	add_definitions( ${FLAG}DUSE_METAPAD_UNICODE )
+	add_definitions( ${FLAG}DBUILD_METAPAD_UNICODE ${FLAG}DUNICODE ${FLAG}D_UNICODE )
+
+	if ( MINGW )
+		set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -municode" )
+	endif ()
+
 	message( "[EXPERIMENTAL] Unicode support enabled." )
 else ()
 	add_definitions( ${FLAG}DN_UNICODE ${FLAG}DNUNICODE )
@@ -48,7 +54,7 @@ set( EXE_NAME "metapad" )
 
 include_directories( include )
 
-set( SOURCE
+set( SOURCE ${SOURCE}
 
 	${CMAKE_SOURCE_DIR}/cdecode.c
 	${CMAKE_SOURCE_DIR}/cencode.c

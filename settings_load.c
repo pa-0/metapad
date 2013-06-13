@@ -30,24 +30,23 @@
 #include <windows.h>
 #include <tchar.h>
 #ifdef BUILD_METAPAD_UNICODE
-#define _UNICODE
 #include <wchar.h>
 #else
-#undef _UNICODE
-#undef UNICODE
+#include "include/cdecode.h"
 #endif
 
 #include "include/consts.h"
 #include "include/strings.h"
 #include "include/typedefs.h"
-#include "include/cdecode.h"
 #include "include/settings_load.h"
 
 #ifdef USE_RICH_EDIT
 extern BOOL bHyperlinks;
 #endif
 
-extern int atoi(const char*);
+#ifndef __MINGW64_VERSION_MAJOR
+extern int _ttoi(const TCHAR*);
+#endif
 
 extern HANDLE globalHeap;
 extern TCHAR szCustomFilter[2*MAXSTRING];
@@ -77,24 +76,28 @@ extern option_struct options;
  * @param cbData The size of lpData, in bytes.
  * @return TRUE if the value was loaded successfully, FALSE otherwise.
  */
-static void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
+static void LoadOptionBinary(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData)
 {
 	if (hKey) {
 		RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData);
 	}
 	else {
+#ifndef BUILD_METAPAD_UNICODE
 		base64_decodestate state;
-		char *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, cbData * sizeof(TCHAR) * 2);
+#endif
+		TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, cbData * sizeof(TCHAR) * 2);
 
-		if (GetPrivateProfileString("Options", name, (char*)lpData, szBuffer, cbData * 2, szMetapadIni) > 0) {
+		if (GetPrivateProfileString(_T("Options"), name, (TCHAR*)lpData, szBuffer, cbData * 2, szMetapadIni) > 0) {
 			int i;
 			for (i = 0; i < lstrlen(szBuffer); ++i) {
 				if (szBuffer[i] == '-') {
 					szBuffer[i] = '=';
 				}
 			}
+#ifndef BUILD_METAPAD_UNICODE
 			base64_init_decodestate(&state);
-			base64_decode_block(szBuffer, lstrlen(szBuffer), (char*)lpData, &state);
+			base64_decode_block((char*)szBuffer, lstrlenA((char*)szBuffer), (char*)lpData, &state);
+#endif
 		}
 		HeapFree(globalHeap, 0, szBuffer);
 	}
@@ -109,19 +112,19 @@ static void LoadOptionBinary(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
  * @param cbData The size of lpData, in bytes.
  * @return TRUE if the value was loaded successfully, FALSE otherwise.
  */
-static void LoadBoundedOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
+static void LoadBoundedOptionString(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData)
 {
 	if (hKey) {
 		RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData);
 	}
 	else {
-		char *bounded = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, cbData + 2);
-		GetPrivateProfileString("Options", name, bounded, bounded, cbData + 2, szMetapadIni);
+		TCHAR *bounded = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, cbData + 2);
+		GetPrivateProfileString(_T("Options"), name, bounded, bounded, cbData + 2, szMetapadIni);
 		if (lstrlen(bounded) >= 2 && bounded[0] == '[' && bounded[lstrlen(bounded)-1] == ']') {
-			strncpy((char*)lpData, bounded+1, lstrlen(bounded) - 2);
+			_tcsncpy((TCHAR*)lpData, bounded+1, lstrlen(bounded) - 2);
 		}
 		else {
-			strncpy((char*)lpData, bounded, lstrlen(bounded));
+			_tcsncpy((TCHAR*)lpData, bounded, lstrlen(bounded));
 		}
 		HeapFree(globalHeap, 0, bounded);
 	}
@@ -153,7 +156,7 @@ void LoadOptions(void)
 	options.bNoFindAutoSelect = FALSE;
 	options.bNoFaves = FALSE;
 
-	lstrcpy(options.szQuote, "> ");
+	lstrcpy(options.szQuote, _T("> "));
 	ZeroMemory(options.szArgs, sizeof(options.szArgs));
 	ZeroMemory(options.szBrowser, sizeof(options.szBrowser));
 	ZeroMemory(options.szArgs2, sizeof(options.szArgs2));
@@ -272,11 +275,11 @@ void LoadOptions(void)
 			LoadOptionBinary(key, _T("MacroArray"), (LPBYTE)&options.MacroArray, dwBufferSize);
 		}
 		else {
-			char keyname[14];
+			TCHAR keyname[14];
 			int i;
 
 			for (i = 0; i < 10; ++i) {
-				wsprintf(keyname, "szMacroArray%d", i);
+				wsprintf(keyname, _T("szMacroArray%d"), i);
 				LoadBoundedOptionString(key, keyname, (LPBYTE)&options.MacroArray[i], MAXMACRO);
 			}
 		}
@@ -316,13 +319,13 @@ void LoadOptions(void)
  * @param cbData The size of lpData, in bytes.
  * @return TRUE if the value was loaded successfully, FALSE otherwise.
  */
-void LoadOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
+void LoadOptionString(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData)
 {
 	if (hKey) {
 		RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData);
 	}
 	else {
-		GetPrivateProfileString("Options", name, (char*)lpData, (char*)lpData, cbData, szMetapadIni);
+		GetPrivateProfileString(_T("Options"), name, (TCHAR*)lpData, (TCHAR*)lpData, cbData, szMetapadIni);
 	}
 }
 
@@ -335,15 +338,15 @@ void LoadOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
  * @param cbData The size of lpData, in bytes.
  * @return TRUE if the value was loaded successfully, FALSE otherwise.
  */
-BOOL LoadOptionNumeric(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData)
+BOOL LoadOptionNumeric(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData)
 {
 	if (hKey) {
 		return (RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData) == ERROR_SUCCESS);
 	}
 	else {
-		char val[10];
-		if (GetPrivateProfileString("Options", name, NULL, val, 10, szMetapadIni) > 0) {
-			long int longInt = atoi(val);
+		TCHAR val[10];
+		if (GetPrivateProfileString(_T("Options"), name, NULL, val, 10, szMetapadIni) > 0) {
+			long int longInt = _ttoi(val);
 			lpData[3] = (int)((longInt >> 24) & 0xFF) ;
 			lpData[2] = (int)((longInt >> 16) & 0xFF) ;
 			lpData[1] = (int)((longInt >> 8) & 0XFF);
@@ -432,21 +435,21 @@ void LoadMenusAndData(void)
 			DWORD dwBufferSize = sizeof(TCHAR) * NUMFINDS * MAXFIND;
 			RegQueryValueEx(key, _T("FindArray_U"), NULL, NULL, (LPBYTE)&FindArray, &dwBufferSize);
 			RegQueryValueEx(key, _T("ReplaceArray_U"), NULL, NULL, (LPBYTE)&ReplaceArray, &dwBufferSize);
-			ASSERT(FALSE);
+//			ASSERT(FALSE);
 #else
 			if (key) {
 				LoadOptionString(key, _T("FindArray"), (LPBYTE)&FindArray, sizeof(FindArray));
 				LoadOptionString(key, _T("ReplaceArray"), (LPBYTE)&ReplaceArray, sizeof(ReplaceArray));
 			}
 			else {
-				char keyname[16];
+				TCHAR keyname[16];
 				int i;
 				for (i = 0; i < 10; ++i) {
-					wsprintf(keyname, "szFindArray%d", i);
+					wsprintf(keyname, _T("szFindArray%d"), i);
 					LoadBoundedOptionString(key, keyname, (LPBYTE)&FindArray[i], MAXFIND);
 				}
 				for (i = 0; i < 10; ++i) {
-					wsprintf(keyname, "szReplaceArray%d", i);
+					wsprintf(keyname, _T("szReplaceArray%d"), i);
 					LoadBoundedOptionString(key, keyname, (LPBYTE)&ReplaceArray[i], MAXFIND);
 				}
 			}

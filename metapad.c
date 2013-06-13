@@ -30,9 +30,6 @@
 #ifdef BUILD_METAPAD_UNICODE
 #define _UNICODE
 #include <wchar.h>
-#else
-#undef _UNICODE
-#undef UNICODE
 #endif
 
 #include <windows.h>
@@ -58,10 +55,10 @@
  #include "include/w32crt.h"
 #endif
 
-#if !defined(__MINGW64__)
-extern long atol(const char*);
+#if !defined(__MINGW64_VERSION_MAJOR)
+extern long _ttol(const TCHAR*);
+extern int _ttoi(const TCHAR*);
 #endif
-extern int atoi(const char*);
 
 #ifdef _MSC_VER
 #pragma intrinsic(memset)
@@ -763,7 +760,7 @@ void UpdateStatus(void)
 	*/
 
 	nPaneSizes[SBPANE_MESSAGE] = nPaneSizes[SBPANE_MESSAGE - 1] + 1000;//(int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane));
-	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_MESSAGE | SBT_NOBORDERS, (LPARAM)(bHideMessage ? "" : szStatusMessage));
+	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_MESSAGE | SBT_NOBORDERS, (LPARAM)(bHideMessage ? _T("") : szStatusMessage));
 
 	SendMessage(status, SB_SETPARTS, NUMPANES, (DWORD_PTR)(LPINT)nPaneSizes);
 	HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
@@ -806,13 +803,13 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 			switch (id) {
 			case ID_ESCAPE_NEWLINE:
-				lstrcat(szText, "\\n");
+				lstrcat(szText, _T("\\n"));
 				break;
 			case ID_ESCAPE_TAB:
-				lstrcat(szText, "\\t");
+				lstrcat(szText, _T("\\t"));
 				break;
 			case ID_ESCAPE_BACKSLASH:
-				lstrcat(szText, "\\\\");
+				lstrcat(szText, _T("\\\\"));
 				break;
 			case ID_ESCAPE_DISABLE:
 				bNoFindHidden = !GetCheckedState(hsub, ID_ESCAPE_DISABLE, TRUE);
@@ -1647,8 +1644,8 @@ void PopulateFavourites(void)
 				block is probably never executed. */
 		for (i = 0, j = 0, cnt = accel = 1; /*cnt <= MAXFAVES*/; ++j, ++i) {
 			szName[j] = szBuffer[i];
-			if (szBuffer[i] == '\0') {
-				if (lstrcmp(szName, "-") == 0) {
+			if (szBuffer[i] == _T('\0')) {
+				if (lstrcmp(szName, _T("-")) == 0) {
 					mio.fType = MFT_SEPARATOR;
 					InsertMenuItem(hsub, cnt + 3, TRUE, &mio);
 					++cnt;
@@ -2592,7 +2589,7 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 
 		cr.cpMin = SendMessage(client, EM_FINDTEXT, (WPARAM)nFlags, (LPARAM)&ft);
 
-		if (strchr(szText, '\r')) {
+		if (_tcschr(szText, _T('\r'))) {
 			LONG lLine, lLines;
 
 			lLine = SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)cr.cpMin);
@@ -5708,7 +5705,7 @@ endinsertfile:
 					TCHAR szBuffer[MAXFN];
 					GetModuleFileName(hinstThis, szBuffer, MAXFN);
 					//ShellExecute(NULL, NULL, szBuffer, NULL, szDir, SW_SHOWNORMAL);
-					ExecuteProgram(szBuffer, "");
+					ExecuteProgram(szBuffer, _T(""));
 				}
 				break;
 			case ID_LAUNCH_ASSOCIATED_VIEWER:
@@ -5876,9 +5873,9 @@ endinsertfile:
 						RegCloseKey(key);
 					}
 					else {
-						char entry[14];
-						wsprintf(entry, "szMacroArray%d", macroIndex);
-						if (!SaveOption(NULL, entry, REG_SZ, (LPBYTE)&options.MacroArray[macroIndex], MAXMACRO)) {
+						TCHAR entry[14];
+						wsprintf(entry, _T("szMacroArray%d"), macroIndex);
+						if (!SaveOption((HKEY)NULL, entry, REG_SZ, (LPBYTE)&options.MacroArray[macroIndex], MAXMACRO)) {
 							ReportLastError();
 						}
 					}
@@ -6278,7 +6275,10 @@ DWORD WINAPI LoadThread(LPVOID lpParameter)
 	return 0;
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+#if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
+#include "mingw-unicode-gui.c"
+#endif
+int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 {
 	WNDCLASS wc;
 	MSG msg;
@@ -6310,8 +6310,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	hinstThis = hInstance;
 	globalHeap = GetProcessHeap();
 
-#ifdef BUILD_METAPAD_UNICODE
+#if defined(BUILD_METAPAD_UNICODE) && ( !defined(__MINGW32__) || defined(__MINGW64_VERSION_MAJOR) )
 	szCmdLine = GetCommandLine();
+	szCmdLine = _tcschr(szCmdLine, _T(' ')) + 1;
+#elif defined(BUILD_METAPAD_UNICODE) && ( defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR) )
+	szCmdLine = GetCommandLineW();
 	szCmdLine = _tcschr(szCmdLine, _T(' ')) + 1;
 #else
 	szCmdLine = lpCmdLine;
@@ -6323,8 +6326,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		pch = _tcsrchr(szMetapadIni, _T('\\'));
 		++pch;
-		*pch = '\0';
-		lstrcat(szMetapadIni, "metapad.ini");
+		*pch = _T('\0');
+		lstrcat(szMetapadIni, _T("metapad.ini"));
 	}
 
 	if (lstrlen(szCmdLine) > 0) {
@@ -6351,7 +6354,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				LoadOptions();
 				g_bIniMode = TRUE;
 				SaveOptions();
-				MSGOUT("Migration to INI completed.");
+				MSGOUT(_T("Migration to INI completed."));
 				return FALSE;
 			}
 		}
@@ -6489,7 +6492,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		HMODULE hm;
 
 		hm = GetModuleHandle(_T("user32.dll"));
-		SetLWA = (SLWA)(GetProcAddress(hm, _T("SetLayeredWindowAttributes")));
+		SetLWA = (SLWA)(GetProcAddress(hm, "SetLayeredWindowAttributes"));
 
 		if (SetLWA) {
 			SetLWA(hwnd, 0, 255, LWA_ALPHA);
@@ -6602,7 +6605,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		else {
 			FindClose(handle);
 			lstrcpy(szFav, options.szFavDir);
-			lstrcat(szFav, "\\");
+			lstrcat(szFav, _T("\\"));
 		}
 
 		lstrcat(szFav, STR_FAV_FILE);

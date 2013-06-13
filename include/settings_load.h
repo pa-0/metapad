@@ -28,9 +28,9 @@
 #define SETTINGS_LOAD_H
 
 void LoadWindowPlacement(int* left, int* top, int* width, int* height, int* nShow);
-void LoadOptionString(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
+void LoadOptionString(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData);
 void LoadOptions(void);
-BOOL LoadOptionNumeric(HKEY hKey, LPCSTR name, BYTE* lpData, DWORD cbData);
+BOOL LoadOptionNumeric(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData);
 void LoadMenusAndData(void);
 
 #endif
