@@ -6471,18 +6471,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		nCmdShow = SW_SHOWNORMAL;
 	}
 
-	/*
-	{
-		OSVERSIONINFO vi;
-
-		vi.dwOSVersionInfoSize = sizeof(vi);
-		GetVersionEx(&vi);
-		if (vi.dwPlatformId == VER_PLATFORM_WIN32_NT && vi.dwMajorVersion >= 5) {
-			bWin2k = TRUE;
-		}
-	}
-	*/
-
 	{
 		TCHAR szBuffer[100];
 		wsprintf(szBuffer, STR_CAPTION_FILE, GetString(IDS_NEW_FILE));
@@ -6542,24 +6530,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	}
 
 
-/*
-	if (bWin2k) {
-		HMODULE mh;
-
-		mh = GetModuleHandle(_T("user32.dll"));
-		SetLWA = (SLWA)(GetProcAddress(mh, _T("SetLayeredWindowAttributes")));
-		if (SetLWA) {
-			SetLWA(hwnd, 0, 255, LWA_ALPHA);
-		}
-		else {
-			ERROROUT(_T("Cannot find SetLayeredWindowAttributes in USER32.DLL"));
-		}
-	}
-	else {
-		HMENU hsub = GetSubMenu(GetMenu(hwnd), 3);
-		DeleteMenu(hsub, 4, MF_BYPOSITION);
-	}
-*/
 	{
 		HMODULE hm;
 
