@@ -71,7 +71,7 @@ BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
 	wsprintf(szCmdLine, lpFormat, lpExecutable, lpCommandLine);
 
 	if (lstrcmpi(lpExecutable + (lstrlen(lpExecutable) - 4), _T(".exe")) != 0) {
-		/// @TODO Should this inform about which error happened?
+		/// @todo Should this inform about which error happened?
 		if ((INT_PTR)ShellExecute(NULL, NULL, lpExecutable, szCmdLine, szDir, SW_SHOWNORMAL) <= 32) {
 			return FALSE;
 		}

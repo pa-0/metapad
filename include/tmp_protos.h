@@ -40,7 +40,7 @@ void SelectWord(BOOL bFinding, BOOL bSmart, BOOL bAutoSelect);
 void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU);
 void SetFont(HFONT* phfnt, BOOL bPrimary);
 void SetTabStops(void);
-void NextWord(BOOL bRight, BOOL bSelect);
+void NextWord(BOOL bRight, BOOL bSelect); // Uninmplemented.
 void UpdateStatus(void);
 BOOL SetClientFont(BOOL bPrimary);
 BOOL SearchFile(LPCTSTR szText, BOOL bMatchCase, BOOL bReplaceAll, BOOL bDown, BOOL bWholeWord);

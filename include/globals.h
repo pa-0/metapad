@@ -50,7 +50,7 @@ TCHAR szStatusMessage[MAXSTRING];
 TCHAR _szString[MAXSTRING];
 LPTSTR lpszShadow;
 BOOL bDirtyFile, bLoading, bMatchCase, bDown, bWholeWord, bUnix, bReadOnly, bBinaryFile;
-BOOL bWordWrap, bPrimaryFont, bPrint, bSmartSelect, bShowStatus /*, bWin2k*/;
+BOOL bWordWrap, bPrimaryFont, bPrint, bSmartSelect, bShowStatus;
 BOOL bReplacingAll, bShowToolbar, bAlwaysOnTop, bCloseAfterFind, bHasFaves, bNoFindHidden;
 BOOL bTransparent;
 //BOOL bLinkMenu;

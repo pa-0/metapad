@@ -29,6 +29,9 @@
 
 #ifdef BUILD_METAPAD_UNICODE
 #include <wchar.h>
+#define _CF_TEXT CF_UNICODETEXT
+#else
+#define _CF_TEXT CF_TEXT
 #endif
 
 #include <windows.h>
@@ -591,13 +594,6 @@ void CreateStatusbar(void)
 		(HMENU) ID_STATUSBAR,
 		hinstThis,
 		NULL);
-	/** @FIXME Commented out code. */
-	/*
-	if (!hstatusfont) {
-		hstatusfont = CreateFont(8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, VARIABLE_PITCH | FF_SWISS, "MS Sans Serif");
-	}
-	SendMessage(status, WM_SETFONT, (WPARAM)hstatusfont, 0);
-	*/
 
 	SendMessage(status, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
 
@@ -644,7 +640,7 @@ void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 	SendMessage(client, EM_AUTOURLDETECT, (WPARAM)bHyperlinks, 0);
 	SendMessage(client, EM_SETEVENTMASK, 0, (LPARAM)(ENM_LINK | ENM_CHANGE));
 	SendMessage(client, EM_EXLIMITTEXT, 0, (LPARAM)(DWORD)0x7fffffff);
-	/** @FIXME Commented out code. */
+	/** @fixme Commented out code. */
 	// sort of fixes font problems but cannot set tab size
 	//SendMessage(client, EM_SETTEXTMODE, (WPARAM)TM_PLAINTEXT, 0);
 
@@ -654,7 +650,7 @@ void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 
 	if (!bWrap)
 		dwStyle |= WS_HSCROLL;
-	/** @FIXME Commented out code. */
+	/** @fixme Commented out code. */
 	/*
 	if (bReadOnly)
 		dwStyle |= ES_READONLY;
@@ -700,11 +696,7 @@ void UpdateStatus(void)
 		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_CUT, MAKELONG((cr.cpMin != cr.cpMax), 0));
 		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_COPY, MAKELONG((cr.cpMin != cr.cpMax), 0));
 		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_UNDO, MAKELONG(SendMessage(client, EM_CANUNDO, 0, 0), 0));
-#ifdef BUILD_METAPAD_UNICODE
-		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_PASTE, MAKELONG(IsClipboardFormatAvailable(CF_UNICODETEXT), 0));
-#else
-		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_PASTE, MAKELONG(IsClipboardFormatAvailable(CF_TEXT), 0));
-#endif
+		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_PASTE, MAKELONG(IsClipboardFormatAvailable(_CF_TEXT), 0));
 #ifdef USE_RICH_EDIT
 		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_REDO, MAKELONG(SendMessage(client, EM_CANREDO, 0, 0), 0));
 #endif
@@ -758,7 +750,7 @@ void UpdateStatus(void)
 	nPaneSizes[SBPANE_INS] = nPaneSizes[SBPANE_INS - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane));
 	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_INS, (LPARAM)(LPTSTR)szPane);
 #endif
-	/** @FIXME Commented out code. */
+	/** @fixme Commented out code. */
 	/*
 	nPaneSizes[SBPANE_READ] = nPaneSizes[SBPANE_READ - 1] + 2 * options.nStatusFontWidth + 4;
 	if (bReadOnly)
@@ -797,7 +789,7 @@ void UpdateStatus(void)
 	wsprintf(szPane, _T(" Col: %d"), lCol);
 	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_COL, (LPARAM)(LPTSTR)szPane);
 	nPaneSizes[SBPANE_COL] = nPaneSizes[SBPANE_COL - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
-	/** @FIXME Commented out code. */
+	/** @fixme Commented out code. */
 	/*
 	if (bHideMessage)
 		szPane[0] = '\0';
@@ -945,7 +937,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 			if (!GetTextMetrics(clientDC, &tm))
 				ReportLastError();
-			/** @FIXME Commented out code. */
+			/** @fixme Commented out code. */
 			nFontHeight = (tm.tmHeight /*- tm.tmInternalLeading*/);
 
 			nVis = CallWindowProc(wpOrigEditProc, hwndEdit, EM_GETFIRSTVISIBLELINE, 0, 0);
@@ -996,7 +988,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 			SelectWord(FALSE, bSmartSelect, TRUE);
 			return 0;
 		}
-/** @FIXME Commented out code. */
+/** @fixme Commented out code. */
 //		if (!bSmartSelect) {
 /*		}
 		else {
@@ -1014,7 +1006,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 #ifndef USE_RICH_EDIT
 			DeleteMenu(hsub, 1, MF_BYPOSITION);
 #endif
-/** @FIXME Commented code. */
+/** @fixme Commented code. */
 /*			if (bLinkMenu) {
 				bLinkMenu = FALSE;
 			}
@@ -1369,7 +1361,7 @@ void PrintContents()
 		ERROROUT(GetString(IDS_PRINT_START_ERROR));
 		goto Error;
 	}
-	/** @FIXME Several commented out blocks of code. */
+	/** @fixme Several commented out blocks of code. */
 	/*
 	rectdev.left = rectdev.top = 0;
 	rectdev.right = GetDeviceCaps(pd.hDC, HORZRES);
@@ -1604,7 +1596,7 @@ void ReportLastError(void)
 	MessageBox(NULL, lpMsgBuf, STR_METAPAD, MB_OK | MB_ICONSTOP);
 
 	LocalFree(lpMsgBuf);
-/** @FIXME Commented out code. */
+/** @fixme Commented out code. */
 /*
 #ifndef	_DEBUG
 	PostQuitMessage(0);
@@ -1686,7 +1678,7 @@ void PopulateFavourites(void)
 
 	if (GetPrivateProfileString(STR_FAV_APPNAME, NULL, NULL, szBuffer, MAXFAVESIZE, szFav)) {
 		bHasFaves = TRUE;
-		/** @FIXME Commented out condition for a for loop. The whole
+		/** @fixme Commented out condition for a for loop. The whole
 				block is probably never executed. */
 		for (i = 0, j = 0, cnt = accel = 1; /*cnt <= MAXFAVES*/; ++j, ++i) {
 			szName[j] = szBuffer[i];
@@ -1999,7 +1991,7 @@ int ConvertAndSetWindowText(LPTSTR szText)
 			++mcnt;
 		++i;
 	}
-	/** @FIXME Commented out code. */
+	/** @fixme Commented out code. */
 	/*
 	if (mcnt && cnt) {
 		ERROROUT("Malformed text file detected!");
@@ -2071,7 +2063,7 @@ int ConvertAndSetWindowText(LPTSTR szText)
 #else
 	else {
 		SetWindowText(client, szText);
-/** @FIXME Commented out code. */
+/** @fixme Commented out code. */
 /*
 typedef struct _settextex {
 	DWORD flags;
@@ -2101,12 +2093,10 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 	*ppBuffer = (PBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (*plBufferLength+2) * sizeof(TCHAR));
 	if (*ppBuffer == NULL) {
 		ReportLastError();
-		return 0;	/** @FIXME Should make a better error handling for this.
+		return 0;	/** @fixme Should make a better error handling for this.
 				 *  Returning -1 and checking for this value on the callers
 				 *  might make sense. */
 	}
-
-	ZeroMemory(*ppBuffer, (*plBufferLength+2) * sizeof(TCHAR));
 
 	*pnFileEncoding = TYPE_UNKNOWN;
 
@@ -3957,11 +3947,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 		if (nPos == EDITPOS) {
 			CHARRANGE cr;
-#ifdef BUILD_METAPAD_UNICODE
-			if (IsClipboardFormatAvailable(CF_UNICODETEXT))
-#else
-			if (IsClipboardFormatAvailable(CF_TEXT))
-#endif
+			if (IsClipboardFormatAvailable(_CF_TEXT))
 				EnableMenuItem(hmenuPopup, ID_MYEDIT_PASTE, MF_BYCOMMAND | MF_ENABLED);
 			else
 				EnableMenuItem(hmenuPopup, ID_MYEDIT_PASTE, MF_BYCOMMAND | MF_GRAYED);
@@ -4450,11 +4436,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						break;
 					}
 					else {
-#ifdef BUILD_METAPAD_UNICODE
-						if (hMem = GetClipboardData(CF_UNICODETEXT)) {
-#else
-						if (hMem = GetClipboardData(CF_TEXT)) {
-#endif
+						if (hMem = GetClipboardData(_CF_TEXT)) {
 							DWORD dwLastError;
 							szOrig = GlobalLock(hMem);
 							if( szOrig ) {
@@ -4484,11 +4466,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 									ReportLastError();
 									break;
 								}
-#ifdef BUILD_METAPAD_UNICODE
-								if (!SetClipboardData(CF_UNICODETEXT, hMem2)) {
-#else
-								if (!SetClipboardData(CF_TEXT, hMem2)) {
-#endif
+								if (!SetClipboardData(_CF_TEXT, hMem2)) {
 									ReportLastError();
 									break;
 								}
@@ -4501,7 +4479,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					}
 #else // old cut/copy
 /**
- * @FIXME Huge block of unused code. It's here probably as a means of testing
+ * @fixme Huge block of unused code. It's here probably as a means of testing
  * the currently used code. Might be wise to remove. It also includes some
  * commented out sections.
  */
@@ -4558,11 +4536,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 					if (OpenClipboard(NULL)) {
 						EmptyClipboard();
-#ifdef BUILD_METAPAD_UNICODE
-						SetClipboardData(CF_UNICODETEXT, hMem);
-#else
-						SetClipboardData(CF_TEXT, hMem);
-#endif
+						SetClipboardData(_CF_TEXT, hMem);
 						CloseClipboard();
 					}
 					else {
@@ -4575,11 +4549,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 	HGLOBAL hMem;
 	LPTSTR szTmp;
 	OpenClipboard(NULL);
-#ifdef BUILD_METAPAD_UNICODE
-	hMem = GetClipboardData(CF_UNICODETEXT);
-#else
-	hMem = GetClipboardData(CF_TEXT);
-#endif
+	hMem = GetClipboardData(_CF_TEXT);
 	if (hMem) {
 		szTmp = GlobalLock(hMem);
 		DBGOUT(szTmp, "clipboard contents");
@@ -4611,11 +4581,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				HGLOBAL hMem;
 				LPTSTR szTmp;
 				OpenClipboard(NULL);
-#ifdef BUILD_METAPAD_UNICODE
-				hMem = GetClipboardData(CF_UNICODETEXT);
-#else
-				hMem = GetClipboardData(CF_TEXT);
-#endif
+				hMem = GetClipboardData(_CF_TEXT);
 				if (hMem) {
 					szTmp = GlobalLock(hMem);
 					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szTmp);
@@ -6384,9 +6350,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
 #if defined(BUILD_METAPAD_UNICODE) && ( !defined(__MINGW32__) || defined(__MINGW64_VERSION_MAJOR) )
 	szCmdLine = GetCommandLine();
-	szCmdLine = _tcschr(szCmdLine, _T(' ')) + 1;
-#elif defined(BUILD_METAPAD_UNICODE) && ( defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR) )
-	szCmdLine = GetCommandLineW();
 	szCmdLine = _tcschr(szCmdLine, _T(' ')) + 1;
 #else
 	szCmdLine = lpCmdLine;
