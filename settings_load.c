@@ -31,10 +31,9 @@
 #include <tchar.h>
 #ifdef BUILD_METAPAD_UNICODE
 #include <wchar.h>
-#else
-#include "include/cdecode.h"
 #endif
 
+#include "include/hexdecoder.h"
 #include "include/consts.h"
 #include "include/strings.h"
 #include "include/typedefs.h"
@@ -82,22 +81,10 @@ static void LoadOptionBinary(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbDat
 		RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData);
 	}
 	else {
-#ifndef BUILD_METAPAD_UNICODE
-		base64_decodestate state;
-#endif
-		TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, cbData * sizeof(TCHAR) * 2);
+		TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (cbData + 1) * sizeof(TCHAR) * 2);
 
 		if (GetPrivateProfileString(_T("Options"), name, (TCHAR*)lpData, szBuffer, cbData * 2, szMetapadIni) > 0) {
-			int i;
-			for (i = 0; i < lstrlen(szBuffer); ++i) {
-				if (szBuffer[i] == '-') {
-					szBuffer[i] = '=';
-				}
-			}
-#ifndef BUILD_METAPAD_UNICODE
-			base64_init_decodestate(&state);
-			base64_decode_block((char*)szBuffer, lstrlenA((char*)szBuffer), (char*)lpData, &state);
-#endif
+			HexToBin( szBuffer, lpData );
 		}
 		HeapFree(globalHeap, 0, szBuffer);
 	}
@@ -248,13 +235,8 @@ void LoadOptions(void)
 		LoadOptionNumeric(key, _T("nPrimaryFont"), (LPBYTE)&options.nPrimaryFont, dwBufferSize);
 		LoadOptionNumeric(key, _T("nSecondaryFont"), (LPBYTE)&options.nSecondaryFont, dwBufferSize);
 		dwBufferSize = sizeof(LOGFONT);
-#ifdef BUILD_METAPAD_UNICODE
-		LoadOptionBinary(key, _T("PrimaryFont_U"), (LPBYTE)&options.PrimaryFont, dwBufferSize);
-		LoadOptionBinary(key, _T("SecondaryFont_U"), (LPBYTE)&options.SecondaryFont, dwBufferSize);
-#else
 		LoadOptionBinary(key, _T("PrimaryFont"), (LPBYTE)&options.PrimaryFont, dwBufferSize);
 		LoadOptionBinary(key, _T("SecondaryFont"), (LPBYTE)&options.SecondaryFont, dwBufferSize);
-#endif
 		dwBufferSize = sizeof(options.szBrowser);
 		LoadOptionString(key, _T("szBrowser"), (LPBYTE)&options.szBrowser, dwBufferSize);
 		dwBufferSize = sizeof(options.szBrowser2);
@@ -431,12 +413,6 @@ void LoadMenusAndData(void)
 		LoadOptionString(key, _T("FileFilter"), (LPBYTE)&szCustomFilter, sizeof(szCustomFilter));
 
 		if (!options.bNoSaveHistory) {
-#ifdef BUILD_METAPAD_UNICODE
-			DWORD dwBufferSize = sizeof(TCHAR) * NUMFINDS * MAXFIND;
-			RegQueryValueEx(key, _T("FindArray_U"), NULL, NULL, (LPBYTE)&FindArray, &dwBufferSize);
-			RegQueryValueEx(key, _T("ReplaceArray_U"), NULL, NULL, (LPBYTE)&ReplaceArray, &dwBufferSize);
-//			ASSERT(FALSE);
-#else
 			if (key) {
 				LoadOptionString(key, _T("FindArray"), (LPBYTE)&FindArray, sizeof(FindArray));
 				LoadOptionString(key, _T("ReplaceArray"), (LPBYTE)&ReplaceArray, sizeof(ReplaceArray));
@@ -453,7 +429,6 @@ void LoadMenusAndData(void)
 					LoadBoundedOptionString(key, keyname, (LPBYTE)&ReplaceArray[i], MAXFIND);
 				}
 			}
-#endif
 		}
 
 		if (options.bSaveDirectory) {

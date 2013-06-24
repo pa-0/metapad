@@ -32,10 +32,9 @@
 
 #ifdef BUILD_METAPAD_UNICODE
 #include <wchar.h>
-#else
-#include "include/cencode.h"
 #endif
 
+#include "include/hexencoder.h"
 #include "include/tmp_protos.h"
 #include "include/consts.h"
 #include "include/strings.h"
@@ -98,20 +97,8 @@ BOOL SaveOption(HKEY hKey, LPCTSTR name, DWORD dwType, CONST LPBYTE lpData, DWOR
 				writeSucceeded = WritePrivateProfileString(_T("Options"), name, (TCHAR*)lpData, szMetapadIni);
 				break;
 			case REG_BINARY: {
-#ifndef BUILD_METAPAD_UNICODE
-				base64_encodestate state_in;
-#endif
-				INT i;
-				TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, 2 * cbData * sizeof(TCHAR));
-#ifndef BUILD_METAPAD_UNICODE
-				base64_init_encodestate(&state_in);
-				base64_encode_block((const char*)lpData, cbData, (char*)szBuffer, &state_in);
-#endif
-				for (i = 0; i < lstrlen(szBuffer); ++i) {
-					if (szBuffer[i] == _T('=')) {
-						szBuffer[i] = _T('-');
-					}
-				}
+				TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, 2 * (cbData + 1) * sizeof(TCHAR));
+				BinToHex( lpData, cbData, szBuffer );
 				writeSucceeded = WritePrivateProfileString(_T("Options"), name, (TCHAR*)szBuffer, szMetapadIni);
 				HeapFree(globalHeap, 0, szBuffer);
 				break;
@@ -179,13 +166,8 @@ void SaveOptions(void)
 	writeSucceeded &= SaveOption(key, _T("nTabStops"), REG_DWORD, (LPBYTE)&options.nTabStops, sizeof(int));
 	writeSucceeded &= SaveOption(key, _T("nPrimaryFont"), REG_DWORD, (LPBYTE)&options.nPrimaryFont, sizeof(int));
 	writeSucceeded &= SaveOption(key, _T("nSecondaryFont"), REG_DWORD, (LPBYTE)&options.nSecondaryFont, sizeof(int));
-#ifdef BUILD_METAPAD_UNICODE
-	writeSucceeded &= SaveOption(key, _T("PrimaryFont_U"), REG_BINARY, (LPBYTE)&options.PrimaryFont, sizeof(LOGFONT));
-	writeSucceeded &= SaveOption(key, _T("SecondaryFont_U"), REG_BINARY, (LPBYTE)&options.SecondaryFont, sizeof(LOGFONT));
-#else
 	writeSucceeded &= SaveOption(key, _T("PrimaryFont"), REG_BINARY, (LPBYTE)&options.PrimaryFont, sizeof(LOGFONT));
 	writeSucceeded &= SaveOption(key, _T("SecondaryFont"), REG_BINARY, (LPBYTE)&options.SecondaryFont, sizeof(LOGFONT));
-#endif
 	writeSucceeded &= SaveOption(key, _T("szBrowser"), REG_SZ, (LPBYTE)&options.szBrowser, sizeof(options.szBrowser));
 	writeSucceeded &= SaveOption(key, _T("szArgs"), REG_SZ, (LPBYTE)&options.szArgs, sizeof(options.szArgs));
 	writeSucceeded &= SaveOption(key, _T("szBrowser2"), REG_SZ, (LPBYTE)&options.szBrowser2, sizeof(options.szBrowser2));
@@ -305,11 +287,6 @@ void SaveMenusAndData(void)
 	}
 
 	if (!options.bNoSaveHistory) {
-#ifdef BUILD_METAPAD_UNICODE
-		SaveOption(key, _T("FindArray_U"), REG_BINARY, (LPBYTE)&FindArray, sizeof(TCHAR) * NUMFINDS * MAXFIND);
-		SaveOption(key, _T("ReplaceArray_U"), REG_BINARY, (LPBYTE)&ReplaceArray, sizeof(TCHAR) * NUMFINDS * MAXFIND);
-//		ASSERT(0);
-#else
 		if (key) {
 			SaveOption(key, _T("FindArray"), REG_BINARY, (LPBYTE)&FindArray, sizeof(FindArray));
 			SaveOption(key, _T("ReplaceArray"), REG_BINARY, (LPBYTE)&ReplaceArray, sizeof(ReplaceArray));
@@ -329,7 +306,6 @@ void SaveMenusAndData(void)
 				SaveOption(key, keyname, REG_SZ, (LPBYTE)bounded, MAXFIND);
 			}
 		}
-#endif
 	}
 
 	if (options.bSaveDirectory) {
