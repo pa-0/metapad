@@ -264,6 +264,9 @@ void GetClientRange(int min, int max, LPTSTR szDest)
 }
 #endif
 
+/**
+ * Updates window title to reflect current working file's name and state.
+ */
 void UpdateCaption(void)
 {
 	TCHAR szBuffer[MAXFN];

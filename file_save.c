@@ -380,7 +380,7 @@ void ConvertToUnix(LPTSTR szBuffer)
  * Convert a string from rich text mode to DOS mode.
  *
  * @param[in] szBuffer Pointer to the string to convert.
- * @note This conversion consists in adding line breaks after carriage returns.
+ * @note This conversion consists in adding one line break after every carriage return.
  */
 void RichModeToDos(LPTSTR *szBuffer)
 {
