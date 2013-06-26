@@ -107,12 +107,12 @@ DWORD HexToBin( LPCTSTR hex, LPBYTE bin )
 {
 	DWORD i, size;
 	BYTE j;
-	if( !(lstrlen(hex)%2) ){
+	size = lstrlen( hex );
+	if( size == 0 ) return 0;
+	else if( !( size % 2 ) ){
 		ERROROUT(_T("Invalid hex string!"));
 		return 0;
-	} else 
-		size = lstrlen( hex )/2;
-	if( size == 0 ) return 0;
+	} else size = size/2;
 	for( i = 0; i < size; ++i ){
 		if( ( j = HexBaseToBin( hex[2*i] ) ) == 255 ){
 			ERROROUT( _T("Invalid hex character!") );

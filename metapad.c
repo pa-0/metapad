@@ -115,19 +115,19 @@ BOOL EncodeWithEscapeSeqs(TCHAR* szText)
 
 	for (i = 0, j = 0; i < MAXMACRO && szText[i]; ++i) {
 		switch (szText[i]) {
-		case '\n':
+		case _T('\n'):
 			break;
-		case '\r':
-			szStore[j++] = '\\';
-			szStore[j++] = 'n';
+		case _T('\r'):
+			szStore[j++] = _T('\\');
+			szStore[j++] = _T('n');
 			break;
-		case '\t':
-			szStore[j++] = '\\';
-			szStore[j++] = 't';
+		case _T('\t'):
+			szStore[j++] = _T('\\');
+			szStore[j++] = _T('t');
 			break;
-		case '\\':
-			szStore[j++] = '\\';
-			szStore[j++] = '\\';
+		case _T('\\'):
+			szStore[j++] = _T('\\');
+			szStore[j++] = _T('\\');
 			break;
 		default:
 			szStore[j++] = szText[i];
@@ -136,7 +136,7 @@ BOOL EncodeWithEscapeSeqs(TCHAR* szText)
 			return FALSE;
 		}
 	}
-	szStore[j] = '\0';
+	szStore[j] = _T('\0');
 	lstrcpy(szText, szStore);
 	return TRUE;
 }
@@ -150,16 +150,16 @@ void ParseForEscapeSeqs(TCHAR* szText)
 	for (i = 0, j = 0;i < MAXMACRO && szText[i]; ++i) {
 		if (bSlashFound) {
 			switch (szText[i]) {
-			case 'n':
+			case _T('n'):
 #ifdef USE_RICH_EDIT
-				szStore[j] = '\r';
+				szStore[j] = _T('\r');
 #else
-				szStore[j++] = '\r';
-				szStore[j] = '\n';
+				szStore[j++] = _T('\r');
+				szStore[j] = _T('\n');
 #endif
 				break;
-			case 't':
-				szStore[j] = '\t';
+			case _T('t'):
+				szStore[j] = _T('\t');
 				break;
 			default:
 				szStore[j] = szText[i];
@@ -167,7 +167,7 @@ void ParseForEscapeSeqs(TCHAR* szText)
 			bSlashFound = FALSE;
 		}
 		else {
-			if (szText[i] == '\\') {
+			if (szText[i] == _T('\\')) {
 				bSlashFound = TRUE;
 				continue;
 			}
@@ -175,7 +175,7 @@ void ParseForEscapeSeqs(TCHAR* szText)
 		}
 		++j;
 	}
-	szStore[j] = '\0';
+	szStore[j] = _T('\0');
 	lstrcpy(szText, szStore);
 }
 
@@ -258,7 +258,7 @@ void GetClientRange(int min, int max, LPTSTR szDest)
 	lFileSize = GetWindowTextLength(client);
 	szBuffer = (LPTSTR)GetShadowBuffer();
 	ch = szBuffer[max];
-	szBuffer[max] = '\0';
+	szBuffer[max] = _T('\0');
 	lstrcpy(szDest, szBuffer + min);
 	szBuffer[max] = ch;
 }
@@ -427,11 +427,11 @@ void MakeNewFile(void)
 	}
 
 	SwitchReadOnly(FALSE);
-	szFile[0] = '\0';
+	szFile[0] = _T('\0');
 	lstrcpy(szCaptionFile, GetString(IDS_NEW_FILE));
 	UpdateStatus();
 	if (lpszShadow)
-		lpszShadow[0] = '\0';
+		lpszShadow[0] = _T('\0');
 	bLoading = FALSE;
 }
 
@@ -6370,25 +6370,25 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
 	if (lstrlen(szCmdLine) > 0) {
 		int nCmdLen = lstrlen(szCmdLine);
-		if (nCmdLen > 1 && szCmdLine[0] == '/') {
+		if (nCmdLen > 1 && szCmdLine[0] == _T('/')) {
 
 			TCHAR chOption = szCmdLine[1];
-			if (chOption == 's' || chOption == 'S') {
+			if (chOption == _T('s') || chOption == _T('S')) {
 				bSkipLanguagePlugin = TRUE;
 				szCmdLine += 2;
-				if (szCmdLine[0] == ' ') ++szCmdLine;
+				if (szCmdLine[0] == _T(' ')) ++szCmdLine;
 			}
-			else if (chOption == 'v' || chOption == 'V') {
+			else if (chOption == _T('v') || chOption == _T('V')) {
 				g_bDisablePluginVersionChecking = TRUE;
 				szCmdLine += 2;
-				if (szCmdLine[0] == ' ') ++szCmdLine;
+				if (szCmdLine[0] == _T(' ')) ++szCmdLine;
 			}
-			else if (chOption == 'i' || chOption == 'I') {
+			else if (chOption == _T('i') || chOption == _T('I')) {
 				g_bIniMode = TRUE;
 				szCmdLine += 2;
-				if (szCmdLine[0] == ' ') ++szCmdLine;
+				if (szCmdLine[0] == _T(' ')) ++szCmdLine;
 			}
-			else if (chOption == 'm' || chOption == 'M') {
+			else if (chOption == _T('m') || chOption == _T('M')) {
 				LoadOptions();
 				g_bIniMode = TRUE;
 				SaveOptions();
@@ -6608,7 +6608,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
 			pch = _tcsrchr(szFav, _T('\\'));
 			++pch;
-			*pch = '\0';
+			*pch = _T('\0');
 		}
 		else {
 			FindClose(handle);
@@ -6628,10 +6628,10 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
 		nCmdLen = lstrlen(szCmdLine);
 
-		if (nCmdLen > 1 && szCmdLine[0] == '/') {
+		if (nCmdLen > 1 && szCmdLine[0] == _T('/')) {
 			TCHAR chOption = szCmdLine[1];
 
-			if (chOption == 'p' || chOption == 'P') {
+			if (chOption == _T('p') || chOption == _T('P')) {
 				if (szCmdLine[3] == _T('\"') && szCmdLine[nCmdLen - 1] == _T('\"'))
 					lstrcpyn(szFile, szCmdLine + 4, nCmdLen - 1);
 				else
@@ -6643,7 +6643,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 				CleanUp();
 				return TRUE;
 			}
-			else if (chOption == 'g' || chOption == 'G') {
+			else if (chOption == _T('g') || chOption == _T('G')) {
 				TCHAR szNum[6];
 				int nRlen, nClen;
 
@@ -6657,12 +6657,12 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 					szNum[nClen] = szCmdLine[nRlen + nClen + 4];
 				crLineCol.cpMax = _ttol(szNum);
 
-				if (szCmdLine[5 + nClen + nRlen] == '\"' && szCmdLine[nCmdLen - 1] == '\"')
+				if (szCmdLine[5 + nClen + nRlen] == _T('\"') && szCmdLine[nCmdLen - 1] == _T('\"'))
 					lstrcpyn(szFile, szCmdLine + nClen + nRlen + 6, nCmdLen - 1);
 				else
 					lstrcpyn(szFile, szCmdLine + nClen + nRlen + 5, nCmdLen + 1);
 			}
-			else if (chOption == 'e' || chOption == 'E') {
+			else if (chOption == _T('e') || chOption == _T('E')) {
 				if (szCmdLine[3] == _T('\"') && szCmdLine[nCmdLen - 1] == _T('\"'))
 					lstrcpyn(szFile, szCmdLine + 4, nCmdLen - 1);
 				else
@@ -6678,7 +6678,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		}
 		else {
 			//ERROROUT(szCmdLine);
-			if (szCmdLine[0] == '\"') {
+			if (szCmdLine[0] == _T('\"')) {
 				lstrcpyn(szFile, szCmdLine + 1, _tcschr(szCmdLine+1, _T('\"')) - szCmdLine);
 			}
 			else {

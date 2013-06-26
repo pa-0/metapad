@@ -17,6 +17,8 @@ set( LIBS ${LIBS} msvcrt comctl32 )
 if ( DEBUG )
 	add_definitions( -DDEBUG -D_DEBUG )
 	message( "DEBUG defined." )
+else ()
+	add_definitions( -DNDEBUG -D_NDEBUG )
 endif ()
 
 if ( RICH_EDIT )
