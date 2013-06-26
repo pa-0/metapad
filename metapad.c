@@ -96,6 +96,12 @@ HMENU hrecentmenu = NULL;
 HFONT hfontmain = NULL;
 HFONT hfontfind = NULL;
 BOOL g_bIniMode = FALSE;
+BOOL bFindCalled = FALSE;
+BOOL bReplaceCalled = FALSE;
+BOOL bFindOpen = FALSE;
+BOOL bReplaceOpen = FALSE;
+WINDOWPLACEMENT wpFindPlace;
+WINDOWPLACEMENT wpReplacePlace;
 int _fltused = 0x9875; // see CMISCDAT.C for more info on this
 
 option_struct options;
@@ -4259,6 +4265,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					fr.Flags |= FR_MATCHCASE;
 
 				hdlgFind = FindText(&fr);
+				bFindOpen = TRUE;
+				if (bFindCalled) {
+					SetWindowPlacement(hdlgFind, &wpFindPlace);
+				} else
+					bFindCalled = TRUE;
 
 				wpOrigFindProc = (WNDPROC)SetWindowLongPtr(hdlgFind, GWLP_WNDPROC, (LONG_PTR)FindProc);
 
@@ -4331,6 +4342,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 
 				hdlgFind = ReplaceText(&fr);
+				bReplaceOpen = TRUE;
+				if (bReplaceCalled) {
+					SetWindowPlacement(hdlgFind, &wpReplacePlace);
+				} else
+					bReplaceCalled = TRUE;
 
 				wpOrigFindProc = (WNDPROC)SetWindowLongPtr(hdlgFind, GWLP_WNDPROC, (LONG_PTR)FindProc);
 
@@ -5350,12 +5366,12 @@ endinsertfile:
 			case ID_DATE_TIME: {
 				TCHAR szTime[100], szDate[100];
 				if (bLoading) {
-					szTime[0] = '\r';
-					szTime[1] = '\n';
-					szTime[2] = '\0';
+					szTime[0] = _T('\r');
+					szTime[1] = _T('\n');
+					szTime[2] = _T('\0');
 				}
 				else {
-					szTime[0] = '\0';
+					szTime[0] = _T('\0');
 				}
 				if (!options.bDontInsertTime) {
 					GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL, NULL, (bLoading ? szTime + 2 : szTime), 100);
@@ -6060,12 +6076,18 @@ endinsertfile:
 
 			if (lpfr->Flags & FR_DIALOGTERM) {
 				int i;
+				if(bFindOpen)
+					GetWindowPlacement(hdlgFind, &wpFindPlace);
+				else if(bReplaceOpen)
+					GetWindowPlacement(hdlgFind, &wpReplacePlace);
 				for (i = 0; i < NUMFINDS; i++) {
 					SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_GETLBTEXT, i, (WPARAM)FindArray[i]);
 					if (lpfr->lpstrReplaceWith != NULL)
 						SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_GETLBTEXT, i, (WPARAM)ReplaceArray[i]);
 				}
 				hdlgFind = NULL;
+				bFindOpen = FALSE;
+				bReplaceOpen = FALSE;
 				return FALSE;
 			}
 
@@ -6213,8 +6235,14 @@ endinsertfile:
 						for (i = 0; i < NUMFINDS; i++) {
 							SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_GETLBTEXT, i, (WPARAM)FindArray[i]);
 						}
+						if (bFindOpen)
+							GetWindowPlacement(hdlgFind, &wpFindPlace);
+						else if (bReplaceOpen)
+							GetWindowPlacement(hdlgFind, &wpReplacePlace);
 						DestroyWindow(hdlgFind);
 						hdlgFind = NULL;
+						bFindOpen = FALSE;
+						bReplaceOpen = FALSE;
 					}
 				}
 			}
@@ -6394,10 +6422,10 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 					int left, top, width, height, nShow;
 					LoadWindowPlacement(&left, &top, &width, &height, &nShow);
 					SaveOption(NULL, _T("w_WindowState"), REG_DWORD, (LPBYTE)&nShow, sizeof(int));
-					SaveOption(key, _T("w_Left"), REG_DWORD, (LPBYTE)&left, sizeof(int));
-					SaveOption(key, _T("w_Top"), REG_DWORD, (LPBYTE)&top, sizeof(int));
-					SaveOption(key, _T("w_Width"), REG_DWORD, (LPBYTE)&width, sizeof(int));
-					SaveOption(key, _T("w_Height"), REG_DWORD, (LPBYTE)&height, sizeof(int));
+					SaveOption(NULL, _T("w_Left"), REG_DWORD, (LPBYTE)&left, sizeof(int));
+					SaveOption(NULL, _T("w_Top"), REG_DWORD, (LPBYTE)&top, sizeof(int));
+					SaveOption(NULL, _T("w_Width"), REG_DWORD, (LPBYTE)&width, sizeof(int));
+					SaveOption(NULL, _T("w_Height"), REG_DWORD, (LPBYTE)&height, sizeof(int));
 				}
 				g_bIniMode = TRUE;
 				SaveOptions();
