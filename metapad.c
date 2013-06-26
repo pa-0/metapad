@@ -6390,6 +6390,15 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 			}
 			else if (chOption == _T('m') || chOption == _T('M')) {
 				LoadOptions();
+				if( options.bSaveWindowPlacement || options.bStickyWindow ) {
+					int left, top, width, height, nShow;
+					LoadWindowPlacement(&left, &top, &width, &height, &nShow);
+					SaveOption(NULL, _T("w_WindowState"), REG_DWORD, (LPBYTE)&nShow, sizeof(int));
+					SaveOption(key, _T("w_Left"), REG_DWORD, (LPBYTE)&left, sizeof(int));
+					SaveOption(key, _T("w_Top"), REG_DWORD, (LPBYTE)&top, sizeof(int));
+					SaveOption(key, _T("w_Width"), REG_DWORD, (LPBYTE)&width, sizeof(int));
+					SaveOption(key, _T("w_Height"), REG_DWORD, (LPBYTE)&height, sizeof(int));
+				}
 				g_bIniMode = TRUE;
 				SaveOptions();
 				MSGOUT(_T("Migration to INI completed."));
