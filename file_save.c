@@ -56,10 +56,12 @@ extern int nEncodingType;
 extern option_struct options;
 
 #ifndef USE_RICH_EDIT
-static inline void ConvertToUnix(LPTSTR szBuffer);
+static __inline void ConvertToUnix(LPTSTR szBuffer);
 #else
-static inline void RichModeToDos(LPTSTR *szBuffer);
+static __inline void RichModeToDos(LPTSTR *szBuffer);
 #endif
+
+BOOL SaveFile(LPCTSTR szFilename);
 
 /**
  * Replace '|' with '\0', and adds a '\0' at the end.
@@ -71,11 +73,11 @@ void FixFilterString(LPTSTR szIn)
 	int i;
 
 	for (i = 0; szIn[i]; ++i) {
-		if (szIn[i] == '|') {
-			szIn[i] = '\0';
+		if (szIn[i] == _T('|')) {
+			szIn[i] = _T('\0');
 		}
 	}
-	szIn[i+1] = '\0';
+	szIn[i+1] = _T('\0');
 }
 
 /**
@@ -274,13 +276,13 @@ BOOL SaveFile(LPCTSTR szFilename)
 		}
 
 		if ((nEncodingType == TYPE_UTF_16_BE) && pNewBuffer) {
+			const CHAR szBOM_UTF_16_BE[SIZEOFBOM_UTF_16] = {'\376', '\377'};
 			ReverseBytes((PBYTE)pNewBuffer, nBytesNeeded);
-			const CHAR const szBOM_UTF_16_BE[SIZEOFBOM_UTF_16] = "\376\377";
 			// 0xFE, 0xFF - leave off _T() macro.
 			WriteFile(hFile, szBOM_UTF_16_BE, SIZEOFBOM_UTF_16, &dwActualBytesWritten, NULL);
 		}
 		else if (nEncodingType == TYPE_UTF_16) {
-			const CHAR const szBOM_UTF_16[SIZEOFBOM_UTF_16] = "\377\376";
+			const CHAR szBOM_UTF_16[SIZEOFBOM_UTF_16] = {'\377', '\376'};
 			// 0xFF, 0xFE - leave off _T() macro.
 			WriteFile(hFile, szBOM_UTF_16, SIZEOFBOM_UTF_16, &dwActualBytesWritten, NULL);
 		}
@@ -307,9 +309,9 @@ BOOL SaveFile(LPCTSTR szFilename)
 #ifdef USE_RICH_EDIT
 		if (bUnix) {
 			int i = 0;
-			while (szBuffer[i] != '\0') {
-				if (szBuffer[i] == '\r')
-					szBuffer[i] = '\n';
+			while (szBuffer[i] != _T('\0')) {
+				if (szBuffer[i] == _T('\r'))
+					szBuffer[i] = _T('\n');
 				i++;
 			}
 			lFileSize = lstrlen(szBuffer);
@@ -324,7 +326,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 		}
 #endif
 		if (nEncodingType == TYPE_UTF_8) {
-			const CHAR const szBOM_UTF_8[SIZEOFBOM_UTF_8] = "\xEF\xBB\xBF";
+			const CHAR szBOM_UTF_8[SIZEOFBOM_UTF_8] = {'\xEF', '\xBB', '\xBF'};
 			// 0xEF, 0xBB, 0xBF / "\357\273\277" - leave off _T() macro.
 			WriteFile(hFile, szBOM_UTF_8, SIZEOFBOM_UTF_8, &dwActualBytesWritten, NULL);
 
@@ -365,14 +367,14 @@ void ConvertToUnix(LPTSTR szBuffer)
 
 	lstrcpy(szTemp, szBuffer);
 
-	while (szTemp[i] != '\0') {
-		if (szTemp[i] != '\r') {
+	while (szTemp[i] != _T('\0')) {
+		if (szTemp[i] != _T('\r')) {
 			szBuffer[j] = szTemp[i];
 			j++;
 		}
 		i++;
 	}
-	szBuffer[j] = '\0';
+	szBuffer[j] = _T('\0');
 	HeapFree(globalHeap, 0, (HGLOBAL)szTemp);
 }
 #else
@@ -387,8 +389,8 @@ void RichModeToDos(LPTSTR *szBuffer)
 	int cnt = 0;
 	int i = 0, j;
 
-	while ((*szBuffer)[i] != '\0') {
-		if ((*szBuffer)[i] == '\r')
+	while ((*szBuffer)[i] != _T('\0')) {
+		if ((*szBuffer)[i] == _T('\r'))
 			cnt++;
 		i++;
 	}
@@ -396,17 +398,17 @@ void RichModeToDos(LPTSTR *szBuffer)
 	if (cnt) {
 		LPTSTR szNewBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(*szBuffer)+cnt+2) * sizeof(TCHAR));
 		i = j = 0;
-		while ((*szBuffer)[i] != '\0') {
-			if ((*szBuffer)[i] == '\r') {
+		while ((*szBuffer)[i] != _T('\0')) {
+			if ((*szBuffer)[i] == _T('\r')) {
 				szNewBuffer[j++] = (*szBuffer)[i];
-				szNewBuffer[j] = '\n';
+				szNewBuffer[j] = _T('\n');
 			}
 			else {
 				szNewBuffer[j] = (*szBuffer)[i];
 			}
 			j++; i++;
 		}
-		szNewBuffer[j] = '\0';
+		szNewBuffer[j] = _T('\0');
 
 		HeapFree(globalHeap, 0, (HGLOBAL) *szBuffer);
 		*szBuffer = szNewBuffer;
