@@ -9,7 +9,7 @@
 //
 //#include "afxres.h"
 #include <windows.h>
-#define IDC_STATIC (-1) 
+#define IDC_STATIC (-1)
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -106,16 +106,16 @@ BEGIN
     PUSHBUTTON      "Clear &Find History...",IDC_BUTTON_CLEAR_FIND,7,146,83,
                     14
     LTEXT           "Recent files to re&member:",IDC_STATIC,102,129,82,8
-    EDITTEXT        IDC_EDIT_MAX_MRU,194,127,24,12,ES_CENTER | 
+    EDITTEXT        IDC_EDIT_MAX_MRU,194,127,24,12,ES_CENTER |
                     ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "&Default file format:",IDC_STATIC,102,148,58,8
-    COMBOBOX        IDC_COMBO_FORMAT,163,146,55,63,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_COMBO_FORMAT,163,146,55,63,CBS_DROPDOWNLIST |
                     WS_VSCROLL | WS_TABSTOP
 END
 #endif
 
 IDD_PAGE_SETUP DIALOG DISCARDABLE  32, 32, 190, 124
-STYLE DS_MODALFRAME | DS_3DLOOK | DS_CONTEXTHELP | WS_POPUP | WS_VISIBLE | 
+STYLE DS_MODALFRAME | DS_3DLOOK | DS_CONTEXTHELP | WS_POPUP | WS_VISIBLE |
     WS_CAPTION | WS_SYSMENU
 CAPTION "Page Setup"
 FONT 8, "MS Sans Serif"
@@ -142,7 +142,7 @@ CAPTION "metapad"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,53,56,44,15
-    EDITTEXT        IDC_EDIT_URL,43,17,102,10,ES_CENTER | ES_NOHIDESEL | 
+    EDITTEXT        IDC_EDIT_URL,43,17,102,10,ES_CENTER | ES_NOHIDESEL |
                     ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
     RTEXT           "metapad X.X",IDC_STATICX,41,7,103,8
     ICON            IDI_PAD,IDC_DLGICON,7,7,20,20,SS_NOTIFY
@@ -162,20 +162,20 @@ BEGIN
 END
 
 IDD_REPLACE DIALOG DISCARDABLE  36, 44, 230, 82
-STYLE DS_MODALFRAME | DS_3DLOOK | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION | 
+STYLE DS_MODALFRAME | DS_3DLOOK | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION |
     WS_SYSMENU
 CAPTION "Replace"
 FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Fi&nd what:",IDC_STATIC,7,9,45,8
-    COMBOBOX        ID_DROP_FIND,54,7,99,112,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
+    COMBOBOX        ID_DROP_FIND,54,7,99,112,CBS_DROPDOWN | CBS_AUTOHSCROLL |
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "Re&place with:",IDC_STATIC,7,26,45,8
-    COMBOBOX        ID_DROP_REPLACE,54,24,99,111,CBS_DROPDOWN | 
+    COMBOBOX        ID_DROP_REPLACE,54,24,99,111,CBS_DROPDOWN |
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      ">",IDC_ESCAPE,156,7,11,12,BS_BITMAP | BS_NOTIFY
     PUSHBUTTON      ">",IDC_ESCAPE2,156,24,11,12,BS_BITMAP | BS_NOTIFY
-    CONTROL         "Match &whole word only",1040,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "Match &whole word only",1040,"Button",BS_AUTOCHECKBOX |
                     WS_GROUP | WS_TABSTOP,7,43,87,12
     CONTROL         "Match &case",1041,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     7,59,59,12
@@ -189,21 +189,21 @@ BEGIN
     PUSHBUTTON      "Replace &All",1025,173,43,50,14
     PUSHBUTTON      "Close",IDCANCEL,173,61,50,14
     PUSHBUTTON      "&Help",1038,238,52,50,14,NOT WS_VISIBLE
-    EDITTEXT        1152,247,81,24,12,ES_AUTOHSCROLL | NOT WS_VISIBLE | 
+    EDITTEXT        1152,247,81,24,12,ES_AUTOHSCROLL | NOT WS_VISIBLE |
                     WS_GROUP
 END
 
 IDD_FIND DIALOG DISCARDABLE  30, 73, 236, 65
-STYLE DS_MODALFRAME | DS_3DLOOK | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION | 
+STYLE DS_MODALFRAME | DS_3DLOOK | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION |
     WS_SYSMENU
 CAPTION "Find"
 FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Fi&nd what:",-1,7,9,37,8
-    COMBOBOX        ID_DROP_FIND,47,7,113,117,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
+    COMBOBOX        ID_DROP_FIND,47,7,113,117,CBS_DROPDOWN | CBS_AUTOHSCROLL |
                     WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      ">",IDC_ESCAPE,163,7,11,12,BS_BITMAP | BS_NOTIFY
-    CONTROL         "Match &whole word only",1040,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "Match &whole word only",1040,"Button",BS_AUTOCHECKBOX |
                     WS_GROUP | WS_TABSTOP,7,26,92,8
     CONTROL         "Match &case",1041,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     7,38,92,8
@@ -216,7 +216,7 @@ BEGIN
     DEFPUSHBUTTON   "&Find Next",IDOK,179,7,50,14,WS_GROUP
     PUSHBUTTON      "Close",IDCANCEL,179,26,50,14
     PUSHBUTTON      "&Help",1038,179,44,50,14
-    EDITTEXT        1152,255,32,18,12,ES_AUTOHSCROLL | NOT WS_VISIBLE | 
+    EDITTEXT        1152,255,32,18,12,ES_AUTOHSCROLL | NOT WS_VISIBLE |
                     WS_GROUP
 END
 
@@ -243,7 +243,7 @@ BEGIN
     CONTROL         "&Insert tabs as spaces",IDC_INSERT_SPACES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,119,31,98,8
     LTEXT           "&Tab size:",IDC_STATIC,119,45,33,8
-    EDITTEXT        IDC_TAB_STOP,160,43,18,12,ES_CENTER | ES_AUTOHSCROLL | 
+    EDITTEXT        IDC_TAB_STOP,160,43,18,12,ES_CENTER | ES_AUTOHSCROLL |
                     ES_NUMBER
     LTEXT           "&Quote with:",IDC_STATIC,119,58,41,8
     EDITTEXT        IDC_EDIT_QUOTE,160,57,18,12,ES_AUTOHSCROLL
@@ -265,7 +265,7 @@ BEGIN
     CONTROL         "Do&n't save",IDC_LAUNCH_SAVE2,"Button",
                     BS_AUTORADIOBUTTON,161,139,51,10
     CONTROL         "E&xit metapad after viewer is launched",
-                    IDC_CHECK_LAUNCH_CLOSE,"Button",BS_AUTOCHECKBOX | 
+                    IDC_CHECK_LAUNCH_CLOSE,"Button",BS_AUTOCHECKBOX |
                     WS_GROUP | WS_TABSTOP,15,151,138,9
 END
 
@@ -287,7 +287,7 @@ BEGIN
                     11,WS_EX_STATICEDGE
     LTEXT           "Font colour:",IDC_STAT_FONT,16,92,45,9
     CONTROL         "font",IDC_COLOUR_FONT,"Button",BS_OWNERDRAW,74,91,26,
-                    11,WS_EX_STATICEDGE                    
+                    11,WS_EX_STATICEDGE
     GROUPBOX        "Secondary font",IDC_STATIC,117,7,101,102,WS_GROUP
     CONTROL         "ANSI fi&xed width",IDC_FONT_SECONDARY,"Button",
                     BS_AUTORADIOBUTTON | WS_GROUP,126,19,75,10
@@ -304,14 +304,14 @@ BEGIN
                     11,WS_EX_STATICEDGE
     GROUPBOX        "Window",IDC_STATIC,7,113,211,47
     LTEXT           "&Selection margin width:",IDC_STATIC,15,128,82,16
-    EDITTEXT        IDC_EDIT_SM_WIDTH,94,127,24,12,ES_CENTER | 
+    EDITTEXT        IDC_EDIT_SM_WIDTH,94,127,24,12,ES_CENTER |
                     ES_AUTOHSCROLL
     LTEXT           "&Transparency %:",IDC_STAT_TRANS,129,
                     128,58,16
-    EDITTEXT        IDC_EDIT_TRANSPARENT,185,127,24,12,ES_CENTER | 
+    EDITTEXT        IDC_EDIT_TRANSPARENT,185,127,24,12,ES_CENTER |
                     ES_AUTOHSCROLL
     CONTROL         "Use def&ault toolbar style",
-                    IDC_FLAT_TOOLBAR,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | 
+                    IDC_FLAT_TOOLBAR,"Button",BS_AUTOCHECKBOX | BS_MULTILINE |
                     WS_TABSTOP,16,143,176,9
 END
 
@@ -365,10 +365,10 @@ BEGIN
     PUSHBUTTON      "Clear &Find History...",IDC_BUTTON_CLEAR_FIND,7,146,83,
                     14
     LTEXT           "Recent files to re&member:",IDC_STATIC,102,129,82,8
-    EDITTEXT        IDC_EDIT_MAX_MRU,194,127,24,12,ES_CENTER | 
+    EDITTEXT        IDC_EDIT_MAX_MRU,194,127,24,12,ES_CENTER |
                     ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "&Default file format:",IDC_STATIC,102,148,58,8
-    COMBOBOX        IDC_COMBO_FORMAT,163,146,55,63,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_COMBO_FORMAT,163,146,55,63,CBS_DROPDOWNLIST |
                     WS_VSCROLL | WS_TABSTOP
 END
 #endif
@@ -405,7 +405,7 @@ BEGIN
                     BS_AUTORADIOBUTTON | BS_NOTIFY | WS_GROUP,17,128,72,10
     CONTROL         "&Language plugin:",IDC_RADIO_LANG_PLUGIN,"Button",
                     BS_AUTORADIOBUTTON | BS_NOTIFY,17,142,72,10
-    EDITTEXT        IDC_EDIT_LANG_PLUGIN,95,141,96,12,ES_AUTOHSCROLL | 
+    EDITTEXT        IDC_EDIT_LANG_PLUGIN,95,141,96,12,ES_AUTOHSCROLL |
                     WS_GROUP
     PUSHBUTTON      "...",IDC_BUTTON_BROWSE,194,141,14,12
 END
@@ -422,16 +422,16 @@ FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,72,75,44,15
     LTEXT           "Language:",IDC_STATIC,7,7,41,8
-    EDITTEXT        IDC_EDIT_PLUGIN_LANG,52,7,130,9,ES_CENTER | ES_READONLY | 
+    EDITTEXT        IDC_EDIT_PLUGIN_LANG,52,7,130,9,ES_CENTER | ES_READONLY |
                     NOT WS_BORDER,WS_EX_STATICEDGE
     LTEXT           "Release:",IDC_STATIC,7,23,41,8
-    EDITTEXT        IDC_EDIT_PLUGIN_RELEASE,52,23,130,9,ES_CENTER | 
+    EDITTEXT        IDC_EDIT_PLUGIN_RELEASE,52,23,130,9,ES_CENTER |
                     ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
     LTEXT           "Translator:",IDC_STATIC,7,39,41,8
-    EDITTEXT        IDC_EDIT_PLUGIN_TRANSLATOR,52,39,130,9,ES_CENTER | 
+    EDITTEXT        IDC_EDIT_PLUGIN_TRANSLATOR,52,39,130,9,ES_CENTER |
                     ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
     LTEXT           "Contact:",IDC_STATIC,7,55,41,9
-    EDITTEXT        IDC_EDIT_PLUGIN_EMAIL,52,55,130,9,ES_CENTER | 
+    EDITTEXT        IDC_EDIT_PLUGIN_EMAIL,52,55,130,9,ES_CENTER |
                     ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
 END
 #endif
@@ -443,7 +443,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
+GUIDELINES DESIGNINFO DISCARDABLE
 BEGIN
     IDD_ABORT_PRINT, DIALOG
     BEGIN
@@ -597,18 +597,18 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE DISCARDABLE
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE DISCARDABLE
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE DISCARDABLE
 BEGIN
     "\r\n"
     "\0"
@@ -622,7 +622,7 @@ END
 // Menu
 //
 
-IDR_ESCAPE_SEQUENCES MENU DISCARDABLE 
+IDR_ESCAPE_SEQUENCES MENU DISCARDABLE
 BEGIN
     POPUP "Escape"
     BEGIN
@@ -634,7 +634,7 @@ BEGIN
     END
 END
 
-IDR_MENU MENU DISCARDABLE 
+IDR_MENU MENU DISCARDABLE
 BEGIN
     POPUP "&File"
     BEGIN
@@ -691,7 +691,7 @@ BEGIN
             MENUITEM "&Unindent\tShift+Tab",        ID_UNINDENT
             MENUITEM "&Quote\tAlt+Q",               ID_QUOTE
             MENUITEM "S&trip First Character\tAlt+Z", ID_STRIPCHAR
-            MENUITEM "&Strip Trailing Whitespace\tAlt+W", 
+            MENUITEM "&Strip Trailing Whitespace\tAlt+W",
                                                     ID_STRIP_TRAILING_WS
             MENUITEM "Un&wrap Lines\tF9",           ID_STRIP_CR
             MENUITEM "Unwrap Lines (w/ S&pace)\tAlt+F9", ID_STRIP_CR_SPACE
@@ -706,9 +706,11 @@ BEGIN
             MENUITEM SEPARATOR
             MENUITEM "Ta&bified\tF8",               ID_TABIFY
             MENUITEM "U&ntabified\tCtrl+F8",        ID_UNTABIFY
+#ifndef BUILD_METAPAD_UNICODE
             MENUITEM SEPARATOR
             MENUITEM "&OEM Format\tF11",            ID_MAKE_OEM
             MENUITEM "&ANSI Format\tCtrl+F11",      ID_MAKE_ANSI
+#endif
         END
         POPUP "Insert &Date/Time"
         BEGIN
@@ -755,7 +757,7 @@ BEGIN
     END
 END
 
-IDR_POPUP MENU DISCARDABLE 
+IDR_POPUP MENU DISCARDABLE
 BEGIN
     POPUP "Popup"
     BEGIN
@@ -831,7 +833,7 @@ IDC_MYHAND                CURSOR  DISCARDABLE     "linkhand.cur"
 // Accelerator
 //
 
-IDR_ACCELERATOR ACCELERATORS DISCARDABLE 
+IDR_ACCELERATOR ACCELERATORS DISCARDABLE
 BEGIN
     "0",            ID_MACRO_10,            VIRTKEY, ALT, NOINVERT
     "0",            ID_SET_MACRO_10,        VIRTKEY, SHIFT, ALT, NOINVERT
@@ -899,7 +901,7 @@ BEGIN
     VK_F3,          ID_FIND_NEXT,           VIRTKEY, NOINVERT
     VK_F3,          ID_FIND_NEXT_WORD,      VIRTKEY, CONTROL, NOINVERT
     VK_F3,          ID_FIND_PREV,           VIRTKEY, SHIFT, NOINVERT
-    VK_F3,          ID_FIND_PREV_WORD,      VIRTKEY, SHIFT, CONTROL, 
+    VK_F3,          ID_FIND_PREV_WORD,      VIRTKEY, SHIFT, CONTROL,
                                                     NOINVERT
     VK_F5,          ID_RELOAD_CURRENT,      VIRTKEY, NOINVERT
     VK_F6,          ID_DATE_TIME,           VIRTKEY, NOINVERT
@@ -938,7 +940,7 @@ END
 // String Table
 //
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE DISCARDABLE
 BEGIN
     IDS_VERSION_SYNCH       "3.6"
     IDS_PLUGIN_LANGUAGE     "English (Plugin Template)"
@@ -957,7 +959,7 @@ BEGIN
     IDS_ERROR_FAVOURITES    "Error in favourites file. It may have been modified and is not synchronized."
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE DISCARDABLE
 BEGIN
     IDS_FILE_LOADING        "Loading file..."
     IDS_READONLY_WARNING    "This file is read only. You must save to a different file."
@@ -973,13 +975,13 @@ BEGIN
     IDS_SECONDARY_VIEWER_MISSING "No secondary external viewer configured."
     IDS_NO_DEFAULT_VIEWER   "No viewer associated with this file type."
     IDS_DEFAULT_VIEWER_ERROR "Unknown error launching default viewer."
-    IDS_REGISTRY_WINDOW_ERROR 
+    IDS_REGISTRY_WINDOW_ERROR
                             "Missing window placement registry values - using default settings."
-    IDS_CARRIAGE_RETURN_WARNING 
+    IDS_CARRIAGE_RETURN_WARNING
                             "Some number of solitary carriage returns were detected and removed."
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE DISCARDABLE
 BEGIN
     IDS_MAC_FILE_WARNING    "Lines ending in solitary carriage returns detected. (Possibly a Macintosh text file.) Converting to UNIX format."
     IDS_CREATE_FILE_MESSAGE """%s"" not found. Create it?"
@@ -987,7 +989,7 @@ BEGIN
     IDS_FILE_NOT_FOUND      "File not found."
     IDS_FILE_LOCKED_ERROR   "File is locked by another process."
     IDS_UNICODE_CONVERT_ERROR "Error converting from Unicode file"
-    IDS_UNICODE_CHARS_WARNING 
+    IDS_UNICODE_CHARS_WARNING
                             "Detected non-ANSI characters in this Unicode file.\n\nData will be lost if this file is saved!"
     IDS_BINARY_FILE_WARNING "This file is not a valid text file. It may be a binary file.\nConvert any NULL terminators to spaces and load anyway?"
     IDS_UNICODE_STRING_ERROR "Error converting to Unicode string"
@@ -1000,17 +1002,17 @@ BEGIN
     IDS_RECENT_MENU         "&Recent"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE DISCARDABLE
 BEGIN
     IDS_RECENT_FILES_MENU   "Recent &Files"
     IDS_MAX_RECENT_WARNING  "Enter a maximum Recent File size between 0 and 16"
     IDS_STICKY_MESSAGE      "Main window will now always start up with its current size and position."
     IDS_CLEAR_FIND_WARNING  "This action will clear both the find and replace histories."
     IDS_CLEAR_RECENT_WARNING "This action will clear the recent files history"
-    IDS_SELECT_PLUGIN_WARNING 
+    IDS_SELECT_PLUGIN_WARNING
                             "Select a language plugin or choose Default (English)."
     IDS_MARGIN_WIDTH_WARNING "Enter a margin width between 0 and 300"
-    IDS_TRANSPARENCY_WARNING 
+    IDS_TRANSPARENCY_WARNING
                             "Enter a transparency mode percent between 1 and 99"
     IDS_TAB_SIZE_WARNING    "Enter a tab size between 1 and 100"
     IDS_TB_NEWFILE          "New File"
@@ -1020,7 +1022,7 @@ BEGIN
     IDS_TB_FIND             "Find"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE DISCARDABLE
 BEGIN
     IDS_TB_REPLACE          "Replace"
     IDS_TB_CUT              "Cut"
@@ -1040,38 +1042,38 @@ BEGIN
     IDS_QUERY_LAUNCH_VIEWER "This version of Windows does not support loading files this large into an Edit window.\nLaunch in external viewer?"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE DISCARDABLE
 BEGIN
     IDS_LE_MEMORY_LIMIT     "Reached memory limit!\nSave file now and use another editor  (metapad full not LE)!"
-    IDS_UNDO_HYPERLINKS_WARNING 
+    IDS_UNDO_HYPERLINKS_WARNING
                             "Updating hyperlinks. This action will empty the undo buffer."
-    IDS_CHANGE_READONLY_ERROR 
+    IDS_CHANGE_READONLY_ERROR
                             "Unable to change the readonly attribute for this file."
     IDS_SETTINGS_TITLE      "Settings"
     IDS_NO_SELECTED_TEXT    "No selected text."
     IDS_BYTE_LENGTH         "...text is %d bytes long."
     IDS_ITEMS_REPLACED      "Replaced %d item(s)."
     IDS_MENU_LANGUAGE_PLUGIN "&Language Plugin..."
-    IDS_RICHED_MISSING_ERROR 
+    IDS_RICHED_MISSING_ERROR
                             "metapad requires RICHED20.DLL to be installed on your system.\n\nSee the FAQ on the website for further information."
-    IDS_COMMAND_LINE_OPTIONS 
+    IDS_COMMAND_LINE_OPTIONS
 	"Usage:  metapad [/i | /m | /v | /s] [/p | /g row:col | /e] [filename]\n\nOption descriptions:\n\n\t/i - force INI mode for settings\n\t/m - migrate all registry settings to INI file\n\t/g row:col - goto position at row and column\n\t/e - goto end of file\n\t/p - print file\n\t/v - disable plugin version checking\n\t/s - skip loading language plugin"
     IDS_GLOBALLOCK_ERROR    "GlobalLock failed"
-    IDS_CLIPBOARD_UNLOCK_ERROR 
+    IDS_CLIPBOARD_UNLOCK_ERROR
                             "There was an error unlocking the clipboard memory."
     IDS_FILE_READ_ERROR     "Error reading file."
     IDS_RESTART_HIDE_SB     "The change in ""Hide scrollbars when possible"" will be reflected upon restarting the program."
     IDS_RESTART_FAVES       "The change in ""Disable Favourites"" will be reflected upon restarting the program."
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE DISCARDABLE
 BEGIN
     IDS_RESTART_LANG        "Language changes will be reflected upon restarting the program."
-    IDS_INVALID_PLUGIN_ERROR 
+    IDS_INVALID_PLUGIN_ERROR
                             "Error loading language plugin DLL. It is probably not a valid metapad language plugin."
-    IDS_BAD_STRING_PLUGIN_ERROR 
+    IDS_BAD_STRING_PLUGIN_ERROR
                             "Error fetching version string resource from plugin DLL. It is probably not a valid metapad language plugin."
-    IDS_PLUGIN_MISMATCH_ERROR 
+    IDS_PLUGIN_MISMATCH_ERROR
                             "Your language plugin is for metapad %s, but you are running metapad %s.\n\nSome menu or dialog features may be missing or not work correctly.\n\nRun metapad /v to skip this message."
     IDS_ALLRIGHTS           "All Rights Reserved"
     IDS_OK_BUTTON           "OK"

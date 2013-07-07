@@ -31,6 +31,7 @@
 #include <tchar.h>
 #include <shellapi.h>
 
+#include "include/file_save.h"
 #include "include/typedefs.h"
 #include "include/tmp_protos.h"
 #include "include/external_viewers.h"
@@ -102,7 +103,7 @@ BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
  */
 void LaunchPrimaryExternalViewer(void)
 {
-	TCHAR szLaunch[MAXFN] = {'\0'};
+	TCHAR szLaunch[MAXFN] = {_T('\0')};
 
 	lstrcat(szLaunch, options.szArgs);
 	lstrcat(szLaunch, _T(" \""));
@@ -117,7 +118,7 @@ void LaunchPrimaryExternalViewer(void)
  */
 static void LaunchSecondaryExternalViewer(void)
 {
-	TCHAR szLaunch[MAXFN] = {'\0'};
+	TCHAR szLaunch[MAXFN] = {_T('\0')};
 
 	lstrcat(szLaunch, options.szArgs2);
 	lstrcat(szLaunch, _T(" \""));
@@ -136,20 +137,20 @@ static void LaunchSecondaryExternalViewer(void)
 void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 {
 	if (bCustom) {
-		if (!bSecondary && options.szBrowser[0] == '\0') {
+		if (!bSecondary && options.szBrowser[0] == _T('\0')) {
 			MessageBox(hwnd, GetString(IDS_PRIMARY_VIEWER_MISSING), STR_METAPAD, MB_OK|MB_ICONEXCLAMATION);
 			SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_VIEW_OPTIONS, 0), 0);
 			return;
 		}
-//DBGOUT(options.szBrowser2, "run szBrowser2 value:");
-		if (bSecondary && options.szBrowser2[0] == '\0') {
+//DBGOUT(options.szBrowser2, _T("run szBrowser2 value:"));
+		if (bSecondary && options.szBrowser2[0] == _T('\0')) {
 			MessageBox(hwnd, GetString(IDS_SECONDARY_VIEWER_MISSING), STR_METAPAD, MB_OK|MB_ICONEXCLAMATION);
 			SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_VIEW_OPTIONS, 0), 0);
 			return;
 		}
 	}
 
-	if (szFile[0] == '\0' || (bDirtyFile && options.nLaunchSave != 2)) {
+	if (szFile[0] == _T('\0') || (bDirtyFile && options.nLaunchSave != 2)) {
 		int res = IDYES;
 		if (options.nLaunchSave == 0) {
 			TCHAR szBuffer[MAXFN];
@@ -165,7 +166,7 @@ void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 			}
 		}
 	}
-	if (szFile[0] != '\0') {
+	if (szFile[0] != _T('\0')) {
 		if (bCustom) {
 			if (bSecondary) {
 				LaunchSecondaryExternalViewer();

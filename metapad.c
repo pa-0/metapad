@@ -96,8 +96,6 @@ HMENU hrecentmenu = NULL;
 HFONT hfontmain = NULL;
 HFONT hfontfind = NULL;
 BOOL g_bIniMode = FALSE;
-BOOL bFindCalled = FALSE;
-BOOL bReplaceCalled = FALSE;
 BOOL bFindOpen = FALSE;
 BOOL bReplaceOpen = FALSE;
 WINDOWPLACEMENT wpFindPlace;
@@ -498,80 +496,36 @@ void CreateToolbar(void)
 	TBADDBITMAP tbab = {hinstThis, IDB_TOOLBAR};
 
 	TBBUTTON tbButtons [] = {
-		{.iBitmap = 0, .idCommand = 0, .fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_SEP, .dwData = 0L, .iString = 0},
-		//{CUSTOMBMPBASE+6, ID_NEW_INSTANCE, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0L, 0},
-		{.iBitmap = STD_FILENEW, .idCommand = ID_MYFILE_NEW,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = STD_FILEOPEN, .idCommand = ID_MYFILE_OPEN,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = STD_FILESAVE, .idCommand = ID_MYFILE_SAVE,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = CUSTOMBMPBASE+1, .idCommand = ID_RELOAD_CURRENT,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = 0, .idCommand = 0, .fsState = TBSTATE_ENABLED,
-			.fsStyle = TBSTYLE_SEP, .dwData = 0L, .iString = 0},
-		{.iBitmap = CUSTOMBMPBASE+2, .idCommand = ID_FILE_LAUNCHVIEWER,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = CUSTOMBMPBASE+3, .idCommand = ID_LAUNCH_SECONDARY_VIEWER,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = 0, .idCommand = 0, .fsState = TBSTATE_ENABLED,
-			.fsStyle = TBSTYLE_SEP, .dwData = 0L, .iString = 0},
-		{.iBitmap = STD_PRINT, .idCommand = ID_PRINT,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = 0, .idCommand = 0, .fsState = TBSTATE_ENABLED,
-			.fsStyle = TBSTYLE_SEP, .dwData = 0L, .iString = 0},
-		{.iBitmap = STD_FIND, .idCommand = ID_FIND,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = STD_REPLACE, .idCommand = ID_REPLACE,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = 0, .idCommand = 0, .fsState = TBSTATE_ENABLED,
-			.fsStyle = TBSTYLE_SEP, .dwData = 0L, .iString = 0},
-		{.iBitmap = STD_CUT, .idCommand = ID_MYEDIT_CUT,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = STD_COPY, .idCommand = ID_MYEDIT_COPY,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = STD_PASTE, .idCommand = ID_MYEDIT_PASTE,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = 0, .idCommand = 0, .fsState = TBSTATE_ENABLED,
-			.fsStyle = TBSTYLE_SEP, .dwData = 0L, .iString = 0},
-		{.iBitmap = STD_UNDO, .idCommand = ID_MYEDIT_UNDO,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
+	{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
+//{CUSTOMBMPBASE+6, ID_NEW_INSTANCE, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{STD_FILENEW, ID_MYFILE_NEW, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{STD_FILEOPEN, ID_MYFILE_OPEN, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{STD_FILESAVE, ID_MYFILE_SAVE, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{CUSTOMBMPBASE+1, ID_RELOAD_CURRENT, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
+{CUSTOMBMPBASE+2, ID_FILE_LAUNCHVIEWER, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{CUSTOMBMPBASE+3, ID_LAUNCH_SECONDARY_VIEWER, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
+{STD_PRINT, ID_PRINT, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
+{STD_FIND, ID_FIND, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{STD_REPLACE, ID_REPLACE, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
+{STD_CUT, ID_MYEDIT_CUT, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{STD_COPY, ID_MYEDIT_COPY, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{STD_PASTE, ID_MYEDIT_PASTE, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
+{STD_UNDO, ID_MYEDIT_UNDO, TBSTATE_ENABLED, TBSTYLE_BUTTON},
 #ifdef USE_RICH_EDIT
-		{.iBitmap = STD_REDOW, .idCommand = ID_MYEDIT_REDO,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
+{STD_REDOW, ID_MYEDIT_REDO, TBSTATE_ENABLED, TBSTYLE_BUTTON},
 #endif
-		{.iBitmap = 0, .idCommand = 0, .fsState = TBSTATE_ENABLED,
-			.fsStyle = TBSTYLE_SEP, .dwData = 0L, .iString = 0},
-		{.iBitmap = CUSTOMBMPBASE, .idCommand = ID_EDIT_WORDWRAP,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_CHECK,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = CUSTOMBMPBASE+4, .idCommand = ID_FONT_PRIMARY,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = CUSTOMBMPBASE+5, .idCommand = ID_ALWAYSONTOP,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-		{.iBitmap = 0, .idCommand = 0, .fsState = TBSTATE_ENABLED,
-			.fsStyle = TBSTYLE_SEP, .dwData = 0L, .iString = 0},
-		{.iBitmap = STD_PROPERTIES, .idCommand = ID_VIEW_OPTIONS,
-			.fsState = TBSTATE_ENABLED, .fsStyle = TBSTYLE_BUTTON,
-			.dwData = 0L, .iString = 0},
-	};
-
+{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
+{CUSTOMBMPBASE, ID_EDIT_WORDWRAP, TBSTATE_ENABLED, TBSTYLE_CHECK},
+{CUSTOMBMPBASE+4, ID_FONT_PRIMARY, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{CUSTOMBMPBASE+5, ID_ALWAYSONTOP, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
+{STD_PROPERTIES, ID_VIEW_OPTIONS, TBSTATE_ENABLED, TBSTYLE_BUTTON},
+};
 	if (!options.bUnFlatToolbar)
 		dwStyle |= TBSTYLE_FLAT;
 
@@ -701,7 +655,7 @@ void UpdateStatus(void)
 		SendMessage(toolbar, TB_CHECKBUTTON, (WPARAM)ID_EDIT_WORDWRAP, MAKELONG(bWordWrap, 0));
 		SendMessage(toolbar, TB_CHECKBUTTON, (WPARAM)ID_FONT_PRIMARY, MAKELONG(bPrimaryFont, 0));
 		SendMessage(toolbar, TB_CHECKBUTTON, (WPARAM)ID_ALWAYSONTOP, MAKELONG(bAlwaysOnTop, 0));
-		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_RELOAD_CURRENT, MAKELONG(szFile[0] != '\0', 0));
+		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_RELOAD_CURRENT, MAKELONG(szFile[0] != _T('\0'), 0));
 		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_CUT, MAKELONG((cr.cpMin != cr.cpMax), 0));
 		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_COPY, MAKELONG((cr.cpMin != cr.cpMax), 0));
 		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_UNDO, MAKELONG(SendMessage(client, EM_CANUNDO, 0, 0), 0));
@@ -763,9 +717,9 @@ void UpdateStatus(void)
 	/*
 	nPaneSizes[SBPANE_READ] = nPaneSizes[SBPANE_READ - 1] + 2 * options.nStatusFontWidth + 4;
 	if (bReadOnly)
-		wsprintf(szPane, "READ");
+		wsprintf(szPane, _T("READ"));
 	else
-		wsprintf(szPane, " WRI");
+		wsprintf(szPane, _T(" WRI"));
 	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_READ, (LPARAM)(LPTSTR)szPane);
 	*/
 
@@ -785,11 +739,11 @@ void UpdateStatus(void)
 	szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
 	*((LPWORD)szBuffer) = (USHORT)(lLineLen + 1);
 	SendMessage(client, EM_GETLINE, (WPARAM)lLine, (LPARAM) (LPCTSTR)szBuffer);
-	szBuffer[lLineLen] = '\0';
+	szBuffer[lLineLen] = _T('\0');
 
 	lLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lLine, 0);
 	while (lLineLen && i < (cr.cpMax - lLineIndex) && szBuffer[i]) {
-		if (szBuffer[i] == '\t')
+		if (szBuffer[i] == _T('\t'))
 			lCol += options.nTabStops - (lCol-1) % options.nTabStops;
 		else
 			lCol++;
@@ -801,7 +755,7 @@ void UpdateStatus(void)
 	/** @fixme Commented out code. */
 	/*
 	if (bHideMessage)
-		szPane[0] = '\0';
+		szPane[0] = _T('\0');
 	else
 		lstrcpy(szPane, szStatusMessage);
 	*/
@@ -1053,7 +1007,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 			return lRes;
 		}
 	case WM_CHAR:
-		if ((TCHAR) wParam == '\r') {
+		if ((TCHAR) wParam == _T('\r')) {
 			CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
 			if (options.bAutoIndent) {
 				int i = 0;
@@ -1077,12 +1031,12 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 				*((LPWORD)szBuffer) = (USHORT)(lLineLen + 1);
 				CallWindowProc(wpOrigEditProc, client, EM_GETLINE, (WPARAM)lLine - 1, (LPARAM)(LPCTSTR)szBuffer);
-				szBuffer[lLineLen] = '\0';
-				while (szBuffer[i] == '\t' || szBuffer[i] == ' ') {
+				szBuffer[lLineLen] = _T('\0');
+				while (szBuffer[i] == _T('\t') || szBuffer[i] == _T(' ')) {
 					szIndent[i] = szBuffer[i];
 					i++;
 				}
-				szIndent[i] = '\0';
+				szIndent[i] = _T('\0');
 				CallWindowProc(wpOrigEditProc, client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szIndent);
 				HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
 				HeapFree(globalHeap, 0, (HGLOBAL)szIndent);
@@ -1158,7 +1112,7 @@ int FixShortFilename(TCHAR *szSrc, TCHAR *szDest)
 	BOOL bOK = TRUE;
 
 	// Copy drive letter over
-	if (szSrc[1] == ':') {
+	if (szSrc[1] == _T(':')) {
 		szDest[nDestPos++] = szSrc[nSrcPos++];
 		szDest[nDestPos++] = szSrc[nSrcPos++];
 	}
@@ -1166,25 +1120,25 @@ int FixShortFilename(TCHAR *szSrc, TCHAR *szDest)
 	while (szSrc[nSrcPos]) {
 		// If the next TCHAR is '\' we are starting from the root and want to add '\*' to sDir.
 		// Otherwise we are doing relative search, so we just append '*' to sDir
-		if (szSrc[nSrcPos]=='\\') {
+		if (szSrc[nSrcPos]==_T('\\')) {
 			szDest[nDestPos++] = szSrc[nSrcPos++];
 
-			if (szSrc[nSrcPos] == '\\') { // get UNC server name
+			if (szSrc[nSrcPos] == _T('\\')) { // get UNC server name
 				szDest[nDestPos++] = szSrc[nSrcPos++];
 
-				while (szSrc[nSrcPos] && szSrc[nSrcPos - 1]!='\\') {
+				while (szSrc[nSrcPos] && szSrc[nSrcPos - 1]!=_T('\\')) {
 					szDest[nDestPos++] = szSrc[nSrcPos++];
 				}
 			}
 		}
 
 		_tcsncpy(sDir, szDest, nDestPos);
-		sDir[nDestPos] = '*';
-		sDir[nDestPos + 1] = '\0';
+		sDir[nDestPos] = _T('*');
+		sDir[nDestPos + 1] = _T('\0');
 
-		for (i=0; szSrc[nSrcPos] && szSrc[nSrcPos]!='\\'; i++)
+		for (i=0; szSrc[nSrcPos] && szSrc[nSrcPos]!=_T('\\'); i++)
 			sName[i] = szSrc[nSrcPos++];
-		sName[i] = '\0';
+		sName[i] = _T('\0');
 
 		hHandle = FindFirstFile(sDir, &FindFileData);
 		bOK = (hHandle != INVALID_HANDLE_VALUE);
@@ -1642,14 +1596,14 @@ void SaveMRUInfo(LPCTSTR szFullPath)
 		SaveOption(key, _T("mru_Top"), REG_DWORD, (LPBYTE)&nMRUTop, sizeof(int));
 		wsprintf(szKey, _T("mru_%d"), nMRUTop);
 		dwBufferSize = sizeof(szTopVal);
-		szTopVal[0] = '\0';
+		szTopVal[0] = _T('\0');
 		LoadOptionString(key, szKey, (LPBYTE)&szTopVal, dwBufferSize);
 		SaveOption(key, szKey, REG_SZ, (LPBYTE)szFullPath, sizeof(TCHAR) * lstrlen(szFullPath) + 1);
 
 		for (i = 1; i <= options.nMaxMRU; ++i) {
 			if (i == nMRUTop) continue;
 
-			szBuffer[0] = szKey[0] = '\0';
+			szBuffer[0] = szKey[0] = _T('\0');
 			dwBufferSize = sizeof(szBuffer);
 			wsprintf(szKey, _T("mru_%d"), i);
 			LoadOptionString(key, szKey, (LPBYTE)&szBuffer, dwBufferSize);
@@ -1815,7 +1769,7 @@ void SelectWord(BOOL bFinding, BOOL bSmart, BOOL bAutoSelect)
 		szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
 		*((LPWORD)szBuffer) = (USHORT)(lLineLen + 1);
 		SendMessage(client, EM_GETLINE, (WPARAM)lLine, (LPARAM) (LPCTSTR)szBuffer);
-		szBuffer[lLineLen] = '\0';
+		szBuffer[lLineLen] = _T('\0');
 		lLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lLine, 0);
 		cr.cpMin -= lLineIndex;
 		cr.cpMax -= lLineIndex;
@@ -1825,13 +1779,13 @@ void SelectWord(BOOL bFinding, BOOL bSmart, BOOL bAutoSelect)
 					cr.cpMax++;
 				}
 				else {
-					while (cr.cpMin && (_istalnum(szBuffer[cr.cpMin-1]) || szBuffer[cr.cpMin-1] == '_'))
+					while (cr.cpMin && (_istalnum(szBuffer[cr.cpMin-1]) || szBuffer[cr.cpMin-1] == _T('_')))
 						cr.cpMin--;
 				}
-				if (_istalnum(szBuffer[cr.cpMin]) || szBuffer[cr.cpMin] == '_') {
-					while (cr.cpMin && (_istalnum(szBuffer[cr.cpMin-1]) || szBuffer[cr.cpMin-1] == '_'))
+				if (_istalnum(szBuffer[cr.cpMin]) || szBuffer[cr.cpMin] == _T('_')) {
+					while (cr.cpMin && (_istalnum(szBuffer[cr.cpMin-1]) || szBuffer[cr.cpMin-1] == _T('_')))
 						cr.cpMin--;
-					while (cr.cpMax < lLineLen && (_istalnum(szBuffer[cr.cpMax]) || szBuffer[cr.cpMax] == '_'))
+					while (cr.cpMax < lLineLen && (_istalnum(szBuffer[cr.cpMax]) || szBuffer[cr.cpMax] == _T('_')))
 						cr.cpMax++;
 				}
 			}
@@ -1856,11 +1810,11 @@ void SelectWord(BOOL bFinding, BOOL bSmart, BOOL bAutoSelect)
 			if (bFinding) {
 				if (cr.cpMax - cr.cpMin > MAXFIND) {
 					lstrcpyn(szFindText, szBuffer + cr.cpMin, MAXFIND);
-					szFindText[MAXFIND - 1] = '\0';
+					szFindText[MAXFIND - 1] = _T('\0');
 				}
 				else {
 					lstrcpyn(szFindText, szBuffer + cr.cpMin, cr.cpMax - cr.cpMin + 1);
-					szFindText[cr.cpMax - cr.cpMin] = '\0';
+					szFindText[cr.cpMax - cr.cpMin] = _T('\0');
 				}
 			}
 			cr.cpMin += lLineIndex;
@@ -1883,7 +1837,7 @@ DWORD CALLBACK EditStreamIn(DWORD dwCookie, LPBYTE pbBuff, LONG cb, LONG *pcb)
 	LONG lBufferLength = lstrlen(szBuffer);
 	static LONG nBytesDone = 0;
 
-	wsprintf(szStatusMessage, "Loading file... %d", nBytesDone);
+	wsprintf(szStatusMessage, _T("Loading file... %d"), nBytesDone);
 	UpdateStatus();
 
 	if (*pcb == 1) nBytesDone = 0;
@@ -1917,7 +1871,7 @@ int FixTextBuffer(LPTSTR szText)
 	}
 
 	while (szText[i] && szText[i+1] && szText[i+2]) {
-		if (szText[i] == '\r' && szText[i+1] == '\r' && szText[i+2] == '\n') {
+		if (szText[i] == _T('\r') && szText[i+1] == _T('\r') && szText[i+2] == _T('\n')) {
 			++cnt;
 		}
 		else {
@@ -1948,38 +1902,38 @@ void FixTextBufferLE(LPTSTR* pszBuffer)
 	UINT i = 0, cnt = 0, j;
 	LPTSTR szNewBuffer = NULL;
 
-	if ((*pszBuffer)[0] == '\n') {
+	if ((*pszBuffer)[0] == _T('\n')) {
 		++cnt;
 	}
 	while ((*pszBuffer)[i] && (*pszBuffer)[i+1]) {
-		if ((*pszBuffer)[i] != '\r' && (*pszBuffer)[i+1] == '\n')
+		if ((*pszBuffer)[i] != _T('\r') && (*pszBuffer)[i+1] == _T('\n'))
 			++cnt;
-		else if ((*pszBuffer)[i] == '\r' && (*pszBuffer)[i+1] != '\n')
+		else if ((*pszBuffer)[i] == _T('\r') && (*pszBuffer)[i+1] != _T('\n'))
 			++cnt;
 		++i;
 	}
 
 	szNewBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(*pszBuffer)+cnt+2) * sizeof(TCHAR));
 	i = j = 0;
-	if ((*pszBuffer)[0] == '\n') {
-		szNewBuffer[0] = '\r';
+	if ((*pszBuffer)[0] == _T('\n')) {
+		szNewBuffer[0] = _T('\r');
 		++j;
 	}
-	while ((*pszBuffer)[i] != '\0') {
-		if ((*pszBuffer)[i] != '\r' && (*pszBuffer)[i+1] == '\n') {
+	while ((*pszBuffer)[i] != _T('\0')) {
+		if ((*pszBuffer)[i] != _T('\r') && (*pszBuffer)[i+1] == _T('\n')) {
 			szNewBuffer[j++] = (*pszBuffer)[i];
-			szNewBuffer[j] = '\r';
+			szNewBuffer[j] = _T('\r');
 		}
-		else if ((*pszBuffer)[i] == '\r' && (*pszBuffer)[i+1] != '\n') {
+		else if ((*pszBuffer)[i] == _T('\r') && (*pszBuffer)[i+1] != _T('\n')) {
 			szNewBuffer[j++] = (*pszBuffer)[i];
-			szNewBuffer[j] = '\n';
+			szNewBuffer[j] = _T('\n');
 		}
 		else {
 			szNewBuffer[j] = (*pszBuffer)[i];
 		}
 		j++; i++;
 	}
-	szNewBuffer[j] = '\0';
+	szNewBuffer[j] = _T('\0');
 	GlobalFree((HGLOBAL) *pszBuffer);
 	*pszBuffer = szNewBuffer;
 }
@@ -1990,20 +1944,20 @@ int ConvertAndSetWindowText(LPTSTR szText)
 	UINT i = 0, cnt = 0, mcnt = 0, j;
 	LPTSTR szBuffer = NULL;
 
-	if (szText[0] == '\n') {
+	if (szText[0] == _T('\n')) {
 		++cnt;
 	}
 	while (szText[i] && szText[i+1]) {
-		if (szText[i] != '\r' && szText[i+1] == '\n')
+		if (szText[i] != _T('\r') && szText[i+1] == _T('\n'))
 			++cnt;
-		else if (szText[i] == '\r' && szText[i+1] != '\n')
+		else if (szText[i] == _T('\r') && szText[i+1] != _T('\n'))
 			++mcnt;
 		++i;
 	}
 	/** @fixme Commented out code. */
 	/*
 	if (mcnt && cnt) {
-		ERROROUT("Malformed text file detected!");
+		ERROROUT(_T("Malformed text file detected!"));
 	}
 	*/
 
@@ -2011,14 +1965,14 @@ int ConvertAndSetWindowText(LPTSTR szText)
 		if (!options.bNoWarningPrompt)
 			ERROROUT(GetString(IDS_MAC_FILE_WARNING));
 
-		if (szText[i] == '\r') ++mcnt;
+		if (szText[i] == _T('\r')) ++mcnt;
 
 		for (i = 0; szText[i] && szText[i+1]; ++i) {
-			if (szText[i] == '\r' && szText[i+1] != '\n')
-				szText[i] = '\n';
+			if (szText[i] == _T('\r') && szText[i+1] != _T('\n'))
+				szText[i] = _T('\n');
 		}
 
-		if (szText[i] == '\r') szText[i] = '\n';
+		if (szText[i] == _T('\r')) szText[i] = _T('\n');
 
 		cnt += mcnt;
 	}
@@ -2033,21 +1987,21 @@ int ConvertAndSetWindowText(LPTSTR szText)
 		}
 		szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(szText)+cnt+2) * sizeof(TCHAR));
 		i = j = 0;
-		if (szText[0] == '\n') {
-			szBuffer[0] = '\r';
+		if (szText[0] == _T('\n')) {
+			szBuffer[0] = _T('\r');
 			++j;
 		}
-		while (szText[i] != '\0') {
-			if (szText[i] != '\r' && szText[i+1] == '\n') {
+		while (szText[i] != _T('\0')) {
+			if (szText[i] != _T('\r') && szText[i+1] == _T('\n')) {
 				szBuffer[j++] = szText[i];
-				szBuffer[j] = '\r';
+				szBuffer[j] = _T('\r');
 			}
 			else {
 				szBuffer[j] = szText[i];
 			}
 			j++; i++;
 		}
-		szBuffer[j] = '\0';
+		szBuffer[j] = _T('\0');
 #ifdef STREAMING
 		{
 		EDITSTREAM es;
@@ -2160,7 +2114,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 		}
 	}
 
-	if (*pnFileEncoding == TYPE_UTF_16 || *pnFileEncoding == TYPE_UTF_16_BE && *plBufferLength) {
+	if ((*pnFileEncoding == TYPE_UTF_16 || *pnFileEncoding == TYPE_UTF_16_BE) && *plBufferLength) {
 #ifndef BUILD_METAPAD_UNICODE
 		long nBytesNeeded;
 		BOOL bUsedDefault;
@@ -2341,8 +2295,8 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 			if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_YESNO) == IDYES) {
 				UINT i;
 				for (i = 0; i < lBufferLength; i++) {
-					if (pBuffer[i] == '\0')
-						pBuffer[i] = ' ';
+					if (pBuffer[i] == _T('\0'))
+						pBuffer[i] = _T(' ');
 				}
 				SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
 #ifdef STREAMING
@@ -2370,10 +2324,10 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 	SetTabStops();
 	SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
 
-	if (pBuffer[0] == '.' &&
-		pBuffer[1] == 'L' &&
-		pBuffer[2] == 'O' &&
-		pBuffer[3] == 'G') {
+	if (pBuffer[0] == _T('.') &&
+		pBuffer[1] == _T('L') &&
+		pBuffer[2] == _T('O') &&
+		pBuffer[3] == _T('G')) {
 		CHARRANGE cr;
 		cr.cpMin = cr.cpMax = lBufferLength;
 
@@ -2715,12 +2669,12 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 			TCHAR chSave = *lpch;
 			int nResult;
 
-			*lpch = '\0';
+			*lpch = _T('\0');
 			nResult = (*pfnCompare)(lpsz, szText);
 			*lpch = chSave;
 
 
-			if (bWholeWord && lpsz > szBuffer && (_istalnum(*(lpsz-1)) || *(lpsz-1) == '_' || _istalnum(*(lpsz + nFindLen)) || *(lpsz + nFindLen) == '_'))
+			if (bWholeWord && lpsz > szBuffer && (_istalnum(*(lpsz-1)) || *(lpsz-1) == _T('_') || _istalnum(*(lpsz + nFindLen)) || *(lpsz + nFindLen) == _T('_')))
 			;
 			else if (nResult == 0) {
 				lpszFound = lpsz;
@@ -3250,7 +3204,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 			SetDlgItemText(hwndDlg, IDC_MACRO_9, options.MacroArray[8]);
 			SetDlgItemText(hwndDlg, IDC_MACRO_10, options.MacroArray[9]);
 
-			if (options.szLangPlugin[0] == '\0') {
+			if (options.szLangPlugin[0] == _T('\0')) {
 				SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_DEFAULT, BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
 				SendMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_RADIO_LANG_DEFAULT, 0), 0);
 			}
@@ -3267,7 +3221,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 				if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_PLUGIN, BM_GETCHECK, 0, 0)) {
 					TCHAR szPlugin[MAXFN];
 					GetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, szPlugin, MAXFN);
-					if (szPlugin[0] == '\0') {
+					if (szPlugin[0] == _T('\0')) {
 						ERROROUT(GetString(IDS_SELECT_PLUGIN_WARNING));
 						SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_LANG_PLUGIN));
 						SetWindowLongPtr(hwndDlg, DWLP_MSGRESULT, TRUE);
@@ -3290,7 +3244,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 				GetDlgItemText(hwndDlg, IDC_MACRO_10, options.MacroArray[9], MAXMACRO);
 
 				if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_DEFAULT, BM_GETCHECK, 0, 0))
-					options.szLangPlugin[0] = '\0';
+					options.szLangPlugin[0] = _T('\0');
 				else if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_PLUGIN, BM_GETCHECK, 0, 0))
 					GetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, options.szLangPlugin, MAXFN);
 			}
@@ -3314,7 +3268,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 				TCHAR szFilter[] = _T("metapad language plugins (*.dll)\0*.dll\0All Files (*.*)\0*.*\0");
 				TCHAR szResult[MAXFN];
 
-				szResult[0] = '\0';
+				szResult[0] = _T('\0');
 
 				ofn.lStructSize = sizeof(OPENFILENAME);
 				ofn.hwndOwner = hwndDlg;
@@ -3395,7 +3349,7 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 				SendDlgItemMessage(hwndDlg, IDC_FONT_SECONDARY_2, BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
 
 			/*
-			wsprintf(szInt, "%d", options.nStatusFontWidth);
+			wsprintf(szInt, _T("%d"), options.nStatusFontWidth);
 			SetDlgItemText(hwndDlg, IDC_EDIT_SB_FONT_WIDTH, szInt);
 			*/
 
@@ -3434,7 +3388,7 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 				GetDlgItemText(hwndDlg, IDC_EDIT_SB_FONT_WIDTH, szInt, 10);
 				nTmp = _ttoi(szInt);
 				if (nTmp < 1 || nTmp > 1000) {
-					ERROROUT("Enter a font size between 1 and 1000");
+					ERROROUT(_T("Enter a font size between 1 and 1000"));
 					SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_SB_FONT_WIDTH));
 					SetWindowLong (hwndDlg, DWLP_MSGRESULT, TRUE);
 				}
@@ -3798,7 +3752,7 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 				TCHAR szFilter[] = _T("Executable Files (*.exe)\0*.exe\0All Files (*.*)\0*.*\0");
 				TCHAR szResult[MAXFN];
 
-				szResult[0] = '\0';
+				szResult[0] = _T('\0');
 
 				ofn.lStructSize = sizeof(OPENFILENAME);
 				ofn.hwndOwner = hwndDlg;
@@ -4000,7 +3954,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 #endif
 		}
 		else if (nPos == 0) {
-			if (szFile[0] != '\0') {
+			if (szFile[0] != _T('\0')) {
 				EnableMenuItem(hmenuPopup, ID_RELOAD_CURRENT, MF_BYCOMMAND | MF_ENABLED);
 				EnableMenuItem(hmenuPopup, ID_READONLY, MF_BYCOMMAND | MF_ENABLED);
 			}
@@ -4010,7 +3964,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			}
 		}
 		else if (!options.bNoFaves && nPos == FAVEPOS) {
-			if (szFile[0] != '\0') {
+			if (szFile[0] != _T('\0')) {
 				EnableMenuItem(hmenuPopup, ID_FAV_ADD, MF_BYCOMMAND | MF_ENABLED);
 			}
 			else {
@@ -4153,9 +4107,9 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						if (!bDirtyFile && !bLoading) {
 							int nMax = GetWindowTextLength(hwndMain);
 							TCHAR szTmp[MAXFN];
-							szTmp[0] = ' ';
-							szTmp[1] = '*';
-							szTmp[2] = ' ';
+							szTmp[0] = _T(' ');
+							szTmp[1] = _T('*');
+							szTmp[2] = _T(' ');
 							GetWindowText(hwndMain, szTmp + 3, nMax + 1);
 							SetWindowText(hwndMain, szTmp);
 							bDirtyFile = TRUE;
@@ -4179,10 +4133,10 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 #else
 						if (bLoading) {
 							if (options.bAlwaysLaunch || MessageBox(hwnd, GetString(IDS_QUERY_LAUNCH_VIEWER), STR_METAPAD, MB_ICONQUESTION | MB_YESNO) == IDYES) {
-								if (options.szBrowser[0] == '\0') {
+								if (options.szBrowser[0] == _T('\0')) {
 									MessageBox(hwnd, GetString(IDS_PRIMARY_VIEWER_MISSING), STR_METAPAD, MB_OK|MB_ICONEXCLAMATION);
 									SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_VIEW_OPTIONS, 0), 0);
-									szFile[0] = '\0';
+									szFile[0] = _T('\0');
 									break;
 								}
 								LaunchPrimaryExternalViewer();
@@ -4208,7 +4162,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				SendMessage(hwndMain, WM_CLOSE, 0, 0L);
 				break;
 			case ID_FIND_NEXT:
-				if (szFindText[0] != '\0') {
+				if (szFindText[0] != _T('\0')) {
 					SearchFile(szFindText, bMatchCase, FALSE, TRUE, bWholeWord);
 					SendMessage(client, EM_SCROLLCARET, 0, 0);
 				}
@@ -4220,13 +4174,13 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_FIND_PREV_WORD:
 			case ID_FIND_NEXT_WORD:
 				SelectWord(TRUE, TRUE, TRUE);
-				if (szFindText[0] != '\0') {
+				if (szFindText[0] != _T('\0')) {
 					SearchFile(szFindText, bMatchCase, FALSE, (LOWORD(wParam) == ID_FIND_NEXT_WORD ? TRUE : FALSE), bWholeWord);
 					SendMessage(client, EM_SCROLLCARET, 0, 0);
 				}
 				break;
 			case ID_FIND_PREV:
-				if (szFindText[0] != '\0') {
+				if (szFindText[0] != _T('\0')) {
 					SearchFile(szFindText, bMatchCase, FALSE, FALSE, bWholeWord);
 					SendMessage(client, EM_SCROLLCARET, 0, 0);
 				}
@@ -4237,6 +4191,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 			case ID_FIND: {
 				static FINDREPLACE fr;
+				static BOOL bFindCalled = FALSE;
 
 				if (hdlgFind) {
 					SetFocus(hdlgFind);
@@ -4310,6 +4265,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			}
 			case ID_REPLACE: {
 				static FINDREPLACE fr;
+				static BOOL bReplaceCalled = FALSE;
 
 				if (hdlgFind) {
 					SetFocus(hdlgFind);
@@ -4513,17 +4469,17 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 /*
 {
 	TCHAR str[100];
-	wsprintf(str, "Selection length = %d", cr.cpMax - cr.cpMin);
+	wsprintf(str, _T("Selection length = %d"), cr.cpMax - cr.cpMin);
 	ERROROUT(str);
 }
 */
 					szSrc = (LPTSTR) GlobalAlloc(GPTR, (cr.cpMax - cr.cpMin + 1) * sizeof(TCHAR));
 					SendMessage(client, EM_GETSELTEXT, 0, (LPARAM)szSrc);
 
-//DBGOUT(szSrc, "original string");
+//DBGOUT(szSrc, _T("original string"));
 					RichModeToDos(&szSrc);
 
-//DBGOUT(szSrc, "modified string");
+//DBGOUT(szSrc, _T("modified string"));
 
 					hMem = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (lstrlen(szSrc) + 2));
 					strTmp = GlobalLock(hMem);
@@ -4535,12 +4491,12 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						break;
 					}
 
-//DBGOUT(strTmp, "adding to clipboard");
+//DBGOUT(strTmp, _T("adding to clipboard"));
 
 /*
 {
 	TCHAR str[100];
-	wsprintf(str, "hMem = %d", hMem);
+	wsprintf(str, _T("hMem = %d"), hMem);
 	ERROROUT(str);
 }
 */
@@ -4571,7 +4527,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 	hMem = GetClipboardData(_CF_TEXT);
 	if (hMem) {
 		szTmp = GlobalLock(hMem);
-		DBGOUT(szTmp, "clipboard contents");
+		DBGOUT(szTmp, _T("clipboard contents"));
 		GlobalUnlock(hMem);
 	}
 	CloseClipboard();
@@ -4639,10 +4595,10 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					szTemp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
 					*((LPWORD)szTemp) = (USHORT)(lLineLen + 1);
 					SendMessage(client, EM_GETLINE, (WPARAM)lStartLine, (LPARAM)(LPCTSTR)szTemp);
-					szTemp[lLineLen] = '\0';
+					szTemp[lLineLen] = _T('\0');
 
 					for (i = 0; i < lLineLen; ++i)
-						if (szTemp[i] != '\t' && szTemp[i] != ' ')
+						if (szTemp[i] != _T('\t') && szTemp[i] != _T(' '))
 							break;
 
 					if (cr.cpMin - lStartLineIndex == i)
@@ -4777,12 +4733,12 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 					dwActualBytesRead = LoadFileIntoBuffer(hFile, &pBuffer, &lBufferLength, &nFileEncoding);
 #ifndef BUILD_METAPAD_UNICODE
-					if (memchr((const void*)pBuffer, '\0', lBufferLength) != NULL) {
+					if (memchr((const void*)pBuffer, _T('\0'), lBufferLength) != NULL) {
 						if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_YESNO) == IDYES) {
 							UINT i;
 							for (i = 0; i < lBufferLength; i++) {
-								if (pBuffer[i] == '\0')
-									pBuffer[i] = ' ';
+								if (pBuffer[i] == _T('\0'))
+									pBuffer[i] = _T(' ');
 							}
 						}
 						else goto endinsertfile;
@@ -4859,7 +4815,7 @@ endinsertfile:
 						SetWindowText(hwndMain, szTmp);
 					}
 					else
-						//szTmp[GetWindowTextLength(hwndMain) - 12] = '\0';
+						//szTmp[GetWindowTextLength(hwndMain) - 12] = _T('\0');
 						UpdateCaption();
 
 					SwitchReadOnly(bReadOnly);
@@ -5009,7 +4965,7 @@ endinsertfile:
 									}
 								}
 
-							if (szFile[0] != '\0') {
+							if (szFile[0] != _T('\0')) {
 								UpdateCaption();
 							}
 
@@ -5197,9 +5153,9 @@ endinsertfile:
 
 					pch = _tcsrchr(buf, _T('\\'));
 					++pch;
-					*pch = '\0';
+					*pch = _T('\0');
 
-					lstrcat(buf, "metapad.chm");
+					lstrcat(buf, _T("metapad.chm"));
 
 					ShellExecute(NULL, NULL, buf, NULL, szDir, SW_SHOWNORMAL);
 				}
@@ -5247,12 +5203,12 @@ endinsertfile:
 				lMaxLine = SendMessage(client, EM_GETLINECOUNT, 0, 0) - 1;
 
 				if (options.bInsertSpaces) {
-					memset(szPrefix, ' ', options.nTabStops);
+					memset(szPrefix, _T(' '), options.nTabStops);
 					if (cr.cpMin == cr.cpMax) {
-						szPrefix[options.nTabStops - (cr.cpMax - lEndLineIndex) % options.nTabStops] = '\0';
+						szPrefix[options.nTabStops - (cr.cpMax - lEndLineIndex) % options.nTabStops] = _T('\0');
 					}
 					else
-						szPrefix[options.nTabStops] = '\0';
+						szPrefix[options.nTabStops] = _T('\0');
 				}
 				else {
 					lstrcpy(szPrefix, _T("\t"));
@@ -5275,7 +5231,7 @@ endinsertfile:
 						++lEndLine;
 					}
 					szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (1 + lFileSize + (lMaxLine + 1) * options.nTabStops) * sizeof(TCHAR));
-					szBuffer[0] = '\0';
+					szBuffer[0] = _T('\0');
 
 					for (i = lStartLine; i < lEndLine; i++) {
 						iIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)i, 0);
@@ -5285,19 +5241,19 @@ endinsertfile:
 						szTemp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
 						*((LPWORD)szTemp) = (USHORT)(lLineLen + 1); // + 1 to fix weird xp bug (skipping length 1 lines)!!
 						SendMessage(client, EM_GETLINE, (WPARAM)i, (LPARAM)(LPCTSTR)szTemp);
-						szTemp[lLineLen] = '\0';
+						szTemp[lLineLen] = _T('\0');
 						if (bIndent) {
 							lstrcat(szBuffer, szPrefix);
 							lstrcat(szBuffer, szTemp);
 							diff = -(lstrlen(szPrefix));
 						}
 						else {
-							if ((bStrip && lLineLen > 0) || szTemp[0] == '\t') {
+							if ((bStrip && lLineLen > 0) || szTemp[0] == _T('\t')) {
 								diff = 1;
 							}
-							else if (szTemp[0] == ' ') {
+							else if (szTemp[0] == _T(' ')) {
 								diff = 1;
-								while (diff < options.nTabStops && szTemp[diff] == ' ')
+								while (diff < options.nTabStops && szTemp[diff] == _T(' '))
 									diff++;
 							}
 							lstrcpy(szBuffer+j, szTemp + diff);
@@ -5306,8 +5262,8 @@ endinsertfile:
 							j += lLineLen - diff;
 						}
 						else {
-							szBuffer[lLineLen+j-diff] = '\r';
-							szBuffer[lLineLen+j+1-diff] = '\n';
+							szBuffer[lLineLen+j-diff] = _T('\r');
+							szBuffer[lLineLen+j+1-diff] = _T('\n');
 							j += lLineLen + 2 - diff;
 						}
 						HeapFree(globalHeap, 0, (HGLOBAL)szTemp);
@@ -5456,8 +5412,11 @@ endinsertfile:
 			case ID_MAKE_INVERSE:
 			case ID_MAKE_SENTENCE:
 			case ID_MAKE_TITLE:
+#ifndef BUILD_METAPAD_UNICODE
 			case ID_MAKE_OEM:
-			case ID_MAKE_ANSI: {
+			case ID_MAKE_ANSI:
+#endif
+				{
 				CHARRANGE cr;
 				LPTSTR szSrc;
 				LPTSTR szDest;
@@ -5492,13 +5451,13 @@ endinsertfile:
 
 						if (LOWORD(wParam) == ID_UNTABIFY) {
 							lstrcpy(szFnd, _T("\t"));
-							memset(szRepl, ' ', options.nTabStops);
-							szRepl[options.nTabStops] = '\0';
+							memset(szRepl, _T(' '), options.nTabStops);
+							szRepl[options.nTabStops] = _T('\0');
 						}
 						else {
 							lstrcpy(szRepl, _T("\t"));
-							memset(szFnd, ' ', options.nTabStops);
-							szFnd[options.nTabStops] = '\0';
+							memset(szFnd, _T(' '), options.nTabStops);
+							szFnd[options.nTabStops] = _T('\0');
 						}
 
 						nReplaceMax = cr.cpMax;
@@ -5529,9 +5488,9 @@ endinsertfile:
 
 						for (i = 0; i < nSize-1; ++i) {
 #ifdef USE_RICH_EDIT
-							if (szSrc[i] == '\r') ++nLines;
+							if (szSrc[i] == _T('\r')) ++nLines;
 #else
-							if (szSrc[i] == '\n') ++nLines;
+							if (szSrc[i] == _T('\n')) ++nLines;
 #endif
 						}
 
@@ -5542,9 +5501,9 @@ endinsertfile:
 						for (i = 0, j = nQuoteLen; i < nSize-1; ++i) {
 							szDest[j++] = szSrc[i];
 #ifdef USE_RICH_EDIT
-							if (szSrc[i] == '\r') {
+							if (szSrc[i] == _T('\r')) {
 #else
-							if (szSrc[i] == '\n') {
+							if (szSrc[i] == _T('\n')) {
 #endif
 								if (i == nSize - 2) {
 									--nLines;
@@ -5564,28 +5523,28 @@ endinsertfile:
 						LONG i, j;
 						for (i = 0, j = 0; i < nSize; ++i) {
 #ifdef USE_RICH_EDIT
-							if (szSrc[i] != '\r') {
+							if (szSrc[i] != _T('\r')) {
 								szDest[j++] = szSrc[i];
 							}
-							else if (szSrc[i+1] == '\r') {
+							else if (szSrc[i+1] == _T('\r')) {
 								szDest[j++] = szSrc[i++];
 								szDest[j++] = szSrc[i];
 							}
 							else if (LOWORD(wParam) == ID_STRIP_CR_SPACE){
-								szDest[j++] = ' ';
+								szDest[j++] = _T(' ');
 							}
 #else
-							if (szSrc[i] != '\n' && szSrc[i] != '\r') {
+							if (szSrc[i] != _T('\n') && szSrc[i] != _T('\r')) {
 								szDest[j++] = szSrc[i];
 							}
-							else if (szSrc[i] == '\r' && szSrc[i+1] == '\n' && szSrc[i+2] == '\r' && szSrc[i+3] == '\n') {
+							else if (szSrc[i] == _T('\r') && szSrc[i+1] == _T('\n') && szSrc[i+2] == _T('\r') && szSrc[i+3] == _T('\n')) {
 								szDest[j++] = szSrc[i++];
 								szDest[j++] = szSrc[i++];
 								szDest[j++] = szSrc[i++];
 								szDest[j++] = szSrc[i];
 							}
-							else if (LOWORD(wParam) == ID_STRIP_CR_SPACE && szSrc[i] == '\n') {
-								szDest[j++] = ' ';
+							else if (LOWORD(wParam) == ID_STRIP_CR_SPACE && szSrc[i] == _T('\n')) {
+								szDest[j++] = _T(' ');
 							}
 #endif
 						}
@@ -5597,19 +5556,19 @@ endinsertfile:
 						INT i, j;
 						BOOL bStrip = TRUE;
 
-						szDest[lstrlen(szSrc)] = '\0';
+						szDest[lstrlen(szSrc)] = _T('\0');
 						for (i = lstrlen(szSrc)-1, j = i; i >= 0; --i) {
 
 							if (bStrip) {
-								if (szSrc[i] == '\t' || szSrc[i] == ' ') {
+								if (szSrc[i] == _T('\t') || szSrc[i] == _T(' ')) {
 									continue;
 								}
-								else if (szSrc[i] != '\r' && szSrc[i] != '\n') {
+								else if (szSrc[i] != _T('\r') && szSrc[i] != _T('\n')) {
 									bStrip = FALSE;
 								}
 							}
 							else {
-								if (szSrc[i] == '\r') {
+								if (szSrc[i] == _T('\r')) {
 									bStrip = TRUE;
 								}
 							}
@@ -5627,33 +5586,33 @@ endinsertfile:
 						for (i = 0; i < nSize; i++) {
 							if (_istascii(szDest[i])) {
 								switch (szDest[i]) {
-								case 'a':
-								case 'A':
-									szDest[i] = '4';
+								case _T('a'):
+								case _T('A'):
+								szDest[i] = _T('4');
 									break;
-								case 'T':
-								case 't':
-									szDest[i] = '7';
+								case _T('T'):
+								case _T('t'):
+									szDest[i] = _T('7');
 									break;
-								case 'E':
-								case 'e':
-									szDest[i] = '3';
+								case _T('E'):
+								case _T('e'):
+									szDest[i] = _T('3');
 									break;
-								case 'L':
-								case 'l':
-									szDest[i] = '1';
+								case _T('L'):
+								case _T('l'):
+									szDest[i] = _T('1');
 									break;
-								case 'S':
-								case 's':
-									szDest[i] = '5';
+								case _T('S'):
+								case _T('s'):
+									szDest[i] = _T('5');
 									break;
-								case 'G':
-								case 'g':
-									szDest[i] = '6';
+								case _T('G'):
+								case _T('g'):
+									szDest[i] = _T('6');
 									break;
-								case 'O':
-								case 'o':
-									szDest[i] = '0';
+								case _T('O'):
+								case _T('o'):
+									szDest[i] = _T('0');
 									break;
 								}
 							}
@@ -5711,13 +5670,13 @@ endinsertfile:
 								}
 							}
 							else {
-								if (LOWORD(wParam) == ID_MAKE_TITLE && szDest[i] != '\'') {
+								if (LOWORD(wParam) == ID_MAKE_TITLE && szDest[i] != _T('\'')) {
 									bNextUpper = TRUE;
 								}
-								else if (szDest[i] == '.'
-									|| szDest[i] == '?'
-									|| szDest[i] == '!'
-									|| szDest[i] == '\r') {
+								else if (szDest[i] == _T('.')
+									|| szDest[i] == _T('?')
+									|| szDest[i] == _T('!')
+									|| szDest[i] == _T('\r')) {
 									bNextUpper = TRUE;
 								}
 
@@ -5725,20 +5684,14 @@ endinsertfile:
 						}
 					}
 					break;
+#ifndef BUILD_METAPAD_UNICODE
 				case ID_MAKE_OEM:
-#ifdef BUILD_METAPAD_UNICODE
-					ERROROUT(_T("Not supported in UNICODE version."));
-#else
 					CharToOemBuff(szSrc, szDest, nSize);
-#endif
 					break;
 				case ID_MAKE_ANSI:
-#ifdef BUILD_METAPAD_UNICODE
-					ERROROUT(_T("Not supported in UNICODE version."));
-#else
 					OemToCharBuff(szSrc, szDest, nSize);
-#endif
 					break;
+#endif
 				}
 
 				if (LOWORD(wParam) != ID_UNTABIFY && LOWORD(wParam) != ID_TABIFY) {
@@ -5804,9 +5757,9 @@ endinsertfile:
 
 				if (!bDirtyFile && !bLoading) {
 					TCHAR szTmp[MAXFN];
-					szTmp[0] = ' ';
-					szTmp[1] = '*';
-					szTmp[2] = ' ';
+					szTmp[0] = _T(' ');
+					szTmp[1] = _T('*');
+					szTmp[2] = _T(' ');
 					GetWindowText(hwndMain, szTmp + 3, GetWindowTextLength(hwndMain) + 1);
 					SetWindowText(hwndMain, szTmp);
 					bDirtyFile = TRUE;
@@ -5818,7 +5771,7 @@ endinsertfile:
 				break;
 			}
 			case ID_RELOAD_CURRENT: {
-				if (szFile[0] != '\0') {
+				if (szFile[0] != _T('\0')) {
 					CHARRANGE cr;
 
 					if (!SaveIfDirty())
@@ -5980,7 +5933,7 @@ endinsertfile:
 						szTemp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+3) * sizeof(TCHAR));
 						*((LPWORD)szTemp) = (USHORT)(lLineLen + 1);
 						SendMessage(client, EM_GETLINE, (WPARAM)i, (LPARAM)(LPCTSTR)szTemp);
-						szTemp[lLineLen] = '\0';
+						szTemp[lLineLen] = _T('\0');
 						lstrcat(szBuffer, szTemp);
 						if (i < lMaxLine - 1) {
 #ifdef USE_RICH_EDIT
@@ -6027,7 +5980,7 @@ endinsertfile:
 				SetKeyboardState(keys);
 			}
 #else
-				SendMessage(client, WM_CHAR, (WPARAM)'\r', 0);
+				SendMessage(client, WM_CHAR, (WPARAM)_T('\r'), 0);
 #endif
 				break;
 			case ID_CONTEXTMENU:
@@ -6164,15 +6117,15 @@ endinsertfile:
 				bReplacingAll = TRUE;
 
 #ifdef USE_RICH_EDIT // warning -- big kluge to fix problem in richedit re newlines!
-				if (lpfr->lpstrFindWhat[lstrlen(lpfr->lpstrFindWhat) - 1] == '\r') {
-					if (lpfr->lpstrReplaceWith[lstrlen(lpfr->lpstrReplaceWith) - 1] != '\r') {
+				if (lpfr->lpstrFindWhat[lstrlen(lpfr->lpstrFindWhat) - 1] == _T('\r')) {
+					if (lpfr->lpstrReplaceWith[lstrlen(lpfr->lpstrReplaceWith) - 1] != _T('\r')) {
 						bFixCRProblem = TRUE;
 					}
 				}
 #endif
 				while (SearchFile(lpfr->lpstrFindWhat, bMatchCase, TRUE, TRUE, bWholeWord)) {
 #ifdef USE_RICH_EDIT // warning -- big kluge!
-					TCHAR ch[2] = {'\0', '\0'};
+					TCHAR ch[2] = {_T('\0'), _T('\0')};
 
 					lstrcpy(szReplaceHold, lpfr->lpstrReplaceWith);
 
@@ -6259,8 +6212,8 @@ endinsertfile:
 #endif
 
 #ifdef USE_RICH_EDIT // warning -- big kluge!
-				if (lpfr->lpstrFindWhat[lstrlen(lpfr->lpstrFindWhat) - 1] == '\r') {
-					if (lpfr->lpstrReplaceWith[lstrlen(lpfr->lpstrReplaceWith) - 1] != '\r') {
+				if (lpfr->lpstrFindWhat[lstrlen(lpfr->lpstrFindWhat) - 1] == _T('\r')) {
+					if (lpfr->lpstrReplaceWith[lstrlen(lpfr->lpstrReplaceWith) - 1] != _T('\r')) {
 						bFixCRProblem = TRUE;
 					}
 				}
@@ -6269,7 +6222,7 @@ endinsertfile:
 #endif
 				if (SearchFile(lpfr->lpstrFindWhat, bMatchCase, FALSE, bDown, bWholeWord)) {
 #ifdef USE_RICH_EDIT // warning -- big kluge!
-					TCHAR ch[2] = {'\0', '\0'};
+					TCHAR ch[2] = {_T('\0'), _T('\0')};
 
 					if (bFixCRProblem) {
 						SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
@@ -6639,7 +6592,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		WIN32_FIND_DATA FindFileData;
 		HANDLE handle;
 
-		if (options.szFavDir[0] == '\0' || (handle = FindFirstFile(options.szFavDir, &FindFileData)) == INVALID_HANDLE_VALUE) {
+		if (options.szFavDir[0] == _T('\0') || (handle = FindFirstFile(options.szFavDir, &FindFileData)) == INVALID_HANDLE_VALUE) {
 			TCHAR* pch;
 			GetModuleFileName(hInstance, szFav, MAXFN);
 

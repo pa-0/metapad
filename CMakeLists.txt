@@ -5,14 +5,13 @@ cmake_minimum_required ( VERSION 2.6 )
 
 if ( WIN32 )
 
-if ( MINGW OR BORLAND OR WATCOM )
+if ( MSVC )
+else ( MINGW OR BORLAND OR WATCOM )
 	set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows -pg -s" )
 	set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -g -pg" )
-else ( MSVC )
-	set ( SOURCE ${SOURCE} ${CMAKE_SOURCE_DIR}/w32crt.c )
 endif ()
 
-set( LIBS ${LIBS} msvcrt comctl32 )
+set ( LIBS ${LIBS} comctl32 )
 
 if ( DEBUG )
 	add_definitions( -DDEBUG -D_DEBUG )
@@ -61,6 +60,7 @@ include_directories( include )
 
 set( SOURCE ${SOURCE}
 
+	${CMAKE_SOURCE_DIR}/w32crt.c #No tiene utilidad en otro que no sea MSC, pero lo mantengo para asegurar que funcione. Una vez que deje de hacer cambios grandes, pasarlo solo a MSC (suma 1kb, en MSC puedo deshabilitar el runtime standard de C y usar eso en su lugar, salvando unos 40kb).
 	${CMAKE_SOURCE_DIR}/hexdecoder.c
 	${CMAKE_SOURCE_DIR}/hexencoder.c
 	${CMAKE_SOURCE_DIR}/external_viewers.c
