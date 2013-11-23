@@ -24,7 +24,7 @@
 #define CONSTS_H
 
 #define MAXFN 300
-#define MAXFONT 100
+#define MAXFONT 32
 #define MAXARGS 100
 #define MAXQUOTE 100
 #define MAXFIND 100
