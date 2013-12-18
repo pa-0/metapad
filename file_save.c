@@ -35,6 +35,7 @@
 
 #include "include/outmacros.h"
 #include "include/consts.h"
+#include "include/file_utils.h"
 #include "include/strings.h"
 #include "include/resource.h"
 #include "include/typedefs.h"
@@ -55,13 +56,70 @@ extern int nEncodingType;
 
 extern option_struct options;
 
-#ifndef USE_RICH_EDIT
-static __inline void ConvertToUnix(LPTSTR szBuffer);
-#else
-static __inline void RichModeToDos(LPTSTR *szBuffer);
-#endif
-
 BOOL SaveFile(LPCTSTR szFilename);
+
+#ifndef USE_RICH_EDIT
+/**
+ * Convert a string from DOS mode to Unix mode.
+ *
+ * @param[in] szBuffer String to convert.
+ * @note This conversion consist in removing carriage returns.
+ */
+static __inline void ConvertToUnix(LPTSTR szBuffer)
+{
+	UINT i = 0, j = 0;
+	LPTSTR szTemp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(szBuffer)+1) * sizeof(TCHAR));
+
+	lstrcpy(szTemp, szBuffer);
+
+	while (szTemp[i] != _T('\0')) {
+		if (szTemp[i] != _T('\r')) {
+			szBuffer[j] = szTemp[i];
+			j++;
+		}
+		i++;
+	}
+	szBuffer[j] = _T('\0');
+	HeapFree(globalHeap, 0, (HGLOBAL)szTemp);
+}
+#else
+/**
+ * Convert a string from rich text mode to DOS mode.
+ *
+ * @param[in] szBuffer Pointer to the string to convert.
+ * @note This conversion consists in adding one line break after every carriage return.
+ */
+static __inline void RichModeToDos(LPTSTR *szBuffer)
+{
+	int cnt = 0;
+	int i = 0, j;
+
+	while ((*szBuffer)[i] != _T('\0')) {
+		if ((*szBuffer)[i] == _T('\r'))
+			cnt++;
+		i++;
+	}
+
+	if (cnt) {
+		LPTSTR szNewBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(*szBuffer)+cnt+2) * sizeof(TCHAR));
+		i = j = 0;
+		while ((*szBuffer)[i] != _T('\0')) {
+			if ((*szBuffer)[i] == _T('\r')) {
+				szNewBuffer[j++] = (*szBuffer)[i];
+				szNewBuffer[j] = _T('\n');
+			}
+			else {
+				szNewBuffer[j] = (*szBuffer)[i];
+			}
+			j++; i++;
+		}
+		szNewBuffer[j] = _T('\0');
+
+		HeapFree(globalHeap, 0, (HGLOBAL) *szBuffer);
+		*szBuffer = szNewBuffer;
+	}
+}
+#endif
 
 /**
  * Replace '|' with '\0', and adds a '\0' at the end.
@@ -215,6 +273,7 @@ BOOL SaveIfDirty(void)
  * @param[in] szFilename A string containing the target file's name.
  * @return TRUE if successful, FALSE otherwise.
  */
+#ifndef NEW_SAVE
 BOOL SaveFile(LPCTSTR szFilename)
 {
 	HANDLE hFile;
@@ -225,7 +284,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 	LPTSTR pNewBuffer = NULL;
 
 	lFileSize = GetWindowTextLength(client) * sizeof(TCHAR);
-	szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, lFileSize + (1 * sizeof(TCHAR)));
+	szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lFileSize + 1) * sizeof(TCHAR));
 
 	hFile = (HANDLE)CreateFile(szFilename, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
@@ -351,67 +410,5 @@ BOOL SaveFile(LPCTSTR szFilename)
 	}
 	else
 		return TRUE;
-}
-
-#ifndef USE_RICH_EDIT
-/**
- * Convert a string from DOS mode to Unix mode.
- *
- * @param[in] szBuffer String to convert.
- * @note This conversion consist in removing carriage returns.
- */
-void ConvertToUnix(LPTSTR szBuffer)
-{
-	UINT i = 0, j = 0;
-	LPTSTR szTemp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(szBuffer)+1) * sizeof(TCHAR));
-
-	lstrcpy(szTemp, szBuffer);
-
-	while (szTemp[i] != _T('\0')) {
-		if (szTemp[i] != _T('\r')) {
-			szBuffer[j] = szTemp[i];
-			j++;
-		}
-		i++;
-	}
-	szBuffer[j] = _T('\0');
-	HeapFree(globalHeap, 0, (HGLOBAL)szTemp);
-}
-#else
-/**
- * Convert a string from rich text mode to DOS mode.
- *
- * @param[in] szBuffer Pointer to the string to convert.
- * @note This conversion consists in adding one line break after every carriage return.
- */
-void RichModeToDos(LPTSTR *szBuffer)
-{
-	int cnt = 0;
-	int i = 0, j;
-
-	while ((*szBuffer)[i] != _T('\0')) {
-		if ((*szBuffer)[i] == _T('\r'))
-			cnt++;
-		i++;
-	}
-
-	if (cnt) {
-		LPTSTR szNewBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(*szBuffer)+cnt+2) * sizeof(TCHAR));
-		i = j = 0;
-		while ((*szBuffer)[i] != _T('\0')) {
-			if ((*szBuffer)[i] == _T('\r')) {
-				szNewBuffer[j++] = (*szBuffer)[i];
-				szNewBuffer[j] = _T('\n');
-			}
-			else {
-				szNewBuffer[j] = (*szBuffer)[i];
-			}
-			j++; i++;
-		}
-		szNewBuffer[j] = _T('\0');
-
-		HeapFree(globalHeap, 0, (HGLOBAL) *szBuffer);
-		*szBuffer = szNewBuffer;
-	}
 }
 #endif

@@ -25,25 +25,21 @@
 ///// Prototypes /////
 
 LPTSTR GetString(UINT uID);
-void MakeNewFile(void);
 BOOL GetCheckedState(HMENU hmenu, UINT nID, BOOL bToggle);
 void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap);
 LPCTSTR GetShadowBuffer(void);
 BOOL CALLBACK AbortDlgProc(HDC hdc, int nCode);
 LRESULT CALLBACK AbortPrintJob(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWord, BOOL bCase, BOOL bFromTop);
-void ExpandFilename(LPTSTR szBuffer);
 void PrintContents(void);
 void ReportLastError(void);
 void CenterWindow(HWND hwndCenter);
 void SelectWord(BOOL bFinding, BOOL bSmart, BOOL bAutoSelect);
-void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU);
 void SetFont(HFONT* phfnt, BOOL bPrimary);
 void SetTabStops(void);
 void NextWord(BOOL bRight, BOOL bSelect); // Uninmplemented.
 void UpdateStatus(void);
 BOOL SetClientFont(BOOL bPrimary);
-BOOL SearchFile(LPCTSTR szText, BOOL bMatchCase, BOOL bReplaceAll, BOOL bDown, BOOL bWholeWord);
 BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -56,5 +52,7 @@ void PopulateMRUList(void);
 void SaveMRUInfo(LPCTSTR szFullPath);
 void SwitchReadOnly(BOOL bNewVal);
 BOOL EncodeWithEscapeSeqs(TCHAR* szText);
+void ReverseBytes(LPBYTE buffer, LONG size);
+void UpdateCaption(void);
 
 #endif

@@ -25,50 +25,44 @@
 #include <windows.h>
 #include <tchar.h>
 
-#ifdef UNICODE
-#include <wchar.h>
-#endif
+#include "include/consts.h"
+#include "include/file_utils.h"
+#include "include/resource.h"
+#include "include/tmp_protos.h"
+#include "include/typedefs.h"
+#include "include/strings.h"
 
-#undef _tWinMain
-#ifdef _UNICODE
-#define _tWinMain wWinMain
-#else
-#define _tWinMain WinMain
-#endif
+extern BOOL bBinaryFile;
+extern BOOL bDirtyFile;
+extern BOOL bLoading;
+extern HWND client;
+extern HWND hwnd;
+extern LPTSTR lpszShadow;
+extern TCHAR szCaptionFile[MAXFN];
+extern TCHAR szFile[MAXFN];
 
-void __cdecl _tWinMainCRTStartup(void)
+extern option_struct options;
+
+void MakeNewFile(void)
 {
-	int mainret;
-	LPTSTR lpszCommandLine;
-	STARTUPINFO StartupInfo;
+	bLoading = TRUE;
+	SetFileFormat(options.nFormatIndex);
+	SetWindowText(client, _T(""));
+	bDirtyFile = FALSE;
+	bBinaryFile = FALSE;
+	bLoading = FALSE;
 
-	lpszCommandLine = (LPTSTR)GetCommandLine();
-
-	if (*lpszCommandLine == _T('"') ) {
-		lpszCommandLine++;
-        while(*lpszCommandLine && (*lpszCommandLine != _T('"') ) )
-            lpszCommandLine++;
-
-        if (*lpszCommandLine == _T('"') )
-            lpszCommandLine++;
-	}
-	else {
-		while (*lpszCommandLine > _T(' ') )
-			lpszCommandLine++;
+	{
+		TCHAR szBuffer[100];
+		wsprintf(szBuffer, STR_CAPTION_FILE, GetString(IDS_NEW_FILE));
+		SetWindowText(hwnd, szBuffer);
 	}
 
-	while ( *lpszCommandLine && (*lpszCommandLine <= _T(' ') ) )
-        lpszCommandLine++;
-
-	StartupInfo.dwFlags = 0;
-	GetStartupInfo(&StartupInfo);
-
-	mainret = _tWinMain( GetModuleHandle(NULL),
-				NULL,
-				lpszCommandLine,
-				StartupInfo.dwFlags &
-				STARTF_USESHOWWINDOW ?
-				StartupInfo.wShowWindow : SW_SHOWDEFAULT );
-
-	ExitProcess(mainret);
+	SwitchReadOnly(FALSE);
+	szFile[0] = _T('\0');
+	lstrcpy(szCaptionFile, GetString(IDS_NEW_FILE));
+	UpdateStatus();
+	if (lpszShadow)
+		lpszShadow[0] = _T('\0');
+	bLoading = FALSE;
 }

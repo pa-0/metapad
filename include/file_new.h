@@ -19,56 +19,9 @@
 /*                                                                          */
 /****************************************************************************/
 
-#define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0400
+#ifndef FILE_NEW_H
+#define FILE_NEW_H
 
-#include <windows.h>
-#include <tchar.h>
+void MakeNewFile(void);
 
-#ifdef UNICODE
-#include <wchar.h>
 #endif
-
-#undef _tWinMain
-#ifdef _UNICODE
-#define _tWinMain wWinMain
-#else
-#define _tWinMain WinMain
-#endif
-
-void __cdecl _tWinMainCRTStartup(void)
-{
-	int mainret;
-	LPTSTR lpszCommandLine;
-	STARTUPINFO StartupInfo;
-
-	lpszCommandLine = (LPTSTR)GetCommandLine();
-
-	if (*lpszCommandLine == _T('"') ) {
-		lpszCommandLine++;
-        while(*lpszCommandLine && (*lpszCommandLine != _T('"') ) )
-            lpszCommandLine++;
-
-        if (*lpszCommandLine == _T('"') )
-            lpszCommandLine++;
-	}
-	else {
-		while (*lpszCommandLine > _T(' ') )
-			lpszCommandLine++;
-	}
-
-	while ( *lpszCommandLine && (*lpszCommandLine <= _T(' ') ) )
-        lpszCommandLine++;
-
-	StartupInfo.dwFlags = 0;
-	GetStartupInfo(&StartupInfo);
-
-	mainret = _tWinMain( GetModuleHandle(NULL),
-				NULL,
-				lpszCommandLine,
-				StartupInfo.dwFlags &
-				STARTF_USESHOWWINDOW ?
-				StartupInfo.wShowWindow : SW_SHOWDEFAULT );
-
-	ExitProcess(mainret);
-}

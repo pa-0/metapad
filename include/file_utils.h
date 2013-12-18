@@ -19,56 +19,12 @@
 /*                                                                          */
 /****************************************************************************/
 
-#define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0400
+#ifndef FILE_UTILS_H
+#define FILE_UTILS_H
 
-#include <windows.h>
-#include <tchar.h>
+long CalculateFileSize(void);
+void ExpandFilename(LPTSTR szBuffer);
+BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL bWholeWord);
+void SetFileFormat(int nFormat);
 
-#ifdef UNICODE
-#include <wchar.h>
 #endif
-
-#undef _tWinMain
-#ifdef _UNICODE
-#define _tWinMain wWinMain
-#else
-#define _tWinMain WinMain
-#endif
-
-void __cdecl _tWinMainCRTStartup(void)
-{
-	int mainret;
-	LPTSTR lpszCommandLine;
-	STARTUPINFO StartupInfo;
-
-	lpszCommandLine = (LPTSTR)GetCommandLine();
-
-	if (*lpszCommandLine == _T('"') ) {
-		lpszCommandLine++;
-        while(*lpszCommandLine && (*lpszCommandLine != _T('"') ) )
-            lpszCommandLine++;
-
-        if (*lpszCommandLine == _T('"') )
-            lpszCommandLine++;
-	}
-	else {
-		while (*lpszCommandLine > _T(' ') )
-			lpszCommandLine++;
-	}
-
-	while ( *lpszCommandLine && (*lpszCommandLine <= _T(' ') ) )
-        lpszCommandLine++;
-
-	StartupInfo.dwFlags = 0;
-	GetStartupInfo(&StartupInfo);
-
-	mainret = _tWinMain( GetModuleHandle(NULL),
-				NULL,
-				lpszCommandLine,
-				StartupInfo.dwFlags &
-				STARTF_USESHOWWINDOW ?
-				StartupInfo.wShowWindow : SW_SHOWDEFAULT );
-
-	ExitProcess(mainret);
-}

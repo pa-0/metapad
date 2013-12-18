@@ -19,56 +19,17 @@
 /*                                                                          */
 /****************************************************************************/
 
-#define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0400
+#ifndef FILE_LOAD_H
+#define FILE_LOAD_H
 
-#include <windows.h>
-#include <tchar.h>
-
-#ifdef UNICODE
-#include <wchar.h>
-#endif
-
-#undef _tWinMain
-#ifdef _UNICODE
-#define _tWinMain wWinMain
+#ifdef USE_RICH_EDIT
+int FixTextBuffer(LPTSTR szText);
 #else
-#define _tWinMain WinMain
+void FixTextBufferLE(LPTSTR* pszBuffer);
 #endif
 
-void __cdecl _tWinMainCRTStartup(void)
-{
-	int mainret;
-	LPTSTR lpszCommandLine;
-	STARTUPINFO StartupInfo;
+void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU);
+void LoadFileFromMenu(WORD wMenu, BOOL bMRU);
+DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, INT* pnFileEncoding);
 
-	lpszCommandLine = (LPTSTR)GetCommandLine();
-
-	if (*lpszCommandLine == _T('"') ) {
-		lpszCommandLine++;
-        while(*lpszCommandLine && (*lpszCommandLine != _T('"') ) )
-            lpszCommandLine++;
-
-        if (*lpszCommandLine == _T('"') )
-            lpszCommandLine++;
-	}
-	else {
-		while (*lpszCommandLine > _T(' ') )
-			lpszCommandLine++;
-	}
-
-	while ( *lpszCommandLine && (*lpszCommandLine <= _T(' ') ) )
-        lpszCommandLine++;
-
-	StartupInfo.dwFlags = 0;
-	GetStartupInfo(&StartupInfo);
-
-	mainret = _tWinMain( GetModuleHandle(NULL),
-				NULL,
-				lpszCommandLine,
-				StartupInfo.dwFlags &
-				STARTF_USESHOWWINDOW ?
-				StartupInfo.wShowWindow : SW_SHOWDEFAULT );
-
-	ExitProcess(mainret);
-}
+#endif

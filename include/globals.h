@@ -70,9 +70,7 @@ BOOL g_bIniMode;
 
 #ifdef USE_RICH_EDIT
 BOOL bUpdated, bHyperlinks;
-#endif
-
-#ifndef USE_RICH_EDIT
+#else
 HBRUSH BackBrush;
 BOOL bQuitApp;
 #endif
