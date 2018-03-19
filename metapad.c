@@ -54,8 +54,8 @@
 
 #if defined(__MINGW32__)
  #define PROPSHEETHEADER_V1_SIZE 40
-#else
- #include "w32crt.h"
+ //#else causes issues with MSVC
+ //#include "w32crt.h"
 #endif
 
 #include "cencode.h"
