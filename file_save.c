@@ -2,6 +2,8 @@
 /*                                                                          */
 /*   metapad 3.6                                                            */
 /*                                                                          */
+/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
 /*   This program is free software: you can redistribute it and/or modify   */
@@ -273,18 +275,20 @@ BOOL SaveIfDirty(void)
  * @param[in] szFilename A string containing the target file's name.
  * @return TRUE if successful, FALSE otherwise.
  */
-#ifndef NEW_SAVE
 BOOL SaveFile(LPCTSTR szFilename)
 {
 	HANDLE hFile;
-	LONG lFileSize;
+	LONG lChars;
 	DWORD dwActualBytesWritten = 0;
 	LPTSTR szBuffer;
 	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 	LPTSTR pNewBuffer = NULL;
+	LONG nBytesNeeded = 0;
+	UINT nonansi = 0;
+	UINT cp = CP_ACP;
 
-	lFileSize = GetWindowTextLength(client) * sizeof(TCHAR);
-	szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lFileSize + 1) * sizeof(TCHAR));
+	lChars = GetWindowTextLength(client);
+	szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lChars + 1)*sizeof(TCHAR));
 
 	hFile = (HANDLE)CreateFile(szFilename, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
@@ -303,44 +307,38 @@ BOOL SaveFile(LPCTSTR szFilename)
 			SendMessage(client, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
 		}
 #else
-	GetWindowText(client, szBuffer, lFileSize+1);
+	GetWindowText(client, szBuffer, lChars+1);
 #endif
 
 	if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE) {
 
-		long nBytesNeeded = 0;
-
-		if (lFileSize) {
+		if (lChars) {
 
 #ifdef USE_RICH_EDIT
 			RichModeToDos(&szBuffer);
 #endif
 
-#ifdef BUILD_METAPAD_UNICODE
-			pNewBuffer = szBuffer;
-#else
-			nBytesNeeded = 2 * (1+MultiByteToWideChar(CP_ACP, 0, (LPCSTR)szBuffer,
-				lFileSize, NULL, 0));
-
-			pNewBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+1);
-			if (pNewBuffer == NULL)
-				ReportLastError();
-
-			else if (!MultiByteToWideChar(CP_ACP, 0,	(LPCSTR)szBuffer, lFileSize,
-				(LPWSTR)pNewBuffer, nBytesNeeded)) {
-				ReportLastError();
-				ERROROUT(GetString(IDS_UNICODE_STRING_ERROR));
+			if (sizeof(TCHAR) < 2) {
+				nBytesNeeded = 2 * MultiByteToWideChar(cp, 0, (LPCSTR)szBuffer, lChars, NULL, 0);
+				pNewBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+1);
+				if (pNewBuffer == NULL)
+					ReportLastError();
+				else if (!MultiByteToWideChar(cp, 0, (LPCSTR)szBuffer, lChars, (LPWSTR)pNewBuffer, nBytesNeeded)) {
+					ReportLastError();
+					ERROROUT(GetString(IDS_UNICODE_STRING_ERROR));
+				}
+			} else {
+				pNewBuffer = szBuffer;
+				nBytesNeeded = lChars * sizeof(TCHAR);
 			}
-#endif
 		}
 
-		if ((nEncodingType == TYPE_UTF_16_BE) && pNewBuffer) {
+		if (nEncodingType == TYPE_UTF_16_BE) {
 			const CHAR szBOM_UTF_16_BE[SIZEOFBOM_UTF_16] = {'\376', '\377'};
-			ReverseBytes((PBYTE)pNewBuffer, nBytesNeeded);
+			if (pNewBuffer) ReverseBytes((PBYTE)pNewBuffer, nBytesNeeded);
 			// 0xFE, 0xFF - leave off _T() macro.
 			WriteFile(hFile, szBOM_UTF_16_BE, SIZEOFBOM_UTF_16, &dwActualBytesWritten, NULL);
-		}
-		else if (nEncodingType == TYPE_UTF_16) {
+		} else {
 			const CHAR szBOM_UTF_16[SIZEOFBOM_UTF_16] = {'\377', '\376'};
 			// 0xFF, 0xFE - leave off _T() macro.
 			WriteFile(hFile, szBOM_UTF_16, SIZEOFBOM_UTF_16, &dwActualBytesWritten, NULL);
@@ -350,21 +348,18 @@ BOOL SaveFile(LPCTSTR szFilename)
 			ERROROUT(GetString(IDS_UNICODE_BOM_ERROR));
 		}
 
-		if (lFileSize) {
-			if (!WriteFile(hFile, pNewBuffer, nBytesNeeded-2, &dwActualBytesWritten, NULL)) {
+		if (lChars) {
+			if (!WriteFile(hFile, pNewBuffer, nBytesNeeded, &dwActualBytesWritten, NULL)) {
 				ReportLastError();
 			}
-			lFileSize = nBytesNeeded-2;
-#ifndef BUILD_METAPAD_UNICODE
-			HeapFree(globalHeap, 0, (HGLOBAL)pNewBuffer);
-#endif
+			if (sizeof(TCHAR) < 2)
+				HeapFree(globalHeap, 0, (HGLOBAL)pNewBuffer);
 		}
 		else {
 			dwActualBytesWritten = 0;
 		}
 	}
 	else {
-
 #ifdef USE_RICH_EDIT
 		if (bUnix) {
 			int i = 0;
@@ -373,7 +368,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 					szBuffer[i] = _T('\n');
 				i++;
 			}
-			lFileSize = lstrlen(szBuffer);
+			lChars = lstrlen(szBuffer);
 		}
 		else {
 			RichModeToDos(&szBuffer);
@@ -381,7 +376,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 #else
 		if (bUnix) {
 			ConvertToUnix(szBuffer);
-			lFileSize = lstrlen(szBuffer);
+			lChars = lstrlen(szBuffer);
 		}
 #endif
 		if (nEncodingType == TYPE_UTF_8) {
@@ -392,11 +387,26 @@ BOOL SaveFile(LPCTSTR szFilename)
 			if (dwActualBytesWritten != SIZEOFBOM_UTF_8) {
 				ERROROUT(GetString(IDS_UNICODE_BOM_ERROR));
 			}
+			cp = CP_UTF8;
 		}
 
-		if (!WriteFile(hFile, szBuffer, lFileSize, &dwActualBytesWritten, NULL)) {
+		if (lChars && sizeof(TCHAR) > 1) {	//if we're internally Unicode and the buffer is non-empty, conversion is needed
+			nBytesNeeded = WideCharToMultiByte(cp, 0, szBuffer, lChars, NULL, 0, NULL, NULL);
+			if (NULL == (pNewBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded + 1)))
+				ReportLastError();
+			else if (!WideCharToMultiByte(cp, 0, szBuffer, lChars, (LPSTR)pNewBuffer, nBytesNeeded, NULL, (cp != CP_ACP ? NULL : &nonansi)))
+				ReportLastError();
+			else if (nonansi)
+				ERROROUT(GetString(IDS_UNICODE_SAVE_TRUNCATION));
+		} else {
+			pNewBuffer = szBuffer;
+			nBytesNeeded = lChars;
+		}
+		if (!WriteFile(hFile, pNewBuffer, nBytesNeeded, &dwActualBytesWritten, NULL)) {
 			ReportLastError();
 		}
+		if (lChars && sizeof(TCHAR) > 1)
+			HeapFree(globalHeap, 0, (HGLOBAL)pNewBuffer);
 	}
 
 	SetEndOfFile(hFile);
@@ -404,11 +414,11 @@ BOOL SaveFile(LPCTSTR szFilename)
 
 	SetCursor(hcur);
 	HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
-	if (dwActualBytesWritten != (DWORD)lFileSize) {
+	if (dwActualBytesWritten != (DWORD)nBytesNeeded) {
 		ERROROUT(GetString(IDS_ERROR_LOCKED));
 		return FALSE;
 	}
 	else
 		return TRUE;
 }
-#endif
+
