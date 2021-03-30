@@ -2,6 +2,8 @@
 /*                                                                          */
 /*   metapad 3.6                                                            */
 /*                                                                          */
+/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
 /*   This program is free software: you can redistribute it and/or modify   */
@@ -166,8 +168,13 @@ void SaveOptions(void)
 	writeSucceeded &= SaveOption(key, _T("nTabStops"), REG_DWORD, (LPBYTE)&options.nTabStops, sizeof(int));
 	writeSucceeded &= SaveOption(key, _T("nPrimaryFont"), REG_DWORD, (LPBYTE)&options.nPrimaryFont, sizeof(int));
 	writeSucceeded &= SaveOption(key, _T("nSecondaryFont"), REG_DWORD, (LPBYTE)&options.nSecondaryFont, sizeof(int));
+#ifdef BUILD_METAPAD_UNICODE
+	writeSucceeded &= SaveOption(key, _T("PrimaryFontU"), REG_BINARY, (LPBYTE)&options.PrimaryFont, sizeof(LOGFONT));
+	writeSucceeded &= SaveOption(key, _T("SecondaryFontU"), REG_BINARY, (LPBYTE)&options.SecondaryFont, sizeof(LOGFONT));
+#else
 	writeSucceeded &= SaveOption(key, _T("PrimaryFont"), REG_BINARY, (LPBYTE)&options.PrimaryFont, sizeof(LOGFONT));
 	writeSucceeded &= SaveOption(key, _T("SecondaryFont"), REG_BINARY, (LPBYTE)&options.SecondaryFont, sizeof(LOGFONT));
+#endif
 	writeSucceeded &= SaveOption(key, _T("szBrowser"), REG_SZ, (LPBYTE)&options.szBrowser, sizeof(options.szBrowser));
 	writeSucceeded &= SaveOption(key, _T("szArgs"), REG_SZ, (LPBYTE)&options.szArgs, sizeof(options.szArgs));
 	writeSucceeded &= SaveOption(key, _T("szBrowser2"), REG_SZ, (LPBYTE)&options.szBrowser2, sizeof(options.szBrowser2));
@@ -176,7 +183,11 @@ void SaveOptions(void)
 	writeSucceeded &= SaveOption(key, _T("szLangPlugin"), REG_SZ, (LPBYTE)&options.szLangPlugin, sizeof(options.szLangPlugin));
 	writeSucceeded &= SaveOption(key, _T("szFavDir"), REG_SZ, (LPBYTE)&options.szFavDir, sizeof(options.szFavDir));
 	if (key) {
+#ifdef BUILD_METAPAD_UNICODE
+		writeSucceeded &= SaveOption(key, _T("MacroArrayU"), REG_BINARY, (LPBYTE)&options.MacroArray, sizeof(options.MacroArray));
+#else
 		writeSucceeded &= SaveOption(key, _T("MacroArray"), REG_BINARY, (LPBYTE)&options.MacroArray, sizeof(options.MacroArray));
+#endif
 	}
 	else {
 		TCHAR keyname[14];
@@ -288,8 +299,13 @@ void SaveMenusAndData(void)
 
 	if (!options.bNoSaveHistory) {
 		if (key) {
+#ifdef BUILD_METAPAD_UNICODE
+			SaveOption(key, _T("FindArrayU"), REG_BINARY, (LPBYTE)&FindArray, sizeof(FindArray));
+			SaveOption(key, _T("ReplaceArrayU"), REG_BINARY, (LPBYTE)&ReplaceArray, sizeof(ReplaceArray));
+#else
 			SaveOption(key, _T("FindArray"), REG_BINARY, (LPBYTE)&FindArray, sizeof(FindArray));
 			SaveOption(key, _T("ReplaceArray"), REG_BINARY, (LPBYTE)&ReplaceArray, sizeof(ReplaceArray));
+#endif
 		}
 		else {
 			TCHAR keyname[16];
