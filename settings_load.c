@@ -2,6 +2,8 @@
 /*                                                                          */
 /*   metapad 3.6                                                            */
 /*                                                                          */
+/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
 /*   This program is free software: you can redistribute it and/or modify   */
@@ -34,6 +36,7 @@
 #endif
 
 #include "include/hexdecoder.h"
+#include "include/tmp_protos.h"
 #include "include/consts.h"
 #include "include/strings.h"
 #include "include/typedefs.h"
@@ -44,7 +47,7 @@ extern BOOL bHyperlinks;
 #endif
 
 #ifndef __MINGW64_VERSION_MAJOR
-extern int _ttoi(const TCHAR*);
+//extern int _ttoi(const TCHAR*);
 #endif
 
 extern HANDLE globalHeap;
@@ -235,8 +238,13 @@ void LoadOptions(void)
 		LoadOptionNumeric(key, _T("nPrimaryFont"), (LPBYTE)&options.nPrimaryFont, dwBufferSize);
 		LoadOptionNumeric(key, _T("nSecondaryFont"), (LPBYTE)&options.nSecondaryFont, dwBufferSize);
 		dwBufferSize = sizeof(LOGFONT);
+#ifdef BUILD_METAPAD_UNICODE
+		LoadOptionBinary(key, _T("PrimaryFontU"), (LPBYTE)&options.PrimaryFont, dwBufferSize);
+		LoadOptionBinary(key, _T("SecondaryFontU"), (LPBYTE)&options.SecondaryFont, dwBufferSize);
+#else
 		LoadOptionBinary(key, _T("PrimaryFont"), (LPBYTE)&options.PrimaryFont, dwBufferSize);
 		LoadOptionBinary(key, _T("SecondaryFont"), (LPBYTE)&options.SecondaryFont, dwBufferSize);
+#endif
 		dwBufferSize = sizeof(options.szBrowser);
 		LoadOptionString(key, _T("szBrowser"), (LPBYTE)&options.szBrowser, dwBufferSize);
 		dwBufferSize = sizeof(options.szBrowser2);
@@ -254,7 +262,11 @@ void LoadOptions(void)
 
 		if (key != NULL) {
 			dwBufferSize = sizeof(options.MacroArray);
+#ifdef BUILD_METAPAD_UNICODE
+			LoadOptionBinary(key, _T("MacroArrayU"), (LPBYTE)&options.MacroArray, dwBufferSize);
+#else
 			LoadOptionBinary(key, _T("MacroArray"), (LPBYTE)&options.MacroArray, dwBufferSize);
+#endif
 		}
 		else {
 			TCHAR keyname[14];
@@ -414,8 +426,13 @@ void LoadMenusAndData(void)
 
 		if (!options.bNoSaveHistory) {
 			if (key) {
+#ifdef BUILD_METAPAD_UNICODE
+				LoadOptionString(key, _T("FindArrayU"), (LPBYTE)&FindArray, sizeof(FindArray));
+				LoadOptionString(key, _T("ReplaceArrayU"), (LPBYTE)&ReplaceArray, sizeof(ReplaceArray));
+#else
 				LoadOptionString(key, _T("FindArray"), (LPBYTE)&FindArray, sizeof(FindArray));
 				LoadOptionString(key, _T("ReplaceArray"), (LPBYTE)&ReplaceArray, sizeof(ReplaceArray));
+#endif
 			}
 			else {
 				TCHAR keyname[16];
