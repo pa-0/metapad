@@ -116,7 +116,7 @@
 #define IDD_PROPPAGE_GENERAL            112
 #define IDD_ABORT_PRINT                 113
 #define IDD_GOTO                        114
-#define IDC_MYHAND                        122
+#define IDC_MYHAND                      122
 #define IDD_PROPPAGE_VIEW               124
 #define IDB_TOOLBAR                     126
 #define IDD_FAV_NAME                    128
@@ -124,6 +124,11 @@
 #define IDR_MENU                        130
 #define IDB_DROP_ARROW                  131
 #define IDR_POPUP                       131
+#define IDS_ERROR_MSG                   200
+#define IDS_UNICODE_SAVE_TRUNCATION     201
+#define IDS_UNICODE_LOAD_ERROR          202
+#define IDS_UNICODE_LOAD_TRUNCATE       203
+#define IDS_UNICODE_LOAD_TRUNCATION     203
 #define IDC_STATICX                     1005
 #define IDC_EDIT_URL                    1007
 #define IDC_EDIT_PLUGIN_RELEASE         1008
