@@ -2,6 +2,8 @@
 /*                                                                          */
 /*   metapad 3.6                                                            */
 /*                                                                          */
+/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
 /*   This program is free software: you can redistribute it and/or modify   */
@@ -62,8 +64,8 @@
 #endif
 
 #if !defined(__MINGW64_VERSION_MAJOR)
-extern long _ttol(const TCHAR*);
-extern int _ttoi(const TCHAR*);
+//extern long _ttol(const TCHAR*);
+//extern int _ttoi(const TCHAR*);
 #endif
 
 #ifdef _MSC_VER
@@ -1312,14 +1314,18 @@ Error:
 void ReportLastError(void)
 {
 	LPVOID lpMsgBuf;
+	UINT err = GetLastError(), i;
+	LPTSTR szBuffer, errMsg = GetString(IDS_ERROR_MSG);
 
-	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL,
-				GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+	i = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL,
+				err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 				(LPTSTR) &lpMsgBuf, 0, NULL);
-	MessageBox(NULL, lpMsgBuf, STR_METAPAD, MB_OK | MB_ICONSTOP);
+	szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (i + wcslen(errMsg) + 10) * sizeof(TCHAR));
+	wsprintf(szBuffer, errMsg, lpMsgBuf, err);
+	MessageBox(NULL, szBuffer, STR_METAPAD, MB_OK | MB_ICONSTOP);
 
 	LocalFree(lpMsgBuf);
-/** @fixme Commented out code. */
+	HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
 /*
 #ifndef	_DEBUG
 	PostQuitMessage(0);
@@ -1787,8 +1793,11 @@ void SetTabStops(void)
 
 	bDirtyFile = TRUE;
 
+#ifndef BUILD_METAPAD_UNICODE
+	//TODO: This fails, for now commented by preprocessor (Rich-Unicode build / "Release")
 	if (!SendMessage(client, EM_SETPARAFORMAT, 0, (LPARAM)(PARAFORMAT FAR *)&pf))
 		ERROROUT(GetString(IDS_PARA_FORMAT_ERROR));
+#endif
 
 	bDirtyFile = bOldDirty;
 
