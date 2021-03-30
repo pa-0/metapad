@@ -127,7 +127,6 @@
 #define IDS_ERROR_MSG                   200
 #define IDS_UNICODE_SAVE_TRUNCATION     201
 #define IDS_UNICODE_LOAD_ERROR          202
-#define IDS_UNICODE_LOAD_TRUNCATE       203
 #define IDS_UNICODE_LOAD_TRUNCATION     203
 #define IDC_STATICX                     1005
 #define IDC_EDIT_URL                    1007
