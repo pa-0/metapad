@@ -2,6 +2,8 @@
 /*                                                                          */
 /*   metapad 3.6                                                            */
 /*                                                                          */
+/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
 /*   This program is free software: you can redistribute it and/or modify   */
@@ -53,12 +55,27 @@ extern option_struct options;
  */
 long CalculateFileSize(void)
 {
+	LPTSTR szBuffer;
 	long nBytes;
+	extern HANDLE globalHeap;
 	if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE) {
 		nBytes = GetWindowTextLength(client) * 2 + SIZEOFBOM_UTF_16;
 	}
 	else if (nEncodingType == TYPE_UTF_8) {
-		nBytes = GetWindowTextLength(client) + SIZEOFBOM_UTF_8;
+		nBytes = GetWindowTextLength(client);
+		if (sizeof(TCHAR) > 1) {
+			/* TODO		This can get quite expensive for very large files. Future alternatives:
+				- Count chars instead
+				- Ability to disable this in options
+				- Do this in the background with ratelimiting
+				- Keep a local copy of the text buffer
+			*/
+			szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (nBytes + 1)*sizeof(TCHAR));
+			GetWindowText(client, szBuffer, nBytes+1);
+			nBytes = WideCharToMultiByte(CP_UTF8, 0, szBuffer, nBytes, NULL, 0, NULL, NULL);
+			HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
+		}
+		nBytes += SIZEOFBOM_UTF_8;
 	}
 	else {
 		nBytes = GetWindowTextLength(client) - (bUnix ? (SendMessage(client, EM_GETLINECOUNT, 0, 0)) - 1 : 0);
