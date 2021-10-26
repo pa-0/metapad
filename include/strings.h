@@ -1,7 +1,9 @@
 /****************************************************************************/
 /*                                                                          */
-/*   metapad 3.6                                                            */
+/*   metapad 3.6+                                                           */
 /*                                                                          */
+/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
 /*   This program is free software: you can redistribute it and/or modify   */
@@ -24,15 +26,15 @@
 
 #ifdef BUILD_METAPAD_UNICODE
 #ifdef USE_RICH_EDIT
-#define STR_ABOUT_NORMAL _T("metapad 3.6U Beta 1")
+#define STR_ABOUT_NORMAL _T("metapad 3.7")
 #else
-#define STR_ABOUT_NORMAL _T("metapad LE 3.6U Beta 1")
+#define STR_ABOUT_NORMAL _T("metapad LE 3.7")
 #endif
 #else
 #ifdef USE_RICH_EDIT
-#define STR_ABOUT_NORMAL _T("metapad 3.6")
+#define STR_ABOUT_NORMAL _T("metapad 3.7-ANSI")
 #else
-#define STR_ABOUT_NORMAL _T("metapad LE 3.6")
+#define STR_ABOUT_NORMAL _T("metapad LE 3.7-ANSI")
 #endif
 #endif
 
