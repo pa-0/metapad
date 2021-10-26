@@ -24,9 +24,9 @@
 
 #ifdef BUILD_METAPAD_UNICODE
 #ifdef USE_RICH_EDIT
-#define STR_ABOUT_NORMAL _T("metapad 3.xU ALPHA 0")
+#define STR_ABOUT_NORMAL _T("metapad 3.6U Beta 1")
 #else
-#define STR_ABOUT_NORMAL _T("metapad LE 3.xU ALPHA 0")
+#define STR_ABOUT_NORMAL _T("metapad LE 3.6U Beta 1")
 #endif
 #else
 #ifdef USE_RICH_EDIT
@@ -48,6 +48,6 @@
 #define STR_URL _T("http://liquidninja.com/metapad")
 #define STR_REGKEY _T("SOFTWARE\\metapad")
 #define STR_FAV_APPNAME _T("Favourites")
-#define STR_COPYRIGHT _T("Â© 1999-2011 Alexander Davidson")
+#define STR_COPYRIGHT _T("© 1999-2011 Alexander Davidson")
 
 #endif
