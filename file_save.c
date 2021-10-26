@@ -46,6 +46,7 @@
 extern HANDLE globalHeap;
 extern HWND hwnd;
 extern HWND client;
+extern BOOL bBinaryFile;
 extern BOOL bDirtyFile;
 extern BOOL bLoading;
 extern BOOL bReadOnly;
@@ -278,11 +279,12 @@ BOOL SaveIfDirty(void)
 BOOL SaveFile(LPCTSTR szFilename)
 {
 	HANDLE hFile;
-	LONG lChars;
+	LONG i, lChars;
 	DWORD dwActualBytesWritten = 0;
 	LPTSTR szBuffer;
 	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 	LPTSTR pNewBuffer = NULL;
+	TCHAR cPad;
 	LONG nBytesNeeded = 0;
 	UINT nonansi = 0;
 	UINT cp = CP_ACP;
@@ -309,6 +311,13 @@ BOOL SaveFile(LPCTSTR szFilename)
 #else
 	GetWindowText(client, szBuffer, lChars+1);
 #endif
+
+	if (bBinaryFile && sizeof(TCHAR) > 1) {
+		cPad = _T('\x2400');
+		for (i = 0; i < lChars; i++)
+			if (szBuffer[i] == cPad)
+				szBuffer[i] = _T('\0');
+	}
 
 	if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE) {
 

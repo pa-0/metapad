@@ -1091,6 +1091,9 @@ BEGIN
     IDS_UNICODE_LOAD_ERROR  "Error converting file to Unicode"
     IDS_UNICODE_LOAD_TRUNCATION 
                             "Detected unsupported or invalid code points in this Unicode file.\n\nData will be lost if this file is saved!"
+    IDS_BINARY_FILE_WARNING_SAFE
+                            "This file is not a valid text file. It may be a binary file.\nLoad anyway?\nNULL terminators will be preserved unless the File Format is changed."
+    IDS_LARGE_FILE_WARNING  "This file is very large ( >16 MB). Loading it may take a long time.\nLoad anyway?"
 END
 
 #endif    // English (U.S.) resources
