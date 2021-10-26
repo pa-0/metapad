@@ -228,6 +228,7 @@
 #define IDC_EDIT_PLUGIN_LANG            1083
 #define IDC_STATIC_COPYRIGHT            1084
 #define IDC_STATIC_COPYRIGHT2           1085
+#define IDC_CUSTOMDATE                  1086
 #define ID_DROP_REPLACE                 1153
 #define ID_DROP_FIND                    1154
 #define IDD_FIND                        1540
@@ -316,8 +317,11 @@
 #define ID_SCROLLLEFT                   40106
 #define ID_SCROLLRIGHT                  40107
 #define ID_SAVE_AND_QUIT                40108
-#define ID_UTF_8_FILE                   40109
 #define ID_CONTROL_SHIFT_ENTER          40110
+#define ID_UTF8_FILE                    40201
+#define ID_UTF8_UNIX_FILE               40202
+#define ID_BINARY_FILE                  40203
+#define ID_DATE_TIME_CUSTOM             40204
 #define ID_MRU_BASE                     44000
 #define ID_MRU_1                        44001
 #define ID_MRU_2                        44002

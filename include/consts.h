@@ -1,7 +1,9 @@
 /****************************************************************************/
 /*                                                                          */
-/*   metapad 3.6                                                            */
+/*   metapad 3.6+                                                           */
 /*                                                                          */
+/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
 /*   This program is free software: you can redistribute it and/or modify   */
@@ -33,6 +35,7 @@
 #define MAXSTRING 500
 //#define MAXFAVES 16
 #define MAXMACRO 1001
+#define MAXCUSTOMDATE 65
 
 #define NUMCUSTOMBITMAPS 6
 #ifdef USE_RICH_EDIT
@@ -72,7 +75,9 @@
 #define FILE_FORMAT_UNIX 1
 #define FILE_FORMAT_UNICODE 2
 #define FILE_FORMAT_UNICODE_BE 3
-#define FILE_FORMAT_UTF_8 4
+#define FILE_FORMAT_UTF8 4
+#define FILE_FORMAT_UTF8_UNIX 5
+#define FILE_FORMAT_BINARY 6
 
 #define SIZEOFBOM_UTF_8 3
 #define SIZEOFBOM_UTF_16 2
