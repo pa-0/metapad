@@ -75,7 +75,7 @@ long CalculateFileSize(void)
 			nBytes = WideCharToMultiByte(CP_UTF8, 0, szBuffer, nBytes, NULL, 0, NULL, NULL);
 			HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
 		}
-		nBytes += SIZEOFBOM_UTF_8;
+		nBytes += SIZEOFBOM_UTF_8 - (bUnix ? (SendMessage(client, EM_GETLINECOUNT, 0, 0)) - 1 : 0);
 	}
 	else {
 		nBytes = GetWindowTextLength(client) - (bUnix ? (SendMessage(client, EM_GETLINECOUNT, 0, 0)) - 1 : 0);
@@ -92,14 +92,20 @@ void SetFileFormat(int nFormat)
 	case FILE_FORMAT_UNIX:
 		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNIX_FILE, 0), 0);
 		break;
-	case FILE_FORMAT_UTF_8:
-		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UTF_8_FILE, 0), 0);
+	case FILE_FORMAT_UTF8:
+		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UTF8_FILE, 0), 0);
+		break;
+	case FILE_FORMAT_UTF8_UNIX:
+		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UTF8_UNIX_FILE, 0), 0);
 		break;
 	case FILE_FORMAT_UNICODE:
 		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNICODE_FILE, 0), 0);
 		break;
 	case FILE_FORMAT_UNICODE_BE:
 		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNICODE_BE_FILE, 0), 0);
+		break;
+	case FILE_FORMAT_BINARY:
+		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_BINARY_FILE, 0), 0);
 		break;
 	}
 }

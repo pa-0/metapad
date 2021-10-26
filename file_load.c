@@ -129,12 +129,7 @@ int ConvertAndSetWindowText(LPTSTR szText, DWORD dwTextLen)
 
 	bUnix = FALSE;
 	if (cnt) {
-		if (nEncodingType == TYPE_UTF_8) {
-			bUnix = FALSE;
-		}
-		else {
-			bUnix = TRUE;
-		}
+		bUnix = TRUE;
 		szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(szText)+cnt+2) * sizeof(TCHAR));
 		i = j = 0;
 		if (szText[0] == _T('\n')) {
@@ -588,7 +583,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 				SetFileFormat(FILE_FORMAT_UNICODE_BE);
 				break;
 			case TYPE_UTF_8:
-				SetFileFormat(FILE_FORMAT_UTF_8);
+				SetFileFormat(bUnix ? FILE_FORMAT_UTF8_UNIX : FILE_FORMAT_UTF8);
 				break;
 			default:
 				SetFileFormat(bUnix ? FILE_FORMAT_UNIX : FILE_FORMAT_DOS);
@@ -629,6 +624,9 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 		}
 	}
 
+#ifdef BUILD_METAPAD_UNICODE
+	if (bBinaryFile) SetFileFormat(FILE_FORMAT_BINARY);
+#endif
 	SendMessage(client, EM_SETMODIFY, (WPARAM)TRUE, 0);
 
 	SetTabStops();

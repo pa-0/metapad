@@ -535,8 +535,8 @@ void UpdateStatus(void)
 		wsprintf(szPane, _T("  BIN"));
 	}
 	else if (nEncodingType == TYPE_UTF_8) {
-		wsprintf(szPane, _T(" UTF-8"));
-		nPaneSizes[SBPANE_TYPE] = 5 * options.nStatusFontWidth + 4;
+		wsprintf(szPane, bUnix ? _T(" UTF-8 UNIX") : _T(" UTF-8"));
+		nPaneSizes[SBPANE_TYPE] = (bUnix ? 9 : 5) * options.nStatusFontWidth + 4;
 	}
 	else if (nEncodingType == TYPE_UTF_16) {
 		wsprintf(szPane, _T(" Unicode"));
@@ -2295,7 +2295,9 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("UNIX Text"));
 			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("Unicode"));
 			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("Unicode BE"));
-			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("UTF-8"));
+			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("UTF-8 DOS"));
+			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("UTF-8 UNIX"));
+			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("Binary"));
 
 
 			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_SETCURSEL, (WPARAM)options.nFormatIndex, 0);
@@ -4962,30 +4964,36 @@ endinsertfile:
 			case ID_LAUNCH_ASSOCIATED_VIEWER:
 				LaunchInViewer(FALSE, FALSE);
 				break;
-			case ID_UTF_8_FILE:
+			case ID_BINARY_FILE:
+			case ID_UTF8_FILE:
+			case ID_UTF8_UNIX_FILE:
 			case ID_UNICODE_FILE:
 			case ID_UNICODE_BE_FILE:
 			case ID_DOS_FILE:
 			case ID_UNIX_FILE: {
 				HMENU hmenu = GetSubMenu(GetSubMenu(GetMenu(hwndMain), 0), FILEFORMATPOS);
 
-				bBinaryFile = FALSE;
 				if (!bLoading) {
-					if (LOWORD(wParam) == ID_UTF_8_FILE && nEncodingType == TYPE_UTF_8)
+					if (LOWORD(wParam) == ID_UTF8_FILE && !bUnix && nEncodingType == TYPE_UTF_8)
+						break;
+					else if (LOWORD(wParam) == ID_UTF8_UNIX_FILE && bUnix && nEncodingType == TYPE_UTF_8)
 						break;
 					else if (LOWORD(wParam) == ID_UNICODE_FILE && nEncodingType == TYPE_UTF_16)
 						break;
 					else if (LOWORD(wParam) == ID_UNICODE_BE_FILE && nEncodingType == TYPE_UTF_16_BE)
 						break;
-					else if (LOWORD(wParam) == ID_UNIX_FILE && bUnix && nEncodingType == TYPE_UNKNOWN)
+					else if (LOWORD(wParam) == ID_UNIX_FILE && bUnix && !bBinaryFile && nEncodingType == TYPE_UNKNOWN)
 						break;
-					else if (LOWORD(wParam) == ID_DOS_FILE && !bUnix && nEncodingType == TYPE_UNKNOWN)
+					else if (LOWORD(wParam) == ID_DOS_FILE && !bUnix && !bBinaryFile && nEncodingType == TYPE_UNKNOWN)
+						break;
+					else if (LOWORD(wParam) == ID_BINARY_FILE && bBinaryFile && nEncodingType == TYPE_UNKNOWN)
 						break;
 				}
 
-				bUnix = LOWORD(wParam) == ID_UNIX_FILE;
+				bBinaryFile = (LOWORD(wParam) == ID_BINARY_FILE);
+				bUnix = (LOWORD(wParam) == ID_UNIX_FILE || LOWORD(wParam) == ID_UTF8_UNIX_FILE);
 
-				if (LOWORD(wParam) == ID_UTF_8_FILE)
+				if (LOWORD(wParam) == ID_UTF8_FILE || LOWORD(wParam) == ID_UTF8_UNIX_FILE)
 					nEncodingType = TYPE_UTF_8;
 				else if (LOWORD(wParam) == ID_UNICODE_FILE)
 					nEncodingType = TYPE_UTF_16;
@@ -4994,7 +5002,7 @@ endinsertfile:
 				else
 					nEncodingType = TYPE_UNKNOWN;
 
-				CheckMenuRadioItem(hmenu, ID_DOS_FILE, ID_UTF_8_FILE, LOWORD(wParam), MF_BYCOMMAND);
+				CheckMenuRadioItem(hmenu, ID_DOS_FILE, ID_BINARY_FILE, LOWORD(wParam), MF_BYCOMMAND);
 
 				if (!bDirtyFile && !bLoading) {
 					TCHAR szTmp[MAXFN];
