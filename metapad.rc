@@ -379,35 +379,37 @@ CAPTION "Buffers && Language"
 FONT 8, "MS Sans Serif"
 BEGIN
     GROUPBOX        "Quick buffers (select text and set with Alt + Shift + number)",
-                    IDC_STATIC,7,7,211,102
-    LTEXT           "Alt + &1:",IDC_STATIC,17,22,25,8
-    EDITTEXT        IDC_MACRO_1,48,20,59,12,ES_AUTOHSCROLL
-    LTEXT           "Alt + &2:",IDC_STATIC,17,39,25,8
-    EDITTEXT        IDC_MACRO_2,48,37,59,12,ES_AUTOHSCROLL
-    LTEXT           "Alt + &3:",IDC_STATIC,17,56,25,8
-    EDITTEXT        IDC_MACRO_3,48,54,59,12,ES_AUTOHSCROLL
-    LTEXT           "Alt + &4:",IDC_STATIC,17,73,25,8
-    EDITTEXT        IDC_MACRO_4,48,71,59,12,ES_AUTOHSCROLL
-    LTEXT           "Alt + &5:",IDC_STATIC,17,90,25,8
-    EDITTEXT        IDC_MACRO_5,48,88,59,12,ES_AUTOHSCROLL
-    LTEXT           "Alt + &6:",IDC_STATIC,118,22,25,8
-    EDITTEXT        IDC_MACRO_6,150,20,59,12,ES_AUTOHSCROLL
-    LTEXT           "Alt + &7:",IDC_STATIC,118,39,25,8
-    EDITTEXT        IDC_MACRO_7,150,37,59,12,ES_AUTOHSCROLL
-    LTEXT           "Alt + &8:",IDC_STATIC,118,56,25,8
-    EDITTEXT        IDC_MACRO_8,150,54,59,12,ES_AUTOHSCROLL
-    LTEXT           "Alt + &9:",IDC_STATIC,118,73,25,8
-    EDITTEXT        IDC_MACRO_9,150,71,59,12,ES_AUTOHSCROLL
-    LTEXT           "Alt + &0:",IDC_STATIC,118,90,28,8
-    EDITTEXT        IDC_MACRO_10,150,88,59,12,ES_AUTOHSCROLL
-    GROUPBOX        "Language for menus, dialogs and messages",IDC_STATIC,7,113,211,47
+                    IDC_STATIC,7,3,211,97
+    LTEXT           "Alt + &1:",IDC_STATIC,17,18,25,8
+    EDITTEXT        IDC_MACRO_1,48,16,59,12,ES_AUTOHSCROLL
+    LTEXT           "Alt + &2:",IDC_STATIC,17,35,25,8
+    EDITTEXT        IDC_MACRO_2,48,33,59,12,ES_AUTOHSCROLL
+    LTEXT           "Alt + &3:",IDC_STATIC,17,52,25,8
+    EDITTEXT        IDC_MACRO_3,48,50,59,12,ES_AUTOHSCROLL
+    LTEXT           "Alt + &4:",IDC_STATIC,17,69,25,8
+    EDITTEXT        IDC_MACRO_4,48,67,59,12,ES_AUTOHSCROLL
+    LTEXT           "Alt + &5:",IDC_STATIC,17,86,25,8
+    EDITTEXT        IDC_MACRO_5,48,84,59,12,ES_AUTOHSCROLL
+    LTEXT           "Alt + &6:",IDC_STATIC,118,18,25,8
+    EDITTEXT        IDC_MACRO_6,150,16,59,12,ES_AUTOHSCROLL
+    LTEXT           "Alt + &7:",IDC_STATIC,118,35,25,8
+    EDITTEXT        IDC_MACRO_7,150,33,59,12,ES_AUTOHSCROLL
+    LTEXT           "Alt + &8:",IDC_STATIC,118,52,25,8
+    EDITTEXT        IDC_MACRO_8,150,50,59,12,ES_AUTOHSCROLL
+    LTEXT           "Alt + &9:",IDC_STATIC,118,69,25,8
+    EDITTEXT        IDC_MACRO_9,150,67,59,12,ES_AUTOHSCROLL
+    LTEXT           "Alt + &0:",IDC_STATIC,118,86,28,8
+    EDITTEXT        IDC_MACRO_10,150,84,59,12,ES_AUTOHSCROLL
+    GROUPBOX        "Language for menus, dialogs and messages",IDC_STATIC,7,103,211,40
     CONTROL         "&Default (English)",IDC_RADIO_LANG_DEFAULT,"Button",
-                    BS_AUTORADIOBUTTON | BS_NOTIFY | WS_GROUP,17,128,72,10
+                    BS_AUTORADIOBUTTON | BS_NOTIFY | WS_GROUP,17,114,72,10
     CONTROL         "&Language plugin:",IDC_RADIO_LANG_PLUGIN,"Button",
-                    BS_AUTORADIOBUTTON | BS_NOTIFY,17,142,72,10
-    EDITTEXT        IDC_EDIT_LANG_PLUGIN,95,141,96,12,ES_AUTOHSCROLL |
+                    BS_AUTORADIOBUTTON | BS_NOTIFY,17,128,72,10
+    EDITTEXT        IDC_EDIT_LANG_PLUGIN,95,127,96,12,ES_AUTOHSCROLL |
                     WS_GROUP
-    PUSHBUTTON      "...",IDC_BUTTON_BROWSE,194,141,14,12
+    PUSHBUTTON      "...",IDC_BUTTON_BROWSE,194,127,14,12
+    LTEXT           "&Custom date format:",IDC_STATIC,11,150,63,8
+    EDITTEXT        IDC_CUSTOMDATE,80,148,136,12,ES_AUTOHSCROLL
 END
 
 #if defined(APSTUDIO_INVOKED) || defined(DONT_INCLUDE)
@@ -571,7 +573,7 @@ BEGIN
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 218
-        TOPMARGIN, 7
+        TOPMARGIN, 2
         BOTTOMMARGIN, 160
         HORZGUIDE, 24
         HORZGUIDE, 41
@@ -661,10 +663,14 @@ BEGIN
             MENUITEM "&UNIX Text (LF)\tCtrl+2",     ID_UNIX_FILE
             MENUITEM "Un&icode\tCtrl+3",            ID_UNICODE_FILE
             MENUITEM "Unicode (&Big Endian)\tCtrl+4", ID_UNICODE_BE_FILE
-            MENUITEM "UTF-&8 w/BOM (CR+LF)\tCtrl+5",        ID_UTF_8_FILE
+            MENUITEM "UTF-&8 (CR+LF)\tCtrl+5",        ID_UTF8_FILE
+			MENUITEM "UTF-8 UNI&X (LF)\tCtrl+6",      ID_UTF8_UNIX_FILE
+#ifdef BUILD_METAPAD_UNICODE
+			MENUITEM "&Binary (Preserve NULLs)\tCtrl+7",  ID_BINARY_FILE
+#endif
         END
         MENUITEM "&Refresh/Revert\tF5",         ID_RELOAD_CURRENT
-        MENUITEM "&Calculate Size\tF12",        ID_SHOWFILESIZE
+        MENUITEM "&Calculate Size\tF11",        ID_SHOWFILESIZE
         MENUITEM SEPARATOR
         MENUITEM "Page Se&tup...",              ID_PAGESETUP
         MENUITEM "&Print...\tCtrl+P",           ID_PRINT
@@ -706,16 +712,15 @@ BEGIN
             MENUITEM SEPARATOR
             MENUITEM "Ta&bified\tF8",               ID_TABIFY
             MENUITEM "U&ntabified\tCtrl+F8",        ID_UNTABIFY
-#ifndef BUILD_METAPAD_UNICODE
             MENUITEM SEPARATOR
-            MENUITEM "&OEM Format\tF11",            ID_MAKE_OEM
+            MENUITEM "&OEM Format\tShift+F11",      ID_MAKE_OEM
             MENUITEM "&ANSI Format\tCtrl+F11",      ID_MAKE_ANSI
-#endif
         END
         POPUP "Insert &Date/Time"
         BEGIN
             MENUITEM "&Short Format\tF6",           ID_DATE_TIME
             MENUITEM "&Long Format\tF7",            ID_DATE_TIME_LONG
+            MENUITEM "&Custom Format\tF12",         ID_DATE_TIME_CUSTOM
         END
         MENUITEM "&Insert File...\tAlt+D",      ID_INSERT_FILE
         MENUITEM "Co&mmit Word Wrap\tCtrl+F9",  ID_COMMIT_WORDWRAP
@@ -804,7 +809,13 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
+#if defined(BUILD_ICON_SMALL)
+IDI_PAD                 ICON    DISCARDABLE     "metapad.small.ico"
+#elif defined(BUILD_ICON_LEGACY)
+IDI_PAD                 ICON    DISCARDABLE     "metapad.legacy.ico"
+#else
 IDI_PAD                 ICON    DISCARDABLE     "metapad.ico"
+#endif
 IDI_EYE                 ICON    DISCARDABLE     "eye3.ico"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -849,11 +860,15 @@ BEGIN
     "4",            ID_UNICODE_BE_FILE,     VIRTKEY, CONTROL, NOINVERT
     "4",            ID_MACRO_4,             VIRTKEY, ALT, NOINVERT
     "4",            ID_SET_MACRO_4,         VIRTKEY, SHIFT, ALT, NOINVERT
-    "5",            ID_UTF_8_FILE,          VIRTKEY, CONTROL, NOINVERT
+    "5",            ID_UTF8_FILE,           VIRTKEY, CONTROL, NOINVERT
     "5",            ID_MACRO_5,             VIRTKEY, ALT, NOINVERT
     "5",            ID_SET_MACRO_5,         VIRTKEY, SHIFT, ALT, NOINVERT
+    "6",            ID_UTF8_UNIX_FILE,      VIRTKEY, CONTROL, NOINVERT
     "6",            ID_MACRO_6,             VIRTKEY, ALT, NOINVERT
     "6",            ID_SET_MACRO_6,         VIRTKEY, SHIFT, ALT, NOINVERT
+#ifdef BUILD_METAPAD_UNICODE
+    "7",            ID_BINARY_FILE,         VIRTKEY, CONTROL, NOINVERT
+#endif
     "7",            ID_MACRO_7,             VIRTKEY, ALT, NOINVERT
     "7",            ID_SET_MACRO_7,         VIRTKEY, SHIFT, ALT, NOINVERT
     "8",            ID_MACRO_8,             VIRTKEY, ALT, NOINVERT
@@ -894,9 +909,10 @@ BEGIN
     VK_DOWN,        ID_SCROLLDOWN,          VIRTKEY, ALT, NOINVERT
     VK_ESCAPE,      ID_MYFILE_QUICK_EXIT,   VIRTKEY, NOINVERT
     VK_ESCAPE,      ID_SAVE_AND_QUIT,       VIRTKEY, SHIFT, NOINVERT
-    VK_F11,         ID_MAKE_OEM,            VIRTKEY, NOINVERT
+    VK_F11,         ID_SHOWFILESIZE,        VIRTKEY, NOINVERT
+    VK_F11,         ID_MAKE_OEM,            VIRTKEY, SHIFT, NOINVERT
     VK_F11,         ID_MAKE_ANSI,           VIRTKEY, CONTROL, NOINVERT
-    VK_F12,         ID_SHOWFILESIZE,        VIRTKEY, NOINVERT
+    VK_F12,         ID_DATE_TIME_CUSTOM,    VIRTKEY, NOINVERT
     VK_F2,          ID_MYFILE_SAVEAS,       VIRTKEY, CONTROL, NOINVERT
     VK_F3,          ID_FIND_NEXT,           VIRTKEY, NOINVERT
     VK_F3,          ID_FIND_NEXT_WORD,      VIRTKEY, CONTROL, NOINVERT

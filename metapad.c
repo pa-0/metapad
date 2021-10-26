@@ -1,6 +1,6 @@
 /****************************************************************************/
 /*                                                                          */
-/*   metapad 3.6                                                            */
+/*   metapad 3.6+                                                           */
 /*                                                                          */
 /*   Copyright (C) 2021 SoBiT Corp                                          */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
@@ -2434,6 +2434,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 			SendDlgItemMessage(hwndDlg, IDC_MACRO_8, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
 			SendDlgItemMessage(hwndDlg, IDC_MACRO_9, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
 			SendDlgItemMessage(hwndDlg, IDC_MACRO_10, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
+			SendDlgItemMessage(hwndDlg, IDC_CUSTOMDATE, EM_LIMITTEXT, (WPARAM)MAXCUSTOMDATE-1, 0);
 			SetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, options.szLangPlugin);
 
 			SetDlgItemText(hwndDlg, IDC_MACRO_1, options.MacroArray[0]);
@@ -2446,6 +2447,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 			SetDlgItemText(hwndDlg, IDC_MACRO_8, options.MacroArray[7]);
 			SetDlgItemText(hwndDlg, IDC_MACRO_9, options.MacroArray[8]);
 			SetDlgItemText(hwndDlg, IDC_MACRO_10, options.MacroArray[9]);
+			SetDlgItemText(hwndDlg, IDC_CUSTOMDATE, options.szCustomDate);
 
 			if (options.szLangPlugin[0] == _T('\0')) {
 				SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_DEFAULT, BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
@@ -2485,6 +2487,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 				GetDlgItemText(hwndDlg, IDC_MACRO_8, options.MacroArray[7], MAXMACRO);
 				GetDlgItemText(hwndDlg, IDC_MACRO_9, options.MacroArray[8], MAXMACRO);
 				GetDlgItemText(hwndDlg, IDC_MACRO_10, options.MacroArray[9], MAXMACRO);
+				GetDlgItemText(hwndDlg, IDC_CUSTOMDATE, options.szCustomDate, MAXCUSTOMDATE);
 
 				if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_DEFAULT, BM_GETCHECK, 0, 0))
 					options.szLangPlugin[0] = _T('\0');
@@ -3797,13 +3800,21 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_MYEDIT_PASTE: {
 #if defined(USE_RICH_EDIT) || defined(BUILD_METAPAD_UNICODE)
 				HGLOBAL hMem;
-				LPTSTR szTmp;
+				LPTSTR szTmp, szTmp2;
 				OpenClipboard(NULL);
 				hMem = GetClipboardData(_CF_TEXT);
 				if (hMem) {
 					szTmp = GlobalLock(hMem);
-					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szTmp);
+					szTmp2 = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(szTmp)+1) * sizeof(TCHAR));
+					lstrcpy(szTmp2, szTmp);
 					GlobalUnlock(hMem);
+#ifdef USE_RICH_EDIT
+					FixTextBuffer(szTmp2);
+#else
+					FixTextBufferLE(&szTmp2);
+#endif
+					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szTmp2);
+					HeapFree(globalHeap, 0, (HGLOBAL)szTmp2);
 				}
 				CloseClipboard();
 				InvalidateRect(client, NULL, TRUE);
@@ -4562,7 +4573,8 @@ endinsertfile:
 				break;
 #endif
 			case ID_DATE_TIME_LONG:
-			case ID_DATE_TIME: {
+			case ID_DATE_TIME: 
+			case ID_DATE_TIME_CUSTOM: {
 				TCHAR szTime[100], szDate[100];
 				if (bLoading) {
 					szTime[0] = _T('\r');
@@ -4572,12 +4584,17 @@ endinsertfile:
 				else {
 					szTime[0] = _T('\0');
 				}
-				if (!options.bDontInsertTime) {
-					GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL, NULL, (bLoading ? szTime + 2 : szTime), 100);
-					lstrcat(szTime, _T(" "));
+				if (LOWORD(wParam) == ID_DATE_TIME_CUSTOM) {
+					GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, options.szCustomDate, (bLoading ? szTime + 2 : szTime), 100);
+					GetDateFormat(LOCALE_USER_DEFAULT, 0, NULL, szTime, szTime, 100);
+				} else {
+					if (!options.bDontInsertTime) {
+						GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL, NULL, (bLoading ? szTime + 2 : szTime), 100);
+						lstrcat(szTime, _T(" "));
+					}
+					GetDateFormat(LOCALE_USER_DEFAULT, (LOWORD(wParam) == ID_DATE_TIME_LONG ? DATE_LONGDATE : 0), NULL, NULL, szDate, 100);
+					lstrcat(szTime, szDate);
 				}
-				GetDateFormat(LOCALE_USER_DEFAULT, (LOWORD(wParam) == ID_DATE_TIME_LONG ? DATE_LONGDATE : 0), NULL, NULL, szDate, 100);
-				lstrcat(szTime, szDate);
 				if (bLoading) {
 					lstrcat(szTime, _T("\r\n"));
 				}
@@ -4655,10 +4672,8 @@ endinsertfile:
 			case ID_MAKE_INVERSE:
 			case ID_MAKE_SENTENCE:
 			case ID_MAKE_TITLE:
-#ifndef BUILD_METAPAD_UNICODE
 			case ID_MAKE_OEM:
 			case ID_MAKE_ANSI:
-#endif
 				{
 				CHARRANGE cr;
 				LPTSTR szSrc;
@@ -4927,14 +4942,25 @@ endinsertfile:
 						}
 					}
 					break;
-#ifndef BUILD_METAPAD_UNICODE
 				case ID_MAKE_OEM:
-					CharToOemBuff(szSrc, szDest, nSize);
+					CharToOemBuff(szSrc, (LPSTR)szDest, nSize);
+					if (sizeof(TCHAR) > 1) {
+						lstrcpy(szSrc, szDest);
+						MultiByteToWideChar(CP_ACP, 0, (LPSTR)szSrc, nSize, szDest, nSize);
+					}
 					break;
-				case ID_MAKE_ANSI:
-					OemToCharBuff(szSrc, szDest, nSize);
+				case ID_MAKE_ANSI:					
+					if (sizeof(TCHAR) > 1) {
+						lstrcpy(szDest, szSrc);
+						WideCharToMultiByte(CP_ACP, 0, szDest, nSize, (LPSTR)szSrc, nSize, NULL, NULL);
+					}
+					OemToCharBuffA((LPSTR)szSrc, (LPSTR)szDest, nSize);
+					if (sizeof(TCHAR) > 1) {
+						//OemToCharBuffW corrupts newlines, use original ANSI function instead and re-convert to unicode here
+						lstrcpy(szSrc, szDest);
+						MultiByteToWideChar(CP_ACP, 0, (LPSTR)szSrc, nSize, szDest, nSize);
+					}
 					break;
-#endif
 				}
 
 				if (LOWORD(wParam) != ID_UNTABIFY && LOWORD(wParam) != ID_TABIFY) {

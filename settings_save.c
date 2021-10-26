@@ -1,6 +1,6 @@
 /****************************************************************************/
 /*                                                                          */
-/*   metapad 3.6                                                            */
+/*   metapad 3.6+                                                           */
 /*                                                                          */
 /*   Copyright (C) 2021 SoBiT Corp                                          */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
@@ -204,6 +204,7 @@ void SaveOptions(void)
 	writeSucceeded &= SaveOption(key, _T("BackColour2"), REG_BINARY, (LPBYTE)&options.BackColour2, sizeof(COLORREF));
 	writeSucceeded &= SaveOption(key, _T("FontColour2"), REG_BINARY, (LPBYTE)&options.FontColour2, sizeof(COLORREF));
 	writeSucceeded &= SaveOption(key, _T("rMargins"), REG_BINARY, (LPBYTE)&options.rMargins, sizeof(RECT));
+	writeSucceeded &= SaveOption(key, _T("szCustomDate"), REG_SZ, (LPBYTE)&options.szCustomDate, sizeof(options.szCustomDate));
 
 	if (!writeSucceeded) {
 		ReportLastError();

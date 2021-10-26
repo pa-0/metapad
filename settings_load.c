@@ -1,6 +1,6 @@
 /****************************************************************************/
 /*                                                                          */
-/*   metapad 3.6                                                            */
+/*   metapad 3.6+                                                           */
 /*                                                                          */
 /*   Copyright (C) 2021 SoBiT Corp                                          */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
@@ -126,6 +126,7 @@ static void LoadBoundedOptionString(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWOR
 void LoadOptions(void)
 {
 	HKEY key = NULL;
+	option_struct optTest;
 
 	options.nTabStops = 4;
 	options.rMargins.top = options.rMargins.bottom = options.rMargins.left = options.rMargins.right = 500;
@@ -147,6 +148,7 @@ void LoadOptions(void)
 	options.bNoFaves = FALSE;
 
 	lstrcpy(options.szQuote, _T("> "));
+	lstrcpy(options.szCustomDate, _T("yyyyMMdd-HHmmss"));
 	ZeroMemory(options.szArgs, sizeof(options.szArgs));
 	ZeroMemory(options.szBrowser, sizeof(options.szBrowser));
 	ZeroMemory(options.szArgs2, sizeof(options.szArgs2));
@@ -258,7 +260,12 @@ void LoadOptions(void)
 		dwBufferSize = sizeof(options.szArgs2);
 		LoadOptionString(key, _T("szArgs2"), (LPBYTE)&options.szArgs2, dwBufferSize);
 		dwBufferSize = sizeof(options.szQuote);
-		LoadOptionBinary(key, _T("szQuote"), (LPBYTE)&options.szQuote, dwBufferSize);
+		LoadOptionString(key, _T("szQuote"), (LPBYTE)&options.szQuote, dwBufferSize);
+			
+		dwBufferSize = sizeof(options.szCustomDate);
+		LoadOptionString(key, _T("szCustomDate"), (LPBYTE)&optTest.szCustomDate, dwBufferSize);
+		if (optTest.szCustomDate[0])
+			LoadOptionString(key, _T("szCustomDate"), (LPBYTE)&options.szCustomDate, dwBufferSize);
 
 		if (key != NULL) {
 			dwBufferSize = sizeof(options.MacroArray);

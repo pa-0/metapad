@@ -1,6 +1,6 @@
 /****************************************************************************/
 /*                                                                          */
-/*   metapad 3.6                                                            */
+/*   metapad 3.6+                                                           */
 /*                                                                          */
 /*   Copyright (C) 2021 SoBiT Corp                                          */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
@@ -245,6 +245,7 @@ void FixTextBufferLE(LPTSTR* pszBuffer)
 			++cnt;
 		++i;
 	}
+	if (!cnt) return;
 
 	szNewBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(*pszBuffer)+cnt+2) * sizeof(TCHAR));
 	i = j = 0;
@@ -267,7 +268,7 @@ void FixTextBufferLE(LPTSTR* pszBuffer)
 		j++; i++;
 	}
 	szNewBuffer[j] = _T('\0');
-	HeapFree(globalHeap, 0, (HGLOBAL)pszBuffer);
+	HeapFree(globalHeap, 0, (HGLOBAL)*pszBuffer);
 	*pszBuffer = szNewBuffer;
 }
 #endif
@@ -569,7 +570,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 
 	if (lBufferLength) {
 #ifdef USE_RICH_EDIT
-		dwActualCharsRead -= FixTextBuffer((LPTSTR)pBuffer);
+		lActualCharsRead -= FixTextBuffer((LPTSTR)pBuffer);
 #endif
 
 		SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
@@ -597,7 +598,9 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 	bBinaryFile = FALSE;
 
 	szBuffer = (LPTSTR)pBuffer;
+#ifdef UNICODE
 	if (sizeof(TCHAR) > 1) cPad = _T('\x2400');
+#endif
 	if (lActualCharsRead != GetWindowTextLength(client) && bLoading) {
 		i = (sizeof(TCHAR) > 1 ? IDS_BINARY_FILE_WARNING_SAFE : IDS_BINARY_FILE_WARNING);
 		if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(i), STR_METAPAD, MB_ICONQUESTION|MB_YESNO) == IDYES) {
@@ -626,6 +629,8 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 
 #ifdef BUILD_METAPAD_UNICODE
 	if (bBinaryFile) SetFileFormat(FILE_FORMAT_BINARY);
+#else
+	if (bBinaryFile) SetFileFormat(FILE_FORMAT_DOS);
 #endif
 	SendMessage(client, EM_SETMODIFY, (WPARAM)TRUE, 0);
 
@@ -644,7 +649,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 #else
 		SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
-		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DATE_TIME, 0), 0);
+		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DATE_TIME_CUSTOM, 0), 0);
 		SendMessage(client, EM_SCROLLCARET, 0, 0);
 	}
 

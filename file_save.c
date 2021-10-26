@@ -1,6 +1,6 @@
 /****************************************************************************/
 /*                                                                          */
-/*   metapad 3.6                                                            */
+/*   metapad 3.6+                                                           */
 /*                                                                          */
 /*   Copyright (C) 2021 SoBiT Corp                                          */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
@@ -313,7 +313,9 @@ BOOL SaveFile(LPCTSTR szFilename)
 #endif
 
 	if (bBinaryFile && sizeof(TCHAR) > 1) {
+#ifdef UNICODE
 		cPad = _T('\x2400');
+#endif
 		for (i = 0; i < lChars; i++)
 			if (szBuffer[i] == cPad)
 				szBuffer[i] = _T('\0');
