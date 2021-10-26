@@ -128,6 +128,8 @@
 #define IDS_UNICODE_SAVE_TRUNCATION     201
 #define IDS_UNICODE_LOAD_ERROR          202
 #define IDS_UNICODE_LOAD_TRUNCATION     203
+#define IDS_BINARY_FILE_WARNING_SAFE    204
+#define IDS_LARGE_FILE_WARNING          205
 #define IDC_STATICX                     1005
 #define IDC_EDIT_URL                    1007
 #define IDC_EDIT_PLUGIN_RELEASE         1008
