@@ -220,6 +220,23 @@ BEGIN
                     WS_GROUP
 END
 
+IDD_INSERT DIALOG DISCARDABLE  30, 73, 236, 65
+STYLE DS_MODALFRAME | DS_3DLOOK | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION |
+    WS_SYSMENU
+CAPTION "Insert"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "&Text:",IDC_STATIC,7,8,23,8
+    COMBOBOX        ID_DROP_TEXT,47,7,113,117,CBS_DROPDOWN | CBS_AUTOHSCROLL |
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      ">",IDC_ESCAPE,163,7,11,12,BS_BITMAP | BS_NOTIFY
+    LTEXT           "&Repeat:",IDC_OFFSET_TEXT,7,27,22,8
+    EDITTEXT        IDC_NUM,44,26,32,12,ES_AUTOHSCROLL | ES_NUMBER
+	LTEXT           "times",IDC_OFFSET_TEXT,56,27,22,8
+    DEFPUSHBUTTON   "&Insert",IDOK,87,7,35,14
+    PUSHBUTTON      "Cancel",IDCANCEL,87,24,35,14
+END
+
 IDD_PROPPAGE_GENERAL DIALOG DISCARDABLE  0, 0, 225, 167
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "General"
@@ -408,8 +425,11 @@ BEGIN
     EDITTEXT        IDC_EDIT_LANG_PLUGIN,95,127,96,12,ES_AUTOHSCROLL |
                     WS_GROUP
     PUSHBUTTON      "...",IDC_BUTTON_BROWSE,194,127,14,12
-    LTEXT           "&Custom date format:",IDC_STATIC,11,150,63,8
-    EDITTEXT        IDC_CUSTOMDATE,80,148,136,12,ES_AUTOHSCROLL
+    GROUPBOX        "Custom date formats:",IDC_STATIC,7,146,211,16
+    LTEXT           "&F12:",IDC_STATIC,11,150,32,8
+    EDITTEXT        IDC_CUSTOMDATE,48,148,59,12,ES_AUTOHSCROLL
+    LTEXT           "&Ctrl+F12:",IDC_STATIC,118,150,32,8
+    EDITTEXT        IDC_CUSTOMDATE2,150,148,59,12,ES_AUTOHSCROLL
 END
 
 #if defined(APSTUDIO_INVOKED) || defined(DONT_INCLUDE)
@@ -524,6 +544,14 @@ BEGIN
         BOTTOMMARGIN, 58
     END
 
+    IDD_INSERT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 229
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 42
+    END
+
     IDD_PROPPAGE_GENERAL, DIALOG
     BEGIN
         LEFTMARGIN, 7
@@ -632,6 +660,10 @@ BEGIN
         MENUITEM "Tab",                         ID_ESCAPE_TAB
         MENUITEM "Backslash",                   ID_ESCAPE_BACKSLASH
         MENUITEM SEPARATOR
+        MENUITEM "Hex Value",                   ID_ESCAPE_HEX
+        MENUITEM "Decimal Value",               ID_ESCAPE_DEC
+        MENUITEM "Octal Value",                 ID_ESCAPE_OCT
+        MENUITEM SEPARATOR
         MENUITEM "Disabled",                    ID_ESCAPE_DISABLE
     END
 END
@@ -690,6 +722,13 @@ BEGIN
         MENUITEM "Cu&t\tCtrl+X",                ID_MYEDIT_CUT
         MENUITEM "&Copy\tCtrl+C",               ID_MYEDIT_COPY
         MENUITEM "&Paste\tCtrl+V",              ID_MYEDIT_PASTE
+        MENUITEM "Paste Mu&ltiple...\tCtrl+Shift+V",  ID_MYEDIT_PASTE_MUL
+        POPUP "&Hex"
+        BEGIN
+            MENUITEM "&Copy Hex Values\tCtrl+Alt+C",  ID_MYEDIT_COPY_HEX
+            MENUITEM "&Paste Hex Values\tCtrl+Alt+V", ID_MYEDIT_PASTE_HEX
+        END
+        MENUITEM "Clear clipboard",             ID_MYEDIT_CLEAR
         MENUITEM SEPARATOR
         POPUP "&Block"
         BEGIN
@@ -720,8 +759,10 @@ BEGIN
         BEGIN
             MENUITEM "&Short Format\tF6",           ID_DATE_TIME
             MENUITEM "&Long Format\tF7",            ID_DATE_TIME_LONG
-            MENUITEM "&Custom Format\tF12",         ID_DATE_TIME_CUSTOM
+            MENUITEM "Custom Format &1\tF12",       ID_DATE_TIME_CUSTOM
+            MENUITEM "Custom Format &2\tCtrl+F12",  ID_DATE_TIME_CUSTOM2
         END
+        MENUITEM "Insert Te&xt/Values...\tF10",     ID_INSERT_TEXT
         MENUITEM "&Insert File...\tAlt+D",      ID_INSERT_FILE
         MENUITEM "Co&mmit Word Wrap\tCtrl+F9",  ID_COMMIT_WORDWRAP
         MENUITEM SEPARATOR
@@ -878,6 +919,7 @@ BEGIN
     "A",            ID_MYEDIT_SELECTALL,    VIRTKEY, CONTROL, NOINVERT
     "B",            ID_SHOWSTATUS,          VIRTKEY, CONTROL, NOINVERT
     "C",            ID_MYEDIT_COPY,         VIRTKEY, CONTROL, NOINVERT
+    "C",            ID_MYEDIT_COPY_HEX,     VIRTKEY, CONTROL, ALT, NOINVERT
     "D",            ID_LAUNCH_ASSOCIATED_VIEWER, VIRTKEY, CONTROL, NOINVERT
     "D",            ID_INSERT_FILE,         VIRTKEY, ALT, NOINVERT
     "E",            ID_READONLY,            VIRTKEY, CONTROL, NOINVERT
@@ -903,22 +945,25 @@ BEGIN
     "U",            ID_TRANSPARENT,         VIRTKEY, CONTROL, NOINVERT
     "U",            ID_MAKE_UPPER,          VIRTKEY, ALT, NOINVERT
     "V",            ID_MYEDIT_PASTE,        VIRTKEY, CONTROL, NOINVERT
+    "V",            ID_MYEDIT_PASTE_MUL,    VIRTKEY, CONTROL, SHIFT, NOINVERT
+    "V",            ID_MYEDIT_PASTE_HEX,    VIRTKEY, CONTROL, ALT, NOINVERT
     VK_APPS,        ID_CONTEXTMENU,         VIRTKEY, NOINVERT
     VK_DELETE,      ID_MYEDIT_CUT,          VIRTKEY, SHIFT, NOINVERT
     VK_DOWN,        ID_SCROLLDOWN,          VIRTKEY, CONTROL, NOINVERT
     VK_DOWN,        ID_SCROLLDOWN,          VIRTKEY, ALT, NOINVERT
     VK_ESCAPE,      ID_MYFILE_QUICK_EXIT,   VIRTKEY, NOINVERT
     VK_ESCAPE,      ID_SAVE_AND_QUIT,       VIRTKEY, SHIFT, NOINVERT
+    VK_F10,         ID_INSERT_TEXT,         VIRTKEY, NOINVERT
     VK_F11,         ID_SHOWFILESIZE,        VIRTKEY, NOINVERT
     VK_F11,         ID_MAKE_OEM,            VIRTKEY, SHIFT, NOINVERT
     VK_F11,         ID_MAKE_ANSI,           VIRTKEY, CONTROL, NOINVERT
     VK_F12,         ID_DATE_TIME_CUSTOM,    VIRTKEY, NOINVERT
+    VK_F12,         ID_DATE_TIME_CUSTOM2,   VIRTKEY, CONTROL, NOINVERT
     VK_F2,          ID_MYFILE_SAVEAS,       VIRTKEY, CONTROL, NOINVERT
     VK_F3,          ID_FIND_NEXT,           VIRTKEY, NOINVERT
     VK_F3,          ID_FIND_NEXT_WORD,      VIRTKEY, CONTROL, NOINVERT
     VK_F3,          ID_FIND_PREV,           VIRTKEY, SHIFT, NOINVERT
-    VK_F3,          ID_FIND_PREV_WORD,      VIRTKEY, SHIFT, CONTROL,
-                                                    NOINVERT
+    VK_F3,          ID_FIND_PREV_WORD,      VIRTKEY, SHIFT, CONTROL, NOINVERT
     VK_F5,          ID_RELOAD_CURRENT,      VIRTKEY, NOINVERT
     VK_F6,          ID_DATE_TIME,           VIRTKEY, NOINVERT
     VK_F7,          ID_DATE_TIME_LONG,      VIRTKEY, NOINVERT

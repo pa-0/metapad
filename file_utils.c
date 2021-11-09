@@ -31,6 +31,7 @@
 #include <richedit.h>
 #endif
 
+#include "include/globals.h"
 #include "include/consts.h"
 #include "include/resource.h"
 #include "include/tmp_protos.h"
@@ -235,4 +236,138 @@ BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL b
 		MessageBox(hdlgFind ? hdlgFind : client, GetString(IDS_ERROR_SEARCH), STR_METAPAD, MB_OK|MB_ICONINFORMATION);
 
 	return bRes;
+}
+
+#ifdef USE_RICH_EDIT
+BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWord, BOOL bCase, BOOL bFromTop)
+{
+	LONG lPrevStart = 0;
+	UINT nFlags = FR_DOWN;
+	FINDTEXT ft;
+	CHARRANGE cr;
+
+	if (bWholeWord)
+		nFlags |= FR_WHOLEWORD;
+
+	if (bCase)
+		nFlags |= FR_MATCHCASE;
+
+	ft.lpstrText = (LPTSTR)szText;
+
+	if (bDown) {
+		if (bFromTop)
+			ft.chrg.cpMin = 0;
+		else
+			ft.chrg.cpMin = lStart + (lStart == lEnd ? 0 : 1);
+		ft.chrg.cpMax = nReplaceMax;
+
+		cr.cpMin = SendMessage(client, EM_FINDTEXT, (WPARAM)nFlags, (LPARAM)&ft);
+
+		if (_tcschr(szText, _T('\r'))) {
+			LONG lLine, lLines;
+
+			lLine = SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)cr.cpMin);
+			lLines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
+
+			if (lLine == lLines - 1) {
+				return FALSE;
+			}
+		}
+
+		if (cr.cpMin == -1)
+			return FALSE;
+		cr.cpMax = cr.cpMin + lstrlen(szText);
+
+		SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
+	}
+	else {
+		ft.chrg.cpMin = 0;
+		if (bFromTop)
+			ft.chrg.cpMax = -1;
+		else
+			ft.chrg.cpMax = (lStart == lEnd ? lEnd : lEnd - 1);
+		lStart = SendMessage(client, EM_FINDTEXT, (WPARAM)nFlags, (LPARAM)&ft);
+		if (lStart == -1)
+			return FALSE;
+		else {
+			while (lStart != -1) {
+				lPrevStart = lStart;
+				lStart = SendMessage(client, EM_FINDTEXT, (WPARAM)nFlags, (LPARAM)&ft);
+				ft.chrg.cpMin = lStart + 1;
+			}
+		}
+		cr.cpMin = lPrevStart;
+		cr.cpMax = lPrevStart + lstrlen(szText);
+		SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
+	}
+	if (!bReplacingAll)	UpdateStatus();
+	return TRUE;
+}
+#else
+typedef int (WINAPI* CMPFUNC)(LPCTSTR str1, LPCTSTR str2);
+
+BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWord, BOOL bCase, BOOL bFromTop)
+{
+	LONG lSize;
+	int nFindLen = lstrlen(szText);
+	LPCTSTR szBuffer = GetShadowBuffer();
+	LPCTSTR lpszStop, lpsz, lpszFound = NULL;
+	CMPFUNC pfnCompare = bCase ? lstrcmp : lstrcmpi;
+
+	lSize = GetWindowTextLength(client);
+
+	if (!szBuffer) {
+		ReportLastError();
+		return FALSE;
+	}
+
+	if (bDown) {
+		if (nReplaceMax > -1) {
+			lpszStop = szBuffer + nReplaceMax - 1;
+		}
+		else {
+			lpszStop = szBuffer + lSize - 1;
+		}
+		lpsz = szBuffer + (bFromTop ? 0 : lStart + (lStart == lEnd ? 0 : 1));
+	}
+	else {
+		lpszStop = szBuffer + (bFromTop ? lSize : lStart + (nFindLen == 1 && lStart > 0 ? -1 : 0));
+		lpsz = szBuffer;
+	}
+
+	while (lpszStop != szBuffer && lpsz <= lpszStop - (bDown ? 0 : nFindLen-1) && (!bDown || (bDown && lpszFound == NULL))) {
+		if ((bCase && *lpsz == *szText) || (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*lpsz) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szText)) {
+			LPTSTR lpch = (LPTSTR)(lpsz + nFindLen);
+			TCHAR chSave = *lpch;
+			int nResult;
+
+			*lpch = _T('\0');
+			nResult = (*pfnCompare)(lpsz, szText);
+			*lpch = chSave;
+
+
+			if (bWholeWord && lpsz > szBuffer && (_istalnum(*(lpsz-1)) || *(lpsz-1) == _T('_') || _istalnum(*(lpsz + nFindLen)) || *(lpsz + nFindLen) == _T('_')))
+			;
+			else if (nResult == 0) {
+				lpszFound = lpsz;
+			}
+		}
+		lpsz++;
+	}
+
+	if (lpszFound != NULL) {
+		LONG lEnd;
+
+		lStart = lpszFound - szBuffer;
+		lEnd = lStart + nFindLen;
+		SendMessage(client, EM_SETSEL, (WPARAM)lStart, (LPARAM)lEnd);
+		if (!bReplacingAll)	UpdateStatus();
+		return TRUE;
+	}
+	return FALSE;
+}
+#endif
+
+long ReplaceAll(LPTSTR* szBuf, long* bufLen, LPCTSTR szFind, LPCTSTR szRepl, BOOL bCase, BOOL bWholeWord){
+
 }

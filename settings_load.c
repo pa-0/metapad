@@ -148,7 +148,8 @@ void LoadOptions(void)
 	options.bNoFaves = FALSE;
 
 	lstrcpy(options.szQuote, _T("> "));
-	lstrcpy(options.szCustomDate, _T("yyyyMMdd-HHmmss"));
+	lstrcpy(options.szCustomDate, _T("yyyyMMdd-HHmmss "));
+	ZeroMemory(options.szCustomDate2, sizeof(options.szFavDir));
 	ZeroMemory(options.szArgs, sizeof(options.szArgs));
 	ZeroMemory(options.szBrowser, sizeof(options.szBrowser));
 	ZeroMemory(options.szArgs2, sizeof(options.szArgs2));
@@ -266,6 +267,8 @@ void LoadOptions(void)
 		LoadOptionString(key, _T("szCustomDate"), (LPBYTE)&optTest.szCustomDate, dwBufferSize);
 		if (optTest.szCustomDate[0])
 			LoadOptionString(key, _T("szCustomDate"), (LPBYTE)&options.szCustomDate, dwBufferSize);
+		dwBufferSize = sizeof(options.szCustomDate2);
+		LoadOptionString(key, _T("szCustomDate2"), (LPBYTE)&options.szCustomDate2, dwBufferSize);
 
 		if (key != NULL) {
 			dwBufferSize = sizeof(options.MacroArray);

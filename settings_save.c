@@ -182,6 +182,8 @@ void SaveOptions(void)
 	writeSucceeded &= SaveOption(key, _T("szQuote"), REG_BINARY, (LPBYTE)&options.szQuote, sizeof(options.szQuote));
 	writeSucceeded &= SaveOption(key, _T("szLangPlugin"), REG_SZ, (LPBYTE)&options.szLangPlugin, sizeof(options.szLangPlugin));
 	writeSucceeded &= SaveOption(key, _T("szFavDir"), REG_SZ, (LPBYTE)&options.szFavDir, sizeof(options.szFavDir));
+	writeSucceeded &= SaveOption(key, _T("szCustomDate"), REG_SZ, (LPBYTE)&options.szCustomDate, sizeof(options.szCustomDate));
+	writeSucceeded &= SaveOption(key, _T("szCustomDate2"), REG_SZ, (LPBYTE)&options.szCustomDate2, sizeof(options.szCustomDate2));
 	if (key) {
 #ifdef BUILD_METAPAD_UNICODE
 		writeSucceeded &= SaveOption(key, _T("MacroArrayU"), REG_BINARY, (LPBYTE)&options.MacroArray, sizeof(options.MacroArray));
@@ -204,7 +206,6 @@ void SaveOptions(void)
 	writeSucceeded &= SaveOption(key, _T("BackColour2"), REG_BINARY, (LPBYTE)&options.BackColour2, sizeof(COLORREF));
 	writeSucceeded &= SaveOption(key, _T("FontColour2"), REG_BINARY, (LPBYTE)&options.FontColour2, sizeof(COLORREF));
 	writeSucceeded &= SaveOption(key, _T("rMargins"), REG_BINARY, (LPBYTE)&options.rMargins, sizeof(RECT));
-	writeSucceeded &= SaveOption(key, _T("szCustomDate"), REG_SZ, (LPBYTE)&options.szCustomDate, sizeof(options.szCustomDate));
 
 	if (!writeSucceeded) {
 		ReportLastError();
