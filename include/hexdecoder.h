@@ -1,8 +1,9 @@
 /****************************************************************************/
 /*                                                                          */
-/*   metapad 3.6                                                            */
+/*   metapad 3.6+                                                           */
 /*                                                                          */
-/*   Copyright (C) 2013 Mario Rugiero					    */
+/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
 /*   This program is free software: you can redistribute it and/or modify   */
@@ -38,7 +39,7 @@
 #include <wchar.h>
 #endif
 
-#include "outmacros.h"
+#include "macros.h"
 
 DWORD HexToBin( LPCTSTR hex, LPBYTE bin );
 
