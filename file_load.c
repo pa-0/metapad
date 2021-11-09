@@ -35,7 +35,7 @@
 #include "include/file_new.h"
 #include "include/file_save.h"
 #include "include/file_utils.h"
-#include "include/outmacros.h"
+#include "include/macros.h"
 #include "include/resource.h"
 #include "include/tmp_protos.h"
 #include "include/typedefs.h"

@@ -35,7 +35,7 @@
 #include <richedit.h>
 #endif
 
-#include "include/outmacros.h"
+#include "include/macros.h"
 #include "include/consts.h"
 #include "include/file_utils.h"
 #include "include/strings.h"
