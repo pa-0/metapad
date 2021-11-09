@@ -66,6 +66,7 @@ extern BOOL bShowToolbar;
 extern BOOL bAlwaysOnTop;
 extern BOOL bTransparent;
 extern BOOL bCloseAfterFind;
+extern BOOL bCloseAfterInsert;
 extern BOOL bNoFindHidden;
 extern option_struct options;
 
@@ -430,6 +431,7 @@ void LoadMenusAndData(void)
 			LoadOptionNumeric(key, _T("m_AlwaysOnTop"), (LPBYTE)&bAlwaysOnTop, sizeof(BOOL));
 			LoadOptionNumeric(key, _T("m_Transparent"), (LPBYTE)&bTransparent, sizeof(BOOL));
 			LoadOptionNumeric(key, _T("bCloseAfterFind"), (LPBYTE)&bCloseAfterFind, sizeof(BOOL));
+			LoadOptionNumeric(key, _T("bCloseAfterInsert"), (LPBYTE)&bCloseAfterInsert, sizeof(BOOL));
 			LoadOptionNumeric(key, _T("bNoFindHidden"), (LPBYTE)&bNoFindHidden, sizeof(BOOL));
 		}
 		LoadOptionString(key, _T("FileFilter"), (LPBYTE)&szCustomFilter, sizeof(szCustomFilter));

@@ -76,7 +76,7 @@
 
 #include "include/consts.h"
 #include "include/strings.h"
-#include "include/outmacros.h"
+#include "include/macros.h"
 #include "include/typedefs.h"
 #include "include/language_plugin.h"
 #include "include/external_viewers.h"
@@ -101,11 +101,12 @@ HWND status = NULL;
 HWND toolbar = NULL;
 HWND hdlgCancel = NULL;
 HWND hdlgFind = NULL;
-DWORD mDlgId = -1;
+DWORD frDlgId = -1;
 HMENU hrecentmenu = NULL;
 HFONT hfontmain = NULL;
 HFONT hfontfind = NULL;
 BOOL g_bIniMode = FALSE;
+LPTSTR szInsert = NULL;
 int _fltused = 0x9875; // see CMISCDAT.C for more info on this
 
 option_struct options;
@@ -644,7 +645,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					break;
 				case IDC_ESCAPE3:
 					GetWindowRect(GetDlgItem(hwndFind, IDC_ESCAPE3), &rect);
-					SendDlgItemMessage(hwndFind, ID_DROP_TEXT, WM_GETTEXT, (WPARAM)MAXFIND, (LPARAM)szText);
+					SendDlgItemMessage(hwndFind, ID_DROP_INSERT, WM_GETTEXT, (WPARAM)MAXFIND, (LPARAM)szText);
 					break;
 			}
 
@@ -694,7 +695,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 				case IDC_ESCAPE2:
 					i = ID_DROP_REPLACE; break;
 				case IDC_ESCAPE3:
-					i = ID_DROP_TEXT; break;
+					i = ID_DROP_INSERT; break;
 			}
 			SendDlgItemMessage(hwndFind, i, WM_SETTEXT, (WPARAM)(BOOL)FALSE, (LPARAM)szText);
 			SetFocus(GetDlgItem(hwndFind, i));
@@ -3334,54 +3335,86 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_MYEDIT_PASTE_MUL: {
 				static FINDREPLACE fr;
 				CHARRANGE cr;
+				HGLOBAL hMem;
+				LPTSTR szTmp;
+				HBITMAP hb;
+				WINDOWPLACEMENT wp, wp2;
 				int i;
 
+				ZeroMemory(&wp, sizeof(WINDOWPLACEMENT));
 				if (hdlgFind) {
-					if (dlgFindID == LOWORD(wParam)) {
+					if (frDlgId == LOWORD(wParam)) {
 						SetFocus(hdlgFind);
 						break;
 					} else {
+						GetWindowPlacement(hdlgFind, &wp);
 						SendMessage(hdlgFind, WM_CLOSE, 0, 0);
 					}
 				}
 
+				frDlgId = LOWORD(wParam);
+				ZeroMemory(&fr, sizeof(FINDREPLACE));
+				fr.lStructSize = sizeof(FINDREPLACE);
+				fr.hwndOwner = hwndMain;
+				fr.lpstrFindWhat = szFindText;
+				fr.wFindWhatLen = MAXFIND * sizeof(TCHAR);
+				fr.lpstrReplaceWith = szReplaceText;
+				fr.wReplaceWithLen = MAXFIND * sizeof(TCHAR);
+				fr.hInstance = hinstLang;
+				fr.Flags = FR_ENABLETEMPLATE;
 				switch (LOWORD(wParam)) {
 					case ID_REPLACE:
 						lstrcpy(szReplaceText, ReplaceArray[0]);
 					case ID_FIND:
 						lstrcpy(szFindText, FindArray[0]);
 						SelectWord(TRUE, TRUE, !options.bNoFindAutoSelect);
-						ZeroMemory(&fr, sizeof(FINDREPLACE));
-						fr.lStructSize = sizeof(FINDREPLACE);
-						fr.hwndOwner = hwndMain;
-						fr.lpstrFindWhat = szFindText;
-						fr.wFindWhatLen = MAXFIND * sizeof(TCHAR);
-						fr.hInstance = hinstLang;
-						fr.Flags = FR_ENABLETEMPLATE;
-						if (bWholeWord)
-							fr.Flags |= FR_WHOLEWORD;
-						if (bDown)
-							fr.Flags |= FR_DOWN;
-						if (bMatchCase)
-							fr.Flags |= FR_MATCHCASE;
+						if (bWholeWord) fr.Flags |= FR_WHOLEWORD;
+						if (bDown) fr.Flags |= FR_DOWN;
+						if (bMatchCase) fr.Flags |= FR_MATCHCASE;
+#ifdef USE_RICH_EDIT
+						SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
+#else
+						SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
+#endif
+						break;
+					case ID_MYEDIT_PASTE_MUL:
+						OpenClipboard(NULL);
+						hMem = GetClipboardData(_CF_TEXT);
+						if (hMem) {
+							szTmp = GlobalLock(hMem);
+							szInsert = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(szTmp)+1) * sizeof(TCHAR));
+							lstrcpy(szInsert, szTmp);
+							GlobalUnlock(hMem);
+						}
+						CloseClipboard();
+					case ID_INSERT_TEXT:
+						if (!szInsert) szInsert = InsertArray[0];
 						break;
 				}
 
-				HBITMAP hb = CreateMappedBitmap(hinstThis, IDB_DROP_ARROW, 0, NULL, 0);
+				wpOrigFindProc = (WNDPROC)SetWindowLongPtr(hdlgFind, GWLP_WNDPROC, (LONG_PTR)FindProc);
+				hb = CreateMappedBitmap(hinstThis, IDB_DROP_ARROW, 0, NULL, 0);				
 				switch (LOWORD(wParam)) {
+					case ID_INSERT_TEXT:
+					case ID_MYEDIT_PASTE_MUL:
+						fr.lpTemplateName = MAKEINTRESOURCE(IDD_INSERT);
+						hdlgFind = FindText(&fr);
+						SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_INSERT, BM_SETCHECK, (WPARAM) bCloseAfterInsert, 0);
+						SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_LIMITTEXT, (WPARAM)MAXINSERT, 0);
+						for (i = 0; i < NUMINSERTS; ++i)
+							if (lstrlen(InsertArray[i]))
+								SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_ADDSTRING, 0, (LPARAM)ReplaceArray[i]);
+						if (options.bCurrentFindFont) SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, WM_SETFONT, (WPARAM)hfontfind, 0);
+						break;
 					case ID_REPLACE:
-						fr.lpstrReplaceWith = szReplaceText;
-						fr.wReplaceWithLen = MAXFIND * sizeof(TCHAR);
 						fr.lpTemplateName = MAKEINTRESOURCE(IDD_REPLACE);
 						hdlgFind = ReplaceText(&fr);
-						SetWindowText(GetDlgItem(hdlgFind, 1152), _T("dummy_repl"));
 						SendDlgItemMessage(hdlgFind, IDC_ESCAPE2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
 						SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_LIMITTEXT, (WPARAM)MAXFIND, 0);
 						for (i = 0; i < NUMFINDS; ++i)
 							if (lstrlen(ReplaceArray[i]))
 								SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_ADDSTRING, 0, (LPARAM)ReplaceArray[i]);
-						if (options.bCurrentFindFont)
-							SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, WM_SETFONT, (WPARAM)hfontfind, 0);
+						if (options.bCurrentFindFont) SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, WM_SETFONT, (WPARAM)hfontfind, 0);
 #ifdef USE_RICH_EDIT
 						if (SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)cr.cpMin) == SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)cr.cpMax))
 #else
@@ -3395,50 +3428,37 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						fr.lpTemplateName = MAKEINTRESOURCE(IDD_FIND);
 						hdlgFind = FindText(&fr);
 						SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_FIND, BM_SETCHECK, (WPARAM) bCloseAfterFind, 0);
-						SetWindowText(GetDlgItem(hdlgFind, 1152), _T("dummy_find"));
-						if (options.bCurrentFindFont)
-							SendDlgItemMessage(hdlgFind, ID_DROP_FIND, WM_SETFONT, (WPARAM)hfontfind, 0);
 						break;
 				}
 				
 				switch (LOWORD(wParam)) {
 					case ID_REPLACE:
 					case ID_FIND:
-						wpOrigFindProc = (WNDPROC)SetWindowLongPtr(hdlgFind, GWLP_WNDPROC, (LONG_PTR)FindProc);
-#ifdef USE_RICH_EDIT
-						SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-#else
-						SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-#endif
-						SendDlgItemMessage(hdlgFind, IDC_ESCAPE, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
 						SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_LIMITTEXT, (WPARAM)MAXFIND, 0);
 						for (i = 0; i < NUMFINDS; ++i)
 							if (lstrlen(FindArray[i]))
 								SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_ADDSTRING, 0, (WPARAM)FindArray[i]);
-						if (options.bCurrentFindFont)
-							SendDlgItemMessage(hdlgFind, ID_DROP_FIND, WM_SETFONT, (WPARAM)hfontfind, 0);
+						if (options.bCurrentFindFont) SendDlgItemMessage(hdlgFind, ID_DROP_FIND, WM_SETFONT, (WPARAM)hfontfind, 0);
 						if (lstrlen(szFindText)) {
 							SendDlgItemMessage(hdlgFind, ID_DROP_FIND, WM_SETTEXT, 0, (LPARAM)szFindText);
 							SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
 						}
+					case ID_INSERT_TEXT:
+					case ID_MYEDIT_PASTE_MUL:
+						SendDlgItemMessage(hdlgFind, IDC_ESCAPE, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
 						break;
 				}
-				
-				break;
-			}
-			case -99: {
 
-
-
-
-
-
-
-
-
-
-
-				}
+				if (wp.showCmd){
+					GetWindowPlacement(hdlgFind, &wp2);
+					i = WIDTH(wp2.rcNormalPosition);
+					wp2.rcNormalPosition.left = wp.rcNormalPosition.left;
+					wp2.rcNormalPosition.right = i + wp.rcNormalPosition.left;
+					i = HEIGHT(wp2.rcNormalPosition);
+					wp2.rcNormalPosition.top = wp.rcNormalPosition.top;
+					wp2.rcNormalPosition.bottom = i + wp.rcNormalPosition.top;
+					SetWindowPlacement(hdlgFind, &wp2);
+				} 
 				break;
 			}
 			case ID_MYEDIT_DELETE:
@@ -5145,17 +5165,21 @@ endinsertfile:
 
 			if (lpfr->Flags & FR_DIALOGTERM) {
 				int i;
-				if (mDlgId == ID_FIND || mDlgId == ID_REPLACE) {
-					for (i = 0; i < NUMFINDS; i++)
-						SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_GETLBTEXT, i, (WPARAM)FindArray[i]);
-						if (lpfr->lpstrReplaceWith != NULL)
+				switch (frDlgId){
+					case ID_REPLACE:
+						for (i = 0; i < NUMFINDS; i++)
 							SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_GETLBTEXT, i, (WPARAM)ReplaceArray[i]);
-				} else if (mDlgId == ID_INSERT_TEXT) {
-					for (i = 0; i < NUMINSERTS; i++)
-						SendDlgItemMessage(hdlgFind, ID_DROP_TEXT, CB_GETLBTEXT, i, (WPARAM)InsertArray[i]);
+					case ID_FIND:
+						for (i = 0; i < NUMFINDS; i++)
+							SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_GETLBTEXT, i, (WPARAM)FindArray[i]);
+						break;
+					case ID_INSERT_TEXT:
+						for (i = 0; i < NUMINSERTS; i++)
+							SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_GETLBTEXT, i, (WPARAM)InsertArray[i]);
+					break;
 				}
 				hdlgFind = NULL;
-				mDlgId = -1;
+				frDlgId = -1;
 				return FALSE;
 			}
 
@@ -5298,17 +5322,7 @@ endinsertfile:
 				SearchFile(lpfr->lpstrFindWhat, bMatchCase, FALSE, bDown, bWholeWord);
 				if (bFinding) {
 					bCloseAfterFind = (BST_CHECKED == SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_FIND, BM_GETCHECK, 0, 0));
-					if (bCloseAfterFind) {
-						int i;
-						PostMessage(hdlgFind, WM_CLOSE, 0, 0);
-						/*for (i = 0; i < NUMFINDS; i++) {
-							SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_GETLBTEXT, i, (WPARAM)FindArray[i]);
-						}
-						DestroyWindow(hdlgFind);
-						hdlgFind = NULL;
-						bFindOpen = FALSE;
-						bReplaceOpen = FALSE;*/
-					}
+					if (bCloseAfterFind) PostMessage(hdlgFind, WM_CLOSE, 0, 0);
 				}
 			}
 			else if (lpfr->Flags & FR_REPLACE) {
@@ -5524,6 +5538,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	bShowToolbar = TRUE;
 	bAlwaysOnTop = FALSE;
 	bCloseAfterFind = FALSE;
+	bCloseAfterInsert = FALSE;
 	bNoFindHidden = TRUE;
 	bTransparent = FALSE;
 
