@@ -50,8 +50,8 @@ extern HANDLE globalHeap;
 extern HWND client;
 extern HWND hwnd;
 extern int nEncodingType;
-extern TCHAR szFav[MAXFN];
-extern TCHAR szFile[MAXFN];
+extern LPTSTR szFav;
+extern LPTSTR szFile;
 extern TCHAR szStatusMessage[MAXSTRING];
 
 extern option_struct options;

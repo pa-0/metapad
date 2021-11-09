@@ -42,9 +42,9 @@
 #include "include/resource.h"
 
 extern HWND hwnd;
-extern TCHAR szCaptionFile[];
-extern TCHAR szFile[];
-extern TCHAR szDir[];
+extern LPTSTR szCaptionFile;
+extern LPTSTR szFile;
+extern LPTSTR szDir;
 extern BOOL bDirtyFile;
 
 extern option_struct options;

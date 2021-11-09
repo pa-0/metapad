@@ -3343,7 +3343,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 				ZeroMemory(&wp, sizeof(WINDOWPLACEMENT));
 				if (hdlgFind) {
-					if (frDlgId == LOWORD(wParam)) {
+					if (frDlgId == LOWORD(wParam) && frDlgId != ID_MYEDIT_PASTE_MUL) {
 						SetFocus(hdlgFind);
 						break;
 					} else {
@@ -3399,12 +3399,19 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					case ID_MYEDIT_PASTE_MUL:
 						fr.lpTemplateName = MAKEINTRESOURCE(IDD_INSERT);
 						hdlgFind = FindText(&fr);
-						SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_INSERT, BM_SETCHECK, (WPARAM) bCloseAfterInsert, 0);
+						SendDlgItemMessage(hdlgFind, IDC_ESCAPE3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
 						SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_LIMITTEXT, (WPARAM)MAXINSERT, 0);
+						SendDlgItemMessage(hdlgFind, IDC_NUM, EM_LIMITTEXT, (WPARAM)9, 0);
+						SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_INSERT, BM_SETCHECK, (WPARAM) bCloseAfterInsert, 0);
 						for (i = 0; i < NUMINSERTS; ++i)
 							if (lstrlen(InsertArray[i]))
 								SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_ADDSTRING, 0, (LPARAM)ReplaceArray[i]);
 						if (options.bCurrentFindFont) SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, WM_SETFONT, (WPARAM)hfontfind, 0);
+						if (szInsert && lstrlen(szInsert)) {
+							SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, WM_SETTEXT, 0, (LPARAM)szInsert);
+							SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
+						}
+						SendDlgItemMessage(hdlgFind, IDC_NUM, WM_SETTEXT, 0, (LPARAM)_T("1"));
 						break;
 					case ID_REPLACE:
 						fr.lpTemplateName = MAKEINTRESOURCE(IDD_REPLACE);
@@ -3434,31 +3441,38 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				switch (LOWORD(wParam)) {
 					case ID_REPLACE:
 					case ID_FIND:
+						SendDlgItemMessage(hdlgFind, IDC_ESCAPE, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
 						SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_LIMITTEXT, (WPARAM)MAXFIND, 0);
 						for (i = 0; i < NUMFINDS; ++i)
 							if (lstrlen(FindArray[i]))
 								SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_ADDSTRING, 0, (WPARAM)FindArray[i]);
 						if (options.bCurrentFindFont) SendDlgItemMessage(hdlgFind, ID_DROP_FIND, WM_SETFONT, (WPARAM)hfontfind, 0);
-						if (lstrlen(szFindText)) {
+						if (szFindText && lstrlen(szFindText)) {
 							SendDlgItemMessage(hdlgFind, ID_DROP_FIND, WM_SETTEXT, 0, (LPARAM)szFindText);
 							SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
 						}
-					case ID_INSERT_TEXT:
-					case ID_MYEDIT_PASTE_MUL:
-						SendDlgItemMessage(hdlgFind, IDC_ESCAPE, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
 						break;
 				}
 
+				GetWindowPlacement(hdlgFind, &wp2);
 				if (wp.showCmd){
-					GetWindowPlacement(hdlgFind, &wp2);
 					i = WIDTH(wp2.rcNormalPosition);
 					wp2.rcNormalPosition.left = wp.rcNormalPosition.left;
-					wp2.rcNormalPosition.right = i + wp.rcNormalPosition.left;
+					wp2.rcNormalPosition.right = i + wp2.rcNormalPosition.left;
 					i = HEIGHT(wp2.rcNormalPosition);
 					wp2.rcNormalPosition.top = wp.rcNormalPosition.top;
-					wp2.rcNormalPosition.bottom = i + wp.rcNormalPosition.top;
+					wp2.rcNormalPosition.bottom = i + wp2.rcNormalPosition.top;
 					SetWindowPlacement(hdlgFind, &wp2);
-				} 
+				} else {
+					GetWindowPlacement(hwnd, &wp);
+					i = WIDTH(wp2.rcNormalPosition);
+					wp2.rcNormalPosition.right = wp.rcNormalPosition.right - 32;
+					wp2.rcNormalPosition.left = wp2.rcNormalPosition.right - i;
+					i = HEIGHT(wp2.rcNormalPosition);
+					wp2.rcNormalPosition.top = wp.rcNormalPosition.top + 85;
+					wp2.rcNormalPosition.bottom = i + wp2.rcNormalPosition.top;
+				}
+				SetWindowPlacement(hdlgFind, &wp2);
 				break;
 			}
 			case ID_MYEDIT_DELETE:
@@ -5176,10 +5190,15 @@ endinsertfile:
 					case ID_INSERT_TEXT:
 						for (i = 0; i < NUMINSERTS; i++)
 							SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_GETLBTEXT, i, (WPARAM)InsertArray[i]);
+						break;
+					case ID_MYEDIT_PASTE_MUL:
+						if (szInsert) HeapFree(globalHeap, 0, (HGLOBAL)szInsert);
+						break;
 					break;
 				}
 				hdlgFind = NULL;
 				frDlgId = -1;
+				szInsert = NULL;
 				return FALSE;
 			}
 
@@ -5437,6 +5456,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	CHARRANGE crLineCol = {-1, -1};
 	LPTSTR szCmdLine;
 	BOOL bSkipLanguagePlugin = FALSE;
+	TCHAR bufFn[MAXFN];
 
 	if (!hPrevInstance) {
 		wc.hbrBackground = (HBRUSH)(COLOR_WINDOW);
@@ -5467,7 +5487,9 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
 	{
 		TCHAR* pch;
-		GetModuleFileName(hinstThis, szMetapadIni, MAXFN);
+		GetModuleFileName(hinstThis, bufFn, MAXFN);
+		szMetapadIni = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(bufFn)+12) * sizeof(TCHAR));
+		lstrcpy(szMetapadIni, bufFn);
 
 		pch = _tcsrchr(szMetapadIni, _T('\\'));
 		++pch;
@@ -5523,7 +5545,9 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 			g_bIniMode = TRUE;
 		}
 	}
-	GetCurrentDirectory(MAXFN, szDir);
+	GetCurrentDirectory(MAXFN, bufFn);
+	szDir = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(bufFn)+1) * sizeof(TCHAR));
+	lstrcpy(szDir, bufFn);
 	LoadOptions();
 
 	options.nStatusFontWidth = LOWORD(GetDialogBaseUnits());

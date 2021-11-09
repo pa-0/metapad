@@ -43,9 +43,9 @@ extern int nEncodingType;
 extern HWND client;
 extern HWND hdlgFind;
 extern HWND hwnd;
-extern TCHAR szCaptionFile[MAXFN];
-extern TCHAR szDir[MAXFN];
-extern TCHAR szFile[MAXFN];
+extern LPTSTR szCaptionFile;
+extern LPTSTR szDir;
+extern LPTSTR szFile;
 
 extern option_struct options;
 

@@ -51,9 +51,9 @@ extern BOOL bDirtyFile;
 extern BOOL bLoading;
 extern BOOL bReadOnly;
 extern BOOL bUnix;
-extern TCHAR szDir[MAXFN];
-extern TCHAR szFile[MAXFN];
-extern TCHAR szCaptionFile[MAXFN];
+extern LPTSTR szDir;
+extern LPTSTR szFile;
+extern LPTSTR szCaptionFile;
 extern TCHAR szCustomFilter[2*MAXSTRING];
 extern int nEncodingType;
 

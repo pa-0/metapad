@@ -43,7 +43,7 @@
 #include "include/typedefs.h"
 
 extern HANDLE globalHeap;
-extern TCHAR szMetapadIni[MAXFN];
+extern LPTSTR szMetapadIni;
 extern option_struct options;
 extern BOOL bWordWrap;
 extern BOOL bPrimaryFont;
@@ -56,8 +56,8 @@ extern BOOL bCloseAfterFind;
 extern BOOL bCloseAfterInsert;
 extern BOOL bNoFindHidden;
 extern BOOL g_bIniMode;
-extern TCHAR FindArray[NUMFINDS][MAXFIND];
-extern TCHAR ReplaceArray[NUMFINDS][MAXFIND];
+extern LPTSTR FindArray[NUMFINDS];
+extern LPTSTR ReplaceArray[NUMFINDS];
 extern TCHAR szDir[MAXFN];
 
 #ifdef USE_RICH_EDIT

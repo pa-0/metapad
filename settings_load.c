@@ -52,11 +52,11 @@ extern BOOL bHyperlinks;
 
 extern HANDLE globalHeap;
 extern TCHAR szCustomFilter[2*MAXSTRING];
-extern TCHAR szDir[MAXFN];
-extern TCHAR szReplaceText[MAXFIND];
-extern TCHAR szMetapadIni[MAXFN];
-extern TCHAR FindArray[NUMFINDS][MAXFIND];
-extern TCHAR ReplaceArray[NUMFINDS][MAXFIND];
+extern LPTSTR szDir;
+extern LPTSTR szReplaceText;
+extern LPTSTR szMetapadIni;
+extern LPTSTR FindArray[NUMFINDS];
+extern LPTSTR ReplaceArray[NUMFINDS];
 extern BOOL g_bIniMode;
 extern BOOL bWordWrap;
 extern BOOL bPrimaryFont;
