@@ -29,7 +29,8 @@
 #define MAXFONT 32
 #define MAXARGS 100
 #define MAXQUOTE 100
-#define MAXFIND 100
+#define MAXFIND 4096
+#define MAXINSERT 4096
 #define NUMPANES 5
 #define MAXFAVESIZE 2000
 #define MAXSTRING 500
@@ -45,7 +46,8 @@
 #endif
 
 #define CUSTOMBMPBASE 15
-#define NUMFINDS 10
+#define NUMFINDS 25
+#define NUMINSERTS 25
 #define EGGNUM 15
 #define SBPANE_TYPE 0
 #define SBPANE_INS 1

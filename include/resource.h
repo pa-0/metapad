@@ -229,8 +229,11 @@
 #define IDC_STATIC_COPYRIGHT            1084
 #define IDC_STATIC_COPYRIGHT2           1085
 #define IDC_CUSTOMDATE                  1086
+#define IDC_CUSTOMDATE2                 1087
+#define IDC_NUM                         1088
 #define ID_DROP_REPLACE                 1153
 #define ID_DROP_FIND                    1154
+#define ID_DROP_TEXT                    1155
 #define IDD_FIND                        1540
 #define IDD_REPLACE                     1541
 #define IDD_PAGE_SETUP                  1546
@@ -238,6 +241,7 @@
 #define IDD_PROPPAGE_A1_LE              1548
 #define IDD_PROPPAGE_A2                 1549
 #define IDD_ABOUT_PLUGIN                1550
+#define IDD_INSERT                      1551
 #define ID_HELP_ABOUT                   40002
 #define ID_MYFILE_OPEN                  40003
 #define ID_MYFILE_EXIT                  40004
@@ -322,6 +326,15 @@
 #define ID_UTF8_UNIX_FILE               40202
 #define ID_BINARY_FILE                  40203
 #define ID_DATE_TIME_CUSTOM             40204
+#define ID_DATE_TIME_CUSTOM2            40205
+#define ID_MYEDIT_PASTE_MUL             40206
+#define ID_INSERT_TEXT                  40207
+#define ID_MYEDIT_COPY_HEX              40208
+#define ID_MYEDIT_PASTE_HEX             40209
+#define ID_MYEDIT_CLEAR                 40210
+#define ID_ESCAPE_HEX                   40211
+#define ID_ESCAPE_DEC                   40212
+#define ID_ESCAPE_OCT                   40213
 #define ID_MRU_BASE                     44000
 #define ID_MRU_1                        44001
 #define ID_MRU_2                        44002

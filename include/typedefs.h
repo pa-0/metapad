@@ -108,6 +108,7 @@ typedef struct tag_options {
 	TCHAR MacroArray[10][MAXMACRO];
 	TCHAR szFavDir[MAXFN];
 	TCHAR szCustomDate[MAXCUSTOMDATE];
+	TCHAR szCustomDate2[MAXCUSTOMDATE];
 } option_struct;
 
 #endif // TYPEDEFS_H
