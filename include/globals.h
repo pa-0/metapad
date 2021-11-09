@@ -25,6 +25,8 @@
 #include "consts.h"
 #include "typedefs.h"
 
+
+
 SLWA SetLWA;
 HINSTANCE hinstThis;
 HINSTANCE hinstLang;
@@ -52,6 +54,7 @@ LPTSTR lpszShadow;
 BOOL bDirtyFile, bLoading, bMatchCase, bDown, bWholeWord, bUnix, bReadOnly, bBinaryFile;
 BOOL bWordWrap, bPrimaryFont, bPrint, bSmartSelect, bShowStatus;
 BOOL bReplacingAll, bShowToolbar, bAlwaysOnTop, bCloseAfterFind, bHasFaves, bNoFindHidden;
+BOOL bCloseAfterInsert;
 BOOL bTransparent;
 //BOOL bLinkMenu;
 UINT nMRUTop;
@@ -64,6 +67,7 @@ int nReplaceMax;
 HWND hwndSheet;
 TCHAR FindArray[NUMFINDS][MAXFIND];
 TCHAR ReplaceArray[NUMFINDS][MAXFIND];
+TCHAR InsertArray[NUMINSERTS][MAXINSERT];
 int nEncodingType;
 BOOL g_bDisablePluginVersionChecking;
 BOOL g_bIniMode;

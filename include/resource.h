@@ -231,9 +231,11 @@
 #define IDC_CUSTOMDATE                  1086
 #define IDC_CUSTOMDATE2                 1087
 #define IDC_NUM                         1088
+#define IDC_ESCAPE3                     1089
+#define IDC_CLOSE_AFTER_INSERT          1090
 #define ID_DROP_REPLACE                 1153
 #define ID_DROP_FIND                    1154
-#define ID_DROP_TEXT                    1155
+#define ID_DROP_INSERT                  1155
 #define IDD_FIND                        1540
 #define IDD_REPLACE                     1541
 #define IDD_PAGE_SETUP                  1546
