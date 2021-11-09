@@ -42,12 +42,12 @@ HFONT hfontmain;
 HFONT hfontfind;
 WNDPROC wpOrigEditProc;
 WNDPROC wpOrigFindProc;
-TCHAR szCaptionFile[MAXFN], szFile[MAXFN];
-TCHAR szFav[MAXFN];
-TCHAR szMetapadIni[MAXFN];
-TCHAR szDir[MAXFN];
-TCHAR szFindText[MAXFIND];
-TCHAR szReplaceText[MAXFIND];
+LPTSTR szCaptionFile, szFile;
+LPTSTR szFav;
+LPTSTR szMetapadIni;
+LPTSTR szDir;
+LPTSTR szFindText;
+LPTSTR szReplaceText;
 TCHAR szStatusMessage[MAXSTRING];
 TCHAR _szString[MAXSTRING];
 LPTSTR lpszShadow;
@@ -65,12 +65,13 @@ TCHAR szCustomFilter[2*MAXSTRING];
 BOOL bInsertMode, bHideMessage;
 int nReplaceMax;
 HWND hwndSheet;
-TCHAR FindArray[NUMFINDS][MAXFIND];
-TCHAR ReplaceArray[NUMFINDS][MAXFIND];
-TCHAR InsertArray[NUMINSERTS][MAXINSERT];
+LPTSTR FindArray[NUMFINDS];
+LPTSTR ReplaceArray[NUMFINDS][MAXFIND];
+LPTSTR InsertArray[NUMINSERTS][MAXINSERT];
 int nEncodingType;
 BOOL g_bDisablePluginVersionChecking;
 BOOL g_bIniMode;
+
 
 #ifdef USE_RICH_EDIT
 BOOL bUpdated, bHyperlinks;
