@@ -34,9 +34,7 @@
 #include <wchar.h>
 #endif
 
-DWORD HexToBin( LPCTSTR hex, LPBYTE bin );
 DWORD DecodeBase( LPCTSTR code, LPBYTE bin, BYTE base, INT len, BYTE extractMode, BYTE alignMode, BOOL showError, LPCTSTR* end );
 DWORD EncodeBase( LPBYTE bin, LPTSTR code, BYTE base, INT len, LPBYTE* end );
-void BinToHex( const LPBYTE bin, DWORD size, TCHAR* hex );
 
 #endif
