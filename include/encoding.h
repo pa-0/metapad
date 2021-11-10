@@ -39,5 +39,7 @@
 #endif
 
 void BinToHex( const LPBYTE bin, DWORD size, TCHAR* hex );
+DWORD HexToBin( LPCTSTR hex, LPBYTE bin );
+DWORD HexToBinEx( LPCTSTR hex, LPBYTE bin, BOOL ignoreParity ); 
 
 #endif
