@@ -43,7 +43,7 @@ HMENU hrecentmenu;
 HFONT hfontmain;
 HFONT hfontfind;
 WNDPROC wpOrigEditProc;
-WNDPROC wpOrigFindProc;
+//WNDPROC wpOrigFindProc;
 LPTSTR szCaptionFile, szFile;
 LPTSTR szFav;
 LPTSTR szMetapadIni;
