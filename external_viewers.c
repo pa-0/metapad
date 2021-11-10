@@ -103,31 +103,16 @@ BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
 /**
  * Launch the primary external viewer.
  */
-void LaunchPrimaryExternalViewer(void)
+void LaunchExternalViewer(int id)
 {
-	TCHAR szLaunch[MAXFN] = {_T('\0')};
-
-	lstrcat(szLaunch, options.szArgs);
+	TCHAR szLaunch[MAXFN+MAXARGS+4] = {_T('\0')};
+	LPTSTR args = id ? options.szArgs2 : options.szArgs;
+	if (args) lstrcat(szLaunch, args);
 	lstrcat(szLaunch, _T(" \""));
-	lstrcat(szLaunch, szFile);
+	if (szFile) lstrcat(szLaunch, szFile);
 	lstrcat(szLaunch, _T("\""));
-	if (!ExecuteProgram(options.szBrowser, szLaunch))
-	ERROROUT(GetString(IDS_PRIMARY_VIEWER_ERROR));
-}
-
-/**
- * Launch the secondary external viewer.
- */
-static void LaunchSecondaryExternalViewer(void)
-{
-	TCHAR szLaunch[MAXFN] = {_T('\0')};
-
-	lstrcat(szLaunch, options.szArgs2);
-	lstrcat(szLaunch, _T(" \""));
-	lstrcat(szLaunch, szFile);
-	lstrcat(szLaunch, _T("\""));
-	if (!ExecuteProgram(options.szBrowser2, szLaunch))
-		ERROROUT(GetString(IDS_SECONDARY_VIEWER_ERROR));
+	if (!ExecuteProgram(id ? options.szBrowser2 : options.szBrowser, szLaunch))
+	ERROROUT(GetString(id ? IDS_SECONDARY_VIEWER_ERROR : IDS_PRIMARY_VIEWER_ERROR));
 }
 
 /**
@@ -138,24 +123,18 @@ static void LaunchSecondaryExternalViewer(void)
  */
 void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 {
-	if (bCustom) {
-		if (!bSecondary && options.szBrowser[0] == _T('\0')) {
-			MessageBox(hwnd, GetString(IDS_PRIMARY_VIEWER_MISSING), STR_METAPAD, MB_OK|MB_ICONEXCLAMATION);
+	LPTSTR prg = bSecondary ? options.szBrowser2 : options.szBrowser;
+	if (bCustom)
+		if (!prg || prg[0] == _T('\0')) {
+			MessageBox(hwnd, GetString(bSecondary ? IDS_SECONDARY_VIEWER_MISSING : IDS_PRIMARY_VIEWER_MISSING), STR_METAPAD, MB_OK|MB_ICONEXCLAMATION);
 			SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_VIEW_OPTIONS, 0), 0);
 			return;
 		}
-//DBGOUT(options.szBrowser2, _T("run szBrowser2 value:"));
-		if (bSecondary && options.szBrowser2[0] == _T('\0')) {
-			MessageBox(hwnd, GetString(IDS_SECONDARY_VIEWER_MISSING), STR_METAPAD, MB_OK|MB_ICONEXCLAMATION);
-			SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_VIEW_OPTIONS, 0), 0);
-			return;
-		}
-	}
 
-	if (szFile[0] == _T('\0') || (bDirtyFile && options.nLaunchSave != 2)) {
+	if (!szFile || szFile[0] == _T('\0') || (bDirtyFile && options.nLaunchSave != 2)) {
 		int res = IDYES;
 		if (options.nLaunchSave == 0) {
-			TCHAR szBuffer[MAXFN];
+			TCHAR szBuffer[MAXFN + MAXSTRING];
 			wsprintf(szBuffer, GetString(IDS_DIRTYFILE), szCaptionFile);
 			res = MessageBox(hwnd, szBuffer, STR_METAPAD, MB_ICONEXCLAMATION | MB_YESNOCANCEL);
 		}
@@ -168,15 +147,9 @@ void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 			}
 		}
 	}
-	if (szFile[0] != _T('\0')) {
-		if (bCustom) {
-			if (bSecondary) {
-				LaunchSecondaryExternalViewer();
-			}
-			else {
-				LaunchPrimaryExternalViewer();
-			}
-		}
+	if (szFile && szFile[0] != _T('\0')) {
+		if (bCustom)
+			LaunchExternalViewer((int)bSecondary);
 		else {
 			INT_PTR ret = (INT_PTR)ShellExecute(NULL, _T("open"), szFile, NULL, szDir, SW_SHOW);
 			if (ret <= 32) {

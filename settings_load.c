@@ -51,7 +51,7 @@ extern BOOL bHyperlinks;
 #endif
 
 extern HANDLE globalHeap;
-extern TCHAR szCustomFilter[2*MAXSTRING];
+extern LPTSTR szCustomFilter;
 extern LPTSTR szDir;
 extern LPTSTR szReplaceText;
 extern LPTSTR szMetapadIni;
@@ -95,39 +95,11 @@ static void LoadOptionBinary(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbDat
 }
 
 /**
- * Load a bounded option string.
- *
- * @param hKey A handle to an open registry key. If NULL, loads the option from an ini file.
- * @param name Name of the value to get.
- * @param lpData Pointer to the place to store the data.
- * @param cbData The size of lpData, in bytes.
- * @return TRUE if the value was loaded successfully, FALSE otherwise.
- */
-static void LoadBoundedOptionString(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData)
-{
-	if (hKey) {
-		RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData);
-	}
-	else {
-		TCHAR *bounded = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, cbData + 2);
-		GetPrivateProfileString(_T("Options"), name, bounded, bounded, cbData + 2, szMetapadIni);
-		if (lstrlen(bounded) >= 2 && bounded[0] == '[' && bounded[lstrlen(bounded)-1] == ']') {
-			_tcsncpy((TCHAR*)lpData, bounded+1, lstrlen(bounded) - 2);
-		}
-		else {
-			_tcsncpy((TCHAR*)lpData, bounded, lstrlen(bounded));
-		}
-		HeapFree(globalHeap, 0, bounded);
-	}
-}
-
-/**
  * Load metapad's options.
  */
 void LoadOptions(void)
 {
 	HKEY key = NULL;
-	option_struct optTest;
 
 	options.nTabStops = 4;
 	options.rMargins.top = options.rMargins.bottom = options.rMargins.left = options.rMargins.right = 500;
@@ -148,18 +120,18 @@ void LoadOptions(void)
 	options.bNoFindAutoSelect = FALSE;
 	options.bNoFaves = FALSE;
 
-	lstrcpy(options.szQuote, _T("> "));
-	lstrcpy(options.szCustomDate, _T("yyyyMMdd-HHmmss "));
-	ZeroMemory(options.szCustomDate2, sizeof(options.szFavDir));
-	ZeroMemory(options.szArgs, sizeof(options.szArgs));
-	ZeroMemory(options.szBrowser, sizeof(options.szBrowser));
-	ZeroMemory(options.szArgs2, sizeof(options.szArgs2));
-	ZeroMemory(options.szBrowser2, sizeof(options.szBrowser2));
-	ZeroMemory(options.szLangPlugin, sizeof(options.szLangPlugin));
-	ZeroMemory(options.szFavDir, sizeof(options.szFavDir));
 	ZeroMemory(&options.PrimaryFont, sizeof(LOGFONT));
 	ZeroMemory(&options.SecondaryFont, sizeof(LOGFONT));
 	ZeroMemory(&options.MacroArray, sizeof(options.MacroArray));
+	options.szFavDir = NULL;
+	options.szQuote = NULL;
+	options.szCustomDate = NULL;
+	options.szCustomDate2 = NULL;
+	options.szArgs = NULL;
+	options.szArgs2 = NULL;
+	options.szBrowser = NULL;
+	options.szBrowser2 = NULL;
+	options.szLangPlugin = NULL;
 	options.bHideGotoOffset = FALSE;
 	options.bRecentOnOwn = FALSE;
 	options.bDontInsertTime = FALSE;
@@ -195,9 +167,10 @@ void LoadOptions(void)
 
 	{
 		DWORD dwBufferSize;
+		TCHAR keyname[20];
+		int i;
 
 		dwBufferSize = sizeof(int);
-
 		LoadOptionNumeric(key, _T("bHideGotoOffset"), (LPBYTE)&options.bHideGotoOffset, dwBufferSize);
 		LoadOptionNumeric(key, _T("bSystemColours"), (LPBYTE)&options.bSystemColours, dwBufferSize);
 		LoadOptionNumeric(key, _T("bSystemColours2"), (LPBYTE)&options.bSystemColours2, dwBufferSize);
@@ -249,44 +222,20 @@ void LoadOptions(void)
 		LoadOptionBinary(key, _T("PrimaryFont"), (LPBYTE)&options.PrimaryFont, dwBufferSize);
 		LoadOptionBinary(key, _T("SecondaryFont"), (LPBYTE)&options.SecondaryFont, dwBufferSize);
 #endif
-		dwBufferSize = sizeof(options.szBrowser);
-		LoadOptionString(key, _T("szBrowser"), (LPBYTE)&options.szBrowser, dwBufferSize);
-		dwBufferSize = sizeof(options.szBrowser2);
-		LoadOptionString(key, _T("szBrowser2"), (LPBYTE)&options.szBrowser2, dwBufferSize);
-		dwBufferSize = sizeof(options.szLangPlugin);
-		LoadOptionString(key, _T("szLangPlugin"), (LPBYTE)&options.szLangPlugin, dwBufferSize);
-		dwBufferSize = sizeof(options.szFavDir);
-		LoadOptionString(key, _T("szFavDir"), (LPBYTE)&options.szFavDir, dwBufferSize);
-		dwBufferSize = sizeof(options.szArgs);
-		LoadOptionString(key, _T("szArgs"), (LPBYTE)&options.szArgs, dwBufferSize);
-		dwBufferSize = sizeof(options.szArgs2);
-		LoadOptionString(key, _T("szArgs2"), (LPBYTE)&options.szArgs2, dwBufferSize);
-		dwBufferSize = sizeof(options.szQuote);
-		LoadOptionString(key, _T("szQuote"), (LPBYTE)&options.szQuote, dwBufferSize);
+		LoadOptionString(key, _T("szBrowser"), &options.szBrowser, MAXFN);
+		LoadOptionString(key, _T("szBrowser2"), &options.szBrowser2, MAXFN);
+		LoadOptionString(key, _T("szLangPlugin"), &options.szLangPlugin, MAXFN);
+		LoadOptionString(key, _T("szFavDir"), &options.szFavDir, MAXFN);
+		LoadOptionString(key, _T("szArgs"), &options.szArgs, MAXARGS);
+		LoadOptionString(key, _T("szArgs2"), &options.szArgs2, MAXARGS);
+		LoadOptionStringDefault(key, _T("szQuote"), &options.szQuote, MAXQUOTE, _T("> "));
 			
-		dwBufferSize = sizeof(options.szCustomDate);
-		LoadOptionString(key, _T("szCustomDate"), (LPBYTE)&optTest.szCustomDate, dwBufferSize);
-		if (optTest.szCustomDate[0])
-			LoadOptionString(key, _T("szCustomDate"), (LPBYTE)&options.szCustomDate, dwBufferSize);
-		dwBufferSize = sizeof(options.szCustomDate2);
-		LoadOptionString(key, _T("szCustomDate2"), (LPBYTE)&options.szCustomDate2, dwBufferSize);
+		LoadOptionStringDefault(key, _T("szCustomDate"), &options.szCustomDate, MAXDATEFORMAT, _T("yyyyMMdd-HHmmss "));
+		LoadOptionString(key, _T("szCustomDate2"), &options.szCustomDate2, MAXDATEFORMAT);
 
-		if (key != NULL) {
-			dwBufferSize = sizeof(options.MacroArray);
-#ifdef BUILD_METAPAD_UNICODE
-			LoadOptionBinary(key, _T("MacroArrayU"), (LPBYTE)&options.MacroArray, dwBufferSize);
-#else
-			LoadOptionBinary(key, _T("MacroArray"), (LPBYTE)&options.MacroArray, dwBufferSize);
-#endif
-		}
-		else {
-			TCHAR keyname[14];
-			int i;
-
-			for (i = 0; i < 10; ++i) {
-				wsprintf(keyname, _T("szMacroArray%d"), i);
-				LoadBoundedOptionString(key, keyname, (LPBYTE)&options.MacroArray[i], MAXMACRO);
-			}
+		for (i = 0; i < 10; ++i) {
+			wsprintf(keyname, _T("szMacroArray%d"), i);
+			LoadOptionString(key, keyname, &options.MacroArray[i], MAXMACRO);
 		}
 
 		dwBufferSize = sizeof(COLORREF);
@@ -324,13 +273,30 @@ void LoadOptions(void)
  * @param cbData The size of lpData, in bytes.
  * @return TRUE if the value was loaded successfully, FALSE otherwise.
  */
-void LoadOptionString(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData)
+void LoadOptionString(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData)
 {
-	if (hKey) {
-		RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData);
+	DWORD clen = cbData + 1, buflen = clen * sizeof(TCHAR);
+	LPTSTR buf = (LPTSTR)HeapAlloc(globalHeap, 0, buflen);
+	if (buf) {
+		buf[0] = _T('\0');
+		if (hKey) RegQueryValueEx(hKey, name, NULL, NULL, lpData, &buflen);
+		else GetPrivateProfileString(_T("Options"), name, buf, buf, clen, szMetapadIni);
+		if (*lpData) HeapFree(globalHeap, 0, (HGLOBAL)*lpData);
+		if (buf[0])
+			*lpData = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(buf)+1) * sizeof(TCHAR));
+			lstrcpy(*lpData, buf);
+		else
+			*lpData = NULL;
+		HeapFree(globalHeap, 0, (HGLOBAL)buf);
 	}
-	else {
-		GetPrivateProfileString(_T("Options"), name, (TCHAR*)lpData, (TCHAR*)lpData, cbData, szMetapadIni);
+}
+void LoadOptionStringDefault(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData, LPCTSTR default)
+{
+	LoadOptionString(hKey, name, lpData, cbData);
+	if (default && default[0] && (!*lpData || !*lpData[0])) {
+		if (*lpData) HeapFree(globalHeap, 0, (HGLOBAL)*lpData);
+		*lpData = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(default)+1) * sizeof(TCHAR));
+		lstrcpy(*lpData, default);
 	}
 }
 
@@ -411,6 +377,9 @@ void LoadMenusAndData(void)
 {
 	HKEY key = NULL;
 	BOOL bLoad = TRUE;
+	TCHAR bufFn[MAXFN];
+	TCHAR keyname[20];
+	int i;
 
 	if (!g_bIniMode) {
 		if (RegOpenKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, KEY_ALL_ACCESS, &key) != ERROR_SUCCESS) {
@@ -434,38 +403,28 @@ void LoadMenusAndData(void)
 			LoadOptionNumeric(key, _T("bCloseAfterInsert"), (LPBYTE)&bCloseAfterInsert, sizeof(BOOL));
 			LoadOptionNumeric(key, _T("bNoFindHidden"), (LPBYTE)&bNoFindHidden, sizeof(BOOL));
 		}
-		LoadOptionString(key, _T("FileFilter"), (LPBYTE)&szCustomFilter, sizeof(szCustomFilter));
+		LoadOptionString(key, _T("FileFilter"), &szCustomFilter, MAXFN);
 
 		if (!options.bNoSaveHistory) {
-			if (key) {
-#ifdef BUILD_METAPAD_UNICODE
-				LoadOptionString(key, _T("FindArrayU"), (LPBYTE)&FindArray, sizeof(FindArray));
-				LoadOptionString(key, _T("ReplaceArrayU"), (LPBYTE)&ReplaceArray, sizeof(ReplaceArray));
-#else
-				LoadOptionString(key, _T("FindArray"), (LPBYTE)&FindArray, sizeof(FindArray));
-				LoadOptionString(key, _T("ReplaceArray"), (LPBYTE)&ReplaceArray, sizeof(ReplaceArray));
-#endif
+			for (i = 0; i < NUMFINDS; ++i) {
+				wsprintf(keyname, _T("szFindArray%d"), i);
+				LoadOptionString(key, keyname, &FindArray[i], MAXFIND);
 			}
-			else {
-				TCHAR keyname[16];
-				int i;
-				for (i = 0; i < 10; ++i) {
-					wsprintf(keyname, _T("szFindArray%d"), i);
-					LoadBoundedOptionString(key, keyname, (LPBYTE)&FindArray[i], MAXFIND);
-				}
-				for (i = 0; i < 10; ++i) {
-					wsprintf(keyname, _T("szReplaceArray%d"), i);
-					LoadBoundedOptionString(key, keyname, (LPBYTE)&ReplaceArray[i], MAXFIND);
-				}
+			for (i = 0; i < NUMFINDS; ++i) {
+				wsprintf(keyname, _T("szReplaceArray%d"), i);
+				LoadOptionString(key, keyname, &ReplaceArray[i], MAXFIND);
+				if (i == 0) LoadOptionString(key, keyname, &szReplaceText, MAXFIND);
 			}
+			for (i = 0; i < NUMINSERTS; ++i) {
+				wsprintf(keyname, _T("szInsertArray%d"), i);
+				LoadOptionString(key, keyname, &InsertArray[i], MAXINSERT);
+			}
+			LoadOptionString(key, "szReplaceArray0", &ReplaceArray[i], MAXFIND);
 		}
 
-		if (options.bSaveDirectory) {
-			LoadOptionString(key, _T("szLastDirectory"), (LPBYTE)&szDir, sizeof(szDir));
-		}
+		if (options.bSaveDirectory)
+			LoadOptionString(key, _T("szLastDirectory"), &szDir, MAXFN);
 	}
-
-	lstrcpy(szReplaceText, ReplaceArray[0]);
 
 	RegCloseKey(key);
 }

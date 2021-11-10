@@ -1,7 +1,9 @@
 /****************************************************************************/
 /*                                                                          */
-/*   metapad 3.6                                                            */
+/*   metapad 3.6+                                                           */
 /*                                                                          */
+/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
 /*   This program is free software: you can redistribute it and/or modify   */
@@ -38,8 +40,8 @@ extern BOOL bLoading;
 extern HWND client;
 extern HWND hwnd;
 extern LPTSTR lpszShadow;
-extern TCHAR szCaptionFile[MAXFN];
-extern TCHAR szFile[MAXFN];
+extern LPTSTR szCaptionFile;
+extern LPTSTR szFile;
 
 extern option_struct options;
 
@@ -59,8 +61,8 @@ void MakeNewFile(void)
 	}
 
 	SwitchReadOnly(FALSE);
-	szFile[0] = _T('\0');
-	lstrcpy(szCaptionFile, GetString(IDS_NEW_FILE));
+	FREE(szFile);
+	SSTRCPY(szCaptionFile, GetString(IDS_NEW_FILE));
 	UpdateStatus();
 	if (lpszShadow)
 		lpszShadow[0] = _T('\0');

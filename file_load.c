@@ -279,6 +279,7 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 	HMENU hsub = NULL;
 	MENUITEMINFO mio;
 	TCHAR szBuffer[MAXFN] = _T("\n");
+	TCHAR sztFile[MAXFN+4];
 
 	if (!SaveIfDirty())
 		return;
@@ -303,13 +304,12 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 	mio.dwTypeData = szBuffer;
 	GetMenuItemInfo(hsub, wMenu, FALSE, &mio);
 
-	lstrcpy(szFile, szBuffer + 3);
-
-	if (lstrlen(szFile) > 0) {
+	FREE(szFile);
+	if (lstrlen(sztFile) > 0) {
 
 		if (!bMRU) {
-			GetPrivateProfileString(STR_FAV_APPNAME, szFile, _T("error"), szFile, MAXFN, szFav);
-			if (lstrcmp(szFile, _T("error")) == 0) {
+			GetPrivateProfileString(STR_FAV_APPNAME, sztFile, _T("error"), sztFile, MAXFN, szFav);
+			if (lstrcmp(sztFile, _T("error")) == 0) {
 				ERROROUT(GetString(IDS_ERROR_FAVOURITES));
 				MakeNewFile();
 				return;
@@ -318,18 +318,18 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 
 		bLoading = TRUE;
 		bHideMessage = FALSE;
-		ExpandFilename(szFile);
+		ExpandFilename(sztFile);
 		lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
 		UpdateStatus();
-		LoadFile(szFile, FALSE, TRUE);
+		LoadFile(sztFile, FALSE, TRUE);
 		if (bLoading) {
 			bLoading = FALSE;
 			bDirtyFile = FALSE;
 			UpdateCaption();
+			SSTRCPY(szFile, sztFile);
 		}
-		else {
+		else
 			MakeNewFile();
-		}
 	}
 }
 

@@ -54,7 +54,7 @@ extern BOOL bUnix;
 extern LPTSTR szDir;
 extern LPTSTR szFile;
 extern LPTSTR szCaptionFile;
-extern TCHAR szCustomFilter[2*MAXSTRING];
+extern LPTSTR szCustomFilter;
 extern int nEncodingType;
 
 extern option_struct options;
@@ -149,7 +149,7 @@ void FixFilterString(LPTSTR szIn)
 BOOL SaveCurrentFileAs(void)
 {
 	OPENFILENAME ofn;
-	TCHAR szTmp[MAXFN];
+	TCHAR szTmp[MAXFN] = _T("");
 	TCHAR* pch;
 
 	ofn.lStructSize = sizeof(OPENFILENAME);
@@ -169,11 +169,13 @@ BOOL SaveCurrentFileAs(void)
 	ofn.nMaxCustFilter = 0L;
 	ofn.nFilterIndex = 1L;
 
-	pch = _tcsrchr(szFile, _T('\\'));
-	if (pch == NULL)
-		lstrcpy(szTmp, szFile);
-	else
-		lstrcpy(szTmp, pch+1);
+	if (szFile){
+		pch = _tcsrchr(szFile, _T('\\'));
+		if (pch == NULL)
+			lstrcpy(szTmp, szFile);
+		else
+			lstrcpy(szTmp, pch+1);
+	}
 
 	ofn.lpstrFile = szTmp;
 	ofn.nMaxFile = sizeof(szTmp);
@@ -187,7 +189,7 @@ BOOL SaveCurrentFileAs(void)
 	ofn.nFileExtension = 0;
 
 	if (GetSaveFileName(&ofn)) {
-		lstrcpy(szFile, szTmp);
+		SSTRCPY(szFile, szTmp);
 		if (!SaveFile(szFile))
 			return FALSE;
 		SaveMRUInfo(szFile);
@@ -212,8 +214,8 @@ BOOL SaveCurrentFile(void)
 {
 	SetCurrentDirectory(szDir);
 
-	if (lstrlen(szFile) > 0) {
-		TCHAR szTmp[MAXFN];
+	if (szFile && lstrlen(szFile) > 0) {
+		TCHAR szTmp[MAXFN + MAXSTRING];
 		DWORD dwResult = GetFileAttributes(szFile);
 
 		if (dwResult != 0xffffffff && bReadOnly != (BOOL)(dwResult & FILE_ATTRIBUTE_READONLY)) {
@@ -250,8 +252,8 @@ BOOL SaveCurrentFile(void)
 BOOL SaveIfDirty(void)
 {
 	if (bDirtyFile) {
-		TCHAR szBuffer[MAXFN];
-		if (lstrlen(szFile) == 0) {
+		TCHAR szBuffer[MAXFN+MAXSTRING];
+		if (szFile && lstrlen(szFile) == 0) {
 			if (GetWindowTextLength(client) == 0) {
 				return TRUE;
 			}

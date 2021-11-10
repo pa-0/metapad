@@ -94,7 +94,7 @@ void FindAndLoadLanguagePlugin(void)
 
 	hinstLang = hinstThis;
 
-	if (options.szLangPlugin[0] == _T('\0'))
+	if (!options.szLangPlugin || options.szLangPlugin[0] == _T('\0'))
 		return;
 
 	{

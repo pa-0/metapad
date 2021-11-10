@@ -58,7 +58,7 @@ extern BOOL bNoFindHidden;
 extern BOOL g_bIniMode;
 extern LPTSTR FindArray[NUMFINDS];
 extern LPTSTR ReplaceArray[NUMFINDS];
-extern TCHAR szDir[MAXFN];
+extern LPTSTR szDir;
 
 #ifdef USE_RICH_EDIT
 extern BOOL bHyperlinks;
@@ -118,6 +118,8 @@ void SaveOptions(void)
 {
 	HKEY key = NULL;
 	BOOL writeSucceeded = TRUE;
+	TCHAR keyname[20];
+	int i;
 
 	if (!g_bIniMode) {
 		if (RegCreateKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
@@ -185,23 +187,11 @@ void SaveOptions(void)
 	writeSucceeded &= SaveOption(key, _T("szFavDir"), REG_SZ, (LPBYTE)&options.szFavDir, sizeof(options.szFavDir));
 	writeSucceeded &= SaveOption(key, _T("szCustomDate"), REG_SZ, (LPBYTE)&options.szCustomDate, sizeof(options.szCustomDate));
 	writeSucceeded &= SaveOption(key, _T("szCustomDate2"), REG_SZ, (LPBYTE)&options.szCustomDate2, sizeof(options.szCustomDate2));
-	if (key) {
-#ifdef BUILD_METAPAD_UNICODE
-		writeSucceeded &= SaveOption(key, _T("MacroArrayU"), REG_BINARY, (LPBYTE)&options.MacroArray, sizeof(options.MacroArray));
-#else
-		writeSucceeded &= SaveOption(key, _T("MacroArray"), REG_BINARY, (LPBYTE)&options.MacroArray, sizeof(options.MacroArray));
-#endif
+	for (i = 0; i < 10; ++i) {
+		wsprintf(keyname, _T("szMacroArray%d"), i);
+		writeSucceeded &= SaveOption(key, keyname, REG_SZ, (LPBYTE)&options.MacroArray[i], MAXMACRO);
 	}
-	else {
-		TCHAR keyname[14];
-		int i;
-		TCHAR bounded[MAXMACRO + 2];
-		for (i = 0; i < 10; ++i) {
-			wsprintf(keyname, _T("szMacroArray%d"), i);
-			wsprintf(bounded, _T("[%s]"), options.MacroArray[i]);
-			writeSucceeded &= SaveOption(key, keyname, REG_SZ, (LPBYTE)&bounded, MAXMACRO);
-		}
-	}
+
 	writeSucceeded &= SaveOption(key, _T("BackColour"), REG_BINARY, (LPBYTE)&options.BackColour, sizeof(COLORREF));
 	writeSucceeded &= SaveOption(key, _T("FontColour"), REG_BINARY, (LPBYTE)&options.FontColour, sizeof(COLORREF));
 	writeSucceeded &= SaveOption(key, _T("BackColour2"), REG_BINARY, (LPBYTE)&options.BackColour2, sizeof(COLORREF));
@@ -278,6 +268,8 @@ void SaveWindowPlacement(HWND hWndSave)
 void SaveMenusAndData(void)
 {
 	HKEY key = NULL;
+	TCHAR keyname[20];
+	int i;
 
 	if (!g_bIniMode) {
 		if (RegCreateKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
@@ -302,37 +294,26 @@ void SaveMenusAndData(void)
 	}
 
 	if (!options.bNoSaveHistory) {
-		if (key) {
-#ifdef BUILD_METAPAD_UNICODE
-			SaveOption(key, _T("FindArrayU"), REG_BINARY, (LPBYTE)&FindArray, sizeof(FindArray));
-			SaveOption(key, _T("ReplaceArrayU"), REG_BINARY, (LPBYTE)&ReplaceArray, sizeof(ReplaceArray));
-#else
-			SaveOption(key, _T("FindArray"), REG_BINARY, (LPBYTE)&FindArray, sizeof(FindArray));
-			SaveOption(key, _T("ReplaceArray"), REG_BINARY, (LPBYTE)&ReplaceArray, sizeof(ReplaceArray));
-#endif
+		for (i = 0; i < NUMFINDS; ++i) {
+			if (!FindArray[i]) continue;
+			wsprintf(keyname, _T("szFindArray%d"), i);
+			SaveOption(key, keyname, REG_SZ, (LPBYTE)&FindArray[i], MAXFIND);
 		}
-		else {
-			TCHAR keyname[16];
-			TCHAR bounded[MAXFIND + 2];
-			int i;
-			for (i = 0; i < 10; ++i) {
-				wsprintf(keyname, _T("szFindArray%d"), i);
-				wsprintf(bounded, _T("[%s]"), &FindArray[i]);
-				SaveOption(key, keyname, REG_SZ, (LPBYTE)bounded, MAXFIND);
-			}
-			for (i = 0; i < 10; ++i) {
-				wsprintf(keyname, _T("szReplaceArray%d"), i);
-				wsprintf(bounded, _T("[%s]"), &ReplaceArray[i]);
-				SaveOption(key, keyname, REG_SZ, (LPBYTE)bounded, MAXFIND);
-			}
+		for (i = 0; i < NUMFINDS; ++i) {
+			if (!ReplaceArray[i]) continue;
+			wsprintf(keyname, _T("szReplaceArray%d"), i);
+			SaveOption(key, keyname, REG_SZ, (LPBYTE)&ReplaceArray[i], MAXFIND);
+		}
+		for (i = 0; i < NUMINSERTS; ++i) {
+			if (!InsertArray[i]) continue;
+			wsprintf(keyname, _T("szInsertArray%d"), i);
+			SaveOption(key, keyname, REG_SZ, (LPBYTE)&InsertArray[i], MAXINSERT);
 		}
 	}
 
-	if (options.bSaveDirectory) {
-		SaveOption(key, _T("szLastDirectory"), REG_SZ, (LPBYTE)szDir, sizeof(TCHAR) * (lstrlen(szDir) + 1));
-	}
+	if (options.bSaveDirectory)
+		SaveOption(key, _T("szLastDirectory"), REG_SZ, (LPBYTE)szDir, MAXFN);
 
-	if (key != NULL) {
+	if (key != NULL)
 		RegCloseKey(key);
-	}
 }
