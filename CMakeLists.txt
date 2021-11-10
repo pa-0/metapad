@@ -61,8 +61,7 @@ include_directories( include )
 set( SOURCE ${SOURCE}
 
 	${CMAKE_SOURCE_DIR}/w32crt.c #No tiene utilidad en otro que no sea MSC, pero lo mantengo para asegurar que funcione. Una vez que deje de hacer cambios grandes, pasarlo solo a MSC (suma 1kb, en MSC puedo deshabilitar el runtime standard de C y usar eso en su lugar, salvando unos 40kb).
-	${CMAKE_SOURCE_DIR}/hexdecoder.c
-	${CMAKE_SOURCE_DIR}/hexencoder.c
+	${CMAKE_SOURCE_DIR}/encoding.c
 	${CMAKE_SOURCE_DIR}/external_viewers.c
 	${CMAKE_SOURCE_DIR}/file_save.c
 	${CMAKE_SOURCE_DIR}/language_plugin.c

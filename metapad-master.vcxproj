@@ -360,13 +360,12 @@
     <None Include="toolbar.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="encoding.c" />
     <ClCompile Include="external_viewers.c" />
     <ClCompile Include="file_load.c" />
     <ClCompile Include="file_new.c" />
     <ClCompile Include="file_save.c" />
     <ClCompile Include="file_utils.c" />
-    <ClCompile Include="hexdecoder.c" />
-    <ClCompile Include="hexencoder.c" />
     <ClCompile Include="language_plugin.c" />
     <ClCompile Include="metapad.c" />
     <ClCompile Include="settings_load.c" />
@@ -378,14 +377,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\consts.h" />
+    <ClInclude Include="include\encoding.h" />
     <ClInclude Include="include\external_viewers.h" />
     <ClInclude Include="include\file_load.h" />
     <ClInclude Include="include\file_new.h" />
     <ClInclude Include="include\file_save.h" />
     <ClInclude Include="include\file_utils.h" />
     <ClInclude Include="include\globals.h" />
-    <ClInclude Include="include\hexdecoder.h" />
-    <ClInclude Include="include\hexencoder.h" />
     <ClInclude Include="include\language_plugin.h" />
     <ClInclude Include="include\macros.h" />
     <ClInclude Include="include\resource.h" />

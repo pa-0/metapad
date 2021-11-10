@@ -47,12 +47,6 @@
     <ClCompile Include="file_utils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hexdecoder.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="hexencoder.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="language_plugin.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -66,6 +60,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="w32crt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="encoding.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -96,12 +93,6 @@
     <ClInclude Include="include\globals.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\hexdecoder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\hexencoder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\language_plugin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -130,6 +121,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\macros.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\encoding.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -35,8 +35,7 @@
 #include <wchar.h>
 #endif
 
-#include "include/hexdecoder.h"
-#include "include/hexencoder.h"
+#include "include/encoding.h"
 #include "include/tmp_protos.h"
 #include "include/consts.h"
 #include "include/strings.h"
