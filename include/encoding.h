@@ -1,8 +1,9 @@
 /****************************************************************************/
 /*                                                                          */
-/*   metapad 3.6                                                            */
+/*   metapad 3.6+                                                           */
 /*                                                                          */
-/*   Copyright (C) 2013 Mario Rugiero					    */
+/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
 /*   This program is free software: you can redistribute it and/or modify   */
@@ -20,13 +21,8 @@
 /*                                                                          */
 /****************************************************************************/
 
-/**
- * @file hexencoder.h
- * @brief Binary to hexa converter prototypes.
- */
-
-#ifndef HEXENCODER_H
-#define HEXENCODER_H
+#ifndef ENCODING_H
+#define ENCODING_H
 
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0400
@@ -38,8 +34,9 @@
 #include <wchar.h>
 #endif
 
-void BinToHex( const LPBYTE bin, DWORD size, TCHAR* hex );
 DWORD HexToBin( LPCTSTR hex, LPBYTE bin );
-DWORD HexToBinEx( LPCTSTR hex, LPBYTE bin, BOOL ignoreParity ); 
+DWORD DecodeBase( LPCTSTR code, LPBYTE bin, BYTE base, INT len, BYTE extractMode, BYTE alignMode, BOOL showError, LPCTSTR* end );
+DWORD EncodeBase( LPBYTE bin, LPTSTR code, BYTE base, INT len, LPBYTE* end );
+void BinToHex( const LPBYTE bin, DWORD size, TCHAR* hex );
 
 #endif
