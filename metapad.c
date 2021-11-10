@@ -1357,10 +1357,9 @@ void ReportLastError(void)
 void SaveMRUInfo(LPCTSTR szFullPath)
 {
 	HKEY key = NULL;
-	TCHAR szKey[7];
-	TCHAR szBuffer[MAXFN];
-	TCHAR szTopVal[MAXFN];
-	DWORD dwBufferSize;
+	TCHAR szKey[16];
+	LPTSTR szBuffer;
+	LPTSTR szTopVal;
 	UINT i = 1;
 
 	if (options.nMaxMRU == 0)
@@ -1372,8 +1371,7 @@ void SaveMRUInfo(LPCTSTR szFullPath)
 	}
 
 	wsprintf(szKey, _T("mru_%d"), nMRUTop);
-	dwBufferSize = sizeof(szBuffer);
-	LoadOptionNumeric(key, szKey, (LPBYTE)(&szBuffer), dwBufferSize);
+	LoadOptionString(key, szKey, &szBuffer, MAXFN);
 
 	if (lstrcmp(szFullPath, szBuffer) != 0) {
 		if (++nMRUTop > options.nMaxMRU) {
@@ -1382,30 +1380,26 @@ void SaveMRUInfo(LPCTSTR szFullPath)
 
 		SaveOption(key, _T("mru_Top"), REG_DWORD, (LPBYTE)&nMRUTop, sizeof(int));
 		wsprintf(szKey, _T("mru_%d"), nMRUTop);
-		dwBufferSize = sizeof(szTopVal);
-		szTopVal[0] = _T('\0');
-		LoadOptionString(key, szKey, (LPBYTE)&szTopVal, dwBufferSize);
-		SaveOption(key, szKey, REG_SZ, (LPBYTE)szFullPath, sizeof(TCHAR) * lstrlen(szFullPath) + 1);
+		LoadOptionString(key, szKey, &szTopVal, MAXFN);
+		SaveOption(key, szKey, REG_SZ, (LPBYTE)szFullPath, MAXFN);
 
 		for (i = 1; i <= options.nMaxMRU; ++i) {
 			if (i == nMRUTop) continue;
-
-			szBuffer[0] = szKey[0] = _T('\0');
-			dwBufferSize = sizeof(szBuffer);
 			wsprintf(szKey, _T("mru_%d"), i);
-			LoadOptionString(key, szKey, (LPBYTE)&szBuffer, dwBufferSize);
+			LoadOptionString(key, szKey, &szBuffer, MAXFN);
 			if (lstrcmpi(szBuffer, szFullPath) == 0) {
-				SaveOption(key, szKey, REG_SZ, (LPBYTE)szTopVal, sizeof(TCHAR) * lstrlen(szTopVal) + 1);
+				SaveOption(key, szKey, REG_SZ, (LPBYTE)szTopVal, MAXFN);
 				break;
 			}
 		}
 	}
 
-	if (key != NULL) {
+	if (key)
 		RegCloseKey(key);
-	}
 
 	PopulateMRUList();
+	FREE(szBuffer);
+	FREE(szTopVal);
 }
 
 void PopulateFavourites(void)
@@ -1461,10 +1455,10 @@ void PopulateMRUList(void)
 	HKEY key = NULL;
 	DWORD nPrevSave = 0;
 	TCHAR szBuffer[MAXFN+4];
-	TCHAR szBuff2[MAXFN];
+	LPTSTR szBuff2;
 	HMENU hmenu = GetMenu(hwnd);
 	HMENU hsub;
-	TCHAR szKey[7];
+	TCHAR szKey[16];
 	MENUITEMINFO mio;
 
 	if (options.bRecentOnOwn)
@@ -1491,27 +1485,23 @@ void PopulateMRUList(void)
 
 	if (g_bIniMode || nPrevSave == REG_OPENED_EXISTING_KEY) {
 		UINT i, num = 1, cnt = 0;
-		DWORD dwBufferSize = sizeof(int);
 
 		while (GetMenuItemCount(hsub)) {
 			DeleteMenu(hsub, 0, MF_BYPOSITION);
 		}
 
-		LoadOptionNumeric(key, _T("mru_Top"), (LPBYTE)&nMRUTop, dwBufferSize);
+		LoadOptionNumeric(key, _T("mru_Top"), (LPBYTE)&nMRUTop, sizeof(int));
 		mio.cbSize = sizeof(MENUITEMINFO);
 		mio.fMask = MIIM_TYPE | MIIM_ID;
 		mio.fType = MFT_STRING;
 
 		i = nMRUTop;
 		while (cnt < options.nMaxMRU) {
-			szBuff2[0] = _T('\0');
 			wsprintf(szKey, _T("mru_%d"), i);
 			wsprintf(szBuffer, (num < 10 ? _T("&%d ") : _T("%d ")), num);
+			LoadOptionString(key, szKey, &szBuff2, MAXFN);
 
-			dwBufferSize = sizeof(szBuff2);
-			LoadOptionString(key, szKey, (LPBYTE)(&szBuff2), dwBufferSize);
-
-			if (lstrlen(szBuff2) > 0) {
+			if (szBuff2 && lstrlen(szBuff2)) {
 				lstrcat(szBuffer, szBuff2);
 				mio.dwTypeData = szBuffer;
 				mio.wID = ID_MRU_BASE + i;
@@ -1528,6 +1518,7 @@ void PopulateMRUList(void)
 	if (key != NULL) {
 		RegCloseKey(key);
 	}
+	FREE(szBuff2);
 }
 
 void CenterWindow(HWND hwndCenter)
@@ -2390,9 +2381,9 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 				GetDlgItemText(hwndDlg, IDC_CUSTOMDATE, buf, MAXDATEFORMAT);	SSTRCPY(options.szCustomDate, buf);
 				GetDlgItemText(hwndDlg, IDC_CUSTOMDATE2, buf, MAXDATEFORMAT);	SSTRCPY(options.szCustomDate2, buf);
 
-				if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_DEFAULT, BM_GETCHECK, 0, 0))
+				if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_DEFAULT, BM_GETCHECK, 0, 0)) {
 					FREE(options.szLangPlugin);
-				else if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_PLUGIN, BM_GETCHECK, 0, 0))
+				} else if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_PLUGIN, BM_GETCHECK, 0, 0))
 					GetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, buf, MAXFN);		SSTRCPY(options.szLangPlugin, buf);
 			}
 			break;
@@ -2954,7 +2945,6 @@ int CALLBACK SheetInitProc(HWND hwndDlg, UINT uMsg, LPARAM lParam)
 
 LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
-	TCHAR bufFn[MAXFN];
 	if (Msg == WM_COMMAND && ID_FAV_RANGE_BASE < LOWORD(wParam) && LOWORD(wParam) <= ID_FAV_RANGE_MAX) {
 		LoadFileFromMenu(LOWORD(wParam), FALSE);
 		return FALSE;
@@ -2977,6 +2967,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 	case WM_DROPFILES:
 		{
 			HDROP hDrop = (HDROP) wParam;
+			TCHAR bufFn[MAXFN];
 
 			if (!SaveIfDirty())
 				break;
@@ -3289,7 +3280,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 									FREE(szFile);
 									break;
 								}
-								LaunchPrimaryExternalViewer();
+								LaunchExternalViewer(0);
 							}
 							bLoading = FALSE;
 							if (!IsWindowVisible(hwnd))
@@ -3683,13 +3674,12 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_MYEDIT_PASTE: {
 #if defined(USE_RICH_EDIT) || defined(BUILD_METAPAD_UNICODE)
 				HGLOBAL hMem;
-				LPTSTR szTmp, szTmp2;
+				LPTSTR szTmp, szTmp2 = NULL;
 				OpenClipboard(NULL);
 				hMem = GetClipboardData(_CF_TEXT);
 				if (hMem) {
 					szTmp = GlobalLock(hMem);
-					szTmp2 = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(szTmp)+1) * sizeof(TCHAR));
-					lstrcpy(szTmp2, szTmp);
+					SSTRCPY(szTmp2, szTmp);
 					GlobalUnlock(hMem);
 #ifdef USE_RICH_EDIT
 					FixTextBuffer(szTmp2);
@@ -3697,7 +3687,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					FixTextBufferLE(&szTmp2);
 #endif
 					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szTmp2);
-					HeapFree(globalHeap, 0, (HGLOBAL)szTmp2);
+					FREE(szTmp2);
 				}
 				CloseClipboard();
 				InvalidateRect(client, NULL, TRUE);
@@ -5422,6 +5412,7 @@ endinsertfile:
 	}
 	return FALSE;
 }
+LRESULT WINAPI MainWndProcA(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam){ return DefWindowProc(hwndMain, Msg, wParam, lParam); }
 
 DWORD WINAPI LoadThread(LPVOID lpParameter)
 {
@@ -5479,7 +5470,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	if (!hPrevInstance) {
 		wc.hbrBackground = (HBRUSH)(COLOR_WINDOW);
 		wc.style = /*CS_BYTEALIGNWINDOW CS_VREDRAW | CS_HREDRAW;*/ 0;
-		wc.lpfnWndProc = MainWndProc;
+		wc.lpfnWndProc = MainWndProcA;
 		wc.cbClsExtra = 0;
 		wc.cbWndExtra = 0;
 		wc.hInstance = hInstance;
@@ -5495,7 +5486,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
 	hinstThis = hInstance;
 	globalHeap = GetProcessHeap();
-	ZeroMemory(options, sizeof(options));
+	ZeroMemory(&options, sizeof(options));
 	szFile = NULL;
 	szCaptionFile = NULL;
 	szFav = NULL;
@@ -5859,7 +5850,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		}
 		bLoading = TRUE;
 
-		bufFn[0] = _T('\0')
+		bufFn[0] = _T('\0');
 		GetFullPathName(szFile, MAXFN, bufFn, NULL);
 		if (bufFn[0])
 			SSTRCPY(szFile, bufFn);

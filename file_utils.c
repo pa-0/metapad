@@ -37,7 +37,9 @@
 #include "include/tmp_protos.h"
 #include "include/typedefs.h"
 #include "include/strings.h"
+#include "include/macros.h"
 
+extern HANDLE globalHeap;
 extern BOOL bUnix;
 extern int nEncodingType;
 extern HWND client;
@@ -170,7 +172,7 @@ void ExpandFilename(LPTSTR szBuffer)
 {
 	WIN32_FIND_DATA FileData;
 	HANDLE hSearch;
-	TCHAR szTmp[MAXFN] = "";
+	TCHAR szTmp[MAXFN] = _T("");
 	LPTSTR szTmpDir;
 
 	if (szBuffer){

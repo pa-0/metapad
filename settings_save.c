@@ -58,6 +58,7 @@ extern BOOL bNoFindHidden;
 extern BOOL g_bIniMode;
 extern LPTSTR FindArray[NUMFINDS];
 extern LPTSTR ReplaceArray[NUMFINDS];
+extern LPTSTR InsertArray[NUMINSERTS];
 extern LPTSTR szDir;
 
 #ifdef USE_RICH_EDIT

@@ -33,7 +33,9 @@
 #include "include/tmp_protos.h"
 #include "include/typedefs.h"
 #include "include/strings.h"
+#include "include/macros.h"
 
+extern HANDLE globalHeap;
 extern BOOL bBinaryFile;
 extern BOOL bDirtyFile;
 extern BOOL bLoading;

@@ -57,6 +57,7 @@ extern LPTSTR szReplaceText;
 extern LPTSTR szMetapadIni;
 extern LPTSTR FindArray[NUMFINDS];
 extern LPTSTR ReplaceArray[NUMFINDS];
+extern LPTSTR InsertArray[NUMINSERTS];
 extern BOOL g_bIniMode;
 extern BOOL bWordWrap;
 extern BOOL bPrimaryFont;
@@ -279,24 +280,19 @@ void LoadOptionString(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData)
 	LPTSTR buf = (LPTSTR)HeapAlloc(globalHeap, 0, buflen);
 	if (buf) {
 		buf[0] = _T('\0');
-		if (hKey) RegQueryValueEx(hKey, name, NULL, NULL, lpData, &buflen);
+		if (hKey) RegQueryValueEx(hKey, name, NULL, NULL, (LPBYTE)buf, &buflen);
 		else GetPrivateProfileString(_T("Options"), name, buf, buf, clen, szMetapadIni);
-		if (*lpData) HeapFree(globalHeap, 0, (HGLOBAL)*lpData);
-		if (buf[0])
-			*lpData = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(buf)+1) * sizeof(TCHAR));
-			lstrcpy(*lpData, buf);
-		else
-			*lpData = NULL;
+		if (buf[0]){
+			SSTRCPY(*lpData, buf);
+		}
 		HeapFree(globalHeap, 0, (HGLOBAL)buf);
 	}
 }
-void LoadOptionStringDefault(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData, LPCTSTR default)
+void LoadOptionStringDefault(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData, LPCTSTR defVal)
 {
 	LoadOptionString(hKey, name, lpData, cbData);
-	if (default && default[0] && (!*lpData || !*lpData[0])) {
-		if (*lpData) HeapFree(globalHeap, 0, (HGLOBAL)*lpData);
-		*lpData = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(default)+1) * sizeof(TCHAR));
-		lstrcpy(*lpData, default);
+	if (defVal && defVal[0] && (!*lpData || !*lpData[0])) {
+		SSTRCPY(*lpData, defVal);
 	}
 }
 
@@ -311,8 +307,9 @@ void LoadOptionStringDefault(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbDa
  */
 BOOL LoadOptionNumeric(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData)
 {
+	DWORD clen = cbData;
 	if (hKey) {
-		return (RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData) == ERROR_SUCCESS);
+		return (RegQueryValueEx(hKey, name, NULL, NULL, lpData, &clen) == ERROR_SUCCESS);
 	}
 	else {
 		TCHAR val[10];
@@ -377,7 +374,6 @@ void LoadMenusAndData(void)
 {
 	HKEY key = NULL;
 	BOOL bLoad = TRUE;
-	TCHAR bufFn[MAXFN];
 	TCHAR keyname[20];
 	int i;
 
@@ -419,7 +415,7 @@ void LoadMenusAndData(void)
 				wsprintf(keyname, _T("szInsertArray%d"), i);
 				LoadOptionString(key, keyname, &InsertArray[i], MAXINSERT);
 			}
-			LoadOptionString(key, "szReplaceArray0", &ReplaceArray[i], MAXFIND);
+			LoadOptionString(key, _T("szReplaceArray0"), &ReplaceArray[i], MAXFIND);
 		}
 
 		if (options.bSaveDirectory)
