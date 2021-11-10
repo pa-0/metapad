@@ -639,7 +639,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 {
 	switch (uMsg) {
 	case WM_COMMAND:
-		if ((LOWORD(wParam) == IDC_ESCAPE || LOWORD(wParam) == IDC_ESCAPE2 || LOWORD(wParam) == IDC_ESCAPE3) && HIWORD(wParam) == BN_CLICKED) {
+		if ((LOWORD(wParam) == IDC_ESCAPE || LOWORD(wParam) == IDC_ESCAPE2) && HIWORD(wParam) == BN_CLICKED) {
 			HMENU hmenu = LoadMenu(hinstLang, (LPCTSTR)IDR_ESCAPE_SEQUENCES);
 			HMENU hsub = GetSubMenu(hmenu, 0);
 			RECT rect;
@@ -651,15 +651,11 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			switch(LOWORD(wParam)){
 				case IDC_ESCAPE:
 					GetWindowRect(GetDlgItem(hwndFind, IDC_ESCAPE), &rect);
-					SendDlgItemMessage(hwndFind, ID_DROP_FIND, WM_GETTEXT, (WPARAM)MAXFIND, (LPARAM)szText);
+					SendDlgItemMessage(hwndFind, (frDlgId == ID_FIND || frDlgId == ID_REPLACE? ID_DROP_FIND : ID_DROP_INSERT), WM_GETTEXT, (WPARAM)MAXFIND, (LPARAM)szText);
 					break;
 				case IDC_ESCAPE2:
 					GetWindowRect(GetDlgItem(hwndFind, IDC_ESCAPE2), &rect);
 					SendDlgItemMessage(hwndFind, ID_DROP_REPLACE, WM_GETTEXT, (WPARAM)MAXFIND, (LPARAM)szText);
-					break;
-				case IDC_ESCAPE3:
-					GetWindowRect(GetDlgItem(hwndFind, IDC_ESCAPE3), &rect);
-					SendDlgItemMessage(hwndFind, ID_DROP_INSERT, WM_GETTEXT, (WPARAM)MAXFIND, (LPARAM)szText);
 					break;
 			}
 
@@ -705,11 +701,9 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 			switch(LOWORD(wParam)){
 				case IDC_ESCAPE:
-					i = ID_DROP_FIND; break;
+					i = (frDlgId == ID_FIND || frDlgId == ID_REPLACE? ID_DROP_FIND : ID_DROP_INSERT); break;
 				case IDC_ESCAPE2:
 					i = ID_DROP_REPLACE; break;
-				case IDC_ESCAPE3:
-					i = ID_DROP_INSERT; break;
 			}
 			SendDlgItemMessage(hwndFind, i, WM_SETTEXT, (WPARAM)(BOOL)FALSE, (LPARAM)szText);
 			SetFocus(GetDlgItem(hwndFind, i));
@@ -718,8 +712,11 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			DestroyMenu(hmenu);
 		}
 		break;
+	case WM_SHOWWINDOW:
+		return TRUE;
 	}
-	return CallWindowProc(wpOrigFindProc, hwndFind, uMsg, wParam, lParam);
+	//return CallWindowProc(wpOrigFindProc, hwndFind, uMsg, wParam, lParam);
+	return FALSE;
 }
 
 LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -3370,7 +3367,9 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				fr.lpstrReplaceWith = SCNUL(szReplaceText);
 				fr.wReplaceWithLen = MAXFIND * sizeof(TCHAR);
 				fr.hInstance = hinstLang;
-				fr.Flags = FR_ENABLETEMPLATE;
+				fr.Flags = FR_ENABLETEMPLATE | FR_ENABLEHOOK;
+				fr.lpfnHook = (LPFRHOOKPROC)FindProc;
+				hb = CreateMappedBitmap(hinstThis, IDB_DROP_ARROW, 0, NULL, 0);
 				switch (LOWORD(wParam)) {
 					case ID_REPLACE:
 						SSTRCPY(szReplaceText, ReplaceArray[0]);
@@ -3400,14 +3399,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						break;
 				}
 
-				wpOrigFindProc = (WNDPROC)SetWindowLongPtr(hdlgFind, GWLP_WNDPROC, (LONG_PTR)FindProc);
-				hb = CreateMappedBitmap(hinstThis, IDB_DROP_ARROW, 0, NULL, 0);				
 				switch (LOWORD(wParam)) {
 					case ID_INSERT_TEXT:
 					case ID_MYEDIT_PASTE_MUL:
 						fr.lpTemplateName = MAKEINTRESOURCE(IDD_INSERT);
 						hdlgFind = FindText(&fr);
-						SendDlgItemMessage(hdlgFind, IDC_ESCAPE3, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
 						SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_LIMITTEXT, (WPARAM)MAXINSERT, 0);
 						SendDlgItemMessage(hdlgFind, IDC_NUM, EM_LIMITTEXT, (WPARAM)9, 0);
 						SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_INSERT, BM_SETCHECK, (WPARAM) bCloseAfterInsert, 0);
@@ -3446,10 +3442,10 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						break;
 				}
 				
+				SendDlgItemMessage(hdlgFind, IDC_ESCAPE, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
 				switch (LOWORD(wParam)) {
 					case ID_REPLACE:
 					case ID_FIND:
-						SendDlgItemMessage(hdlgFind, IDC_ESCAPE, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
 						SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_LIMITTEXT, (WPARAM)MAXFIND, 0);
 						for (i = 0; i < NUMFINDS; ++i)
 							if (SCNUL(FindArray[i])[0])
@@ -5224,7 +5220,18 @@ endinsertfile:
 				return FALSE;
 			}
 
-			bFinding = (lstrcmp(lpfr->lpstrFindWhat, _T("dummy_find")) == 0);
+			switch (frDlgId) {
+				case ID_FIND:
+					bFinding = TRUE;
+				case ID_REPLACE:
+					break;
+				case ID_INSERT_TEXT:
+
+				case ID_MYEDIT_PASTE_MUL:
+
+				default:
+					return FALSE;
+			}
 
 			SendDlgItemMessage(hdlgFind, ID_DROP_FIND, WM_GETTEXT, MAXFIND, (WPARAM)szBuffer);
 			lstrcpy(lpfr->lpstrFindWhat, szBuffer);
@@ -5914,6 +5921,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	SetFocus(client);
 
 	while (GetMessage(&msg, NULL, 0,0)) {
+		if (msg.hwnd && msg.hwnd == hdlgFind)
+			msg=msg;
 		if (!(hdlgFind && IsDialogMessage(hdlgFind, &msg)) && !TranslateAccelerator(hwnd, accel, &msg)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
