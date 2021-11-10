@@ -336,6 +336,10 @@
 #define ID_ESCAPE_HEX                   40211
 #define ID_ESCAPE_DEC                   40212
 #define ID_ESCAPE_OCT                   40213
+#define ID_ESCAPE_BIN                   40214
+#define ID_ESCAPE_HEX2                  40215
+#define ID_ESCAPE_HEXS                  40216
+#define ID_ESCAPE_HEXS2                 40217
 #define ID_MRU_BASE                     44000
 #define ID_MRU_1                        44001
 #define ID_MRU_2                        44002

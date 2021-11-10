@@ -58,4 +58,8 @@ BOOL EncodeWithEscapeSeqs(TCHAR* szText);
 void ReverseBytes(LPBYTE buffer, LONG size);
 void UpdateCaption(void);
 
+#ifdef _DEBUG
+#include <stdio.h>
+#endif
+
 #endif
