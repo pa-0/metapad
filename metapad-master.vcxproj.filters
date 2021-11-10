@@ -105,9 +105,6 @@
     <ClInclude Include="include\language_plugin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\outmacros.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\settings_load.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -130,6 +127,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\macros.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

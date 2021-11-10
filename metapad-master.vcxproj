@@ -194,7 +194,7 @@
       <AdditionalOptions>/SUBSYSTEM:WINDOWS,5.00 /OSVERSION:5.00 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <ResourceCompile>
-      <PreprocessorDefinitions>NO_RICH_EDIT;_UNICODE;UNICODE;BUILD_METAPAD_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NO_RICH_EDIT;BUILD_ICON_SMALL;_UNICODE;UNICODE;BUILD_METAPAD_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <ProjectReference>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
@@ -297,7 +297,7 @@
       <AdditionalOptions>/SUBSYSTEM:WINDOWS,5.00 /OSVERSION:5.00 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <ResourceCompile>
-      <PreprocessorDefinitions>NO_RICH_EDIT;_UNICODE;UNICODE;BUILD_METAPAD_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NO_RICH_EDIT;BUILD_ICON_SMALL;_UNICODE;UNICODE;BUILD_METAPAD_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_ANSI|Win32'">
@@ -383,7 +383,7 @@
     <ClInclude Include="include\hexdecoder.h" />
     <ClInclude Include="include\hexencoder.h" />
     <ClInclude Include="include\language_plugin.h" />
-    <ClInclude Include="include\outmacros.h" />
+    <ClInclude Include="include\macros.h" />
     <ClInclude Include="include\resource.h" />
     <ClInclude Include="include\settings_load.h" />
     <ClInclude Include="include\settings_save.h" />
