@@ -36,6 +36,11 @@
 #include <wchar.h>
 #endif
 
+#include "include/strings.h"
+#include "include/macros.h"
+
+extern HWND hwnd;
+
 /**
  * Converts an array bin of binary data, of size size bytes, into a string hex
  * of hexa characters of size [(2*size) + 1] ANSI or wide characters, depending
@@ -56,3 +61,95 @@ void BinToHex( const LPBYTE bin, DWORD size, TCHAR* hex )
 	}
 	hex[2*i] = _T('\0');
 }
+
+/**
+ * Decodes a single character (representing only 4 bits) to binary.
+ *
+ * @param[in] hexchar The character to decode.
+ * @return The numeric value hexchar represents. If this is 255, it means
+ * hexchar is an invalid hexadecimal character.
+ * @note Case insensitive.
+ */
+static BYTE HexBaseToBin( TCHAR hexchar )
+{
+	switch( hexchar ){
+		case _T('0'):
+			return 0;
+		case _T('1'):
+			return 1;
+		case _T('2'):
+			return 2;
+		case _T('3'):
+			return 3;
+		case _T('4'):
+			return 4;
+		case _T('5'):
+			return 5;
+		case _T('6'):
+			return 6;
+		case _T('7'):
+			return 7;
+		case _T('8'):
+			return 8;
+		case _T('9'):
+			return 9;
+		case _T('A'):
+		case _T('a'):
+			return 10;
+		case _T('B'):
+		case _T('b'):
+			return 11;
+		case _T('C'):
+		case _T('c'):
+			return 12;
+		case _T('D'):
+		case _T('d'):
+			return 13;
+		case _T('E'):
+		case _T('e'):
+			return 14;
+		case _T('F'):
+		case _T('f'):
+			return 15;
+		default:
+			return 255;
+	}
+}
+
+/**
+ * Decodes a string of ANSI or wide characters, depending on definition of the
+ * UNICODE macro, representing an hexadecimal array of binary data, to the array
+ * it represents.
+ *
+ * @param[in] hex Null terminated string to decode.
+ * @param[out] bin Pointer to the array of bytes where the data will be stored.
+ * @return Size of decoded array.
+ */
+DWORD HexToBinEx( LPCTSTR hex, LPBYTE bin, BOOL ignoreParity )
+{
+	DWORD i, size;
+	BYTE j;
+	size = lstrlen( hex );
+	if( size == 0 ) return 0;
+	else if( !ignoreParity && size % 2 ){
+		ERROROUT(_T("Invalid hex string!"));
+		return 0;
+	} else size = size/2;
+	for( i = 0; i < size; ++i ){
+		if( ( j = HexBaseToBin( hex[2*i] ) ) == 255 ){
+			ERROROUT( _T("Invalid hex character!") );
+			return i;
+		} else
+			bin[i] = j << 4;
+		if( ( j = HexBaseToBin( hex[(2*i) + 1] ) ) == 255 ){
+			ERROROUT( _T("Invalid hex character!") );
+			return i;
+		} else
+			bin[i] |= j;
+	}
+	return i;
+}
+
+DWORD HexToBin( LPCTSTR hex, LPBYTE bin ){
+	return HexToBinEx(hex, bin, FALSE);
+} 
