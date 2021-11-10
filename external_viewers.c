@@ -41,6 +41,7 @@
 #include "include/macros.h"
 #include "include/resource.h"
 
+extern HANDLE globalHeap;
 extern HWND hwnd;
 extern LPTSTR szCaptionFile;
 extern LPTSTR szFile;
@@ -58,16 +59,15 @@ extern option_struct options;
  */
 BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
 {
-	TCHAR szCmdLine[1024];
 	LPTSTR lpFormat;
+	LPTSTR szCmdLine = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(lpExecutable)+lstrlen(lpCommandLine)+5) * sizeof(TCHAR));
 
 	if (lpExecutable[0] == _T('"') && lpExecutable[lstrlen(lpExecutable) - 1] == _T('"')) {
 		// quotes already present
 		lpFormat = _T("%s %s");
 	}
 	else {
-		// executable file must be quoted to conform to Win32 file name
-		// specs.
+		// executable file must be quoted to conform to Win32 file name specs.
 		lpFormat = _T("\"%s\" %s");
 	}
 
@@ -75,11 +75,10 @@ BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
 
 	if (lstrcmpi(lpExecutable + (lstrlen(lpExecutable) - 4), _T(".exe")) != 0) {
 		/// @todo Should this inform about which error happened?
-		if ((INT_PTR)ShellExecute(NULL, NULL, lpExecutable, szCmdLine, SCNUL(szDir), SW_SHOWNORMAL) <= 32) {
+		if ((INT_PTR)ShellExecute(NULL, NULL, lpExecutable, lpCommandLine, szDir, SW_SHOWNORMAL) <= 32) {
 			return FALSE;
 		}
-	}
-	else {
+	} else {
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
 		ZeroMemory(&si, sizeof(STARTUPINFO));
@@ -97,6 +96,7 @@ BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
 			CloseHandle(pi.hThread);
 		}
 	}
+	HeapFree(globalHeap, 0, szCmdLine);
 	return TRUE;
 }
 

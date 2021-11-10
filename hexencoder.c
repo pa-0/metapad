@@ -1,8 +1,9 @@
 /****************************************************************************/
 /*                                                                          */
-/*   metapad 3.6                                                            */
+/*   metapad 3.6+                                                           */
 /*                                                                          */
-/*   Copyright (C) 2013 Mario Rugiero					    */
+/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
 /*   This program is free software: you can redistribute it and/or modify   */
@@ -53,5 +54,5 @@ void BinToHex( const LPBYTE bin, DWORD size, TCHAR* hex )
 		hex[2*i] = HexIndex[(bin[i] >> 4) & 0x0F];
 		hex[(2*i)+1] = HexIndex[bin[i] & 0x0F];
 	}
-	hex[(2*i)+2] = _T('\0');
+	hex[2*i] = _T('\0');
 }

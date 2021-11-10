@@ -105,7 +105,7 @@ BOOL SaveOption(HKEY hKey, LPCTSTR name, DWORD dwType, CONST LPBYTE lpData, DWOR
 				writeSucceeded = WritePrivateProfileString(_T("Options"), name, (LPTSTR)szData, SCNUL(szMetapadIni));
 				break;
 			case REG_BINARY: {
-				TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, 2 * (cbData + 1) * sizeof(TCHAR));
+				TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, 0, 2 * (cbData + 1) * sizeof(TCHAR));
 				BinToHex( lpData, cbData, szBuffer );
 				writeSucceeded = WritePrivateProfileString(_T("Options"), name, (TCHAR*)szBuffer, SCNUL(szMetapadIni));
 				HeapFree(globalHeap, 0, szBuffer);

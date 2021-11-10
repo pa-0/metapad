@@ -104,13 +104,13 @@ static BYTE HexBaseToBin( TCHAR hexchar )
  * @param[out] bin Pointer to the array of bytes where the data will be stored.
  * @return Size of decoded array.
  */
-DWORD HexToBin( LPCTSTR hex, LPBYTE bin )
+DWORD HexToBinEx( LPCTSTR hex, LPBYTE bin, BOOL ignoreParity )
 {
 	DWORD i, size;
 	BYTE j;
 	size = lstrlen( hex );
 	if( size == 0 ) return 0;
-	else if( !( size % 2 ) ){
+	else if( !ignoreParity && size % 2 ){
 		ERROROUT(_T("Invalid hex string!"));
 		return 0;
 	} else size = size/2;
@@ -127,4 +127,8 @@ DWORD HexToBin( LPCTSTR hex, LPBYTE bin )
 			bin[i] |= j;
 	}
 	return i;
+}
+
+DWORD HexToBin( LPCTSTR hex, LPBYTE bin ){
+	return HexToBinEx(hex, bin, FALSE);
 }

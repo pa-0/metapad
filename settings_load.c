@@ -36,11 +36,13 @@
 #endif
 
 #include "include/hexdecoder.h"
+#include "include/hexencoder.h"
 #include "include/tmp_protos.h"
 #include "include/consts.h"
 #include "include/strings.h"
 #include "include/typedefs.h"
 #include "include/settings_load.h"
+#include "include/macros.h"
 
 #ifdef USE_RICH_EDIT
 extern BOOL bHyperlinks;
@@ -86,9 +88,11 @@ static void LoadOptionBinary(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbDat
 		RegQueryValueEx(hKey, name, NULL, NULL, lpData, &cbData);
 	}
 	else {
-		TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (cbData + 1) * sizeof(TCHAR) * 2);
+		UINT l = (cbData + 1) * sizeof(TCHAR) * 2;
+		TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, l);
+		BinToHex(lpData, cbData, szBuffer);
 
-		if (GetPrivateProfileString(_T("Options"), name, (TCHAR*)lpData, szBuffer, cbData * 2, SCNUL(szMetapadIni)) > 0) {
+		if (GetPrivateProfileString(_T("Options"), name, szBuffer, szBuffer, l, SCNUL(szMetapadIni)) > 0) {
 			HexToBin( szBuffer, lpData );
 		}
 		HeapFree(globalHeap, 0, szBuffer);

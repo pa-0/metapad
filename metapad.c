@@ -117,7 +117,7 @@ option_struct options;
 
 #ifdef _DEBUG
 	size_t __stktop;
-	void __chkstk(){
+	void __stkchk(){
 		int x = 0;
 		TCHAR m[32];
 		wsprintf(m, _T("Stack: %d"), __stktop - (size_t)&x);
@@ -2189,7 +2189,6 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("UTF-8 UNIX"));
 			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("Binary"));
 
-
 			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_SETCURSEL, (WPARAM)options.nFormatIndex, 0);
 
 			wsprintf(szInt, _T("%d"), options.nMaxMRU);
@@ -2424,7 +2423,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 				ofn.nMaxCustFilter = 0L;
 				ofn.nFilterIndex = 1L;
 				ofn.lpstrFile = szResult;
-				ofn.nMaxFile = sizeof(szResult);
+				ofn.nMaxFile = MAXFN;
 				ofn.lpstrFileTitle = (LPTSTR)NULL;
 				ofn.nMaxFileTitle = 0L;
 				ofn.lpstrInitialDir = (LPTSTR) NULL;
@@ -2909,7 +2908,7 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 				ofn.nMaxCustFilter = 0L;
 				ofn.nFilterIndex = 1L;
 				ofn.lpstrFile = szResult;
-				ofn.nMaxFile = sizeof(szResult);
+				ofn.nMaxFile = MAXFN;
 				ofn.lpstrFileTitle = (LPTSTR)NULL;
 				ofn.nMaxFileTitle = 0L;
 				ofn.lpstrInitialDir = (LPTSTR) NULL;
@@ -3842,7 +3841,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				ofn.nMaxCustFilter = 0L;
 				ofn.nFilterIndex = 1L;
 				ofn.lpstrFile = szFilename;
-				ofn.nMaxFile = sizeof(szFilename);
+				ofn.nMaxFile = MAXFN;
 				ofn.lpstrFileTitle = (LPTSTR)NULL;
 				ofn.nMaxFileTitle = 0L;
 				ofn.lpstrInitialDir = SCNUL(szDir);
@@ -4157,7 +4156,7 @@ endinsertfile:
 				ofn.nMaxCustFilter = 0L;
 				ofn.nFilterIndex = 1L;
 				ofn.lpstrFile = szTmp;
-				ofn.nMaxFile = sizeof(szTmp);
+				ofn.nMaxFile = MAXFN;
 				ofn.lpstrFileTitle = (LPTSTR)NULL;
 				ofn.nMaxFileTitle = 0L;
 				ofn.lpstrInitialDir = SCNUL(szDir);
@@ -4499,7 +4498,7 @@ endinsertfile:
 			}
 			case ID_PAGESETUP:
 				{
-					LPTSTR szLocale = _T("1");
+					TCHAR szLocale[4];
 					BOOL bMetric;
 					PAGESETUPDLG psd;
 
@@ -4834,22 +4833,28 @@ endinsertfile:
 					break;
 				case ID_MAKE_OEM:
 					CharToOemBuff(szSrc, (LPSTR)szDest, nSize);
+#ifdef BUILD_METAPAD_UNICODE
 					if (sizeof(TCHAR) > 1) {
 						lstrcpy(szSrc, szDest);
 						MultiByteToWideChar(CP_ACP, 0, (LPSTR)szSrc, nSize, szDest, nSize);
 					}
+#endif
 					break;
-				case ID_MAKE_ANSI:					
+				case ID_MAKE_ANSI:
+#ifdef BUILD_METAPAD_UNICODE
 					if (sizeof(TCHAR) > 1) {
 						lstrcpy(szDest, szSrc);
 						WideCharToMultiByte(CP_ACP, 0, szDest, nSize, (LPSTR)szSrc, nSize, NULL, NULL);
 					}
+#endif
 					OemToCharBuffA((LPSTR)szSrc, (LPSTR)szDest, nSize);
+#ifdef BUILD_METAPAD_UNICODE
 					if (sizeof(TCHAR) > 1) {
 						//OemToCharBuffW corrupts newlines, use original ANSI function instead and re-convert to unicode here
 						lstrcpy(szSrc, szDest);
 						MultiByteToWideChar(CP_ACP, 0, (LPSTR)szSrc, nSize, szDest, nSize);
 					}
+#endif
 					break;
 				}
 
@@ -5468,12 +5473,14 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	MSG msg;
 	HACCEL accel = NULL;
 	int left, top, width, height;
+	int nCmdLen;
 	HMENU hmenu;
 	MENUITEMINFO mio;
 	CHARRANGE crLineCol = {-1, -1};
 	LPTSTR szCmdLine;
 	BOOL bSkipLanguagePlugin = FALSE;
 	TCHAR* bufFn = gTmpBuf;
+	TCHAR chOption;
 #ifdef _DEBUG
 	int _x=0;
 	__stktop = (size_t)&_x;
@@ -5529,27 +5536,24 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		lstrcat(szMetapadIni, _T("metapad.ini"));
 	}
 	
-	if (lstrlen(szCmdLine) > 0) {
-		int nCmdLen = lstrlen(szCmdLine);
+	if (szCmdLine[0]) {
+		nCmdLen = lstrlen(szCmdLine);
+		while(szCmdLine[0] == _T(' ')) { szCmdLine++; nCmdLen--; }
+		while(szCmdLine[nCmdLen - 1] == _T(' ')) nCmdLen--;
 		if (nCmdLen > 1 && szCmdLine[0] == _T('/')) {
-
-			TCHAR chOption = szCmdLine[1];
-			if (chOption == _T('s') || chOption == _T('S')) {
+			chOption = (TCHAR)CharLower((LPTSTR)szCmdLine[1]);
+			szCmdLine += 2; nCmdLen -= 2;
+			switch (chOption){
+			case _T('s'):
 				bSkipLanguagePlugin = TRUE;
-				szCmdLine += 2;
-				if (szCmdLine[0] == _T(' ')) ++szCmdLine;
-			}
-			else if (chOption == _T('v') || chOption == _T('V')) {
+				break;
+			case _T('v'):
 				g_bDisablePluginVersionChecking = TRUE;
-				szCmdLine += 2;
-				if (szCmdLine[0] == _T(' ')) ++szCmdLine;
-			}
-			else if (chOption == _T('i') || chOption == _T('I')) {
+				break;
+			case _T('i'):
 				g_bIniMode = TRUE;
-				szCmdLine += 2;
-				if (szCmdLine[0] == _T(' ')) ++szCmdLine;
-			}
-			else if (chOption == _T('m') || chOption == _T('M')) {
+				break;
+			case _T('m'):
 				LoadOptions();
 				if( options.bSaveWindowPlacement || options.bStickyWindow ) {
 					int left, top, width, height, nShow;
@@ -5564,6 +5568,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 				SaveOptions();
 				MSGOUT(_T("Migration to INI completed."));
 				return FALSE;
+			default:
+				szCmdLine -= 2; nCmdLen += 2;
 			}
 		}
 	}
@@ -5796,56 +5802,55 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
 	MakeNewFile();
 	
-	if (lstrlen(szCmdLine) > 0) {
-		int nCmdLen;
-
-		nCmdLen = lstrlen(szCmdLine);
+	if (szCmdLine[0]) {
 		if (szFile) HeapFree(globalHeap, 0, (HGLOBAL)szFile);
 		szFile = (LPTSTR)HeapAlloc(globalHeap, 0, (nCmdLen+1) * sizeof(TCHAR));
-
+		while(szCmdLine[0] == _T(' ')) { szCmdLine++; nCmdLen--; }
+		while(szCmdLine[nCmdLen - 1] == _T(' ')) nCmdLen--;
 		if (nCmdLen > 1 && szCmdLine[0] == _T('/')) {
-			TCHAR chOption = szCmdLine[1];
-
-			if (chOption == _T('p') || chOption == _T('P')) {
-				if (szCmdLine[3] == _T('\"') && szCmdLine[nCmdLen - 1] == _T('\"'))
-					lstrcpyn(szFile, szCmdLine + 4, nCmdLen - 1);
+			chOption = (TCHAR)CharLower((LPTSTR)szCmdLine[1]);
+			szCmdLine += 2; nCmdLen -= 2;
+			while(szCmdLine[0] == _T(' ')) { szCmdLine++; nCmdLen--; }
+			switch (chOption){
+			case _T('p'):
+				if (szCmdLine[0] == _T('\"') && szCmdLine[nCmdLen - 1] == _T('\"'))
+					lstrcpyn(szFile, szCmdLine + 1, nCmdLen - 1);
 				else
-					lstrcpyn(szFile, szCmdLine + 3, nCmdLen + 1);
-
+					lstrcpyn(szFile, szCmdLine, nCmdLen + 1);
 				LoadFile(szFile, FALSE, FALSE);
 				SSTRCPY(szCaptionFile, szFile);
 				PrintContents();
 				CleanUp();
 				return TRUE;
-			}
-			else if (chOption == _T('g') || chOption == _T('G')) {
+			case _T('g'): {
 				TCHAR szNum[6];
 				int nRlen, nClen;
 
 				ZeroMemory(szNum, sizeof(szNum));
-				for (nRlen = 0; _istdigit(szCmdLine[nRlen + 3]); nRlen++)
-					szNum[nRlen] = szCmdLine[nRlen + 3];
+				for (nRlen = 0; _istdigit(szCmdLine[nRlen]); nRlen++)
+					szNum[nRlen] = szCmdLine[nRlen];
 				crLineCol.cpMin = _ttol(szNum);
 
 				ZeroMemory(szNum, sizeof(szNum));
-				for (nClen = 0; _istdigit(szCmdLine[nClen + nRlen + 4]); nClen++)
-					szNum[nClen] = szCmdLine[nRlen + nClen + 4];
+				for (nClen = 0; _istdigit(szCmdLine[nClen + nRlen + 1]); nClen++)
+					szNum[nClen] = szCmdLine[nRlen + nClen + 1];
 				crLineCol.cpMax = _ttol(szNum);
 
-				if (szCmdLine[5 + nClen + nRlen] == _T('\"') && szCmdLine[nCmdLen - 1] == _T('\"'))
-					lstrcpyn(szFile, szCmdLine + nClen + nRlen + 6, nCmdLen - 1);
+				if (szCmdLine[2 + nClen + nRlen] == _T('\"') && szCmdLine[nCmdLen - 1] == _T('\"'))
+					lstrcpyn(szFile, szCmdLine + nClen + nRlen + 3, nCmdLen - 1);
 				else
-					lstrcpyn(szFile, szCmdLine + nClen + nRlen + 5, nCmdLen + 1);
+					lstrcpyn(szFile, szCmdLine + nClen + nRlen + 2, nCmdLen + 1);
+				break;
 			}
-			else if (chOption == _T('e') || chOption == _T('E')) {
-				if (szCmdLine[3] == _T('\"') && szCmdLine[nCmdLen - 1] == _T('\"'))
-					lstrcpyn(szFile, szCmdLine + 4, nCmdLen - 1);
+			case _T('e'):
+				if (szCmdLine[0] == _T('\"') && szCmdLine[nCmdLen - 1] == _T('\"'))
+					lstrcpyn(szFile, szCmdLine + 1, nCmdLen - 1);
 				else
-					lstrcpyn(szFile, szCmdLine + 3, nCmdLen + 1);
+					lstrcpyn(szFile, szCmdLine, nCmdLen + 1);
 
 				crLineCol.cpMax = crLineCol.cpMin = 0x7fffffff;
-			}
-			else {
+				break;
+			default:
 				ERROROUT(GetString(IDS_COMMAND_LINE_OPTIONS));
 				CleanUp();
 				return TRUE;

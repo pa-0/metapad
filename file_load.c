@@ -305,7 +305,8 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 	GetMenuItemInfo(hsub, wMenu, FALSE, &mio);
 
 	FREE(szFile);
-	if (lstrlen(sztFile) > 0) {
+	lstrcpy(sztFile, szBuffer + 3);
+	if (sztFile[0]) {
 
 		if (!bMRU) {
 			GetPrivateProfileString(STR_FAV_APPNAME, sztFile, _T("error"), sztFile, MAXFN, SCNUL(szFav));
@@ -325,8 +326,8 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 		if (bLoading) {
 			bLoading = FALSE;
 			bDirtyFile = FALSE;
-			UpdateCaption();
 			SSTRCPY(szFile, sztFile);
+			UpdateCaption();
 		}
 		else
 			MakeNewFile();
@@ -347,7 +348,6 @@ BOOL IsTextUTF8(PBYTE buf){
 
 DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, INT* pnFileEncoding)
 {
-#define LARGEFILESIZELIMIT 0x1000000
 	DWORD dwBytesRead = 0;
 	BOOL bResult;
 	INT unitest = IS_TEXT_UNICODE_UNICODE_MASK | IS_TEXT_UNICODE_REVERSE_MASK | IS_TEXT_UNICODE_NOT_UNICODE_MASK | IS_TEXT_UNICODE_NOT_ASCII_MASK;
@@ -358,7 +358,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 	UINT cp = CP_ACP;
 
 	*plBufferLength = GetFileSize(hFile, NULL);
-	if (!options.bNoWarningPrompt && *plBufferLength > LARGEFILESIZELIMIT && MessageBox(hwnd, GetString(IDS_LARGE_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_YESNO) == IDNO) {
+	if (!options.bNoWarningPrompt && *plBufferLength > LARGEFILESIZEWARN && MessageBox(hwnd, GetString(IDS_LARGE_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_YESNO) == IDNO) {
 		SendMessage(hwnd, WM_CLOSE, 0, 0L);
 		return -1;
 	}

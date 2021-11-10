@@ -178,7 +178,7 @@ BOOL SaveCurrentFileAs(void)
 	}
 
 	ofn.lpstrFile = szTmp;
-	ofn.nMaxFile = sizeof(szTmp);
+	ofn.nMaxFile = MAXFN;
 
 	ofn.lpstrFileTitle = (LPTSTR)NULL;
 	ofn.nMaxFileTitle = 0L;
