@@ -1,7 +1,9 @@
 /****************************************************************************/
 /*                                                                          */
-/*   metapad 3.6                                                            */
+/*   metapad 3.6+                                                           */
 /*                                                                          */
+/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
 /*   This program is free software: you can redistribute it and/or modify   */
@@ -61,13 +63,13 @@ UINT nMRUTop;
 UINT nShadowSize;
 UINT uFindReplaceMsg;
 int nStatusHeight, nToolbarHeight;
-TCHAR szCustomFilter[2*MAXSTRING];
+LPTSTR szCustomFilter;
 BOOL bInsertMode, bHideMessage;
 int nReplaceMax;
 HWND hwndSheet;
 LPTSTR FindArray[NUMFINDS];
-LPTSTR ReplaceArray[NUMFINDS][MAXFIND];
-LPTSTR InsertArray[NUMINSERTS][MAXINSERT];
+LPTSTR ReplaceArray[NUMFINDS];
+LPTSTR InsertArray[NUMINSERTS];
 int nEncodingType;
 BOOL g_bDisablePluginVersionChecking;
 BOOL g_bIniMode;

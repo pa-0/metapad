@@ -107,8 +107,8 @@ typedef struct tag_options {
 	LPTSTR szLangPlugin;
 	LPTSTR MacroArray[10];
 	LPTSTR szFavDir;
-	TCHAR szCustomDate[MAXCUSTOMDATE];
-	TCHAR szCustomDate2[MAXCUSTOMDATE];
+	LPTSTR szCustomDate;
+	LPTSTR szCustomDate2;
 } option_struct;
 
 #endif // TYPEDEFS_H

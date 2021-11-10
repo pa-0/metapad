@@ -28,7 +28,20 @@
 #define MSGOUT(_x) MessageBox(hwnd, _x, STR_METAPAD, MB_OK | MB_ICONINFORMATION)
 #define DBGOUT(_x, _y) MessageBox(hwnd, _x, _y, MB_OK | MB_ICONEXCLAMATION)
 
-#define WIDTH(x) (x.right - x.left + 1)
-#define HEIGHT(x) (x.bottom - x.top + 1)
+#define MAX(x,y)		((x)>(y)?(x):(y))
+#define MIN(x,y)		((x)<(y)?(x):(y))
+#define WIDTH(x)		(x.right - x.left + 1)
+#define HEIGHT(x)		(x.bottom - x.top + 1)
+
+#define FREE(x) {\
+	if (x) HeapFree(globalHeap, 0, (HGLOBAL)x);\
+	x = NULL; }
+#define SSTRCPY(tgt, src) SSTRCPYA(tgt, src, 1)
+#define SSTRCPYA(tgt, src, add) {\
+	if (tgt) HeapFree(globalHeap, 0, (HGLOBAL)tgt);\
+	if (src && src[0]) {\
+		tgt = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(src)+1) * sizeof(TCHAR));\
+		lstrcpy(tgt, src);\
+	} else tgt = NULL; }
 
 #endif
