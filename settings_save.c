@@ -41,6 +41,7 @@
 #include "include/consts.h"
 #include "include/strings.h"
 #include "include/typedefs.h"
+#include "include/macros.h"
 
 extern HANDLE globalHeap;
 extern LPTSTR szMetapadIni;
@@ -77,9 +78,12 @@ extern BOOL bHyperlinks;
  */
 BOOL SaveOption(HKEY hKey, LPCTSTR name, DWORD dwType, CONST LPBYTE lpData, DWORD cbData)
 {
+	LPBYTE szData = (LPBYTE)(SCNUL((LPTSTR)lpData));
+	UINT i;
 	if (hKey) {
-		if (RegSetValueEx(hKey, name, 0, dwType, lpData, cbData) != ERROR_SUCCESS){
-			ReportLastError();
+		if (dwType == REG_SZ) cbData = (lstrlen((LPTSTR)szData)+1) * sizeof(TCHAR);
+		if ((i = RegSetValueEx(hKey, name, 0, dwType, szData, cbData)) != ERROR_SUCCESS){
+			ReportError(i);
 			return FALSE;
 		} else return TRUE;
 	}
@@ -94,16 +98,16 @@ BOOL SaveOption(HKEY hKey, LPCTSTR name, DWORD dwType, CONST LPBYTE lpData, DWOR
 				int32 = (int32 << 8) + lpData[1];
 				int32 = (int32 << 8) + lpData[0];
 				wsprintf(val, _T("%d"), int32);
-				writeSucceeded = WritePrivateProfileString(_T("Options"), name, val, szMetapadIni);
+				writeSucceeded = WritePrivateProfileString(_T("Options"), name, val, SCNUL(szMetapadIni));
 				break;
 			}
 			case REG_SZ:
-				writeSucceeded = WritePrivateProfileString(_T("Options"), name, (TCHAR*)lpData, szMetapadIni);
+				writeSucceeded = WritePrivateProfileString(_T("Options"), name, (LPTSTR)szData, SCNUL(szMetapadIni));
 				break;
 			case REG_BINARY: {
 				TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, 2 * (cbData + 1) * sizeof(TCHAR));
 				BinToHex( lpData, cbData, szBuffer );
-				writeSucceeded = WritePrivateProfileString(_T("Options"), name, (TCHAR*)szBuffer, szMetapadIni);
+				writeSucceeded = WritePrivateProfileString(_T("Options"), name, (TCHAR*)szBuffer, SCNUL(szMetapadIni));
 				HeapFree(globalHeap, 0, szBuffer);
 				break;
 			}
@@ -179,18 +183,18 @@ void SaveOptions(void)
 	writeSucceeded &= SaveOption(key, _T("PrimaryFont"), REG_BINARY, (LPBYTE)&options.PrimaryFont, sizeof(LOGFONT));
 	writeSucceeded &= SaveOption(key, _T("SecondaryFont"), REG_BINARY, (LPBYTE)&options.SecondaryFont, sizeof(LOGFONT));
 #endif
-	writeSucceeded &= SaveOption(key, _T("szBrowser"), REG_SZ, (LPBYTE)&options.szBrowser, sizeof(options.szBrowser));
-	writeSucceeded &= SaveOption(key, _T("szArgs"), REG_SZ, (LPBYTE)&options.szArgs, sizeof(options.szArgs));
-	writeSucceeded &= SaveOption(key, _T("szBrowser2"), REG_SZ, (LPBYTE)&options.szBrowser2, sizeof(options.szBrowser2));
-	writeSucceeded &= SaveOption(key, _T("szArgs2"), REG_SZ, (LPBYTE)&options.szArgs2, sizeof(options.szArgs2));
-	writeSucceeded &= SaveOption(key, _T("szQuote"), REG_BINARY, (LPBYTE)&options.szQuote, sizeof(options.szQuote));
-	writeSucceeded &= SaveOption(key, _T("szLangPlugin"), REG_SZ, (LPBYTE)&options.szLangPlugin, sizeof(options.szLangPlugin));
-	writeSucceeded &= SaveOption(key, _T("szFavDir"), REG_SZ, (LPBYTE)&options.szFavDir, sizeof(options.szFavDir));
-	writeSucceeded &= SaveOption(key, _T("szCustomDate"), REG_SZ, (LPBYTE)&options.szCustomDate, sizeof(options.szCustomDate));
-	writeSucceeded &= SaveOption(key, _T("szCustomDate2"), REG_SZ, (LPBYTE)&options.szCustomDate2, sizeof(options.szCustomDate2));
+	writeSucceeded &= SaveOption(key, _T("szBrowser"), REG_SZ, (LPBYTE)options.szBrowser, MAXFN);
+	writeSucceeded &= SaveOption(key, _T("szArgs"), REG_SZ, (LPBYTE)options.szArgs, MAXARGS);
+	writeSucceeded &= SaveOption(key, _T("szBrowser2"), REG_SZ, (LPBYTE)options.szBrowser2, MAXFN);
+	writeSucceeded &= SaveOption(key, _T("szArgs2"), REG_SZ, (LPBYTE)options.szArgs2, MAXARGS);
+	writeSucceeded &= SaveOption(key, _T("szQuote"), REG_SZ, (LPBYTE)options.szQuote, MAXQUOTE);
+	writeSucceeded &= SaveOption(key, _T("szLangPlugin"), REG_SZ, (LPBYTE)options.szLangPlugin, MAXFN);
+	writeSucceeded &= SaveOption(key, _T("szFavDir"), REG_SZ, (LPBYTE)options.szFavDir, MAXFN);
+	writeSucceeded &= SaveOption(key, _T("szCustomDate"), REG_SZ, (LPBYTE)options.szCustomDate, MAXDATEFORMAT);
+	writeSucceeded &= SaveOption(key, _T("szCustomDate2"), REG_SZ, (LPBYTE)options.szCustomDate2, MAXDATEFORMAT);
 	for (i = 0; i < 10; ++i) {
 		wsprintf(keyname, _T("szMacroArray%d"), i);
-		writeSucceeded &= SaveOption(key, keyname, REG_SZ, (LPBYTE)&options.MacroArray[i], MAXMACRO);
+		writeSucceeded &= SaveOption(key, keyname, REG_SZ, (LPBYTE)options.MacroArray[i], MAXMACRO);
 	}
 
 	writeSucceeded &= SaveOption(key, _T("BackColour"), REG_BINARY, (LPBYTE)&options.BackColour, sizeof(COLORREF));
@@ -298,17 +302,17 @@ void SaveMenusAndData(void)
 		for (i = 0; i < NUMFINDS; ++i) {
 			if (!FindArray[i]) continue;
 			wsprintf(keyname, _T("szFindArray%d"), i);
-			SaveOption(key, keyname, REG_SZ, (LPBYTE)&FindArray[i], MAXFIND);
+			SaveOption(key, keyname, REG_SZ, (LPBYTE)FindArray[i], MAXFIND);
 		}
 		for (i = 0; i < NUMFINDS; ++i) {
 			if (!ReplaceArray[i]) continue;
 			wsprintf(keyname, _T("szReplaceArray%d"), i);
-			SaveOption(key, keyname, REG_SZ, (LPBYTE)&ReplaceArray[i], MAXFIND);
+			SaveOption(key, keyname, REG_SZ, (LPBYTE)ReplaceArray[i], MAXFIND);
 		}
 		for (i = 0; i < NUMINSERTS; ++i) {
 			if (!InsertArray[i]) continue;
 			wsprintf(keyname, _T("szInsertArray%d"), i);
-			SaveOption(key, keyname, REG_SZ, (LPBYTE)&InsertArray[i], MAXINSERT);
+			SaveOption(key, keyname, REG_SZ, (LPBYTE)InsertArray[i], MAXINSERT);
 		}
 	}
 

@@ -88,7 +88,7 @@ static void LoadOptionBinary(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbDat
 	else {
 		TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (cbData + 1) * sizeof(TCHAR) * 2);
 
-		if (GetPrivateProfileString(_T("Options"), name, (TCHAR*)lpData, szBuffer, cbData * 2, szMetapadIni) > 0) {
+		if (GetPrivateProfileString(_T("Options"), name, (TCHAR*)lpData, szBuffer, cbData * 2, SCNUL(szMetapadIni)) > 0) {
 			HexToBin( szBuffer, lpData );
 		}
 		HeapFree(globalHeap, 0, szBuffer);
@@ -281,7 +281,7 @@ void LoadOptionString(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData)
 	if (buf) {
 		buf[0] = _T('\0');
 		if (hKey) RegQueryValueEx(hKey, name, NULL, NULL, (LPBYTE)buf, &buflen);
-		else GetPrivateProfileString(_T("Options"), name, buf, buf, clen, szMetapadIni);
+		else GetPrivateProfileString(_T("Options"), name, buf, buf, clen, SCNUL(szMetapadIni));
 		if (buf[0]){
 			SSTRCPY(*lpData, buf);
 		}
@@ -313,7 +313,7 @@ BOOL LoadOptionNumeric(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData)
 	}
 	else {
 		TCHAR val[10];
-		if (GetPrivateProfileString(_T("Options"), name, NULL, val, 10, szMetapadIni) > 0) {
+		if (GetPrivateProfileString(_T("Options"), name, NULL, val, 10, SCNUL(szMetapadIni)) > 0) {
 			long int longInt = _ttoi(val);
 			lpData[3] = (int)((longInt >> 24) & 0xFF) ;
 			lpData[2] = (int)((longInt >> 16) & 0xFF) ;
@@ -415,7 +415,6 @@ void LoadMenusAndData(void)
 				wsprintf(keyname, _T("szInsertArray%d"), i);
 				LoadOptionString(key, keyname, &InsertArray[i], MAXINSERT);
 			}
-			LoadOptionString(key, _T("szReplaceArray0"), &ReplaceArray[i], MAXFIND);
 		}
 
 		if (options.bSaveDirectory)

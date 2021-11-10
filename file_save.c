@@ -161,7 +161,7 @@ BOOL SaveCurrentFileAs(void)
 		ofn.lpstrDefExt = NULL;
 	}
 	else {
-		ofn.lpstrFilter = szCustomFilter;
+		ofn.lpstrFilter = SCNUL(szCustomFilter);
 		ofn.lpstrDefExt = _T("txt");
 	}
 
@@ -182,7 +182,7 @@ BOOL SaveCurrentFileAs(void)
 
 	ofn.lpstrFileTitle = (LPTSTR)NULL;
 	ofn.nMaxFileTitle = 0L;
-	ofn.lpstrInitialDir = szDir;
+	ofn.lpstrInitialDir = SCNUL(szDir);
 	ofn.lpstrTitle = (LPTSTR)NULL;
 	ofn.Flags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
 	ofn.nFileOffset = 0;
@@ -212,9 +212,9 @@ BOOL SaveCurrentFileAs(void)
  */
 BOOL SaveCurrentFile(void)
 {
-	SetCurrentDirectory(szDir);
+	SetCurrentDirectory(SCNUL(szDir));
 
-	if (szFile && lstrlen(szFile) > 0) {
+	if (SCNUL(szFile)[0]) {
 		TCHAR szTmp[MAXFN + MAXSTRING];
 		DWORD dwResult = GetFileAttributes(szFile);
 
@@ -232,7 +232,7 @@ BOOL SaveCurrentFile(void)
 		if (!SaveFile(szFile))
 			return FALSE;
 		ExpandFilename(szFile);
-		wsprintf(szTmp, STR_CAPTION_FILE, szCaptionFile);
+		wsprintf(szTmp, STR_CAPTION_FILE, SCNUL(szCaptionFile));
 		SetWindowText(hwnd, szTmp);
 		bDirtyFile = FALSE;
 		return TRUE;
@@ -253,12 +253,12 @@ BOOL SaveIfDirty(void)
 {
 	if (bDirtyFile) {
 		TCHAR szBuffer[MAXFN+MAXSTRING];
-		if (szFile && lstrlen(szFile) == 0) {
+		if (!SCNUL(szFile)) {
 			if (GetWindowTextLength(client) == 0) {
 				return TRUE;
 			}
 		}
-		wsprintf(szBuffer, GetString(IDS_DIRTYFILE), szCaptionFile);
+		wsprintf(szBuffer, GetString(IDS_DIRTYFILE), SCNUL(szCaptionFile));
 		switch (MessageBox(hwnd, szBuffer, STR_METAPAD, MB_ICONEXCLAMATION | MB_YESNOCANCEL)) {
 			case IDYES:
 				if (!SaveCurrentFile())

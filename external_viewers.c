@@ -75,7 +75,7 @@ BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
 
 	if (lstrcmpi(lpExecutable + (lstrlen(lpExecutable) - 4), _T(".exe")) != 0) {
 		/// @todo Should this inform about which error happened?
-		if ((INT_PTR)ShellExecute(NULL, NULL, lpExecutable, szCmdLine, szDir, SW_SHOWNORMAL) <= 32) {
+		if ((INT_PTR)ShellExecute(NULL, NULL, lpExecutable, szCmdLine, SCNUL(szDir), SW_SHOWNORMAL) <= 32) {
 			return FALSE;
 		}
 	}
@@ -107,11 +107,11 @@ void LaunchExternalViewer(int id)
 {
 	TCHAR szLaunch[MAXFN+MAXARGS+4] = {_T('\0')};
 	LPTSTR args = id ? options.szArgs2 : options.szArgs;
-	if (args) lstrcat(szLaunch, args);
+	lstrcat(szLaunch, SCNUL(args));
 	lstrcat(szLaunch, _T(" \""));
-	if (szFile) lstrcat(szLaunch, szFile);
+	lstrcat(szLaunch, SCNUL(szFile));
 	lstrcat(szLaunch, _T("\""));
-	if (!ExecuteProgram(id ? options.szBrowser2 : options.szBrowser, szLaunch))
+	if (!ExecuteProgram(SCNUL(id ? options.szBrowser2 : options.szBrowser), szLaunch))
 	ERROROUT(GetString(id ? IDS_SECONDARY_VIEWER_ERROR : IDS_PRIMARY_VIEWER_ERROR));
 }
 
@@ -125,17 +125,17 @@ void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 {
 	LPTSTR prg = bSecondary ? options.szBrowser2 : options.szBrowser;
 	if (bCustom)
-		if (!prg || prg[0] == _T('\0')) {
+		if (!SCNUL(prg)[0]) {
 			MessageBox(hwnd, GetString(bSecondary ? IDS_SECONDARY_VIEWER_MISSING : IDS_PRIMARY_VIEWER_MISSING), STR_METAPAD, MB_OK|MB_ICONEXCLAMATION);
 			SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_VIEW_OPTIONS, 0), 0);
 			return;
 		}
 
-	if (!szFile || szFile[0] == _T('\0') || (bDirtyFile && options.nLaunchSave != 2)) {
+	if (SCNUL(szFile)[0] == _T('\0') || (bDirtyFile && options.nLaunchSave != 2)) {
 		int res = IDYES;
 		if (options.nLaunchSave == 0) {
 			TCHAR szBuffer[MAXFN + MAXSTRING];
-			wsprintf(szBuffer, GetString(IDS_DIRTYFILE), szCaptionFile);
+			wsprintf(szBuffer, GetString(IDS_DIRTYFILE), SCNUL(szCaptionFile));
 			res = MessageBox(hwnd, szBuffer, STR_METAPAD, MB_ICONEXCLAMATION | MB_YESNOCANCEL);
 		}
 		if (res == IDCANCEL) {
@@ -147,11 +147,11 @@ void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 			}
 		}
 	}
-	if (szFile && szFile[0] != _T('\0')) {
+	if (SCNUL(szFile)[0] != _T('\0')) {
 		if (bCustom)
 			LaunchExternalViewer((int)bSecondary);
 		else {
-			INT_PTR ret = (INT_PTR)ShellExecute(NULL, _T("open"), szFile, NULL, szDir, SW_SHOW);
+			INT_PTR ret = (INT_PTR)ShellExecute(NULL, _T("open"), szFile, NULL, SCNUL(szDir), SW_SHOW);
 			if (ret <= 32) {
 				switch (ret) {
 				case SE_ERR_NOASSOC:

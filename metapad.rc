@@ -1141,7 +1141,7 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_ERROR_MSG           "%s\nError 0x%08X"
+    IDS_ERROR_MSG           "\nError 0x%08X"
     IDS_UNICODE_SAVE_TRUNCATION 
                             "Detected non-ANSI characters in this Unicode file.\n\nThis data was lost during save!\n\nTo keep the Unicode information, resave this file in Unicode or UTF-8 format."
     IDS_UNICODE_LOAD_ERROR  "Error converting file to Unicode"
