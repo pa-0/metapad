@@ -656,8 +656,17 @@ BEGIN
         MENUITEM "Backslash",                   ID_ESCAPE_BACKSLASH
         MENUITEM SEPARATOR
         MENUITEM "Hex Value",                   ID_ESCAPE_HEX
-        MENUITEM "Decimal Value",               ID_ESCAPE_DEC
+#ifdef UNICODE
+        MENUITEM "Hex Value (Unicode)",         ID_ESCAPE_HEX2
+#endif
         MENUITEM "Octal Value",                 ID_ESCAPE_OCT
+        MENUITEM "Decimal Value",               ID_ESCAPE_DEC
+        MENUITEM "Binary Value",                ID_ESCAPE_BIN
+        MENUITEM SEPARATOR
+        MENUITEM "Hex String",                  ID_ESCAPE_HEXS
+#ifdef UNICODE
+        MENUITEM "Hex String (Unicode)",        ID_ESCAPE_HEXS2
+#endif
         MENUITEM SEPARATOR
         MENUITEM "Disabled",                    ID_ESCAPE_DISABLE
     END

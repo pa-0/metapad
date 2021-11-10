@@ -166,42 +166,34 @@ BOOL EncodeWithEscapeSeqs(TCHAR* szText)
 	return TRUE;
 }
 
-void ParseForEscapeSeqs(TCHAR* szText)
+void ParseForEscapeSeqs(TCHAR* buf)
 {
-	TCHAR* szStore = gTmpBuf2;
-	INT i,j;
-	BOOL bSlashFound = FALSE;
-
-	for (i = 0, j = 0;i < MAXMACRO && szText[i]; ++i) {
-		if (bSlashFound) {
-			switch (szText[i]) {
+	int i, j;
+	if (!SCNUL(buf)[0]) return;
+	for (i = 0, j = 0; buf[i]; i++) {
+		if (buf[i] == _T('\\')) {
+			switch(buf[++i]){
 			case _T('n'):
 #ifdef USE_RICH_EDIT
-				szStore[j] = _T('\r');
+				buf[j++] = _T('\r');
 #else
-				szStore[j++] = _T('\r');
-				szStore[j] = _T('\n');
+				buf[j++] = _T('\r');
+				buf[j++] = _T('\n');
 #endif
-				break;
-			case _T('t'):
-				szStore[j] = _T('\t');
-				break;
-			default:
-				szStore[j] = szText[i];
-			}
-			bSlashFound = FALSE;
-		}
-		else {
-			if (szText[i] == _T('\\')) {
-				bSlashFound = TRUE;
 				continue;
+			case _T('t'): buf[j++] = _T('\t'); continue;
+			case _T('a'): buf[j++] = _T('\a'); continue;
+			case _T('e'): buf[j++] = _T('\0x1b'); continue;
+			case _T('f'): buf[j++] = _T('\f'); continue;
+			case _T('t'): buf[j++] = _T('\t'); continue;
+			case _T('v'): buf[j++] = _T('\v'); continue;
+			case _T('R'): buf[j++] = _T('\r'); continue;
+			case _T('N'): buf[j++] = _T('\n'); continue;
 			}
-			szStore[j] = szText[i];
 		}
-		++j;
+		buf[j++] = buf[i];
 	}
-	szStore[j] = _T('\0');
-	lstrcpy(szText, szStore);
+	if (buf[j-1]) buf[j] = _T('\0');
 }
 
 /**
@@ -637,15 +629,21 @@ void UpdateStatus(void)
 
 LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	HMENU hmenu, hsub;
+	BOOL bOkEna = TRUE;
+	//printf("%X %X %X\n", uMsg, wParam, lParam);
 	switch (uMsg) {
 	case WM_COMMAND:
-		if ((LOWORD(wParam) == IDC_ESCAPE || LOWORD(wParam) == IDC_ESCAPE2) && HIWORD(wParam) == BN_CLICKED) {
-			HMENU hmenu = LoadMenu(hinstLang, (LPCTSTR)IDR_ESCAPE_SEQUENCES);
-			HMENU hsub = GetSubMenu(hmenu, 0);
+		switch(LOWORD(wParam)){
+		case IDC_ESCAPE:
+		case IDC_ESCAPE2: {
 			RECT rect;
 			UINT id;
 			TCHAR* szText = gTmpBuf;
 			DWORD i;
+			if (HIWORD(wParam) != BN_CLICKED) break;
+			hmenu = LoadMenu(hinstLang, (LPCTSTR)IDR_ESCAPE_SEQUENCES);
+			hsub = GetSubMenu(hmenu, 0);
 
 			SendMessage(hwnd, WM_INITMENUPOPUP, (WPARAM)hsub, MAKELPARAM(1, FALSE));
 			switch(LOWORD(wParam)){
@@ -671,29 +669,25 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 				EnableMenuItem(hsub, ID_ESCAPE_HEX, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(hsub, ID_ESCAPE_DEC, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(hsub, ID_ESCAPE_OCT, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(hsub, ID_ESCAPE_BIN, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(hsub, ID_ESCAPE_HEX2, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(hsub, ID_ESCAPE_HEXS, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(hsub, ID_ESCAPE_HEXS2, MF_BYCOMMAND | MF_GRAYED);
 			}
 
 			id = TrackPopupMenuEx(hsub, TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rect.left, rect.bottom, hwnd, NULL);
 
 			switch (id) {
-			case ID_ESCAPE_NEWLINE:
-				lstrcat(szText, _T("\\n"));
-				break;
-			case ID_ESCAPE_TAB:
-				lstrcat(szText, _T("\\t"));
-				break;
-			case ID_ESCAPE_BACKSLASH:
-				lstrcat(szText, _T("\\\\"));
-				break;
-			case ID_ESCAPE_HEX:
-				lstrcat(szText, _T("\\x"));
-				break;
-			case ID_ESCAPE_DEC:
-				lstrcat(szText, _T("\\"));
-				break;
-			case ID_ESCAPE_OCT:
-				lstrcat(szText, _T("\\o"));
-				break;
+			case ID_ESCAPE_NEWLINE:		lstrcat(szText, _T("\\n")); break;
+			case ID_ESCAPE_TAB:			lstrcat(szText, _T("\\t")); break;
+			case ID_ESCAPE_BACKSLASH:	lstrcat(szText, _T("\\\\")); break;
+			case ID_ESCAPE_HEX: 		lstrcat(szText, _T("\\x")); break;
+			case ID_ESCAPE_DEC: 		lstrcat(szText, _T("\\d")); break;
+			case ID_ESCAPE_OCT: 		lstrcat(szText, _T("\\")); break;
+			case ID_ESCAPE_BIN: 		lstrcat(szText, _T("\\b")); break;
+			case ID_ESCAPE_HEX2: 		lstrcat(szText, _T("\\u")); break;
+			case ID_ESCAPE_HEXS: 		lstrcat(szText, _T("\\X")); break;
+			case ID_ESCAPE_HEXS2: 		lstrcat(szText, _T("\\U")); break;
 			case ID_ESCAPE_DISABLE:
 				bNoFindHidden = !GetCheckedState(hsub, ID_ESCAPE_DISABLE, TRUE);
 				break;
@@ -710,12 +704,26 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			SendDlgItemMessage(hwndFind, i, CB_SETEDITSEL, 0, -1);
 
 			DestroyMenu(hmenu);
+			break; }
+		case IDC_NUM:
+		case ID_DROP_INSERT:
+			if (HIWORD(wParam) != EN_CHANGE && HIWORD(wParam) != CBN_EDITCHANGE && HIWORD(wParam) != CBN_SETFOCUS) break;
+			bOkEna &= (0 != SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, WM_GETTEXTLENGTH, 0, 0));
+			bOkEna &= (0 != SendDlgItemMessage(hdlgFind, IDC_NUM, WM_GETTEXTLENGTH, 0, 0));
+		case ID_DROP_FIND:
+			if (HIWORD(wParam) != EN_CHANGE && HIWORD(wParam) != CBN_EDITCHANGE && HIWORD(wParam) != CBN_SETFOCUS) break;
+			bOkEna &= (0 != GetWindowTextLength((HWND)lParam));
+			EnableWindow(GetDlgItem(hdlgFind, IDOK), bOkEna);
+			if (frDlgId == ID_REPLACE){
+				EnableWindow(GetDlgItem(hdlgFind, 1024), bOkEna);
+				EnableWindow(GetDlgItem(hdlgFind, 1025), bOkEna);
+			}
+			break;
 		}
 		break;
 	case WM_SHOWWINDOW:
 		return TRUE;
 	}
-	//return CallWindowProc(wpOrigFindProc, hwndFind, uMsg, wParam, lParam);
 	return FALSE;
 }
 
@@ -3345,6 +3353,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				LPTSTR szTmp;
 				HBITMAP hb;
 				WINDOWPLACEMENT wp, wp2;
+				TCHAR dummy[1] = _T(""), dummy2[1] = _T("");
 				int i;
 
 				ZeroMemory(&wp, sizeof(WINDOWPLACEMENT));
@@ -3362,10 +3371,10 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				ZeroMemory(&fr, sizeof(FINDREPLACE));
 				fr.lStructSize = sizeof(FINDREPLACE);
 				fr.hwndOwner = hwndMain;
-				fr.lpstrFindWhat = SCNUL(szFindText);
-				fr.wFindWhatLen = MAXFIND * sizeof(TCHAR);
-				fr.lpstrReplaceWith = SCNUL(szReplaceText);
-				fr.wReplaceWithLen = MAXFIND * sizeof(TCHAR);
+				fr.lpstrFindWhat = dummy;
+				fr.wFindWhatLen = sizeof(TCHAR);
+				fr.lpstrReplaceWith = dummy2;
+				fr.wReplaceWithLen = sizeof(TCHAR);
 				fr.hInstance = hinstLang;
 				fr.Flags = FR_ENABLETEMPLATE | FR_ENABLEHOOK;
 				fr.lpfnHook = (LPFRHOOKPROC)FindProc;
@@ -5182,9 +5191,9 @@ endinsertfile:
 	default:
 		if (Msg == uFindReplaceMsg) {
 			LPFINDREPLACE lpfr = (LPFINDREPLACE)lParam;
-			TCHAR* szBuffer = gTmpBuf;
-			int nIdx;
-			BOOL bFinding = FALSE;
+			LPTSTR szBuffer = gTmpBuf;
+			LPTSTR szReplace = gTmpBuf2;
+			int i, nIdx;
 #ifdef USE_RICH_EDIT
 			BOOL bFixCRProblem = FALSE;
 			TCHAR* szFindHold = gTmpBuf3;
@@ -5192,24 +5201,22 @@ endinsertfile:
 #endif
 
 			if (lpfr->Flags & FR_DIALOGTERM) {
-				TCHAR* buff = gTmpBuf2;
-				int i;
 				switch (frDlgId){
 					case ID_REPLACE:
 						for (i = 0; i < NUMFINDS; i++) {
-							SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_GETLBTEXT, i, (WPARAM)buff);
-							SSTRCPY(ReplaceArray[i], buff);
+							SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_GETLBTEXT, i, (WPARAM)szBuffer);
+							SSTRCPY(ReplaceArray[i], szBuffer);
 						}
 					case ID_FIND:
 						for (i = 0; i < NUMFINDS; i++) {
-							SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_GETLBTEXT, i, (WPARAM)buff);
-							SSTRCPY(FindArray[i], buff);
+							SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_GETLBTEXT, i, (WPARAM)szBuffer);
+							SSTRCPY(FindArray[i], szBuffer);
 						}
 						break;
 					case ID_INSERT_TEXT:
 						for (i = 0; i < NUMINSERTS; i++) {
-							SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_GETLBTEXT, i, (WPARAM)buff);
-							SSTRCPY(InsertArray[i], buff);
+							SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_GETLBTEXT, i, (WPARAM)szBuffer);
+							SSTRCPY(InsertArray[i], szBuffer);
 						}
 						break;
 					break;
@@ -5220,10 +5227,11 @@ endinsertfile:
 				return FALSE;
 			}
 
+			szReplace[0] = _T('\0');
 			switch (frDlgId) {
-				case ID_FIND:
-					bFinding = TRUE;
 				case ID_REPLACE:
+					SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, WM_GETTEXT, MAXFIND, (WPARAM)szReplace);
+				case ID_FIND:
 					break;
 				case ID_INSERT_TEXT:
 
@@ -5234,40 +5242,32 @@ endinsertfile:
 			}
 
 			SendDlgItemMessage(hdlgFind, ID_DROP_FIND, WM_GETTEXT, MAXFIND, (WPARAM)szBuffer);
-			lstrcpy(lpfr->lpstrFindWhat, szBuffer);
-
 			nIdx = SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_FINDSTRINGEXACT, 0, (WPARAM)szBuffer);
 			if (nIdx == CB_ERR) {
-				if (SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_GETCOUNT, 0, 0) >= NUMFINDS) {
+				if (SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_GETCOUNT, 0, 0) >= NUMFINDS)
 					SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_DELETESTRING, (LPARAM)NUMFINDS-1, 0);
-				}
 			}
 			else {
 				SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_DELETESTRING, (LPARAM)nIdx, 0);
 			}
 			SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_INSERTSTRING, 0, (WPARAM)szBuffer);
 			SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_SETCURSEL, (LPARAM)0, 0);
+			if (!bNoFindHidden)
+				ParseForEscapeSeqs(szBuffer);
 
-			if (lpfr->lpstrReplaceWith != NULL) {
-				nIdx = SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_FINDSTRINGEXACT, 0, (WPARAM)lpfr->lpstrReplaceWith);
-				if (nIdx == CB_ERR) {
+			if (szReplace[0]) {
+				nIdx = SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_FINDSTRINGEXACT, 0, (WPARAM)szReplace);
+				if (nIdx == CB_ERR)
 					if (SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_GETCOUNT, 0, 0) >= NUMFINDS) {
 						SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_DELETESTRING, (LPARAM)NUMFINDS-1, 0);
-					}
 				}
 				else {
 					SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_DELETESTRING, (LPARAM)nIdx, 0);
 				}
-				SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_INSERTSTRING, 0, (WPARAM)lpfr->lpstrReplaceWith);
+				SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_INSERTSTRING, 0, (WPARAM)szReplace);
 				SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_SETCURSEL, (LPARAM)0, 0);
-
-				if (!bNoFindHidden) {
-					ParseForEscapeSeqs(lpfr->lpstrReplaceWith);
-				}
-			}
-
-			if (!bNoFindHidden) {
-				ParseForEscapeSeqs(lpfr->lpstrFindWhat);
+				if (!bNoFindHidden)
+					ParseForEscapeSeqs(szReplace);
 			}
 
 			bMatchCase = (BOOL) (lpfr->Flags & FR_MATCHCASE);
@@ -5304,17 +5304,17 @@ endinsertfile:
 				bReplacingAll = TRUE;
 
 #ifdef USE_RICH_EDIT // warning -- big kluge to fix problem in richedit re newlines!
-				if (lpfr->lpstrFindWhat[lstrlen(lpfr->lpstrFindWhat) - 1] == _T('\r')) {
-					if (lpfr->lpstrReplaceWith[lstrlen(lpfr->lpstrReplaceWith) - 1] != _T('\r')) {
+				if (szBuffer[lstrlen(szBuffer) - 1] == _T('\r')) {
+					if (szReplace[lstrlen(szReplace) - 1] != _T('\r')) {
 						bFixCRProblem = TRUE;
 					}
 				}
 #endif
-				while (SearchFile(lpfr->lpstrFindWhat, bMatchCase, TRUE, TRUE, bWholeWord)) {
+				while (SearchFile(szBuffer, bMatchCase, TRUE, TRUE, bWholeWord)) {
 #ifdef USE_RICH_EDIT // warning -- big kluge!
 					TCHAR ch[2] = {_T('\0'), _T('\0')};
 
-					lstrcpy(szReplaceHold, lpfr->lpstrReplaceWith);
+					lstrcpy(szReplaceHold, szReplace);
 
 					if (bFixCRProblem) {
 						SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
@@ -5337,10 +5337,10 @@ endinsertfile:
 					}
 
 #else
-					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)lpfr->lpstrReplaceWith);
+					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szReplace);
 #endif
 					if (bSelection)
-						nReplaceMax -= lstrlen(lpfr->lpstrFindWhat) - lstrlen(lpfr->lpstrReplaceWith);
+						nReplaceMax -= lstrlen(szBuffer) - lstrlen(szReplace);
 					nCnt++;
 				}
 				bReplacingAll = FALSE;
@@ -5348,7 +5348,7 @@ endinsertfile:
 
 				if (bSelection) {
 					cr.cpMin = store.cpMin;
-					cr.cpMax = store.cpMax + nCnt * (lstrlen(lpfr->lpstrReplaceWith) - lstrlen(lpfr->lpstrFindWhat));
+					cr.cpMax = store.cpMax + nCnt * (lstrlen(szReplace) - lstrlen(szBuffer));
 				}
 
 #ifdef USE_RICH_EDIT
@@ -5367,8 +5367,8 @@ endinsertfile:
 				MessageBox(hdlgFind, szMsg, STR_METAPAD, MB_OK|MB_ICONINFORMATION);
 			}
 			else if (lpfr->Flags & FR_FINDNEXT) {
-				SearchFile(lpfr->lpstrFindWhat, bMatchCase, FALSE, bDown, bWholeWord);
-				if (bFinding) {
+				SearchFile(szBuffer, bMatchCase, FALSE, bDown, bWholeWord);
+				if (frDlgId == ID_FIND) {
 					bCloseAfterFind = (BST_CHECKED == SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_FIND, BM_GETCHECK, 0, 0));
 					if (bCloseAfterFind) PostMessage(hdlgFind, WM_CLOSE, 0, 0);
 				}
@@ -5386,15 +5386,15 @@ endinsertfile:
 #endif
 
 #ifdef USE_RICH_EDIT // warning -- big kluge!
-				if (lpfr->lpstrFindWhat[lstrlen(lpfr->lpstrFindWhat) - 1] == _T('\r')) {
-					if (lpfr->lpstrReplaceWith[lstrlen(lpfr->lpstrReplaceWith) - 1] != _T('\r')) {
+				if (szBuffer[lstrlen(szBuffer) - 1] == _T('\r')) {
+					if (szReplace[lstrlen(szReplace) - 1] != _T('\r')) {
 						bFixCRProblem = TRUE;
 					}
 				}
-				lstrcpy(szReplaceHold, lpfr->lpstrReplaceWith);
+				lstrcpy(szReplaceHold, szReplace);
 
 #endif
-				if (SearchFile(lpfr->lpstrFindWhat, bMatchCase, FALSE, bDown, bWholeWord)) {
+				if (SearchFile(szBuffer, bMatchCase, FALSE, bDown, bWholeWord)) {
 #ifdef USE_RICH_EDIT // warning -- big kluge!
 					TCHAR ch[2] = {_T('\0'), _T('\0')};
 
@@ -5420,9 +5420,9 @@ endinsertfile:
 
 					InvalidateRect(client, NULL, TRUE);
 #else
-					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)lpfr->lpstrReplaceWith);
+					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szReplace);
 #endif
-					SearchFile(lpfr->lpstrFindWhat, bMatchCase, FALSE, bDown, bWholeWord);
+					SearchFile(szBuffer, bMatchCase, FALSE, bDown, bWholeWord);
 				}
 			}
 			SendMessage(client, EM_SCROLLCARET, 0, 0);
@@ -5921,8 +5921,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	SetFocus(client);
 
 	while (GetMessage(&msg, NULL, 0,0)) {
-		if (msg.hwnd && msg.hwnd == hdlgFind)
-			msg=msg;
 		if (!(hdlgFind && IsDialogMessage(hdlgFind, &msg)) && !TranslateAccelerator(hwnd, accel, &msg)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
