@@ -86,6 +86,7 @@
 #include "include/file_new.h"
 #include "include/file_save.h"
 #include "include/file_utils.h"
+#include "include/encoding.h"
 
 ///// Globals /////
 
@@ -183,9 +184,8 @@ void ParseForEscapeSeqs(TCHAR* buf)
 				continue;
 			case _T('t'): buf[j++] = _T('\t'); continue;
 			case _T('a'): buf[j++] = _T('\a'); continue;
-			case _T('e'): buf[j++] = _T('\0x1b'); continue;
+			case _T('e'): buf[j++] = _T('\x1e'); continue;
 			case _T('f'): buf[j++] = _T('\f'); continue;
-			case _T('t'): buf[j++] = _T('\t'); continue;
 			case _T('v'): buf[j++] = _T('\v'); continue;
 			case _T('R'): buf[j++] = _T('\r'); continue;
 			case _T('N'): buf[j++] = _T('\n'); continue;
@@ -5252,6 +5252,15 @@ endinsertfile:
 			}
 			SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_INSERTSTRING, 0, (WPARAM)szBuffer);
 			SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_SETCURSEL, (LPARAM)0, 0);
+
+{ int l=-1, em=0, am=0, b=16, r, erre=1;
+			l=-1;
+			r=DecodeBase(szBuffer, szBuffer+16, b, l, em, am, erre, &szReplace);
+			l=r;
+			r = EncodeBase(szBuffer+16, szBuffer+32, b, l, &szReplace);
+			r=r;
+}
+
 			if (!bNoFindHidden)
 				ParseForEscapeSeqs(szBuffer);
 
