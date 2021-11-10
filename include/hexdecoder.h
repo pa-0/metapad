@@ -39,8 +39,7 @@
 #include <wchar.h>
 #endif
 
-#include "macros.h"
-
 DWORD HexToBin( LPCTSTR hex, LPBYTE bin );
+DWORD HexToBinEx( LPCTSTR hex, LPBYTE bin, BOOL ignoreParity );
 
 #endif
