@@ -31,5 +31,6 @@
 
 BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine);
 void LaunchInViewer(BOOL bCustom, BOOL bSecondary);
+void LaunchExternalViewer(int);
 
 #endif

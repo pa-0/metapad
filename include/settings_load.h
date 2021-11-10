@@ -1,7 +1,9 @@
 /****************************************************************************/
 /*                                                                          */
-/*   metapad 3.6                                                            */
+/*   metapad 3.6+                                                           */
 /*                                                                          */
+/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
 /*   This program is free software: you can redistribute it and/or modify   */
@@ -28,7 +30,8 @@
 #define SETTINGS_LOAD_H
 
 void LoadWindowPlacement(int* left, int* top, int* width, int* height, int* nShow);
-void LoadOptionString(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData);
+void LoadOptionString(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData);
+void LoadOptionStringDefault(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData, LPCTSTR);
 void LoadOptions(void);
 BOOL LoadOptionNumeric(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData);
 void LoadMenusAndData(void);
