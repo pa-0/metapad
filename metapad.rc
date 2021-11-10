@@ -657,15 +657,17 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Hex Value",                   ID_ESCAPE_HEX
 #ifdef UNICODE
-        MENUITEM "Hex Value (Unicode)",         ID_ESCAPE_HEX2
+        MENUITEM "Hex Value (Unicode)",         ID_ESCAPE_HEXU
 #endif
         MENUITEM "Octal Value",                 ID_ESCAPE_OCT
         MENUITEM "Decimal Value",               ID_ESCAPE_DEC
         MENUITEM "Binary Value",                ID_ESCAPE_BIN
         MENUITEM SEPARATOR
         MENUITEM "Hex String",                  ID_ESCAPE_HEXS
+		MENUITEM "Base-64 String",				ID_ESCAPE_B64S
 #ifdef UNICODE
-        MENUITEM "Hex String (Unicode)",        ID_ESCAPE_HEXS2
+        MENUITEM "Hex String (Unicode)",        ID_ESCAPE_HEXSU
+		MENUITEM "Base-64 String (Unicode)",	ID_ESCAPE_B64SU
 #endif
         MENUITEM SEPARATOR
         MENUITEM "Disabled",                    ID_ESCAPE_DISABLE
@@ -727,12 +729,15 @@ BEGIN
         MENUITEM "&Copy\tCtrl+C",               ID_MYEDIT_COPY
         MENUITEM "&Paste\tCtrl+V",              ID_MYEDIT_PASTE
         MENUITEM "Paste Mu&ltiple...\tCtrl+Shift+V",  ID_MYEDIT_PASTE_MUL
-        POPUP "&Hex"
+        POPUP "E&ncoded text"
         BEGIN
-            MENUITEM "&Copy Hex Values\tCtrl+Alt+C",  ID_MYEDIT_COPY_HEX
-            MENUITEM "&Paste Hex Values\tCtrl+Alt+V", ID_MYEDIT_PASTE_HEX
+            MENUITEM "&Copy As Hex\tCtrl+Alt+C",  ID_MYEDIT_COPY_HEX
+            MENUITEM "&Paste As Hex\tCtrl+Alt+V", ID_MYEDIT_PASTE_HEX
+            MENUITEM "Copy As B&ase-64",          ID_MYEDIT_COPY_B64
+            MENUITEM "Paste As &Base-64",         ID_MYEDIT_PASTE_B64
+			MENUITEM "Base Conversion...\tCtrl+F10",  ID_BASECONV
         END
-        MENUITEM "Clear clipboard",             ID_MYEDIT_CLEAR
+        MENUITEM "Clear clipboard",               ID_MYEDIT_CLEAR
         MENUITEM SEPARATOR
         POPUP "&Block"
         BEGIN
@@ -766,7 +771,7 @@ BEGIN
             MENUITEM "Custom Format &1\tF12",       ID_DATE_TIME_CUSTOM
             MENUITEM "Custom Format &2\tCtrl+F12",  ID_DATE_TIME_CUSTOM2
         END
-        MENUITEM "Insert Te&xt/Values...\tF10",     ID_INSERT_TEXT
+        MENUITEM "Insert Te&xt...\tF10",        ID_INSERT_TEXT
         MENUITEM "&Insert File...\tAlt+D",      ID_INSERT_FILE
         MENUITEM "Co&mmit Word Wrap\tCtrl+F9",  ID_COMMIT_WORDWRAP
         MENUITEM SEPARATOR
@@ -958,6 +963,7 @@ BEGIN
     VK_ESCAPE,      ID_MYFILE_QUICK_EXIT,   VIRTKEY, NOINVERT
     VK_ESCAPE,      ID_SAVE_AND_QUIT,       VIRTKEY, SHIFT, NOINVERT
     VK_F10,         ID_INSERT_TEXT,         VIRTKEY, NOINVERT
+    VK_F10,         ID_BASECONV,            VIRTKEY, CONTROL, NOINVERT
     VK_F11,         ID_SHOWFILESIZE,        VIRTKEY, NOINVERT
     VK_F11,         ID_MAKE_OEM,            VIRTKEY, SHIFT, NOINVERT
     VK_F11,         ID_MAKE_ANSI,           VIRTKEY, CONTROL, NOINVERT

@@ -37,62 +37,6 @@
 
 extern HWND hwnd;
 
-/* Converts an array bin of binary data, of size size bytes, into a string hex
- * of hexa characters of size [(2*size) + 1] ANSI or wide characters, depending
- * on definition of UNICODE macro. Null terminates the string.
- *
- * @param[in] bin The array of bytes to encode.
- * @param[in] size Size of the array to convert in bytes.
- * @param[out] hex Pointer to a string big enough to contain the encoded data.
- * @return Nothing.
- */
-void BinToHex( const LPBYTE bin, DWORD size, TCHAR* hex )
-{
-	DWORD i;
-	TCHAR HexIndex[] = _T("0123456789ABCDEF");
-	for( i = 0; i < size; ++i ){
-		hex[2*i] = HexIndex[(bin[i] >> 4) & 0x0F];
-		hex[(2*i)+1] = HexIndex[bin[i] & 0x0F];
-	}
-	hex[2*i] = _T('\0');
-} 
-
-/**
- * Decodes a single character (representing only 4 bits) to binary.
- *
- * @param[in] hexchar The character to decode.
- * @return The numeric value hexchar represents. If this is 255, it means
- * hexchar is an invalid hexadecimal character.
- * @note Case insensitive.
- */
-static BYTE HexBaseToBin( TCHAR hexchar ) {
-	switch( hexchar ){
-		case _T('0'): return 0;
-		case _T('1'): return 1;
-		case _T('2'): return 2;
-		case _T('3'): return 3;
-		case _T('4'): return 4;
-		case _T('5'): return 5;
-		case _T('6'): return 6;
-		case _T('7'): return 7;
-		case _T('8'): return 8;
-		case _T('9'): return 9;
-		case _T('A'):
-		case _T('a'): return 10;
-		case _T('B'):
-		case _T('b'): return 11;
-		case _T('C'):
-		case _T('c'): return 12;
-		case _T('D'):
-		case _T('d'): return 13;
-		case _T('E'):
-		case _T('e'): return 14;
-		case _T('F'):
-		case _T('f'): return 15;
-		default: return 255;
-	}
-}
-
 static unsigned short decLut[] = {
 	0x803f, 0x803f, 0x81ff, 0x817f,  0x80ff, 0x80ff, 0x80ff, 0x80bf,  0x80bf, 0x80bf, 0x80bf, 0x7cbf,  0x80bf, 0x80bf, 0x80bf, 0x7ebf,
 	0x6840, 0x6a41, 0x6c42, 0x6e43,  0x7044, 0x7245, 0x7446, 0x7647,  0x7848, 0x7a49, 0x807f, 0x807f,  0x807f, 0xfe7f, 0x807f, 0x807f,
@@ -117,8 +61,8 @@ static unsigned short encLut[] = {
  * @param[out] bin Pointer to the array of bytes where the data will be stored. Not modified if any error occurred.
  * @param[in] base Input base
  * @param[in] len Number of characters of [code] to decode. If negative, decode until null terminator.
- * @param[in] extractMode 0=invalid characters result in an error  1=treat any invalid character as a null - stop decoding and return success  2=silently ignore any invalid characters
- * @param[in] alignMode 0=enforce - input string must be a multiple of log(256)/log([base])  1=append leading zeros  2=append trailing zeros
+ * @param[in] extractMode 0=invalid characters result in an error  1=treat any invalid character as a null - stop decoding and return success  2=silently ignore any invalid characters  3=treat any invalid characters as zeros
+ * @param[in] alignMode 0=enforce - input string must be a multiple of log(256)/log([base])  1=append leading zeros  2=append trailing zeros (no effect for base64)
  * @param[in] showError if true, shows an error message when returning an error code
  * @param[in,out] if non-null, returns the position where decoding of [code] finished or was stopped due to error
  * @return Size of decoded array or: -1=invalid characters  -2=alignment error (input length not an expected exact multiple),  -3=invalid base
@@ -134,14 +78,12 @@ DWORD DecodeBase( LPCTSTR code, LPBYTE bin, BYTE base, INT len, BYTE extractMode
 	if (base <= 32) vs = ((lut[base+0x5f] >> 6) & 7);
 	if (!vs && base < 64)
 		for(mi = base, i = w-2; i; i--, mi *= base);
-	for (i = 0, ct = 0; len && code[i]; len--, i++, ct++)
+	for (i = 0, ct = 0; len > 0 && code[i]; len--, i++, ct++)
 		if ((v = (BYTE)code[i]) < 0x20 || v >= 0x80 || ((v = (*(lut+v) >> ls) & la) >= base && v != 0x7f)) {
-			if (extractMode) {
-				if (extractMode == 1) break;
-				ct--;
-			} else {
-				len = -2;
-				break;
+			switch (extractMode){
+				case 0: len = -1; break;
+				case 1: len = 1;
+				case 2: ct--; break;
 			}
 		}
 	if (end) *end = code + i;
@@ -165,26 +107,23 @@ DWORD DecodeBase( LPCTSTR code, LPBYTE bin, BYTE base, INT len, BYTE extractMode
 	}
 	switch (base){
 	case 64:
-		for (bin--, len = ct, k = 0; ct; ct--, k=(++k)%4, w = 0) {
-			if (!k) j = 1;
-			if (!i) v = 0;
-			else {
-				i--;
-				if ((v = (BYTE)*(code++)) < 0x20 || v >= 0x80 || (v=(*(lut+v) >> 9)) >= 64) {
+		for (len = 0, k = 0; i && ct; ct--, i--, k=(++k)%4) {
+			if ((v = (BYTE)*(code++)) < 0x20 || v >= 0x80 || (v=(*(lut+v) >> 9)) >= 64) {
+				if (extractMode < 3) {
 					if (v != 0x7f) { ct++; k--; }
 					continue;
 				}
+				v = 0;
 			}
-			if (j && k) *++bin = 0;
-			j = 0;
 			switch(k) {
-				case 0: 					*++bin = (v << 2);	break;
-				case 1: *bin |= (v >> 4); 	*++bin = (v << 4);	break;
-				case 2: *bin |= (v >> 2); 	*++bin = (v << 6);	break;
-				case 3: *bin |= v; 							 	break;
+				case 1: *bin++ = (w << 2) | (v >> 4); break;
+				case 2: *bin++ = (w << 4) | (v >> 2); break;
+				case 3: *bin++ = (w << 6) | v; break;
 			}
+			if (k) len++;
+			w = v;
 		}
-		return (len*3)/4;
+		return len;
 	default:
 		if (!k) bin--;
 		for (len = ct; ct; ct--, k=(++k)%w) {
@@ -192,7 +131,10 @@ DWORD DecodeBase( LPCTSTR code, LPBYTE bin, BYTE base, INT len, BYTE extractMode
 			else {
 				i--;
 				if ((v = (BYTE)*(code++)) < 0x20 || v >= 0x80 || (v=(*(lut+v) & 0x3f)) >= base) {
-					ct++; k--; continue;
+					if (extractMode < 3) {
+						ct++; k--; continue;
+					}
+					v = 0;
 				}
 			}
 			if (j) { j = 0; *bin = 0; }
@@ -224,7 +166,7 @@ DWORD DecodeBase( LPCTSTR code, LPBYTE bin, BYTE base, INT len, BYTE extractMode
  * @return Size in characters of output string (excluding the null terminator) or: -3=invalid base
  */
 DWORD EncodeBase( LPBYTE bin, LPTSTR code, BYTE base, INT len, LPBYTE* end ) {
-	DWORD ct = 0, v;
+	DWORD i, ct = 0, v;
 	BYTE k, w, vs = 0, ma = base-1;
 	unsigned short *lut = decLut - 0x20, *elut = encLut;
 	if (base < 2 || base > 64 || (w = ((lut[base+0x20] >> 6) & 7) + 1) < 2) return -3;
@@ -234,18 +176,17 @@ DWORD EncodeBase( LPBYTE bin, LPTSTR code, BYTE base, INT len, LPBYTE* end ) {
 		for (len = -1; bin[++len]; );
 	switch (base) {
 	case 64:
-		for (k = 0, w = 0, code-=4; len; k=(++k)%4, len--, v >>= 6) {
+		ct = i = (((LONGLONG)len << 2) + 2) / 3;
+		for (code--, k = 0, w = 0; i; i--, k=(++k)%4, v <<= 6) {
 			if (!k) {
-				for (v = 0, k = 3; k; k--, len--){
-					if (len)
-						v |= (*bin++ << (8 * (3-k)));
-				}
-				code+=4; len+=3; ct+=4;
+				for (v = 0, k = 3; len && k; k--, len--)
+					v |= (*bin++ << (8 * (k-1)));
+				k = 0;
 			}
-			*code++ = (TCHAR)(elut[v & 0x3f] >> 8); break;
+			*++code = (TCHAR)(elut[(v >> 18) & 0x3f] >> 8);
 		}
-		for (; k; k=(++k)%4)
-			*code++ = (TCHAR)(elut[64] >> 8);
+		for (; k; k=(++k)%4, ct++)
+			*++code = (TCHAR)(elut[64] >> 8);
 		break;
 	default:
 		for (k = 0, code-=(w+1); len || k; k=(++k)%w) {
@@ -264,8 +205,3 @@ DWORD EncodeBase( LPBYTE bin, LPTSTR code, BYTE base, INT len, LPBYTE* end ) {
 	if (end) *end = bin;
 	return ct;
 }
-
-DWORD HexToBin( LPCTSTR hex, LPBYTE bin ){
-	return DecodeBase(hex, bin, -1, 16, 0, 0, TRUE, NULL);
-}
-

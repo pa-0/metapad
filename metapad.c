@@ -194,6 +194,9 @@ void ParseForEscapeSeqs(TCHAR* buf)
 		buf[j++] = buf[i];
 	}
 	if (buf[j-1]) buf[j] = _T('\0');
+
+	// abcdefghijklmnopqrstuvwxyz
+	// xM Mxx       X   XMxMxMM  M
 }
 
 /**
@@ -640,7 +643,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			RECT rect;
 			UINT id;
 			TCHAR* szText = gTmpBuf;
-			DWORD i;
+			DWORD i, j = 0;
 			if (HIWORD(wParam) != BN_CLICKED) break;
 			hmenu = LoadMenu(hinstLang, (LPCTSTR)IDR_ESCAPE_SEQUENCES);
 			hsub = GetSubMenu(hmenu, 0);
@@ -670,9 +673,13 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 				EnableMenuItem(hsub, ID_ESCAPE_DEC, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(hsub, ID_ESCAPE_OCT, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(hsub, ID_ESCAPE_BIN, MF_BYCOMMAND | MF_GRAYED);
-				EnableMenuItem(hsub, ID_ESCAPE_HEX2, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(hsub, ID_ESCAPE_HEXS, MF_BYCOMMAND | MF_GRAYED);
-				EnableMenuItem(hsub, ID_ESCAPE_HEXS2, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(hsub, ID_ESCAPE_B64S, MF_BYCOMMAND | MF_GRAYED);
+#ifdef UNICODE
+				EnableMenuItem(hsub, ID_ESCAPE_HEXU, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(hsub, ID_ESCAPE_B64SU, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(hsub, ID_ESCAPE_HEXSU, MF_BYCOMMAND | MF_GRAYED);
+#endif
 			}
 
 			id = TrackPopupMenuEx(hsub, TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rect.left, rect.bottom, hwnd, NULL);
@@ -685,9 +692,11 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			case ID_ESCAPE_DEC: 		lstrcat(szText, _T("\\d")); break;
 			case ID_ESCAPE_OCT: 		lstrcat(szText, _T("\\")); break;
 			case ID_ESCAPE_BIN: 		lstrcat(szText, _T("\\b")); break;
-			case ID_ESCAPE_HEX2: 		lstrcat(szText, _T("\\u")); break;
-			case ID_ESCAPE_HEXS: 		lstrcat(szText, _T("\\X")); break;
-			case ID_ESCAPE_HEXS2: 		lstrcat(szText, _T("\\U")); break;
+			case ID_ESCAPE_HEXU: 		lstrcat(szText, _T("\\u")); break;
+			case ID_ESCAPE_HEXS: 		lstrcat(szText, _T("\\X\\")); j = 1; break;
+			case ID_ESCAPE_HEXSU: 		lstrcat(szText, _T("\\U\\")); j = 1; break;
+			case ID_ESCAPE_B64S: 		lstrcat(szText, _T("\\S\\")); j = 1; break;
+			case ID_ESCAPE_B64SU: 		lstrcat(szText, _T("\\W\\")); j = 1; break;
 			case ID_ESCAPE_DISABLE:
 				bNoFindHidden = !GetCheckedState(hsub, ID_ESCAPE_DISABLE, TRUE);
 				break;
@@ -701,7 +710,11 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			}
 			SendDlgItemMessage(hwndFind, i, WM_SETTEXT, (WPARAM)(BOOL)FALSE, (LPARAM)szText);
 			SetFocus(GetDlgItem(hwndFind, i));
-			SendDlgItemMessage(hwndFind, i, CB_SETEDITSEL, 0, -1);
+			if (j) {
+				j = lstrlen(szText);
+				SendDlgItemMessage(hwndFind, i, CB_SETEDITSEL, 0, MAKELPARAM(j-1, j-1));
+			} else
+				SendDlgItemMessage(hwndFind, i, CB_SETEDITSEL, 0, -1);
 
 			DestroyMenu(hmenu);
 			break; }
@@ -5252,14 +5265,14 @@ endinsertfile:
 			}
 			SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_INSERTSTRING, 0, (WPARAM)szBuffer);
 			SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_SETCURSEL, (LPARAM)0, 0);
-
+/*
 { int l=-1, em=0, am=0, b=16, r, erre=1;
 			l=-1;
 			r=DecodeBase(szBuffer, szBuffer+16, b, l, em, am, erre, &szReplace);
 			l=r;
 			r = EncodeBase(szBuffer+16, szBuffer+32, b, l, &szReplace);
 			r=r;
-}
+}*/
 
 			if (!bNoFindHidden)
 				ParseForEscapeSeqs(szBuffer);

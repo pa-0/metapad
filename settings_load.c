@@ -89,11 +89,9 @@ static void LoadOptionBinary(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbDat
 	else {
 		UINT l = (cbData + 1) * sizeof(TCHAR) * 2;
 		TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, l);
-		BinToHex(lpData, cbData, szBuffer);
-
-		if (GetPrivateProfileString(_T("Options"), name, szBuffer, szBuffer, l, SCNUL(szMetapadIni)) > 0) {
-			HexToBin( szBuffer, lpData );
-		}
+		EncodeBase( lpData, szBuffer, 64, cbData, NULL );
+		if (GetPrivateProfileString(_T("Options"), name, szBuffer, szBuffer, l, SCNUL(szMetapadIni)) > 0)
+			DecodeBase( szBuffer, lpData, 64, -1, 0, 1, TRUE, NULL );
 		HeapFree(globalHeap, 0, szBuffer);
 	}
 }
