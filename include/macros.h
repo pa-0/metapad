@@ -43,5 +43,7 @@
 		tgt = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(src)+1) * sizeof(TCHAR));\
 		lstrcpy(tgt, src);\
 	} else tgt = NULL; }
+#define SCNUL(x)		SCNULD(x, _T(""))
+#define SCNULD(x, def)	(x ? x : def)
 
 #endif

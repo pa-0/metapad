@@ -1,7 +1,9 @@
 /****************************************************************************/
 /*                                                                          */
-/*   metapad 3.6                                                            */
+/*   metapad 3.6+                                                           */
 /*                                                                          */
+/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
 /*   This program is free software: you can redistribute it and/or modify   */
@@ -32,6 +34,7 @@ BOOL CALLBACK AbortDlgProc(HDC hdc, int nCode);
 LRESULT CALLBACK AbortPrintJob(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWord, BOOL bCase, BOOL bFromTop);
 void PrintContents(void);
+void ReportError(UINT);
 void ReportLastError(void);
 void CenterWindow(HWND hwndCenter);
 void SelectWord(BOOL bFinding, BOOL bSmart, BOOL bAutoSelect);
