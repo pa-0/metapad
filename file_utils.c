@@ -387,6 +387,6 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 }
 #endif
 
-long ReplaceAll(LPTSTR* szBuf, long* bufLen, LPCTSTR szFind, LPCTSTR szRepl, BOOL bCase, BOOL bWholeWord){
+DWORD ReplaceAll(LPTSTR* szBuf, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, BOOL bCase, BOOL bWholeWord){
 
 }

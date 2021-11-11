@@ -393,7 +393,6 @@
     <ClInclude Include="include\tmp_protos.h" />
     <ClInclude Include="include\typedefs.h" />
     <ClInclude Include="include\w32crt.h" />
-    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="metapad.manifest" />

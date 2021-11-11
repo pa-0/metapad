@@ -735,7 +735,7 @@ BEGIN
             MENUITEM "&Paste As Hex\tCtrl+Alt+V", ID_PASTE_HEX
             MENUITEM "Copy As B&ase-64\tCtrl+Alt+Shift+C",          ID_COPY_B64
             MENUITEM "Paste As &Base-64\tCtrl+Alt+Shift+V",         ID_PASTE_B64
-			MENUITEM "Base Conversion...\tCtrl+F10",  ID_BASECONV
+/*			MENUITEM "Base Conversion...\tCtrl+F10",  ID_BASECONV*/
         END
         MENUITEM "Clear clipboard",               ID_CLEAR_CLIPBRD
         MENUITEM SEPARATOR
@@ -965,7 +965,7 @@ BEGIN
     VK_ESCAPE,      ID_MYFILE_QUICK_EXIT,   VIRTKEY, NOINVERT
     VK_ESCAPE,      ID_SAVE_AND_QUIT,       VIRTKEY, SHIFT, NOINVERT
     VK_F10,         ID_INSERT_TEXT,         VIRTKEY, NOINVERT
-    VK_F10,         ID_BASECONV,            VIRTKEY, CONTROL, NOINVERT
+/*    VK_F10,         ID_BASECONV,            VIRTKEY, CONTROL, NOINVERT*/
     VK_F11,         ID_SHOWFILESIZE,        VIRTKEY, NOINVERT
     VK_F11,         ID_MAKE_OEM,            VIRTKEY, SHIFT, NOINVERT
     VK_F11,         ID_MAKE_ANSI,           VIRTKEY, CONTROL, NOINVERT

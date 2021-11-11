@@ -308,8 +308,8 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 	SSTRCPY(sztFile, (szBuffer+3));
 	if (sztFile[0]) {
 		if (!bMRU) {
-			GetPrivateProfileString(STR_FAV_APPNAME, szBuffer, _T("error"), szBuffer, MAXFN, SCNUL(szFav));
-			if (lstrcmp(szBuffer, _T("error")) == 0) {
+			GetPrivateProfileString(STR_FAV_APPNAME, sztFile, _T(""), szBuffer, MAXFN, SCNUL(szFav));
+			if (!szBuffer[0]) {
 				ERROROUT(GetString(IDS_ERROR_FAVOURITES));
 				MakeNewFile();
 				return;
