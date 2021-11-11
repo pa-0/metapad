@@ -43,7 +43,6 @@
 
 extern BOOL bBinaryFile;
 extern BOOL bDirtyFile;
-extern BOOL bHideMessage;
 extern BOOL bLoading;
 extern BOOL bUnix;
 extern HANDLE globalHeap;
@@ -52,7 +51,7 @@ extern HWND hwnd;
 extern int nEncodingType;
 extern LPTSTR szFav;
 extern LPTSTR szFile;
-extern TCHAR szStatusMessage[MAXSTRING];
+extern LPTSTR szStatusMessage;
 
 extern option_struct options;
 
@@ -317,9 +316,8 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 		}
 
 		bLoading = TRUE;
-		bHideMessage = FALSE;
 		ExpandFilename(sztFile, &sztFile);
-		lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
+		SSTRCPY(szStatusMessage, GetString(IDS_FILE_LOADING));
 		UpdateStatus();
 		LoadFile(sztFile, FALSE, TRUE);
 		if (bLoading) {
@@ -365,9 +363,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, ULONG* plBufferLength, 
 	*ppBuffer = (LPBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (*plBufferLength+2) * sizeof(TCHAR));
 	if (*ppBuffer == NULL) {
 		ReportLastError();
-		return 0;	/** @fixme Should make a better error handling for this.
-				 *  Returning -1 and checking for this value on the callers
-				 *  might make sense. */
+		return -1;
 	}
 
 	*pnFileEncoding = TYPE_UNKNOWN;
@@ -483,8 +479,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 	UINT i;
 	TCHAR szUncFn[MAXFN+6] = _T("\\\\?\\");
 
-	bHideMessage = FALSE;
-	lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
+	SSTRCPY(szStatusMessage, GetString(IDS_FILE_LOADING));
 	UpdateStatus();
 
 	hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
@@ -511,7 +506,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 						hFile = (HANDLE)CreateFile(szUncFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 						if (hFile == INVALID_HANDLE_VALUE) {
 							ERROROUT(GetString(IDS_FILE_CREATE_ERROR));
-							bHideMessage = TRUE;
+							FREE(szStatusMessage);
 							UpdateStatus();
 							bLoading = FALSE;
 							SetCursor(hcur);
@@ -521,7 +516,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 					}
 				case IDNO:
 					{
-						bHideMessage = TRUE;
+						FREE(szStatusMessage);
 						MakeNewFile();
 						SetCursor(hcur);
 						return;
@@ -530,7 +525,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 					{
 						if (bLoading)
 							PostQuitMessage(0);
-						bHideMessage = TRUE;
+						FREE(szStatusMessage);
 						SetCursor(hcur);
 						return;
 					}
@@ -548,7 +543,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 					SetLastError(dwError);
 					ReportLastError();
 				}
-				bHideMessage = TRUE;
+				FREE(szStatusMessage);
 				UpdateStatus();
 				bLoading = FALSE;
 				SetCursor(hcur);
@@ -565,7 +560,12 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 		SaveMRUInfo(szFilename);
 
 
-	if ((lActualCharsRead = LoadFileIntoBuffer(hFile, &pBuffer, &lBufferLength, &nEncodingType)) < 0) return;
+	if ((lActualCharsRead = LoadFileIntoBuffer(hFile, &pBuffer, &lBufferLength, &nEncodingType)) < 0) {
+		CloseHandle(hFile);
+		FREE(szStatusMessage);
+		bLoading = FALSE;
+		return;
+	}
 
 //	if (dwActualBytesRead < 0) goto fini;
 
@@ -657,7 +657,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 //#ifndef BUILD_METAPAD_UNICODE
 //fini:
 //#endif
-	bHideMessage = TRUE;
+	FREE(szStatusMessage);
 	UpdateStatus();
 	CloseHandle(hFile);
 	HeapFree(globalHeap, 0, (HGLOBAL) pBuffer);

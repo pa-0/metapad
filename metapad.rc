@@ -728,7 +728,9 @@ BEGIN
     POPUP "&Edit"
     BEGIN
         MENUITEM "&Undo\tCtrl+Z",               ID_MYEDIT_UNDO
+#ifdef USE_RICH_EDIT
         MENUITEM "&Redo\tCtrl+Y",               ID_MYEDIT_REDO
+#endif
         MENUITEM SEPARATOR
         MENUITEM "Cu&t\tCtrl+X",                ID_MYEDIT_CUT
         MENUITEM "&Copy\tCtrl+C",               ID_MYEDIT_COPY
