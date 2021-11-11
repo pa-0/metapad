@@ -358,6 +358,7 @@
 #define ID_PASTE_B64                    40221
 #define ID_BASECONV                     40222
 #define ID_ESCAPE_ANY                   40223
+#define ID_ESCAPE_RAND                  40224
 #define ID_MRU_BASE                     44000
 #define ID_MRU_1                        44001
 #define ID_MRU_2                        44002

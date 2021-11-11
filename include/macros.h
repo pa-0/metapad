@@ -56,4 +56,6 @@
 #define ALLOCS(sz) ALLOC(LPTSTR, ((sz)+1) * sizeof(TCHAR))
 #define ALLOCSZ(sz) ALLOCZ(LPTSTR, ((sz)+1) * sizeof(TCHAR))*/
 
+#define RAND() (((randVal = randVal * 214013L + 2531011L) >> 16) & 0xffff)
+
 #endif

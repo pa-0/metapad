@@ -53,7 +53,7 @@ void PopulateMRUList(void);
 void SaveMRUInfo(LPCTSTR szFullPath);
 void SwitchReadOnly(BOOL bNewVal);
 BOOL EncodeWithEscapeSeqs(TCHAR* szText);
-BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE anys, LPCTSTR errContext);
+BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext);
 void ReverseBytes(LPBYTE buffer, LONG size);
 void UpdateCaption(void);
 
