@@ -520,9 +520,11 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 								lstrcpyn(pd, globs[k][cglob[k]%nglob[k]], (cg = (globe[k][cglob[k]%nglob[k]] - globs[k][cglob[k]++%nglob[k]])) + 1);
 								pd += cg;
 							} else if (pbReplSpec[cf] == 6) {
+#ifdef UNICODE
 								if (sizeof(TCHAR) > 1 && (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE))
 									*pd++ = RAND()%0xffe0+0x20;
 								else
+#endif
 									*pd++ = RAND()%0x60+0x20;
 							} else
 								*pd++ = szRepl[cf];
@@ -639,7 +641,7 @@ DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* 
 		if (!selection) {
 			cr.cpMin = 0; cr.cpMax = -1;
 #ifdef USE_RICH_EDIT
-			SendMessage(client, EM_EXSETSEL, 0, (LPARAM)cr);
+			SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 #else
 			SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif

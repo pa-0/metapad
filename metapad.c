@@ -108,6 +108,7 @@ TCHAR gDummyBuf[1], gDummyBuf2[1];
 #ifdef USE_RICH_EDIT
 	TCHAR gTmpBuf3[MAXFIND], gTmpBuf4[MAXFIND];
 #endif
+int fontmainHt;
 int _fltused = 0x9875; // see CMISCDAT.C for more info on this
 
 option_struct options;
@@ -204,9 +205,11 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext)
 					(*specials)[p] = spi;
 				}
 				if (spi == 6){
+#ifdef UNICODE
 					if (sizeof(TCHAR) > 1 && (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE))
 						*bout++ = RAND()%0xffe0+0x20;
 					else
+#endif
 						*bout++ = RAND()%0x60+0x20;
 					continue;
 				}
@@ -380,7 +383,7 @@ void CleanUp(void)
 #ifdef USE_RICH_EDIT
 void UpdateWindowText(void)
 {
-	LPCTSTR szBuffer = GetShadowBuffer();
+	LPCTSTR szBuffer = GetShadowBuffer(NULL);
 	bLoading = TRUE;
 	SetWindowText(client, szBuffer);
 	bLoading = FALSE;
@@ -555,7 +558,7 @@ void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 	SendMessage(client, EM_AUTOURLDETECT, (WPARAM)bHyperlinks, 0);
 	SendMessage(client, EM_SETEVENTMASK, 0, (LPARAM)(ENM_LINK | ENM_CHANGE));
 	SendMessage(client, EM_EXLIMITTEXT, 0, (LPARAM)(DWORD)0x7fffffff);
-	/** @fixme Commented out code. */
+
 	// sort of fixes font problems but cannot set tab size
 	SendMessage(client, EM_SETTEXTMODE, (WPARAM)TM_PLAINTEXT || (WPARAM)TM_ENCODING, 0);
 
@@ -656,7 +659,7 @@ void UpdateStatus(void)
 
 #ifdef USE_RICH_EDIT
 	if (bInsertMode)
-		lstrcpyf(szPane, _T(" INS"));
+		lstrcpy(szPane, _T(" INS"));
 	else
 		lstrcpy(szPane, _T("OVR"));
 	nPaneSizes[SBPANE_INS] = nPaneSizes[SBPANE_INS - 1] + 4 * options.nStatusFontWidth - 3;
@@ -722,7 +725,6 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 		case IDC_ESCAPE:
 		case IDC_ESCAPE2: {
 			RECT rect;
-			UINT id;
 			TCHAR* szText = gTmpBuf;
 			DWORD i, j = 0;
 			if (HIWORD(wParam) != BN_CLICKED) break;
@@ -769,9 +771,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 #endif
 			}
 
-			id = TrackPopupMenuEx(hsub, TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rect.left, rect.bottom, hwnd, NULL);
-
-			switch (id) {
+			switch (TrackPopupMenuEx(hsub, TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rect.left, rect.bottom, hwnd, NULL)) {
 				case ID_ESCAPE_NEWLINE:		lstrcat(szText, _T("\\n")); break;
 				case ID_ESCAPE_TAB:			lstrcat(szText, _T("\\t")); break;
 				case ID_ESCAPE_BACKSLASH:	lstrcat(szText, _T("\\\\")); break;
@@ -946,7 +946,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 				cr.cpMax = cr.cpMin;
 				SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
-
+				{BOOL b = FALSE; TCHAR szReplaceHold[999], szFindHold[999];
 #ifdef USE_RICH_EDIT // warning -- big kluge!
 				if (szBuf[lstrlen(szBuf) - 1] == _T('\r')) {
 					if (szRepl[lstrlen(szRepl) - 1] != _T('\r')) {
@@ -985,7 +985,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szRepl);
 #endif
 					SearchFile(szBuf, bMatchCase, bDown, bWholeWord, pbFindTextSpec);
-				}
+				}}
 				break;
 			}
 			SendMessage(client, EM_SCROLLCARET, 0, 0);
@@ -1164,7 +1164,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 #ifndef USE_RICH_EDIT
 			DeleteMenu(hsub, 1, MF_BYPOSITION);
 #endif
-/** @fixme Commented code. */
+/** dropped feature */
 /*			if (bLinkMenu) {
 				bLinkMenu = FALSE;
 			}
@@ -1937,49 +1937,28 @@ DWORD CALLBACK EditStreamIn(DWORD dwCookie, LPBYTE pbBuff, LONG cb, LONG *pcb)
 }
 #endif
 
-void SetFont(HFONT* phfnt, BOOL bPrimary)
-{
+void SetFont(HFONT* phfnt, BOOL bPrimary) {
 	LOGFONT logfind;
+	HDC clientdc;
 
-	if (*phfnt)
-		DeleteObject(*phfnt);
-
-	if (hfontfind)
-		DeleteObject(hfontfind);
-
-	if (bPrimary) {
-		if (options.nPrimaryFont == 0) {
-			*phfnt = GetStockObject(SYSTEM_FIXED_FONT);
-			hfontfind = *phfnt;
-			return;
-		}
-		else {
-			*phfnt = CreateFontIndirect(&options.PrimaryFont);
-			CopyMemory((PVOID)&logfind, (CONST VOID*)&options.PrimaryFont, sizeof(LOGFONT));
-		}
-	}
-	else {
-		if (options.nSecondaryFont == 0) {
-			*phfnt = GetStockObject(ANSI_FIXED_FONT);
-			hfontfind = *phfnt;
-			return;
-		}
-		else {
-			*phfnt = CreateFontIndirect(&options.SecondaryFont);
-			CopyMemory((PVOID)&logfind, (CONST VOID*)&options.SecondaryFont, sizeof(LOGFONT));
-		}
-	}
-
-	{
-		HDC clientdc = GetDC(client);
+	if (*phfnt) DeleteObject(*phfnt);
+	if (hfontfind) DeleteObject(hfontfind);
+	if ((bPrimary ? options.nPrimaryFont : options.nSecondaryFont) == 0) {
+		*phfnt = GetStockObject(bPrimary ? SYSTEM_FIXED_FONT : ANSI_FIXED_FONT);
+		hfontfind = *phfnt;
+	} else {
+		*phfnt = CreateFontIndirect(bPrimary ? &options.PrimaryFont : &options.SecondaryFont);
+		CopyMemory((PVOID)&logfind, (CONST VOID*)(bPrimary ? &options.PrimaryFont : &options.SecondaryFont), sizeof(LOGFONT));
+		clientdc = GetDC(client);
+		fontmainHt = -options.PrimaryFont.lfHeight;
+		if (fontmainHt < 0) fontmainHt = MulDiv(-fontmainHt, GetDeviceCaps(clientdc, LOGPIXELSY), 72);
 		logfind.lfHeight = -MulDiv(LOWORD(GetDialogBaseUnits())+2, GetDeviceCaps(clientdc, LOGPIXELSY), 72);
 		hfontfind = CreateFontIndirect(&logfind);
 		ReleaseDC(client, clientdc);
 	}
 }
 
-BOOL SetClientFont(BOOL bPrimary)
-{
+BOOL SetClientFont(BOOL bPrimary) {
 #ifdef USE_RICH_EDIT
 	HDC clientDC;
 	CHARFORMAT cf;
@@ -1992,28 +1971,21 @@ BOOL SetClientFont(BOOL bPrimary)
 	//if (!bPrimary && options.bSecondarySystemColour) bUseSystem = TRUE;
 
 	if (SendMessage(client, EM_CANUNDO, 0, 0)) {
-		if (!options.bSuppressUndoBufferPrompt && MessageBox(hwnd, GetString(IDS_FONT_UNDO_WARNING), STR_METAPAD, MB_ICONEXCLAMATION | MB_OKCANCEL) == IDCANCEL) {
+		if (!options.bSuppressUndoBufferPrompt && MessageBox(hwnd, GetString(IDS_FONT_UNDO_WARNING), STR_METAPAD, MB_ICONEXCLAMATION | MB_OKCANCEL) == IDCANCEL)
 			return FALSE;
-		}
 	}
 
 	SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-
 	SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
-
 	SetFont(&hfontmain, bPrimary);
-
 	cf.cbSize = sizeof (cf);
 	cf.dwMask = CFM_COLOR | CFM_SIZE | CFM_FACE | CFM_BOLD | CFM_CHARSET | CFM_ITALIC;
 
 	SendMessage(client, EM_GETCHARFORMAT, TRUE, (LPARAM)&cf);
-
 	clientDC = GetDC(client);
 	SelectObject (clientDC, hfontmain);
-
 	if (!GetTextFace(clientDC, MAXFONT, szFace))
 		ReportLastError();
-
 	lstrcpy(cf.szFaceName, szFace);
 
 	if (bPrimary) {
@@ -2029,7 +2001,6 @@ BOOL SetClientFont(BOOL bPrimary)
 		ReportLastError();
 
 	cf.yHeight = 15 * (tm.tmHeight - tm.tmInternalLeading);
-
 	cf.dwEffects = 0;
 	if (tm.tmWeight == FW_BOLD) {
 		cf.dwEffects |= CFE_BOLD;
@@ -2046,7 +2017,6 @@ BOOL SetClientFont(BOOL bPrimary)
 	SendMessage(client, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&cf);
 	bLoading = FALSE;
 	ReleaseDC(client, clientDC);
-
 	UpdateWindowText();
 
 	SendMessage(client, EM_SETBKGNDCOLOR, (WPARAM)bUseSystem, (LPARAM)(bPrimary ? options.BackColour : options.BackColour2));
@@ -2065,15 +2035,14 @@ BOOL SetClientFont(BOOL bPrimary)
 #endif
 }
 
-void SetTabStops(void)
-{
+void SetTabStops(void) {
 #ifdef USE_RICH_EDIT
-	UINT nTmp;
+	INT nWidth, nTmp, ct;
 	PARAFORMAT pf;
-	int nWidth;
 	HDC clientDC;
 	BOOL bOldDirty = bDirtyFile;
 	CHARRANGE cr, cr2;
+	LPCTSTR ts;
 
 	SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
 
@@ -2084,41 +2053,34 @@ void SetTabStops(void)
 
 	clientDC = GetDC(client);
 	SelectObject (clientDC, hfontmain);
-
 	if (!GetCharWidth32(clientDC, (UINT)VK_SPACE, (UINT)VK_SPACE, &nWidth))
 		ERROROUT(GetString(IDS_TCHAR_WIDTH_ERROR));
-
-	nTmp = nWidth * 15 * options.nTabStops;
+	ReleaseDC(client, clientDC);
 
 	ZeroMemory(&pf, sizeof(pf));
 	pf.cbSize = sizeof(PARAFORMAT);
 	SendMessage(client, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
-
 	pf.dwMask = PFM_TABSTOPS;
 	pf.cTabCount = MAX_TAB_STOPS;
-	{
-		int itab;
-		for (itab = 0; itab < pf.cTabCount; itab++)
-			pf.rgxTabs[itab] = (itab+1) * nTmp;
-	}
-	ReleaseDC(client, clientDC);
+	nTmp = nWidth * 15 * options.nTabStops;
+	for (ct = 0; ct < pf.cTabCount; ct++)
+		pf.rgxTabs[ct] = (ct+1) * nTmp;
 
-	bDirtyFile = TRUE;
-
-#ifndef BUILD_METAPAD_UNICODE
-	//TODO: This fails, for now commented by preprocessor (Rich-Unicode build / "Release")
+	//In RichEdit, Tabstops cannot be set unless 'RICHTEXT' mode (which breaks non-TTF fonts), so we temporarily set it and then revert to 'PLAINTEXT' mode.
+	ts = GetShadowBuffer(NULL);
+	SendMessage(client, WM_SETTEXT, 0, (LPARAM)_T(""));
+	SendMessage(client, EM_SETTEXTMODE, (WPARAM)TM_RICHTEXT, 0);
 	if (!SendMessage(client, EM_SETPARAFORMAT, 0, (LPARAM)(PARAFORMAT FAR *)&pf))
 		ERROROUT(GetString(IDS_PARA_FORMAT_ERROR));
-#endif
-
-	bDirtyFile = bOldDirty;
+	SendMessage(client, WM_SETTEXT, 0, (LPARAM)_T(""));
+	SendMessage(client, EM_SETTEXTMODE, (WPARAM)TM_PLAINTEXT, 0);
+	SendMessage(client, WM_SETTEXT, 0, (LPARAM)ts);
 
 	SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 	SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
 	InvalidateRect(hwnd, NULL, TRUE);
 #else
 	UINT nTmp = options.nTabStops * 4;
-
 	SendMessage(client, EM_SETTABSTOPS, (WPARAM)1, (LPARAM)&nTmp);
 #endif
 }
@@ -3237,6 +3199,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 #ifdef USE_RICH_EDIT
 	ENLINK* pLink;
+	POINT pt;
 #endif
 	HANDLE hFile;
 	HBITMAP hb;
@@ -3421,9 +3384,17 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 #ifdef USE_RICH_EDIT
 			case EN_LINK:
 				pLink = (ENLINK *) lParam;
+				if (pLink->msg != WM_SETCURSOR && pLink->msg != WM_LBUTTONUP && pLink->msg != WM_LBUTTONDBLCLK) break;
+				if (!GetCursorPos(&pt) || !ScreenToClient(client, &pt)) break;
+				i = pt.y;
+				k = SendMessage(client, EM_CHARFROMPOS, 0, (LPARAM)&pt);
+				//printf("%d,%d  %08X %d ----- ",pt.x,pt.y,l,l);
+				SendMessage(client, EM_POSFROMCHAR, (WPARAM)&pt, k);
+				//printf("%08X %d   -> %d,%d\n",l,l,pt.x,pt.y);
+				abort = (k >= GetWindowTextLength(client) || i-fontmainHt-2 > pt.y);
 				switch (pLink->msg) {
 					case WM_SETCURSOR:
-						if (options.bLinkDoubleClick)
+						if (abort || options.bLinkDoubleClick)
 							hCur = LoadCursor(NULL, IDC_ARROW);
 						else
 							hCur = LoadCursor(hinstThis, MAKEINTRESOURCE(IDC_MYHAND));
@@ -3440,6 +3411,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					case WM_LBUTTONUP:
 						if (options.bLinkDoubleClick) break;
 					case WM_LBUTTONDBLCLK:
+						if (abort) break;
 						tr.chrg.cpMin = pLink->chrg.cpMin;
 						tr.chrg.cpMax = pLink->chrg.cpMax;
 						tr.lpstrText = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (pLink->chrg.cpMax - pLink->chrg.cpMin + 1) * sizeof(TCHAR));
@@ -3448,6 +3420,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 						ShellExecute(NULL, NULL, tr.lpstrText, NULL, NULL, SW_SHOWNORMAL);
 						HeapFree(globalHeap, 0, (HGLOBAL)tr.lpstrText);
+						printf("clicky");
 						break;
 				}
 #endif
@@ -3995,7 +3968,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 					lread = LoadFileIntoBuffer(hFile, &pBuf, &len, &enc);
 #ifndef BUILD_METAPAD_UNICODE
-					if (memchr((const void*)pBuffer, _T('\0'), len) != NULL) {
+					if (memchr((const void*)pBuf, _T('\0'), len) != NULL) {
 						if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_YESNO) == IDYES) {
 							for (l = 0; l < len; l++) {
 								if (pBuf[l] == _T('\0'))
@@ -4408,7 +4381,7 @@ endinsertfile:
 						i=j;
 					else if(cr.cpMax > cr.cpMin) {
 #ifdef USE_RICH_EDIT
-						SendMessage(client, EM_EXSETSEL, 0, (LPARAM)cr);
+						SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 #else
 						SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
@@ -4446,7 +4419,7 @@ endinsertfile:
 							cr.cpMax = SendMessage(client, EM_LINEINDEX, (WPARAM)j, 0);
 							cr.cpMax += SendMessage(client, EM_LINELENGTH, (WPARAM)cr.cpMax, 0);
 #ifdef USE_RICH_EDIT
-							SendMessage(client, EM_EXSETSEL, 0, (LPARAM)cr);
+							SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 #else
 							SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
