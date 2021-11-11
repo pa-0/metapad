@@ -190,7 +190,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE anys, LPCTSTR errContext)
 			case _T('v'): *bout++ = _T('\v'); continue;
 			case _T('?'):
 #ifdef UNICODE
-				*bout++ = _T('\xFFFC');
+				*bout++ = _T('\xFFFD');
 #else
 				*bout++ = _T('?');
 #endif
@@ -672,24 +672,26 @@ void UpdateStatus(void)
 
 	nPaneSizes[SBPANE_LINE] = nPaneSizes[SBPANE_LINE - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
 
-	lLineLen = SendMessage(client, EM_LINELENGTH, (WPARAM)cr.cpMax, 0);
-	szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
-	*((LPWORD)szBuffer) = (USHORT)(lLineLen + 1);
-	SendMessage(client, EM_GETLINE, (WPARAM)lLine, (LPARAM) (LPCTSTR)szBuffer);
-	szBuffer[lLineLen] = _T('\0');
+	if (lLineLen = SendMessage(client, EM_LINELENGTH, (WPARAM)cr.cpMax, 0)) {
+		szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
+		*((LPWORD)szBuffer) = (USHORT)(lLineLen + 1);
+		SendMessage(client, EM_GETLINE, (WPARAM)lLine, (LPARAM) (LPCTSTR)szBuffer);
+		szBuffer[lLineLen] = _T('\0');
 
-	lLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lLine, 0);
-	while (lLineLen && i < (cr.cpMax - lLineIndex) && szBuffer[i]) {
-		if (szBuffer[i] == _T('\t'))
-			lCol += options.nTabStops - (lCol-1) % options.nTabStops;
-		else
-			lCol++;
-		i++;
+		lLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lLine, 0);
+		while (lLineLen && i < (cr.cpMax - lLineIndex) && szBuffer[i]) {
+			if (szBuffer[i] == _T('\t'))
+				lCol += options.nTabStops - (lCol-1) % options.nTabStops;
+			else
+				lCol++;
+			i++;
+		}
+		FREE(szBuffer);
 	}
 	wsprintf(szPane, _T(" Col: %d"), lCol);
 	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_COL, (LPARAM)(LPTSTR)szPane);
 	nPaneSizes[SBPANE_COL] = nPaneSizes[SBPANE_COL - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
-	FREE(szBuffer);
+	
 	/** @fixme Commented out code. */
 	/*
 	if (bHideMessage)
@@ -5079,9 +5081,7 @@ endinsertfile:
 			bDown = (BOOL) (lpfr->Flags & FR_DOWN);
 			bWholeWord = (BOOL) (lpfr->Flags & FR_WHOLEWORD);
 			if (lpfr->Flags & FR_REPLACEALL) {
-				l = ReplaceAll(hdlgFind, szFindText, szReplaceText, BST_CHECKED == SendDlgItemMessage(hdlgFind, IDC_RADIO_SELECTION, BM_GETCHECK, 0, 0), FALSE, bMatchCase, bWholeWord, pbFindTextAny, NULL, NULL);
-				wsprintf(szTmp, GetString(IDS_ITEMS_REPLACED), l);
-				MessageBox(hdlgFind, szTmp, STR_METAPAD, MB_OK|MB_ICONINFORMATION);
+				l = ReplaceAll(hdlgFind, szFindText, szReplaceText, szTmp, BST_CHECKED == SendDlgItemMessage(hdlgFind, IDC_RADIO_SELECTION, BM_GETCHECK, 0, 0), bMatchCase, bWholeWord, pbFindTextAny, NULL, NULL);
 				UpdateStatus();
 				return FALSE;
 			}
