@@ -109,7 +109,7 @@ DWORD DecodeBase( LPCTSTR code, LPBYTE bin, BYTE base, INT len, BYTE extractMode
 	case 64:
 		for (len = 0, k = 0; i && ct; ct--, i--, k=(++k)%4) {
 			if ((v = (BYTE)*(code++)) < 0x20 || v >= 0x80 || (v=(*(lut+v) >> 9)) >= 64) {
-				if (extractMode < 3) {
+				if (extractMode < 3 || v == 0x7f) {
 					if (v != 0x7f) { ct++; k--; }
 					continue;
 				}

@@ -241,7 +241,7 @@ void UpdateCaption(void)
 {
 	TCHAR* szBuffer = gTmpBuf;
 
-	ExpandFilename(SCNUL(szFile));
+	ExpandFilename(szFile, &szFile);
 
 	if (bDirtyFile) {
 		szBuffer[0] = _T(' ');
@@ -2409,8 +2409,9 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 
 				if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_DEFAULT, BM_GETCHECK, 0, 0)) {
 					FREE(options.szLangPlugin);
-				} else if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_PLUGIN, BM_GETCHECK, 0, 0))
+				} else if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_PLUGIN, BM_GETCHECK, 0, 0)) {
 					GetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, buf, MAXFN);		SSTRCPY(options.szLangPlugin, buf);
+				}
 			}
 			break;
 		}
@@ -3943,11 +3944,13 @@ endinsertfile:
 
 					if (!options.bReadOnlyMenu || !szFile) break;
 
+					lstrcpy(szTmp, _T("\\\\?\\"));
+					lstrcat(szTmp, szFile);
 					bReadOnly = !GetCheckedState(GetMenu(hwndMain), ID_READONLY, FALSE);
 					if (bReadOnly)
-						nRes = SetFileAttributes(szFile, GetFileAttributes(szFile) | FILE_ATTRIBUTE_READONLY);
+						nRes = SetFileAttributes(szTmp, GetFileAttributes(szTmp) | FILE_ATTRIBUTE_READONLY);
 					else
-						nRes = SetFileAttributes(szFile, ((GetFileAttributes(szFile) & ~FILE_ATTRIBUTE_READONLY) == 0 ? FILE_ATTRIBUTE_NORMAL : GetFileAttributes(szFile) & ~FILE_ATTRIBUTE_READONLY));
+						nRes = SetFileAttributes(szTmp, ((GetFileAttributes(szTmp) & ~FILE_ATTRIBUTE_READONLY) == 0 ? FILE_ATTRIBUTE_NORMAL : GetFileAttributes(szTmp) & ~FILE_ATTRIBUTE_READONLY));
 
 					if (nRes == 0) {
 						DWORD dwError = GetLastError();
@@ -5900,8 +5903,9 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		GetFullPathName(szFile, MAXFN, bufFn, NULL);
 		if (bufFn[0])
 			SSTRCPY(szFile, bufFn);
-
-		ExpandFilename(szFile);
+		
+		ExpandFilename(szFile, &szFile);
+		
 #ifdef USE_RICH_EDIT
 		{
 			DWORD dwID;

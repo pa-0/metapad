@@ -105,7 +105,7 @@ BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
  */
 void LaunchExternalViewer(int id)
 {
-	TCHAR szLaunch[MAXFN+MAXARGS+4] = {_T('\0')};
+	TCHAR szLaunch[MAXFN+MAXARGS+8] = {_T('\0')};
 	LPTSTR args = id ? options.szArgs2 : options.szArgs;
 	lstrcat(szLaunch, SCNUL(args));
 	lstrcat(szLaunch, _T(" \""));

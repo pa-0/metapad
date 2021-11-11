@@ -168,22 +168,25 @@ int FixShortFilename(TCHAR *szSrc, TCHAR *szDest)
 	return !bOK;
 }
 
-void ExpandFilename(LPTSTR szBuffer)
+void ExpandFilename(LPTSTR szBuffer, LPTSTR* szOut)
 {
 	WIN32_FIND_DATA FileData;
 	HANDLE hSearch;
-	TCHAR szTmp[MAXFN] = _T("");
+	TCHAR szTmp[MAXFN+6] = _T("\\\\?\\");
+	LPTSTR szTmpFn = szTmp+4;
 	LPTSTR szTmpDir;
 
 	if (szBuffer){
-		lstrcpy(szTmp, szBuffer);
-		FixShortFilename(szTmp, szBuffer);
+		lstrcpy(szTmpFn, szBuffer);
+		FixShortFilename(szBuffer, szTmpFn);
+		szBuffer = szTmpFn;
+		if (szOut) SSTRCPY(*szOut, szBuffer);
 	}
 
 	if (SCNUL(szDir)[0] != _T('\0'))
 		SetCurrentDirectory(szDir);
 
-	hSearch = FindFirstFile(szBuffer, &FileData);
+	hSearch = FindFirstFile(szTmp, &FileData);
 	FREE(szCaptionFile);
 	if (hSearch != INVALID_HANDLE_VALUE) {
 		LPCTSTR pdest;
@@ -206,6 +209,7 @@ void ExpandFilename(LPTSTR szBuffer)
 		if (szDir) HeapFree(globalHeap, 0, (HGLOBAL)szDir);
 		szDir = szTmpDir;
 	} else {
+		int i = (lstrlen(SCNUL(szDir))+lstrlen(SCNUL(szFile))+1) * sizeof(TCHAR);
 		szCaptionFile = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(SCNUL(szDir))+lstrlen(SCNUL(szFile))+1) * sizeof(TCHAR));
 		szCaptionFile[0] = _T('\0');
 		if (!options.bNoCaptionDir)

@@ -279,7 +279,7 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 	HMENU hsub = NULL;
 	MENUITEMINFO mio;
 	TCHAR szBuffer[MAXFN] = _T("\n");
-	TCHAR sztFile[MAXFN+4];
+	LPTSTR sztFile = NULL;
 
 	if (!SaveIfDirty())
 		return;
@@ -305,12 +305,11 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 	GetMenuItemInfo(hsub, wMenu, FALSE, &mio);
 
 	FREE(szFile);
-	lstrcpy(sztFile, szBuffer + 3);
+	SSTRCPY(sztFile, (szBuffer+3));
 	if (sztFile[0]) {
-
 		if (!bMRU) {
-			GetPrivateProfileString(STR_FAV_APPNAME, sztFile, _T("error"), sztFile, MAXFN, SCNUL(szFav));
-			if (lstrcmp(sztFile, _T("error")) == 0) {
+			GetPrivateProfileString(STR_FAV_APPNAME, szBuffer, _T("error"), szBuffer, MAXFN, SCNUL(szFav));
+			if (lstrcmp(szBuffer, _T("error")) == 0) {
 				ERROROUT(GetString(IDS_ERROR_FAVOURITES));
 				MakeNewFile();
 				return;
@@ -319,7 +318,7 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 
 		bLoading = TRUE;
 		bHideMessage = FALSE;
-		ExpandFilename(sztFile);
+		ExpandFilename(sztFile, &sztFile);
 		lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
 		UpdateStatus();
 		LoadFile(sztFile, FALSE, TRUE);
@@ -482,15 +481,17 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 	LONG lActualCharsRead;
 	HCURSOR hcur;
 	UINT i;
+	TCHAR szUniFn[MAXFN+6] = _T("\\\\?\\");
 
 	bHideMessage = FALSE;
 	lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
 	UpdateStatus();
 
 	hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
+	lstrcpy(szUniFn+4, szFilename);
 
 	for (i = 0; i < 2; ++i) {
-		hFile = (HANDLE)CreateFile(szFilename, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		hFile = (HANDLE)CreateFile(szUniFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hFile == INVALID_HANDLE_VALUE) {
 			DWORD dwError = GetLastError();
 			if (dwError == ERROR_FILE_NOT_FOUND && bCreate) {
@@ -507,7 +508,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 				switch (MessageBox(hwnd, buffer, STR_METAPAD, MB_YESNOCANCEL | MB_ICONEXCLAMATION)) {
 				case IDYES:
 					{
-						hFile = (HANDLE)CreateFile(szFilename, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+						hFile = (HANDLE)CreateFile(szUniFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 						if (hFile == INVALID_HANDLE_VALUE) {
 							ERROROUT(GetString(IDS_FILE_CREATE_ERROR));
 							bHideMessage = TRUE;
@@ -555,7 +556,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 			}
 		}
 		else {
-			SwitchReadOnly(GetFileAttributes(szFilename) & FILE_ATTRIBUTE_READONLY);
+			SwitchReadOnly(GetFileAttributes(szUniFn) & FILE_ATTRIBUTE_READONLY);
 			break;
 		}
 	}
