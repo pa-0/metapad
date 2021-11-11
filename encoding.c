@@ -81,7 +81,7 @@ INT DecodeBase( BYTE base, LPCTSTR code, LPBYTE bin, INT len, BYTE extractMode, 
 	for (i = 0, ct = 0; len > 0 && code[i]; len--, i++, ct++)
 		if ((v = (BYTE)code[i]) < 0x20 || v >= 0x80 || ((v = (*(lut+v) >> ls) & la) >= base && v != 0x7f)) {
 			switch (extractMode){
-				case 0: len = -1; break;
+				case 0: len = 0; break;
 				case 1: i--; len = 1;
 				case 2: ct--; break;
 			}
@@ -98,7 +98,7 @@ INT DecodeBase( BYTE base, LPCTSTR code, LPBYTE bin, INT len, BYTE extractMode, 
 				ct += j;
 				j = 0;
 			}
-		} else len = -1;
+		} else len = -2;
 	}
 	if (len < 0) {
 		if (showError)

@@ -1167,10 +1167,15 @@ BEGIN
                             "This file is not a valid text file. It may be a binary file.\nLoad anyway?\nNULL terminators will be preserved unless the File Format is changed."
     IDS_LARGE_FILE_WARNING  "This file is very large ( >16 MB). Loading it may take a long time.\nLoad anyway?"
 	IDS_UNICODE_CONV_ERROR  "Error converting string to Unicode"
-	IDS_ESCAPE_ERROR		"%s near:\n"
+	IDS_ESCAPE_ERROR		"%s in '%s' near:\n"
 	IDS_ESCAPE_BADCHARS     "Invalid characters in base-%d string"
 	IDS_ESCAPE_BADALIGN		"The base-%d string is not a multiple of %d characters"
 	IDS_ESCAPE_EXPECTED		"Expected base-%d string"
+	IDS_ESCAPE_CTX_FIND		"Find Text"
+	IDS_ESCAPE_CTX_REPLACE	"Replace Text"
+	IDS_ESCAPE_CTX_INSERT	"Insert Text"
+	IDS_ESCAPE_CTX_CLIPBRD	"Clipboard"
+	IDS_ESCAPE_CTX_MACRO	"Macro"
 END
 
 #endif    // English (U.S.) resources

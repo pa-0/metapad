@@ -290,13 +290,13 @@ BOOL SaveFile(LPCTSTR szFilename)
 	LONG nBytesNeeded = 0;
 	UINT nonansi = 0;
 	UINT cp = CP_ACP;
-	TCHAR szUniFn[MAXFN+6] = _T("\\\\?\\");
+	TCHAR szUncFn[MAXFN+6] = _T("\\\\?\\");
 
 	lChars = GetWindowTextLength(client);
 	szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lChars + 1)*sizeof(TCHAR));
 
-	lstrcpy(szUniFn+4, szFilename);
-	hFile = (HANDLE)CreateFile(szUniFn, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	lstrcpy(szUncFn+4, szFilename);
+	hFile = (HANDLE)CreateFile(szUncFn, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
 		ReportLastError();
 		return FALSE;

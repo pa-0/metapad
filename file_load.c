@@ -481,17 +481,17 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 	LONG lActualCharsRead;
 	HCURSOR hcur;
 	UINT i;
-	TCHAR szUniFn[MAXFN+6] = _T("\\\\?\\");
+	TCHAR szUncFn[MAXFN+6] = _T("\\\\?\\");
 
 	bHideMessage = FALSE;
 	lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
 	UpdateStatus();
 
 	hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
-	lstrcpy(szUniFn+4, szFilename);
+	lstrcpy(szUncFn+4, szFilename);
 
 	for (i = 0; i < 2; ++i) {
-		hFile = (HANDLE)CreateFile(szUniFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		hFile = (HANDLE)CreateFile(szUncFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hFile == INVALID_HANDLE_VALUE) {
 			DWORD dwError = GetLastError();
 			if (dwError == ERROR_FILE_NOT_FOUND && bCreate) {
@@ -508,7 +508,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 				switch (MessageBox(hwnd, buffer, STR_METAPAD, MB_YESNOCANCEL | MB_ICONEXCLAMATION)) {
 				case IDYES:
 					{
-						hFile = (HANDLE)CreateFile(szUniFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+						hFile = (HANDLE)CreateFile(szUncFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 						if (hFile == INVALID_HANDLE_VALUE) {
 							ERROROUT(GetString(IDS_FILE_CREATE_ERROR));
 							bHideMessage = TRUE;
@@ -556,7 +556,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 			}
 		}
 		else {
-			SwitchReadOnly(GetFileAttributes(szUniFn) & FILE_ATTRIBUTE_READONLY);
+			SwitchReadOnly(GetFileAttributes(szUncFn) & FILE_ATTRIBUTE_READONLY);
 			break;
 		}
 	}

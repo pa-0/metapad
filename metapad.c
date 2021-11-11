@@ -167,10 +167,10 @@ BOOL EncodeWithEscapeSeqs(TCHAR* szText)
 	return TRUE;
 }
 
-BOOL ParseForEscapeSeqs(LPTSTR buf)
+BOOL ParseForEscapeSeqs(LPTSTR buf, LPCTSTR errContext)
 {
-	LPTSTR op = buf, bout, end, szErr, szErr2, szErr3;
-	INT l, m, base, mul = 3, uni, str, expl;
+	LPTSTR op = buf, bout, end, szErr, szErr2, szErr3, dbuf;
+	INT l, m, base = 0, mul = 3, uni = 0, str, expl = 0, dbufalloc = 0;
 
 	if (!SCNUL(buf)[0]) return TRUE;
 	for (bout = buf; *buf; buf++, base = uni = expl = 0) {
@@ -206,24 +206,28 @@ BOOL ParseForEscapeSeqs(LPTSTR buf)
 			case _T('O'):
 			case _T('o'): buf++; expl = 1;
 			default:	  if (!base) base = 8;
-				str = ((*buf & _T('_')) == *buf);
+				str = (expl && (*(buf-1) & _T('_')) == *(buf-1));
 				end = buf;
 				if (uni == 1) mul *= 2;
-				l = DecodeBase(base, buf, (LPBYTE)bout, str ? -1 : mul, 1, str && base != 64 ? 0 : 1, FALSE, &end);
+				if (sizeof(TCHAR) >= 2 && uni != 1) {
+					if (!dbufalloc) { dbuf = (LPTSTR)HeapAlloc(globalHeap, 0, (MAXFIND + 2) * sizeof(TCHAR)); dbufalloc = 1; }
+				} else
+					dbuf = bout;
+				l = DecodeBase(base, buf, (LPBYTE)dbuf, str ? -1 : mul, 1, str && base != 64 ? 0 : 1, FALSE, &end);
 				if (l > 0) {
-					if (sizeof(TCHAR) >= 2){
+					if (sizeof(TCHAR) >= 2 && uni == 1){
 						while (l % sizeof(TCHAR))
-							*((LPBYTE)(bout)+(l++)) = 0;
+							*((LPBYTE)(dbuf)+(l++)) = 0;
 						l /= sizeof(TCHAR);
 					}
 					buf = end;
 					m = l;
-					if (str && *buf != '\\') l = -1;
-					else if (sizeof(TCHAR) < 2 && uni != 1 && !(m = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)bout, l, bout, l * sizeof(TCHAR))))
+					if (str && *buf && *buf != '\\') l = -1;
+					else if (sizeof(TCHAR) >= 2 && uni != 1 && !(m = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)dbuf, l, bout, l * sizeof(TCHAR))))
 						l = -3;
 					else if (uni == 1) ReverseBytes((LPBYTE)bout, l * sizeof(TCHAR) + 2);
 					if (!str) buf--;
-				}
+				} else if (l == -2 && str && *end && *end != '\\') l = -1;
 				if (l > 0) {
 					
 #ifdef UNICODE
@@ -234,9 +238,13 @@ BOOL ParseForEscapeSeqs(LPTSTR buf)
 #else
 					bout += m;
 #endif
+					if (str && !*buf) break;
 					continue;
 				}
 				if (l == 0 && !expl) break;
+				szErr2 = (LPTSTR)HeapAlloc(globalHeap, 0, (MAXSTRING * 2 + 32) * sizeof(TCHAR));
+				szErr3 = szErr2 + MAXSTRING * 2;
+				lstrcpy(szErr3, SCNUL(errContext));
 				switch(l) {
 					case 0: szErr = GetString(IDS_ESCAPE_EXPECTED); break;
 					case -1: szErr = GetString(IDS_ESCAPE_BADCHARS); break;
@@ -244,27 +252,26 @@ BOOL ParseForEscapeSeqs(LPTSTR buf)
 					case -3: szErr = GetString(IDS_UNICODE_CONV_ERROR); break;
 					default: szErr = GetString(IDS_ERROR); break;
 				}
-				szErr2 = (LPTSTR)HeapAlloc(globalHeap, 0, (MAXSTRING * 2 + 32) * sizeof(TCHAR));
 				wsprintf(szErr2, szErr, base, mul);
-				szErr = szErr2 + MAXSTRING * sizeof(TCHAR);
-				szErr3 = szErr + MAXSTRING * sizeof(TCHAR);
-				szErr3[24] = _T('\0');
-				wsprintf(szErr, GetString(IDS_ESCAPE_ERROR), szErr2);
-				lstrcat(szErr, _T("'"));
-				lstrcpyn(szErr3, &op[MAX(0, end-op-24)], 24);
+				szErr = szErr2 + MAXSTRING;
+				wsprintf(szErr, GetString(IDS_ESCAPE_ERROR), szErr2, szErr3);
+				lstrcat(szErr, _T("\n'"));
+				lstrcpyn(szErr3, &op[MAX(0, end-op-15)], MIN(end-op, 15)+1);
 				lstrcat(szErr, szErr3);
 				lstrcat(szErr, _T(" *** "));
-				lstrcpyn(szErr3, end, 24);
+				lstrcpyn(szErr3, end, 16);
 				lstrcat(szErr, szErr3);
 				lstrcat(szErr, _T("'"));
 				ERROROUT(szErr);
 				FREE(szErr2);
+				if (dbufalloc) FREE(dbuf);
 				return FALSE;
 			}
 		}
 		*bout++ = *buf;
 	}
 	*bout = _T('\0');
+	if (dbufalloc) FREE(dbuf);
 	return TRUE;
 	// abcdefghijklmnopqrstuvwxyz
 	// xM Mxx       XM  XMxMxMM  M
@@ -1693,7 +1700,7 @@ void SelectWord(BOOL bFinding, BOOL bSmart, BOOL bAutoSelect)
 				l = MIN(cr.cpMax - cr.cpMin, MAXFIND);
 				if (szFindText) HeapFree(globalHeap, 0, (HGLOBAL)szFindText);
 				szFindText = (LPTSTR)HeapAlloc(globalHeap, 0, (l+1) * sizeof(TCHAR));
-				lstrcpyn(szFindText, szBuffer + cr.cpMin, l);
+				lstrcpyn(szFindText, szBuffer + cr.cpMin, l+1);
 				szFindText[l] = _T('\0');
 			}
 			cr.cpMin += lLineIndex;
@@ -3925,8 +3932,9 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_INSERT_FILE: {
 				OPENFILENAME ofn;
 				TCHAR szDefExt[] = _T("txt");
-				TCHAR* szFilename = gTmpBuf;
-				szFilename[0] = _T('\0');
+				TCHAR* szTmp = gTmpBuf;
+				TCHAR* szFilename = gTmpBuf + 4;
+				lstrcpy(szTmp, _T("\\\\?\\"));
 
 				ofn.lStructSize = sizeof(OPENFILENAME);
 				ofn.hwndOwner = client;
@@ -3954,8 +3962,8 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					INT nFileEncoding;
 
 					hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
-
-					hFile = (HANDLE)CreateFile(szFilename, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+					
+					hFile = (HANDLE)CreateFile(szTmp, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 					if (hFile == INVALID_HANDLE_VALUE) {
 						ERROROUT(GetString(IDS_FILE_READ_ERROR));
 						goto endinsertfile;
@@ -5169,7 +5177,7 @@ endinsertfile:
 				LPTSTR szTmp = options.MacroArray[LOWORD(wParam) - ID_MACRO_1];
 				if (!SCNUL(szTmp)[0]) break;
 				lstrcpy(szMacro, szTmp);
-				ParseForEscapeSeqs(szMacro);
+				if (!ParseForEscapeSeqs(szMacro, GetString(IDS_ESCAPE_CTX_MACRO))) break;
 				SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szMacro);
 #ifdef USE_RICH_EDIT
 				InvalidateRect(client, NULL, TRUE);
@@ -5343,22 +5351,14 @@ endinsertfile:
 			}
 			SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_INSERTSTRING, 0, (WPARAM)szBuffer);
 			SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_SETCURSEL, (LPARAM)0, 0);
-/*
-{ int l=-1, em=0, am=0, b=16, r, erre=1;
-			l=-1;
-			r=DecodeBase(szBuffer, szBuffer+16, b, l, em, am, erre, &szReplace);
-			l=r;
-			r = EncodeBase(szBuffer+16, szBuffer+32, b, l, &szReplace);
-			r=r;
-}*/
 
-			if (!bNoFindHidden)
-				ParseForEscapeSeqs(szBuffer);
+			if (!bNoFindHidden && !ParseForEscapeSeqs(szBuffer, GetString(IDS_ESCAPE_CTX_FIND))) return FALSE;
+				
 
 			if (szReplace[0]) {
 				nIdx = SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_FINDSTRINGEXACT, 0, (WPARAM)szReplace);
-				if (nIdx == CB_ERR)
-					if (SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_GETCOUNT, 0, 0) >= NUMFINDS) {
+				if (nIdx == CB_ERR) {
+					if (SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_GETCOUNT, 0, 0) >= NUMFINDS)
 						SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_DELETESTRING, (LPARAM)NUMFINDS-1, 0);
 				}
 				else {
@@ -5366,8 +5366,7 @@ endinsertfile:
 				}
 				SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_INSERTSTRING, 0, (WPARAM)szReplace);
 				SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_SETCURSEL, (LPARAM)0, 0);
-				if (!bNoFindHidden)
-					ParseForEscapeSeqs(szReplace);
+				if (!bNoFindHidden && !ParseForEscapeSeqs(szReplace, GetString(IDS_ESCAPE_CTX_REPLACE))) return FALSE;
 			}
 
 			bMatchCase = (BOOL) (lpfr->Flags & FR_MATCHCASE);
