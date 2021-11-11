@@ -1178,6 +1178,7 @@ BEGIN
 	IDS_ESCAPE_CTX_INSERT	"Insert Text"
 	IDS_ESCAPE_CTX_CLIPBRD	"Clipboard"
 	IDS_ESCAPE_CTX_MACRO	"Macro"
+	IDS_LARGE_PASTE_WARNING	"About to insert %I64u characters of text.\nThis may take a very long time!\nContinue?"
 END
 
 #endif    // English (U.S.) resources

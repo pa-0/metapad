@@ -38,7 +38,7 @@
 extern HWND hwnd;
 
 static unsigned short decLut[] = {
-	0x803f, 0x803f, 0x81ff, 0x817f,  0x80ff, 0x80ff, 0x80ff, 0x80bf,  0x80bf, 0x80bf, 0x80bf, 0x7cbf,  0x80bf, 0x80bf, 0x80bf, 0x7ebf,
+	0xfe3f, 0x803f, 0x81ff, 0x817f,  0x80ff, 0x80ff, 0x80ff, 0x80bf,  0x80bf, 0x80bf, 0x80bf, 0x7cbf,  0x80bf, 0x80bf, 0x80bf, 0x7ebf,
 	0x6840, 0x6a41, 0x6c42, 0x6e43,  0x7044, 0x7245, 0x7446, 0x7647,  0x7848, 0x7a49, 0x807f, 0x807f,  0x807f, 0xfe7f, 0x807f, 0x807f,
 	0x807f, 0x004a, 0x024b, 0x044c,  0x064d, 0x080e, 0x0a0f, 0x0c10,  0x0e11, 0x1012, 0x1213, 0x1414,  0x1615, 0x1816, 0x1a17, 0x1c18,
 	0x1e19, 0x201a, 0x221b, 0x241c,  0x261d, 0x281e, 0x2a1f, 0x2c20,  0x2e21, 0x3022, 0x3223, 0x803f,  0x803f, 0x803f, 0x803f, 0x803f,
@@ -79,7 +79,9 @@ INT DecodeBase( BYTE base, LPCTSTR code, LPBYTE bin, INT len, BYTE extractMode, 
 	if (!vs && base < 64)
 		for(mi = base, i = w-2; i; i--, mi *= base);
 	for (i = 0, ct = 0; len > 0 && code[i]; len--, i++, ct++)
-		if ((v = (BYTE)code[i]) < 0x20 || v >= 0x80 || ((v = (*(lut+v) >> ls) & la) >= base && v != 0x7f)) {
+		if ((v = (BYTE)code[i]) < 0x20) {
+			ct--; continue;
+		} else if (v >= 0x80 || ((v = (*(lut+v) >> ls) & la) >= base && v != 0x7f)) {
 			switch (extractMode){
 				case 0: len = 0; break;
 				case 1: i--; len = 1;
@@ -108,7 +110,9 @@ INT DecodeBase( BYTE base, LPCTSTR code, LPBYTE bin, INT len, BYTE extractMode, 
 	switch (base){
 	case 64:
 		for (len = 0, k = 0; i && ct; ct--, i--, k=(++k)%4) {
-			if ((v = (BYTE)*(code++)) < 0x20 || v >= 0x80 || (v=(*(lut+v) >> 9)) >= 64) {
+			if ((v = (BYTE)*(code++)) < 0x20) {
+				ct++; k--; continue;
+			} else if (v >= 0x80 || (v=(*(lut+v) >> 9)) >= 64) {
 				if (extractMode < 3 || v == 0x7f) {
 					if (v != 0x7f) { ct++; k--; }
 					continue;
@@ -130,7 +134,9 @@ INT DecodeBase( BYTE base, LPCTSTR code, LPBYTE bin, INT len, BYTE extractMode, 
 			if (!i) v = 0;
 			else {
 				i--;
-				if ((v = (BYTE)*(code++)) < 0x20 || v >= 0x80 || (v=(*(lut+v) & 0x3f)) >= base) {
+				if ((v = (BYTE)*(code++)) < 0x20) {
+					ct++; k--; continue;
+				} else if (v >= 0x80 || (v=(*(lut+v) & 0x3f)) >= base) {
 					if (extractMode < 3) {
 						ct++; k--; continue;
 					}

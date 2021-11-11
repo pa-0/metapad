@@ -75,7 +75,7 @@ static __inline void ConvertToUnix(LPTSTR szBuffer)
 
 	lstrcpy(szTemp, szBuffer);
 
-	while (szTemp[i] != _T('\0')) {
+	while (szTemp[i]) {
 		if (szTemp[i] != _T('\r')) {
 			szBuffer[j] = szTemp[i];
 			j++;
@@ -378,7 +378,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 #ifdef USE_RICH_EDIT
 		if (bUnix) {
 			int i = 0;
-			while (szBuffer[i] != _T('\0')) {
+			while (szBuffer[i]) {
 				if (szBuffer[i] == _T('\r'))
 					szBuffer[i] = _T('\n');
 				i++;

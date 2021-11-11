@@ -357,7 +357,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, ULONG* plBufferLength, 
 	UINT cp = CP_ACP;
 
 	*plBufferLength = GetFileSize(hFile, NULL);
-	if (!options.bNoWarningPrompt && *plBufferLength > LARGEFILESIZEWARN && MessageBox(hwnd, GetString(IDS_LARGE_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_YESNO) == IDNO) {
+	if (!options.bNoWarningPrompt && *plBufferLength > LARGEFILESIZEWARN && MessageBox(hwnd, GetString(IDS_LARGE_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDCANCEL) {
 		SendMessage(hwnd, WM_CLOSE, 0, 0L);
 		return -1;
 	}

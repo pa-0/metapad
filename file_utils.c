@@ -77,13 +77,17 @@ long CalculateFileSize(void)
 			LPTSTR szBuffer = (LPTSTR)HeapAlloc(globalHeap, 0, (nBytes + 1)*sizeof(TCHAR));
 			GetWindowText(client, szBuffer, nBytes+1);
 			nBytes = WideCharToMultiByte(CP_UTF8, 0, szBuffer, nBytes, NULL, 0, NULL, NULL);
+			for ( ; *szBuffer; szBuffer++)
+				if (*szBuffer == _T('\r'))
+					nBytes--;
 			FREE(szBuffer);
 		}
 #endif
-		nBytes += SIZEOFBOM_UTF_8 - (bUnix ? (SendMessage(client, EM_GETLINECOUNT, 0, 0)) - 1 : 0);
+		nBytes += SIZEOFBOM_UTF_8;
 	}
 	else {
 		nBytes = GetWindowTextLength(client) - (bUnix ? (SendMessage(client, EM_GETLINECOUNT, 0, 0)) - 1 : 0);
+		//BUG! Wrapped lines erroneously decrease byte count (LE)!
 	}
 	return nBytes;
 }
