@@ -42,6 +42,7 @@
 #include "include/typedefs.h"
 #include "include/settings_load.h"
 #include "include/macros.h"
+#include "include/resource.h"
 
 #ifdef USE_RICH_EDIT
 extern BOOL bHyperlinks;
@@ -89,9 +90,9 @@ static void LoadOptionBinary(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbDat
 	else {
 		UINT l = (cbData + 1) * sizeof(TCHAR) * 2;
 		TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, l);
-		EncodeBase( lpData, szBuffer, 64, cbData, NULL );
+		EncodeBase(64, lpData, szBuffer, cbData, NULL );
 		if (GetPrivateProfileString(_T("Options"), name, szBuffer, szBuffer, l, SCNUL(szMetapadIni)) > 0)
-			DecodeBase( szBuffer, lpData, 64, -1, 0, 1, TRUE, NULL );
+			DecodeBase(64, szBuffer, lpData, -1, 0, 1, TRUE, NULL );
 		HeapFree(globalHeap, 0, szBuffer);
 	}
 }
@@ -283,9 +284,7 @@ void LoadOptionString(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData)
 		buf[0] = _T('\0');
 		if (hKey) RegQueryValueEx(hKey, name, NULL, NULL, (LPBYTE)buf, &buflen);
 		else GetPrivateProfileString(_T("Options"), name, buf, buf, clen, SCNUL(szMetapadIni));
-		if (buf[0]){
-			SSTRCPY(*lpData, buf);
-		}
+		SSTRCPY(*lpData, buf);
 		HeapFree(globalHeap, 0, (HGLOBAL)buf);
 	}
 }
@@ -400,7 +399,7 @@ void LoadMenusAndData(void)
 			LoadOptionNumeric(key, _T("bCloseAfterInsert"), (LPBYTE)&bCloseAfterInsert, sizeof(BOOL));
 			LoadOptionNumeric(key, _T("bNoFindHidden"), (LPBYTE)&bNoFindHidden, sizeof(BOOL));
 		}
-		LoadOptionString(key, _T("FileFilter"), &szCustomFilter, MAXFN);
+		LoadOptionStringDefault(key, _T("FileFilter"), &szCustomFilter, MAXFN, GetString(IDS_DEFAULT_FILTER));
 
 		if (!options.bNoSaveHistory) {
 			for (i = 0; i < NUMFINDS; ++i) {

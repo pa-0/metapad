@@ -67,7 +67,7 @@ static unsigned short encLut[] = {
  * @param[in,out] if non-null, returns the position where decoding of [code] finished or was stopped due to error
  * @return Size of decoded array or: -1=invalid characters  -2=alignment error (input length not an expected exact multiple),  -3=invalid base
  */
-DWORD DecodeBase( LPCTSTR code, LPBYTE bin, BYTE base, INT len, BYTE extractMode, BYTE alignMode, BOOL showError, LPCTSTR* end ) {
+INT DecodeBase( BYTE base, LPCTSTR code, LPBYTE bin, INT len, BYTE extractMode, BYTE alignMode, BOOL showError, LPCTSTR* end ) {
 	DWORD i, ct;
 	BYTE j, k = 0, v, w, ls = 0, la = 0x3f, vs = 0, mi = 0, mc = 0;
 	unsigned short* lut = decLut - 0x20;
@@ -82,7 +82,7 @@ DWORD DecodeBase( LPCTSTR code, LPBYTE bin, BYTE base, INT len, BYTE extractMode
 		if ((v = (BYTE)code[i]) < 0x20 || v >= 0x80 || ((v = (*(lut+v) >> ls) & la) >= base && v != 0x7f)) {
 			switch (extractMode){
 				case 0: len = -1; break;
-				case 1: len = 1;
+				case 1: i--; len = 1;
 				case 2: ct--; break;
 			}
 		}
@@ -165,7 +165,7 @@ DWORD DecodeBase( LPCTSTR code, LPBYTE bin, BYTE base, INT len, BYTE extractMode
  * @param[in,out] if non-null, returns the position where encoding of [bin] finished
  * @return Size in characters of output string (excluding the null terminator) or: -3=invalid base
  */
-DWORD EncodeBase( LPBYTE bin, LPTSTR code, BYTE base, INT len, LPBYTE* end ) {
+INT EncodeBase( BYTE base, LPBYTE bin, LPTSTR code, INT len, LPBYTE* end ) {
 	DWORD i, ct = 0, v;
 	BYTE k, w, vs = 0, ma = base-1;
 	unsigned short *lut = decLut - 0x20, *elut = encLut;

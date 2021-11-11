@@ -167,36 +167,107 @@ BOOL EncodeWithEscapeSeqs(TCHAR* szText)
 	return TRUE;
 }
 
-void ParseForEscapeSeqs(TCHAR* buf)
+BOOL ParseForEscapeSeqs(LPTSTR buf)
 {
-	int i, j;
-	if (!SCNUL(buf)[0]) return;
-	for (i = 0, j = 0; buf[i]; i++) {
-		if (buf[i] == _T('\\')) {
-			switch(buf[++i]){
+	LPTSTR op = buf, bout, end, szErr, szErr2, szErr3;
+	INT l, m, base, mul = 3, uni, str, expl;
+
+	if (!SCNUL(buf)[0]) return TRUE;
+	for (bout = buf; *buf; buf++, base = uni = expl = 0) {
+		if (*buf == _T('\\')) {
+			switch(*++buf){
 			case _T('n'):
 #ifdef USE_RICH_EDIT
-				buf[j++] = _T('\r');
+				*bout++ = _T('\r');
 #else
-				buf[j++] = _T('\r');
-				buf[j++] = _T('\n');
+				*bout++ = _T('\r');
+				*bout++ = _T('\n');
 #endif
 				continue;
-			case _T('t'): buf[j++] = _T('\t'); continue;
-			case _T('a'): buf[j++] = _T('\a'); continue;
-			case _T('e'): buf[j++] = _T('\x1e'); continue;
-			case _T('f'): buf[j++] = _T('\f'); continue;
-			case _T('v'): buf[j++] = _T('\v'); continue;
-			case _T('R'): buf[j++] = _T('\r'); continue;
-			case _T('N'): buf[j++] = _T('\n'); continue;
+			case _T('R'): *bout++ = _T('\r'); continue;
+			case _T('N'): *bout++ = _T('\n'); continue;
+			case _T('t'): *bout++ = _T('\t'); continue;
+			case _T('a'): *bout++ = _T('\a'); continue;
+			case _T('e'): *bout++ = _T('\x1e'); continue;
+			case _T('f'): *bout++ = _T('\f'); continue;
+			case _T('v'): *bout++ = _T('\v'); continue;
+			case _T('U'):
+			case _T('u'): uni = 1; 
+			case _T('X'):
+			case _T('x'): if (!base) { base = 16; mul = 2; } if (!uni) uni = 2;
+			case _T('W'):
+			case _T('w'): if (!uni) uni = 1;
+			case _T('S'): 
+			case _T('s'): if (!base) { base = 64; mul = 4; }
+			case _T('B'):
+			case _T('b'): if (!base) { base = 2; mul = 8; }
+			case _T('D'):
+			case _T('d'): if (!base) base = 10;
+			case _T('O'):
+			case _T('o'): buf++; expl = 1;
+			default:	  if (!base) base = 8;
+				str = ((*buf & _T('_')) == *buf);
+				end = buf;
+				if (uni == 1) mul *= 2;
+				l = DecodeBase(base, buf, (LPBYTE)bout, str ? -1 : mul, 1, str && base != 64 ? 0 : 1, FALSE, &end);
+				if (l > 0) {
+					if (sizeof(TCHAR) >= 2){
+						while (l % sizeof(TCHAR))
+							*((LPBYTE)(bout)+(l++)) = 0;
+						l /= sizeof(TCHAR);
+					}
+					buf = end;
+					m = l;
+					if (str && *buf != '\\') l = -1;
+					else if (sizeof(TCHAR) < 2 && uni != 1 && !(m = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)bout, l, bout, l * sizeof(TCHAR))))
+						l = -3;
+					else if (uni == 1) ReverseBytes((LPBYTE)bout, l * sizeof(TCHAR) + 2);
+					if (!str) buf--;
+				}
+				if (l > 0) {
+					
+#ifdef UNICODE
+					for (; m; m--, bout++) {
+						if (*bout == _T('\0'))
+							*bout = _T('\x2400');
+					}
+#else
+					bout += m;
+#endif
+					continue;
+				}
+				if (l == 0 && !expl) break;
+				switch(l) {
+					case 0: szErr = GetString(IDS_ESCAPE_EXPECTED); break;
+					case -1: szErr = GetString(IDS_ESCAPE_BADCHARS); break;
+					case -2: szErr = GetString(IDS_ESCAPE_BADALIGN); break;
+					case -3: szErr = GetString(IDS_UNICODE_CONV_ERROR); break;
+					default: szErr = GetString(IDS_ERROR); break;
+				}
+				szErr2 = (LPTSTR)HeapAlloc(globalHeap, 0, (MAXSTRING * 2 + 32) * sizeof(TCHAR));
+				wsprintf(szErr2, szErr, base, mul);
+				szErr = szErr2 + MAXSTRING * sizeof(TCHAR);
+				szErr3 = szErr + MAXSTRING * sizeof(TCHAR);
+				szErr3[24] = _T('\0');
+				wsprintf(szErr, GetString(IDS_ESCAPE_ERROR), szErr2);
+				lstrcat(szErr, _T("'"));
+				lstrcpyn(szErr3, &op[MAX(0, end-op-24)], 24);
+				lstrcat(szErr, szErr3);
+				lstrcat(szErr, _T(" *** "));
+				lstrcpyn(szErr3, end, 24);
+				lstrcat(szErr, szErr3);
+				lstrcat(szErr, _T("'"));
+				ERROROUT(szErr);
+				FREE(szErr2);
+				return FALSE;
 			}
 		}
-		buf[j++] = buf[i];
+		*bout++ = *buf;
 	}
-	if (buf[j-1]) buf[j] = _T('\0');
-
+	*bout = _T('\0');
+	return TRUE;
 	// abcdefghijklmnopqrstuvwxyz
-	// xM Mxx       X   XMxMxMM  M
+	// xM Mxx       XM  XMxMxMM  M
 }
 
 /**
@@ -1388,6 +1459,7 @@ void SaveMRUInfo(LPCTSTR szFullPath)
 	TCHAR szKey[16];
 	LPTSTR szBuffer = NULL;
 	LPTSTR szTopVal = NULL;
+	LPTSTR szExpPath = NULL;
 	UINT i = 1;
 
 	if (options.nMaxMRU == 0)
@@ -1400,8 +1472,10 @@ void SaveMRUInfo(LPCTSTR szFullPath)
 
 	wsprintf(szKey, _T("mru_%d"), nMRUTop);
 	LoadOptionString(key, szKey, &szBuffer, MAXFN);
+	ExpandFilename(szFullPath, &szExpPath);
+	szFullPath = szExpPath;
 
-	if (lstrcmp(szFullPath, szBuffer) != 0) {
+	if (lstrcmp(SCNUL(szFullPath), SCNUL(szBuffer)) != 0) {
 		if (++nMRUTop > options.nMaxMRU) {
 			nMRUTop = 1;
 		}
@@ -1428,6 +1502,7 @@ void SaveMRUInfo(LPCTSTR szFullPath)
 	PopulateMRUList();
 	FREE(szBuffer);
 	FREE(szTopVal);
+	FREE(szExpPath);
 }
 
 void PopulateFavourites(void)
@@ -5635,9 +5710,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	bNoFindHidden = TRUE;
 	bTransparent = FALSE;
 
-	SSTRCPY(szCustomFilter, GetString(IDS_DEFAULT_FILTER));
 	LoadMenusAndData();
-
 	FixFilterString(szCustomFilter);
 	
 	if (options.bSaveWindowPlacement || options.bStickyWindow)

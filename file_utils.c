@@ -113,7 +113,7 @@ void SetFileFormat(int nFormat)
 	}
 }
 
-int FixShortFilename(TCHAR *szSrc, TCHAR *szDest)
+int FixShortFilename(LPCTSTR szSrc, TCHAR *szDest)
 {
 	WIN32_FIND_DATA FindFileData;
 	HANDLE hHandle;
@@ -168,7 +168,7 @@ int FixShortFilename(TCHAR *szSrc, TCHAR *szDest)
 	return !bOK;
 }
 
-void ExpandFilename(LPTSTR szBuffer, LPTSTR* szOut)
+void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut)
 {
 	WIN32_FIND_DATA FileData;
 	HANDLE hSearch;
