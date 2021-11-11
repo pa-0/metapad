@@ -257,6 +257,41 @@ LPCTSTR GetShadowBuffer(DWORD* len) {
 
 
 
+DWORD GetColNum(LONG pos, LPCTSTR szBuf, DWORD bufLen, LONG line){
+	BOOL free = FALSE;
+	DWORD c = 1, i, p = MAX(0, pos), linelen, lp;
+	LPCTSTR cp = szBuf + p;
+	if (bufLen > 0 && p > bufLen) p = bufLen;
+	if (line < 0) {
+#ifdef USE_RICH_EDIT
+		line = SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)p);
+#else
+		line = SendMessage(client, EM_LINEFROMCHAR, (WPARAM)p, 0);
+#endif
+	}
+	lp = SendMessage(client, EM_LINEINDEX, (WPARAM)line, 0);
+	if (szBuf){
+		for (i = (p - lp); i-- && cp-- != szBuf ; ) ;
+	} else {
+		if ((linelen = SendMessage(client, EM_LINELENGTH, (WPARAM)p, 0)) < 0) return c;
+		free = TRUE;
+		szBuf = (LPCTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (linelen+2) * sizeof(TCHAR));
+		*((LPWORD)szBuf) = (USHORT)(linelen + 1);
+		SendMessage(client, EM_GETLINE, (WPARAM)line, (LPARAM)(LPCTSTR)szBuf);
+		((LPTSTR)szBuf)[linelen] = _T('\0');
+		cp = szBuf;
+	}
+	for (i = 0; i < p - lp && cp[i]; i++, c++) {
+		if (cp[i] == _T('\t'))
+			c += (options.nTabStops - (c-1) % options.nTabStops)-1;
+	}
+	if (free) FREE(szBuf);
+	return c;
+}
+
+
+
+
 /**
  * Calculate the size of the current file.
  *
@@ -305,7 +340,8 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 	LONG lSize;
 	LPCTSTR szBuffer = GetShadowBuffer(NULL);
 	LPCTSTR lpszStop, lpsz, lpfs = NULL, lpszFound = NULL;
-	DWORD cf, nFindLen = lstrlen(szText), f = 1;
+	DWORD cf, nFindLen = lstrlen(szText), nGlob = 0, f = 1, cg = 0, lg = 0, tg = 0;
+	TCHAR gc;
 
 	lSize = GetWindowTextLength(client);
 
@@ -329,13 +365,28 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 	}
 
 	for (cf = 0; lpszStop != szBuffer && lpsz <= lpszStop - (bDown ? 0 : nFindLen-1) && (!bDown || (bDown && lpszFound == NULL)); f = 0) {
-		if ((pbFindSpec && (pbFindSpec[cf] == 1 || (pbFindSpec[cf] == 2 && !RAND()%0x60))) || *lpsz == szText[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*lpsz) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szText[cf]))) {
+		if ( (pbFindSpec && pbFindSpec[cf] && (pbFindSpec[cf] <= 2 || (cf && pbFindSpec[cf] == 3 && *lpsz == gc) || (pbFindSpec[cf] == 4 && !RAND()%0x60))) 
+			|| *lpsz == szText[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*lpsz) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szText[cf]))) {
+			if (pbFindSpec){
+				if (pbFindSpec[cf] >= 1 && pbFindSpec[cf] <= 3 && cf+1 < nFindLen) {
+					if (pbFindSpec[cf] == 2 && *lpsz == szText[cf+1]) { cg = ++cf; continue; }
+					else { cg = 0; cf--; lg++; }
+				} else if (*lpsz == szText[cf]) { tg += lg?lg-1:0; lg = 0; gc = *lpsz; }
+			}
 			if (!lpfs) lpfs = lpsz;
-			if (++cf == nFindLen && (!bWholeWord || ( (f || !(_istalnum(*(lpfs-1)) || *(lpfs-1) == _T('_'))) && !(*(lpsz+1) && (_istalnum(*(lpsz+1)) || *(lpsz+1) == _T('_'))) )))
+			if (++cf == nFindLen && (!bWholeWord || ( (f || !(_istalnum(*(lpfs-1)) || *(lpfs-1) == _T('_'))) && !(*(lpsz+1) && (_istalnum(*(lpsz+1)) || *(lpsz+1) == _T('_'))) ))) {
 				lpszFound = lpfs;
+				cg = 0;
+				nGlob = tg + (lg?lg-1:0);
+				lg = tg = 0;
+			}
 		} else if (lpfs) {
-			lpfs = NULL;
-			cf = 0;
+			if (cg) { cf = cg-1; lg+=2; }
+			else if (pbFindSpec && lg && pbFindSpec[cf++] == 3) { continue; }
+			else {
+				lpfs = NULL;
+				cf = 0;
+			}
 			continue;
 		}
 		lpsz++;
@@ -344,7 +395,7 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 	if (lpszFound != NULL) {
 		LONG lEnd;
 		lStart = lpszFound - szBuffer;
-		lEnd = lStart + nFindLen;
+		lEnd = lStart + nFindLen + nGlob;
 		SendMessage(client, EM_SETSEL, (WPARAM)lStart, (LPARAM)lEnd);
 		UpdateStatus();
 		return TRUE;

@@ -170,7 +170,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext)
 	INT l, m, base = 0, mul = 3, uni = 0, str, expl = 0, dbufalloc = 0, spi = 0;
 	DWORD p = 0;
 #ifdef UNICODE
-	const TCHAR spsub[] = {_T('\xFFFD'), _T('\xFFFC')};
+	const TCHAR spsub[] = {_T('\xFFFD'), _T('\xD7'), _T('\x2026'), _T('\xFFFC')};
 #endif
 
 	if (!SCNUL(buf)[0]) return TRUE;
@@ -195,12 +195,14 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext)
 			case _T('f'): *bout++ = _T('\f'); continue;
 			case _T('v'): *bout++ = _T('\v'); continue;
 			case _T('?'): if (!spi) spi = 1;
-			case _T('$'): if (!spi) spi = 2;
+			case _T('*'): if (!spi) spi = 2;
+			case _T('+'): if (!spi) spi = 3;
+			case _T('$'): if (!spi) spi = 4;
 				if (specials) {
 					if (!*specials) *specials = (LPBYTE)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, lstrlen(op)+1);
 					(*specials)[p] = spi;
 				}
-				if (spi == 2){
+				if (spi == 4){
 					if (sizeof(TCHAR) > 1 && (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE))
 						*bout++ = RAND()%0xffe0+0x20;
 					else
@@ -588,11 +590,9 @@ void UpdateStatus(void)
 {
 	static TCHAR szPane[50];
 	static int lastw = 0;
-	LONG lLine, lLineIndex, lLines;
+	LONG lLine, lLines;
 	int nPaneSizes[NUMPANES];
 	LPTSTR szBuffer;
-	long lLineLen, lCol = 1;
-	int i = 0;
 	CHARRANGE cr;
 	RECT rc;
 
@@ -687,23 +687,8 @@ void UpdateStatus(void)
 
 	nPaneSizes[SBPANE_LINE] = nPaneSizes[SBPANE_LINE - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
 
-	if (lLineLen = SendMessage(client, EM_LINELENGTH, (WPARAM)cr.cpMax, 0)) {
-		szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
-		*((LPWORD)szBuffer) = (USHORT)(lLineLen + 1);
-		SendMessage(client, EM_GETLINE, (WPARAM)lLine, (LPARAM) (LPCTSTR)szBuffer);
-		szBuffer[lLineLen] = _T('\0');
-
-		lLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lLine, 0);
-		while (lLineLen && i < (cr.cpMax - lLineIndex) && szBuffer[i]) {
-			if (szBuffer[i] == _T('\t'))
-				lCol += options.nTabStops - (lCol-1) % options.nTabStops;
-			else
-				lCol++;
-			i++;
-		}
-		FREE(szBuffer);
-	}
-	wsprintf(szPane, _T(" Col: %d"), lCol);
+	wsprintf(szPane, _T(" Col: %d"), GetColNum(cr.cpMax, NULL, 0, lLine));
+	//wsprintf(szPane, _T(" Col: %d"), GetColNum(cr.cpMax, GetShadowBuffer(NULL), 0, lLine));
 	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_COL, (LPARAM)(LPTSTR)szPane);
 	nPaneSizes[SBPANE_COL] = nPaneSizes[SBPANE_COL - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
 	
@@ -4408,12 +4393,64 @@ endinsertfile:
 				j = SendMessage(client, EM_LINEFROMCHAR, (WPARAM)cr.cpMax, 0);
 #endif
 				if (i < j) {
-					cr.cpMin = SendMessage(client, EM_LINEINDEX, (WPARAM)i, 0);
+					szOld = GetShadowBuffer(&l);
+					for (sl = cr.cpMin;	sl < l	 && (szOld[sl] == '\r' || szOld[sl] == '\n'); sl++) ;
+					for (			  ;	sl--	 &&  szOld[sl] != '\r' && szOld[sl] != '\n' ; ) ;
+					cr.cpMin = sl+1;
+					for (sl = cr.cpMax;	sl--	 && (szOld[sl] == '\r' || szOld[sl] == '\n'); ) ;
+					for (			  ;	sl++ < l && szOld[sl] != '\r' && szOld[sl] != '\n'; ) ;
+					cr.cpMax = sl;
+					if (cr.cpMax == cr.cpMin)
+						i=j;
+					else if(cr.cpMax > cr.cpMin) {
 #ifdef USE_RICH_EDIT
-					SendMessage(client, EM_EXSETSEL, 0, (LPARAM)cr);
+						SendMessage(client, EM_EXSETSEL, 0, (LPARAM)cr);
 #else
-					SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
+						SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
+					}
+				}
+#ifdef USE_RICH_EDIT
+				sz = _T("\r");
+#else
+				sz = _T("\r\n");
+#endif
+				switch (LOWORD(wParam)){
+					case ID_INDENT:
+						lstrcpy(szTmp, _T("\r\n"));
+						if (options.bInsertSpaces) {
+#if UNICODE
+							wmemset(szTmp+2, _T(' '), options.nTabStops);
+#else
+							memset(szTmp+2, _T(' '), options.nTabStops);
+#endif
+							if (i >= j)
+								szTmp[2 + options.nTabStops - (GetColNum(cr.cpMin, szOld, l, i)-1) % options.nTabStops] = _T('\0');
+							else
+								szTmp[2 + options.nTabStops] = _T('\0');
+						}
+						else
+							lstrcpy(szTmp+2, _T("\t"));
+						if (i >= j)
+							SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)(szTmp+2));
+						else {
+#ifdef USE_RICH_EDIT
+							(szTmp++)[1] = _T('\r');
+#endif
+							ReplaceAll(hwnd, 1, 0, &sz, &szTmp, NULL, NULL, NULL, TRUE, FALSE, FALSE, sz, NULL);
+							cr.cpMin = SendMessage(client, EM_LINEINDEX, (WPARAM)i, 0);
+							cr.cpMax = SendMessage(client, EM_LINEINDEX, (WPARAM)j, 0);
+							cr.cpMax += SendMessage(client, EM_LINELENGTH, (WPARAM)cr.cpMax, 0);
+#ifdef USE_RICH_EDIT
+							SendMessage(client, EM_EXSETSEL, 0, (LPARAM)cr);
+#else
+							SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
+#endif
+						}
+						break;
+					case ID_UNINDENT:
+
+						break;
 				}
 				break;
 
