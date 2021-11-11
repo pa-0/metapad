@@ -316,10 +316,10 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 
 	if (bDown) {
 		if (nReplaceMax > -1) {
-			lpszStop = szBuffer + nReplaceMax - 1;
+			lpszStop = szBuffer + nReplaceMax;
 		}
 		else {
-			lpszStop = szBuffer + lSize - 1;
+			lpszStop = szBuffer + lSize;
 		}
 		lpsz = szBuffer + (bFromTop ? 0 : lStart + (lStart == lEnd ? 0 : 1));
 	}
@@ -389,7 +389,7 @@ BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL b
 
 
 
-DWORD StrReplaceAll(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, BOOL bCase, BOOL bWholeWord, LPBYTE anys){
+DWORD StrReplaceAll(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, LPBYTE pbReplSpec, BOOL bCase, BOOL bWholeWord){
 	LONG ld;
 	DWORD len, alen, ilen, lf, lr, ct = 0, cf, f = 1;
 	LPTSTR dst, odst, pd;
@@ -439,7 +439,7 @@ DWORD StrReplaceAll(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, 
 	return ct;
 }
 
-DWORD ReplaceAll(HWND owner, LPCTSTR szFind, LPCTSTR szRepl, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, LPBYTE anys, LPCTSTR header, LPCTSTR footer){
+DWORD ReplaceAll(HWND owner, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, LPBYTE pbReplSpec, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, LPCTSTR header, LPCTSTR footer){
 	HCURSOR hCur;
 	LPCTSTR szIn;
 	LPTSTR szBuf = NULL, szTmp = NULL;
@@ -467,7 +467,7 @@ DWORD ReplaceAll(HWND owner, LPCTSTR szFind, LPCTSTR szRepl, LPTSTR szMsgBuf, BO
 		szIn = (LPCTSTR)szTmp;
 	}
 	l += lh+lf;
-	r = StrReplaceAll(szIn, &szBuf, &l, szFind, szRepl, bMatchCase, bWholeWord, anys);
+	r = StrReplaceAll(szIn, &szBuf, &l, szFind, szRepl, pbFindSpec, pbReplSpec, bMatchCase, bWholeWord);
 	if (r) {
 		SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
 		if (!selection) {
