@@ -175,11 +175,11 @@ BEGIN
     PUSHBUTTON      ">",IDC_ESCAPE,162,7,11,12,BS_BITMAP | BS_NOTIFY
     PUSHBUTTON      ">",IDC_ESCAPE2,162,24,11,12,BS_BITMAP | BS_NOTIFY
     CONTROL         "Match &whole word only",1040,"Button",BS_AUTOCHECKBOX |
-                    WS_GROUP | WS_TABSTOP,7,47,87,12
+                    WS_GROUP | WS_TABSTOP,7,46,87,12
     CONTROL         "Match &case",1041,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    7,63,59,12
-    CONTROL         "C&lose dialog after replace",IDC_CLOSE_AFTER_REPLACE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,81,92,8
+                    7,62,59,12
+    CONTROL         "C&lose after replace all",IDC_CLOSE_AFTER_REPLACE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,80,92,8
     GROUPBOX        "Replace all in",IDC_STATIC,108,47,65,36
     CONTROL         "&Selection",IDC_RADIO_SELECTION,"Button",
                     BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,117,58,44,9

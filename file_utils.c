@@ -461,14 +461,14 @@ DWORD StrReplaceAll(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, 
 	return ct;
 }
 
-DWORD ReplaceAll(HWND owner, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, LPBYTE pbReplSpec, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, LPCTSTR header, LPCTSTR footer){
+DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* szRepl, LPBYTE* pbFindSpec, LPBYTE* pbReplSpec, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, LPCTSTR header, LPCTSTR footer){
 	HCURSOR hCur;
 	LPCTSTR szIn;
 	LPTSTR szBuf = NULL, szTmp = NULL;
 	CHARRANGE cr;
-	DWORD l, r = 0, lh = 0, lf = 0;
+	DWORD l, r = 0, lh = 0, lf = 0, ict = 0, nr, gr, op;
 
-	if (!szFind || !*szFind) return 0;
+	if (!szFind || !szRepl || !nOps) return 0;
 	if (!owner) owner = hwnd;
 	if (header) lh = lstrlen(header);
 	if (footer) lf = lstrlen(footer);
@@ -489,7 +489,17 @@ DWORD ReplaceAll(HWND owner, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, 
 		szIn = (LPCTSTR)szTmp;
 	}
 	l += lh+lf;
-	r = StrReplaceAll(szIn, &szBuf, &l, szFind, szRepl, pbFindSpec, pbReplSpec, bMatchCase, bWholeWord);
+	do {
+		gr = 0;
+		for (op = 0; op < nOps; op++){
+			do {
+				r += (nr = StrReplaceAll(szIn, &szBuf, &l, szFind[op], szRepl[op], pbFindSpec ? pbFindSpec[op] : NULL, pbReplSpec ? pbReplSpec[op] : NULL, bMatchCase, bWholeWord));
+				gr += nr;
+				ict++;
+				szIn = (LPCTSTR)szBuf;
+			} while ((recur & 1) && nr);
+		}
+	} while ((recur & 2) && gr);
 	if (r) {
 		SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
 		if (!selection) {
@@ -509,7 +519,7 @@ DWORD ReplaceAll(HWND owner, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, 
 	InvalidateRect(client, NULL, TRUE);
 	SetCursor(hCur);
 	if (szMsgBuf) {
-		wsprintf(szMsgBuf, GetString(IDS_ITEMS_REPLACED), r);
+		wsprintf(szMsgBuf, GetString(recur ? IDS_ITEMS_REPLACED_ITER : IDS_ITEMS_REPLACED), r, ict-1);
 		MessageBox(hdlgFind, szMsgBuf, STR_METAPAD, MB_OK|MB_ICONINFORMATION);
 	}
 	return r;
