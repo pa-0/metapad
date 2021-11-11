@@ -136,6 +136,11 @@
 #define IDS_ESCAPE_BADCHARS             208
 #define IDS_ESCAPE_BADALIGN             209
 #define IDS_ESCAPE_EXPECTED             210
+#define IDS_ESCAPE_CTX_FIND             211
+#define IDS_ESCAPE_CTX_REPLACE          212
+#define IDS_ESCAPE_CTX_INSERT           213
+#define IDS_ESCAPE_CTX_CLIPBRD          214
+#define IDS_ESCAPE_CTX_MACRO            215
 #define IDC_STATICX                     1005
 #define IDC_EDIT_URL                    1007
 #define IDC_EDIT_PLUGIN_RELEASE         1008
