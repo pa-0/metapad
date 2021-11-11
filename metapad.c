@@ -3567,6 +3567,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				if (!EmptyClipboard())
 					ReportLastError();
 				CloseClipboard();
+				UpdateStatus();
 				break;
 			case ID_MYEDIT_CUT:
 			case ID_MYEDIT_COPY:
