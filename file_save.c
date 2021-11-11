@@ -70,13 +70,13 @@ BOOL SaveFile(LPCTSTR szFilename);
  */
 static __inline void ConvertToUnix(LPCTSTR *szBuffer, BOOL *bufDirty)
 {
-	LPTSTR szTemp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(szBuffer)+1) * sizeof(TCHAR));
-	lstrcpy(szTemp, szBuffer);
+	LPTSTR szTemp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(*szBuffer)+1) * sizeof(TCHAR));
+	lstrcpy(szTemp, *szBuffer);
 	for (*szBuffer--; **++szBuffer; ) {
 		if (**szBuffer != _T('\r'))
-			szTemp++ = **szBuffer;
+			*szTemp++ = **szBuffer;
 	}
-	szTemp++ = _T('\0');
+	*szTemp++ = _T('\0');
 	if (bufDirty){
 		if (*bufDirty)
 			FREE(*szBuffer);
@@ -311,7 +311,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 		cPad = _T('\x2400');
 #endif
 		szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, (l+1) * sizeof(TCHAR));
-		lstrcpy(pNewBuffer, szBuffer);
+		lstrcpy(szTmp, szBuffer);
 		for (i = 0; i < lChars; i++)
 			if (szTmp[i] == cPad)
 				szTmp[i] = _T('\0');

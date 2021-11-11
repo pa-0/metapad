@@ -41,7 +41,7 @@ extern BOOL bDirtyFile;
 extern BOOL bLoading;
 extern HWND client;
 extern HWND hwnd;
-extern LPTSTR lpszShadow;
+extern LPTSTR szShadow;
 extern LPTSTR szCaptionFile;
 extern LPTSTR szFile;
 
@@ -66,7 +66,7 @@ void MakeNewFile(void)
 	FREE(szFile);
 	SSTRCPY(szCaptionFile, GetString(IDS_NEW_FILE));
 	UpdateStatus();
-	if (lpszShadow)
-		lpszShadow[0] = _T('\0');
+	if (szShadow)
+		szShadow[0] = _T('\0');
 	bLoading = FALSE;
 }

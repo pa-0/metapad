@@ -343,8 +343,7 @@ void UpdateCaption(void)
  */
 void CleanUp(void)
 {
-	FREE(lpszShadow);
-	FREE(lpszShadowRange);
+	FREE(szShadow);
 	if (hrecentmenu) DestroyMenu(hrecentmenu);
 	if (hfontmain) DeleteObject(hfontmain);
 	if (hfontfind) DeleteObject(hfontfind);
@@ -1150,6 +1149,7 @@ void PrintContents()
 	}
 
 	szBuffer = GetShadowRange(cr.cpMin, cr.cpMax, &l);
+	lStringLen = (LONG)l;
 	bPrint = TRUE;
 
 	if (SetAbortProc(pd.hDC, AbortDlgProc) == SP_ERROR) {
@@ -4129,13 +4129,13 @@ endinsertfile:
 
 				SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 #else
-				sz = GetShadowBuffer(NULL);
+				szOld = GetShadowBuffer(NULL);
 				bWordWrap = !GetCheckedState(GetMenu(hwnd), ID_EDIT_WORDWRAP, TRUE);
 				SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
 				if (!DestroyWindow(client))
 					ReportLastError();
 				CreateClient(hwnd, _T(""), bWordWrap);
-				SetWindowText(client, sz);
+				SetWindowText(client, szOld);
 				SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 				SetClientFont(bPrimaryFont);
 
@@ -5056,18 +5056,18 @@ endinsertfile:
 #else
 					FixTextBufferLE(&szInsert);
 #endif
-					szOld = (LPTSTR)HeapAlloc(globalHeap, 0, ((LONGLONG)l * i + 1) * sizeof(TCHAR));
-					if (!szOld) {
+					szNew = (LPTSTR)HeapAlloc(globalHeap, 0, ((LONGLONG)l * i + 1) * sizeof(TCHAR));
+					if (!szNew) {
 						ReportLastError();
 						return FALSE;
 					}
-					for (szNew = szOld, l = lstrlen(szInsert); i; i--, szNew += l)
-						lstrcpy(szNew, szInsert);
-					*szNew = _T('\0');
-					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szOld);
+					for (sz = szNew, l = lstrlen(szInsert); i; i--, sz += l)
+						lstrcpy(sz, szInsert);
+					*sz = _T('\0');
+					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szNew);
 					bCloseAfterInsert = (BST_CHECKED == SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_INSERT, BM_GETCHECK, 0, 0));
 					if (bCloseAfterInsert) PostMessage(hdlgFind, WM_CLOSE, 0, 0);
-					FREE(szOld);
+					FREE(szNew);
 					UpdateStatus();
 				default:
 					return FALSE;
@@ -5240,9 +5240,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	szReplaceText = NULL;
 	szCustomFilter = NULL;
 	pbFindTextAny = NULL;
-	lpszShadow = NULL;
-	lpszShadowRange = NULL;
-	shadowLen = shadowRngStart = shadowRngLen = shadowAlloc = 0;
+	szShadow = NULL;
+	shadowLen = shadowAlloc = shadowRngEnd = 0;
 	ZeroMemory(FindArray, sizeof(FindArray));
 	ZeroMemory(ReplaceArray, sizeof(ReplaceArray));
 	ZeroMemory(InsertArray, sizeof(InsertArray));

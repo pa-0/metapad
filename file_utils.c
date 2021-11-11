@@ -49,48 +49,12 @@ extern HWND hwnd;
 extern LPTSTR szCaptionFile;
 extern LPTSTR szDir;
 extern LPTSTR szFile;
-extern lpszShadow, lpszShadowRange;
-extern shadowLen, shadowRngStart, shadowRngLen, shadowAlloc;
+extern LPTSTR szShadow;
+extern TCHAR shadowHold;
+extern DWORD shadowLen, shadowAlloc, shadowRngEnd;
 
 extern option_struct options;
 
-/**
- * Calculate the size of the current file.
- *
- * @return Current file's size.
- */
-DWORD CalculateFileSize(void)
-{
-	DWORD nBytes;
-	extern HANDLE globalHeap;
-	if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE) {
-		nBytes = GetWindowTextLength(client) * 2 + SIZEOFBOM_UTF_16;
-	}
-	else if (nEncodingType == TYPE_UTF_8) {
-		nBytes = GetWindowTextLength(client);
-#ifdef UNICODE
-		if (sizeof(TCHAR) > 1) {
-			/* TODO		This can get quite expensive for very large files. Future alternatives:
-				- Count chars instead
-				- Ability to disable this in options
-				- Do this in the background with ratelimiting
-				- Keep a local copy of the text buffer
-			*/
-			LPTSTR szBuffer = GetShadowBuffer(&nBytes);
-			nBytes = WideCharToMultiByte(CP_UTF8, 0, szBuffer, nBytes, NULL, 0, NULL, NULL);
-			for ( ; *szBuffer; szBuffer++)
-				if (*szBuffer == _T('\r'))
-					nBytes--;
-		}
-#endif
-		nBytes += SIZEOFBOM_UTF_8;
-	}
-	else {
-		nBytes = GetWindowTextLength(client) - (bUnix ? (SendMessage(client, EM_GETLINECOUNT, 0, 0)) - 1 : 0);
-		//BUG! Wrapped lines erroneously decrease byte count (LE)!
-	}
-	return nBytes;
-}
 
 void SetFileFormat(int nFormat)
 {
@@ -229,50 +193,54 @@ void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut)
 
 
 
-LPCTSTR GetShadowBuffer(DWORD* len) {
-	if (!lpszShadow || SendMessage(client, EM_GETMODIFY, 0, 0)) {
+LPCTSTR GetShadowRange(LONG min, LONG max, DWORD* len) {
+	DWORD l;
+	if (max <= min && max >= 0){
+		if (len) *len = 0;
+		return _T("");
+	}
+	if (!szShadow || !*szShadow || SendMessage(client, EM_GETMODIFY, 0, 0)) {
 		shadowLen = GetWindowTextLength(client);
-		if (shadowLen + 1 > shadowAlloc) {
-			FREE(lpszShadow);
-			lpszShadow = (LPTSTR) HeapAlloc(globalHeap, 0, shadowAlloc * sizeof(TCHAR));
-			if (!lpszShadow) ReportLastError();
-			shadowAlloc = shadowLen + 1;
+		shadowRngEnd = 0;
+		if (shadowLen < 1) {
+			if (len) *len = 0;
+			return _T("");
+		}
+		if (shadowLen + 1 > shadowAlloc || shadowAlloc / 4 > shadowLen) {
+			shadowAlloc = ((shadowLen + 1) / 2) * 3;
+			FREE(szShadow);
+			szShadow = (LPTSTR) HeapAlloc(globalHeap, 0, shadowAlloc * sizeof(TCHAR));
+			if (!szShadow) ReportLastError();
 		}
 #ifdef USE_RICH_EDIT
 		{
 			TEXTRANGE tr;
 			tr.chrg.cpMin = 0;
 			tr.chrg.cpMax = -1;
-			tr.lpstrText = lpszShadow;
+			tr.lpstrText = szShadow;
 			SendMessage(client, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
 		}
 #else
-		GetWindowText(client, lpszShadow, nSize);
+		GetWindowText(client, szShadow, shadowLen+1);
 #endif
-		SendMessage(client, EM_SETMODIFY, (WPARAM) FALSE, 0);
+		SendMessage(client, EM_SETMODIFY, (WPARAM)FALSE, 0);
 	}
-	if (len) *len = shadowLen;
-	return lpszShadow;
-}
-LPCTSTR GetShadowRange(LONG min, LONG max, DWORD* len) {
-	LPCTSTR sbuf, osbuf = lpszShadow;
-	DWORD len = max - min;
-	if (max <= min && max >= 0){
-		if (len) *len = 0;
-		return _T("");
-	}
-	sbuf = GetShadowBuffer();
 	if (min < 0) min = 0;
-	if (max < 0) len = shadowLen;
-	if (!lpszShadowRange || sbuf != osbuf || min != shadowRngStart || len != shadowRngLen){
-		shadowRngStart = min;
-		shadowRngLen = len;
-		FREE(lpszShadowRange);
-		lpszShadowRange = (LPTSTR) HeapAlloc(globalHeap, 0, (len+1) * sizeof(TCHAR));
-		lstrcpyn(lpszShadowRange, sbuf + min, len + 1);
+	if (max < 0) l = shadowLen;
+	else l = MIN((DWORD)(max-min), shadowLen);
+	if (min + l != shadowRngEnd){
+		if (shadowRngEnd)
+			szShadow[shadowRngEnd] = shadowHold;
+		if (shadowRngEnd >= shadowLen)
+			shadowRngEnd = 0;
+		else {
+			shadowRngEnd = min + l;
+			shadowHold = szShadow[shadowRngEnd];
+			szShadow[shadowRngEnd] = _T('\0');
+		}
 	}
-	if (len) *len = shadowRngLen;
-	return lpszShadowRange;
+	if (len) *len = l;
+	return szShadow + min;
 }
 LPCTSTR GetShadowSelection(DWORD* len) {
 	CHARRANGE cr;
@@ -283,6 +251,51 @@ LPCTSTR GetShadowSelection(DWORD* len) {
 #endif
 	return GetShadowRange(cr.cpMin, cr.cpMax, len);
 }
+LPCTSTR GetShadowBuffer(DWORD* len) {
+	return GetShadowRange(0, -1, len);
+}
+
+
+
+/**
+ * Calculate the size of the current file.
+ *
+ * @return Current file's size.
+ */
+DWORD CalculateFileSize(void)
+{
+	DWORD nBytes;
+	extern HANDLE globalHeap;
+	if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE) {
+		nBytes = GetWindowTextLength(client) * 2 + SIZEOFBOM_UTF_16;
+	}
+	else if (nEncodingType == TYPE_UTF_8) {
+		nBytes = GetWindowTextLength(client);
+#ifdef UNICODE
+		if (sizeof(TCHAR) > 1) {
+			/* TODO		This can get quite expensive for very large files. Future alternatives:
+				- Count chars instead
+				- Ability to disable this in options
+				- Do this in the background with ratelimiting
+				- Keep a local copy of the text buffer
+			*/
+			LPCTSTR szBuffer = GetShadowBuffer(&nBytes);
+			if (nBytes > 0) {
+				nBytes = WideCharToMultiByte(CP_UTF8, 0, szBuffer, nBytes, NULL, 0, NULL, NULL);
+				for ( ; *szBuffer; szBuffer++)
+					if (*szBuffer == _T('\r'))
+						nBytes--;
+			}
+		}
+#endif
+		nBytes += SIZEOFBOM_UTF_8;
+	}
+	else {
+		nBytes = GetWindowTextLength(client) - (bUnix ? (SendMessage(client, EM_GETLINECOUNT, 0, 0)) - 1 : 0);
+		//BUG! Wrapped lines erroneously decrease byte count (LE)!
+	}
+	return nBytes;
+}
 
 
 
@@ -290,7 +303,7 @@ LPCTSTR GetShadowSelection(DWORD* len) {
 BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWord, BOOL bCase, BOOL bFromTop, LPBYTE anys)
 {
 	LONG lSize;
-	LPCTSTR szBuffer = GetShadowBuffer();
+	LPCTSTR szBuffer = GetShadowBuffer(NULL);
 	LPCTSTR lpszStop, lpsz, lpfs = NULL, lpszFound = NULL;
 	DWORD cf, nFindLen = lstrlen(szText), f = 1;
 
@@ -376,24 +389,22 @@ BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL b
 
 
 
-DWORD StrReplaceAll(LPCTSTR szBuf, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, BOOL bCase, BOOL bWholeWord, LPBYTE anys){
+DWORD StrReplaceAll(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, BOOL bCase, BOOL bWholeWord, LPBYTE anys){
 	LONG ld;
-	DWORD len, alen, lf, lr, ct = 0, cf, f = 1;
-	LPTSTR src, dst, odst, pd;
-	if (!szBuf || !szFind || !*szFind) return ct;
-	len = alen = (bufLen && *bufLen >= 0 ? *bufLen : lstrlen(*szBuf));
+	DWORD len, alen, ilen, lf, lr, ct = 0, cf, f = 1;
+	LPTSTR dst, odst, pd;
+	if (!szIn || !szFind || !*szFind) return ct;
+	len = ilen = alen = (bufLen && *bufLen >= 0 ? *bufLen : lstrlen(szIn));
 	if (len < 1) return ct;
-	src = szBuf;
 	dst = odst = (LPTSTR)HeapAlloc(globalHeap, 0, (alen+1) * sizeof(TCHAR));
 	szRepl = SCNUL(szRepl);
 	lf = lstrlen(szFind);
 	lr = lstrlen(szRepl);
 	ld = lr - lf;
-	src[len] = _T('\0');
-	for (cf = 0, pd = NULL; *src; f = 0) {
-		if ((anys && *anys++) || *src == szFind[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*src) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szFind[cf]))) {
+	for (cf = 0, pd = NULL; --ilen; f = 0) {
+		if ((anys && *anys++) || *szIn == szFind[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szIn) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szFind[cf]))) {
 			if (!pd) pd = dst;
-			if (++cf == lf && (!bWholeWord || ( (f || !(_istalnum(*(pd-1)) || *(pd-1) == _T('_'))) && !(*(src+1) && (_istalnum(*(src+1)) || *(src+1) == _T('_'))) ))) {
+			if (++cf == lf && (!bWholeWord || ( (f || !(_istalnum(*(pd-1)) || *(pd-1) == _T('_'))) && !(*(szIn+1) && (_istalnum(*(szIn+1)) || *(szIn+1) == _T('_'))) ))) {
 				len += ld;
 				if (len > alen) {
 					alen = ((len + 1) / 2) * 3;
@@ -407,7 +418,7 @@ DWORD StrReplaceAll(LPCTSTR szBuf, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind,
 				dst = pd + lr;
 				pd = NULL;
 				cf = 0;
-				src++;
+				szIn++;
 				ct++;
 				continue;
 			}
@@ -415,9 +426,10 @@ DWORD StrReplaceAll(LPCTSTR szBuf, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind,
 			pd = NULL;
 			cf = 0;
 			if (anys) anys--;
+			ilen++;
 			continue;
 		}
-		*dst++ = *src++;
+		*dst++ = *szIn++;
 	}
 	*dst = _T('\0');
 	if (bufLen) *bufLen = len;
@@ -428,10 +440,10 @@ DWORD StrReplaceAll(LPCTSTR szBuf, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind,
 	return ct;
 }
 
-DWORD ReplaceAll(HWND owner, LPTSTR szFind, LPTSTR szRepl, BOOL selection, BOOL escape, BOOL bCase, BOOL bWholeWord, LPBYTE anys, LPCTSTR header, LPCTSTR footer){
+DWORD ReplaceAll(HWND owner, LPCTSTR szFind, LPCTSTR szRepl, BOOL selection, BOOL escape, BOOL bCase, BOOL bWholeWord, LPBYTE anys, LPCTSTR header, LPCTSTR footer){
 	HCURSOR hCur;
 	LPCTSTR szIn;
-	LPTSTR szBuf = NULL, szTmp = NULL;
+	LPTSTR szBuf = NULL, szTmp = NULL, szTF = NULL, szTR = NULL;
 	CHARRANGE cr;
 	DWORD l, r, lh = 0, lf = 0;
 
@@ -449,7 +461,7 @@ DWORD ReplaceAll(HWND owner, LPTSTR szFind, LPTSTR szRepl, BOOL selection, BOOL 
 	} else
 		szIn = GetShadowBuffer(&l);
 	if (lh || lf) {
-		szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, (l + lh + lf) * sizeof(TCHAR));
+		szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, (l + lh + lf + 1) * sizeof(TCHAR));
 		if (lh) lstrcpy(szTmp, header);
 		lstrcpy(szTmp + lh, szIn);
 		if (lf) lstrcpy(szTmp+lh+l, footer);
@@ -459,8 +471,16 @@ DWORD ReplaceAll(HWND owner, LPTSTR szFind, LPTSTR szRepl, BOOL selection, BOOL 
 	if (escape){
 		FREE(anys);
 		anys = (LPBYTE)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, lstrlen(szFind)+1);
-		ParseForEscapeSeqs(szFind, anys, NULL);
-		ParseForEscapeSeqs(szRepl, NULL, NULL);
+		szTF = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(szFind)+1) * sizeof(TCHAR));
+		lstrcpy(szTF, szFind);
+		ParseForEscapeSeqs(szTF, anys, NULL);
+		szFind = (LPCTSTR)szTF;
+		if (szRepl && *szRepl) {
+			szTR = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(szRepl)+1) * sizeof(TCHAR));
+			lstrcpy(szTR, szRepl);
+			ParseForEscapeSeqs(szTR, NULL, NULL);
+			szRepl = (LPCTSTR)szTR;
+		}
 	}
 	r = StrReplaceAll(szIn, &szBuf, &l, szFind, szRepl, bMatchCase, bWholeWord, anys);
 	SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
@@ -475,6 +495,8 @@ DWORD ReplaceAll(HWND owner, LPTSTR szFind, LPTSTR szRepl, BOOL selection, BOOL 
 	szBuf[l - lf] = _T('\0');
 	SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)(szBuf+lh));
 	FREE(szTmp);
+	FREE(szTF);
+	FREE(szTR);
 	FREE(szBuf);
 	FREE(anys);
 	SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
