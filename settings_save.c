@@ -54,6 +54,7 @@ extern BOOL bShowToolbar;
 extern BOOL bAlwaysOnTop;
 extern BOOL bTransparent;
 extern BOOL bCloseAfterFind;
+extern BOOL bCloseAfterReplace;
 extern BOOL bCloseAfterInsert;
 extern BOOL bNoFindHidden;
 extern BOOL g_bIniMode;
@@ -294,6 +295,7 @@ void SaveMenusAndData(void)
 		SaveOption(key, _T("m_AlwaysOnTop"), REG_DWORD, (LPBYTE)&bAlwaysOnTop, sizeof(BOOL));
 		SaveOption(key, _T("m_Transparent"), REG_DWORD, (LPBYTE)&bTransparent, sizeof(BOOL));
 		SaveOption(key, _T("bCloseAfterFind"), REG_DWORD, (LPBYTE)&bCloseAfterFind, sizeof(BOOL));
+		SaveOption(key, _T("bCloseAfterReplace"), REG_DWORD, (LPBYTE)&bCloseAfterReplace, sizeof(BOOL));
 		SaveOption(key, _T("bCloseAfterInsert"), REG_DWORD, (LPBYTE)&bCloseAfterInsert, sizeof(BOOL));
 		SaveOption(key, _T("bNoFindHidden"), REG_DWORD, (LPBYTE)&bNoFindHidden, sizeof(BOOL));
 	}

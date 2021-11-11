@@ -300,7 +300,7 @@ DWORD CalculateFileSize(void)
 
 
 
-BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWord, BOOL bCase, BOOL bFromTop, LPBYTE anys)
+BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWord, BOOL bCase, BOOL bFromTop, LPBYTE pbFindSpec)
 {
 	LONG lSize;
 	LPCTSTR szBuffer = GetShadowBuffer(NULL);
@@ -329,7 +329,7 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 	}
 
 	for (cf = 0; lpszStop != szBuffer && lpsz <= lpszStop - (bDown ? 0 : nFindLen-1) && (!bDown || (bDown && lpszFound == NULL)); f = 0) {
-		if ((anys && anys[cf]) || *lpsz == szText[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*lpsz) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szText[cf]))) {
+		if ((pbFindSpec && (pbFindSpec[cf] == 1 || (pbFindSpec[cf] == 2 && !RAND()%0x60))) || *lpsz == szText[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*lpsz) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szText[cf]))) {
 			if (!lpfs) lpfs = lpsz;
 			if (++cf == nFindLen && (!bWholeWord || ( (f || !(_istalnum(*(lpfs-1)) || *(lpfs-1) == _T('_'))) && !(*(lpsz+1) && (_istalnum(*(lpsz+1)) || *(lpsz+1) == _T('_'))) )))
 				lpszFound = lpfs;
@@ -346,13 +346,13 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 		lStart = lpszFound - szBuffer;
 		lEnd = lStart + nFindLen;
 		SendMessage(client, EM_SETSEL, (WPARAM)lStart, (LPARAM)lEnd);
-		if (!bReplacingAll)	UpdateStatus();
+		UpdateStatus();
 		return TRUE;
 	}
 	return FALSE;
 }
 
-BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL bWholeWord, LPBYTE anys)
+BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL bWholeWord, LPBYTE pbFindSpec)
 {
 	BOOL bRes;
 	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
@@ -363,7 +363,7 @@ BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL b
 #else
 	SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
 #endif
-	bRes = DoSearch(szText, cr.cpMin, cr.cpMax, bDown, bWholeWord, bCase, FALSE, anys);
+	bRes = DoSearch(szText, cr.cpMin, cr.cpMax, bDown, bWholeWord, bCase, FALSE, pbFindSpec);
 
 	if (bRes || bReplaceAll) {
 		SetCursor(hcur);
@@ -376,7 +376,7 @@ BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL b
 	}
 	else if (options.bFindAutoWrap) MessageBeep(MB_OK);
 
-	bRes = DoSearch(szText, cr.cpMin, cr.cpMax, bDown, bWholeWord, bCase, TRUE, anys);
+	bRes = DoSearch(szText, cr.cpMin, cr.cpMax, bDown, bWholeWord, bCase, TRUE, pbFindSpec);
 
 	SetCursor(hcur);
 	if (!bRes)
@@ -391,8 +391,8 @@ BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL b
 
 DWORD StrReplaceAll(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, LPBYTE pbReplSpec, BOOL bCase, BOOL bWholeWord){
 	LONG ld;
-	DWORD len, alen, ilen, lf, lr, ct = 0, cf, f = 1;
-	LPTSTR dst, odst, pd;
+	DWORD len, alen, ilen, lf, lr, ct = 0, cf = 0, f = 1, rsl = 0, rsc;
+	LPTSTR dst, odst, pd = NULL, rs = NULL, rd = NULL;
 	if (!szIn || !szFind || !*szFind) return ct;
 	len = ilen = alen = (bufLen && *bufLen >= 0 ? *bufLen : lstrlen(szIn));
 	if (len < 1) return ct;
@@ -401,9 +401,15 @@ DWORD StrReplaceAll(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, 
 	lf = lstrlen(szFind);
 	lr = lstrlen(szRepl);
 	ld = lr - lf;
-	for (cf = 0, pd = NULL; ilen--; f = 0) {
-		if ((anys && anys[cf]) || *szIn == szFind[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szIn) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szFind[cf]))) {
+	if (pbReplSpec) {
+		rs = (LPTSTR)HeapAlloc(globalHeap, 0, (lf+1) * sizeof(TCHAR));
+		rd = (LPTSTR)HeapAlloc(globalHeap, 0, (lr+1) * sizeof(TCHAR));
+	}
+	for ( ; ilen--; f = 0) {
+		if ((pbFindSpec && (pbFindSpec[cf] == 1 || (pbFindSpec[cf] == 2 && !(RAND()%0x60)))) || *szIn == szFind[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szIn) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szFind[cf]))) {
 			if (!pd) pd = dst;
+			if (rs && pbFindSpec && (pbFindSpec[cf] == 1))
+				rs[rsl++] = *szIn;
 			if (++cf == lf && (!bWholeWord || ( (f || !(_istalnum(*(pd-1)) || *(pd-1) == _T('_'))) && !(*(szIn+1) && (_istalnum(*(szIn+1)) || *(szIn+1) == _T('_'))) ))) {
 				len += ld;
 				if (len > alen) {
@@ -414,17 +420,31 @@ DWORD StrReplaceAll(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, 
 					FREE(odst);
 					odst = dst;
 				}
-				lstrcpyn(pd, szRepl, lr + 1);
+				if (rs) {
+					for(cf = 0, rsc = 0; cf < lr; cf++){
+						if (pbReplSpec[cf] == 1 && rsl)
+							rd[cf] = rs[(rsc++)%rsl];
+						else if (pbReplSpec[cf] == 2) {
+							if (sizeof(TCHAR) > 1 && (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE))
+								rd[cf] = RAND()%0xffe0+0x20;
+							else
+								rd[cf] = RAND()%0x60+0x20;
+						} else
+							rd[cf] = szRepl[cf];
+					}
+					lstrcpyn(pd, rd, lr + 1);
+				} else
+					lstrcpyn(pd, szRepl, lr + 1);
 				dst = pd + lr;
 				pd = NULL;
-				cf = 0;
+				cf = rsl = 0;
 				szIn++;
 				ct++;
 				continue;
 			}
 		} else if (pd) {
 			pd = NULL;
-			cf = 0;
+			cf = rsl = 0;
 			ilen++;
 			continue;
 		}
@@ -436,6 +456,8 @@ DWORD StrReplaceAll(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, 
 		FREE(*szOut);
 		*szOut = odst;
 	}
+	FREE(rs);
+	FREE(rd);
 	return ct;
 }
 
