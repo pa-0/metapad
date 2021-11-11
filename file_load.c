@@ -65,7 +65,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU);
  * @param[in] bomType The type of BOM to be checked for. Valid values are TYPE_UTF_8, TYPE_UTF_16 and TYPE_UTF_16_BE.
  * @return TRUE if pb is BOM, FALSE otherwise.
  */
-BOOL IsBOM(PBYTE pb, int bomType)
+BOOL IsBOM(LPBYTE pb, int bomType)
 {
 	if (bomType == TYPE_UTF_8) {
 		if ((*pb == 0xEF) & (*(pb+1) == 0xBB) & (*(pb+2) == 0xBF))
@@ -333,7 +333,7 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 	}
 }
 
-BOOL IsTextUTF8(PBYTE buf){
+BOOL IsTextUTF8(LPBYTE buf){
 	BOOL yes = 0;
 	while (*buf) {
 		if (*buf < 0x80) buf++;
@@ -345,7 +345,7 @@ BOOL IsTextUTF8(PBYTE buf){
 	return yes;
 }
 
-DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, INT* pnFileEncoding)
+DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, ULONG* plBufferLength, INT* pnFileEncoding)
 {
 	DWORD dwBytesRead = 0;
 	BOOL bResult;
@@ -353,7 +353,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 	LPINT lpiResult = &unitest;
 	long nBytesNeeded;
 	BOOL bUsedDefault;
-	PBYTE pNewBuffer = NULL;
+	LPBYTE pNewBuffer = NULL;
 	UINT cp = CP_ACP;
 
 	*plBufferLength = GetFileSize(hFile, NULL);
@@ -362,7 +362,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 		return -1;
 	}
 
-	*ppBuffer = (PBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (*plBufferLength+2) * sizeof(TCHAR));
+	*ppBuffer = (LPBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (*plBufferLength+2) * sizeof(TCHAR));
 	if (*ppBuffer == NULL) {
 		ReportLastError();
 		return 0;	/** @fixme Should make a better error handling for this.
@@ -438,7 +438,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 
 		if (sizeof(TCHAR) < 2) {
 			nBytesNeeded = WideCharToMultiByte(cp, 0, (LPCWSTR)*ppBuffer, *plBufferLength, NULL, 0, NULL, NULL);
-			if (NULL == (pNewBuffer = (PBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+sizeof(TCHAR))))
+			if (NULL == (pNewBuffer = (LPBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+sizeof(TCHAR))))
 				ReportLastError();
 			else if (!WideCharToMultiByte(cp, 0, (LPCWSTR)*ppBuffer, *plBufferLength, (LPSTR)pNewBuffer, nBytesNeeded, NULL, &bUsedDefault)) {
 				ReportLastError();
@@ -455,7 +455,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, PBYTE* ppBuffer, ULONG* plBufferLength, I
 		if (*pnFileEncoding == TYPE_UTF_8 && *plBufferLength)
 			cp = CP_UTF8;
 		nBytesNeeded = MultiByteToWideChar(cp, 0, *ppBuffer, *plBufferLength, NULL, 0)*sizeof(TCHAR);
-		if (NULL == (pNewBuffer = (PBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+sizeof(TCHAR))))
+		if (NULL == (pNewBuffer = (LPBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+sizeof(TCHAR))))
 			ReportLastError();
 		else if (!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, *ppBuffer, *plBufferLength, (LPWSTR)pNewBuffer, nBytesNeeded)){
 			if (!MultiByteToWideChar(cp, 0, *ppBuffer, *plBufferLength, (LPWSTR)pNewBuffer, nBytesNeeded)){
@@ -475,7 +475,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 {
 	HANDLE hFile = NULL;
 	ULONG lBufferLength;
-	PBYTE pBuffer = NULL;
+	LPBYTE pBuffer = NULL;
 	LPTSTR szBuffer = NULL;
 	TCHAR cPad = _T(' ');
 	LONG lActualCharsRead;

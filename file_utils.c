@@ -59,7 +59,6 @@ extern option_struct options;
  */
 long CalculateFileSize(void)
 {
-	LPTSTR szBuffer;
 	long nBytes;
 	extern HANDLE globalHeap;
 	if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE) {
@@ -67,6 +66,7 @@ long CalculateFileSize(void)
 	}
 	else if (nEncodingType == TYPE_UTF_8) {
 		nBytes = GetWindowTextLength(client);
+#ifdef UNICODE
 		if (sizeof(TCHAR) > 1) {
 			/* TODO		This can get quite expensive for very large files. Future alternatives:
 				- Count chars instead
@@ -74,11 +74,12 @@ long CalculateFileSize(void)
 				- Do this in the background with ratelimiting
 				- Keep a local copy of the text buffer
 			*/
-			szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (nBytes + 1)*sizeof(TCHAR));
+			LPTSTR szBuffer = (LPTSTR)HeapAlloc(globalHeap, 0, (nBytes + 1)*sizeof(TCHAR));
 			GetWindowText(client, szBuffer, nBytes+1);
 			nBytes = WideCharToMultiByte(CP_UTF8, 0, szBuffer, nBytes, NULL, 0, NULL, NULL);
-			HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
+			FREE(szBuffer);
 		}
+#endif
 		nBytes += SIZEOFBOM_UTF_8 - (bUnix ? (SendMessage(client, EM_GETLINECOUNT, 0, 0)) - 1 : 0);
 	}
 	else {

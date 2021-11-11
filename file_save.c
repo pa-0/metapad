@@ -350,7 +350,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 
 		if (nEncodingType == TYPE_UTF_16_BE) {
 			const CHAR szBOM_UTF_16_BE[SIZEOFBOM_UTF_16] = {'\376', '\377'};
-			if (pNewBuffer) ReverseBytes((PBYTE)pNewBuffer, nBytesNeeded);
+			if (pNewBuffer) ReverseBytes((LPBYTE)pNewBuffer, nBytesNeeded);
 			// 0xFE, 0xFF - leave off _T() macro.
 			WriteFile(hFile, szBOM_UTF_16_BE, SIZEOFBOM_UTF_16, &dwActualBytesWritten, NULL);
 		} else {
@@ -405,17 +405,21 @@ BOOL SaveFile(LPCTSTR szFilename)
 			cp = CP_UTF8;
 		}
 
+#ifdef UNICODE
 		if (lChars && sizeof(TCHAR) > 1) {	//if we're internally Unicode and the buffer is non-empty, conversion is needed
 			nBytesNeeded = WideCharToMultiByte(cp, 0, szBuffer, lChars, NULL, 0, NULL, NULL);
-			if (NULL == (pNewBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded + 1)))
+			if (NULL == (pNewBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded)))
 				ReportLastError();
 			else if (!WideCharToMultiByte(cp, 0, szBuffer, lChars, (LPSTR)pNewBuffer, nBytesNeeded, NULL, (cp != CP_ACP ? NULL : &nonansi)))
 				ReportLastError();
 			else if (nonansi)
 				ERROROUT(GetString(IDS_UNICODE_SAVE_TRUNCATION));
-		} else {
+		} else 
+#endif
+		{
 			pNewBuffer = szBuffer;
 			nBytesNeeded = lChars;
+
 		}
 		if (!WriteFile(hFile, pNewBuffer, nBytesNeeded, &dwActualBytesWritten, NULL)) {
 			ReportLastError();

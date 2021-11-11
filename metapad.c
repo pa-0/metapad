@@ -63,11 +63,6 @@
  #include "include/w32crt.h"
 #endif
 
-#if !defined(__MINGW64_VERSION_MAJOR)
-//extern long _ttol(const TCHAR*);
-//extern int _ttoi(const TCHAR*);
-#endif
-
 #ifdef _MSC_VER
 #pragma intrinsic(memset)
 #endif
@@ -210,7 +205,10 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPCTSTR errContext)
 				end = buf;
 				if (uni == 1) mul *= 2;
 				if (sizeof(TCHAR) >= 2 && uni != 1) {
-					if (!dbufalloc) { dbuf = (LPTSTR)HeapAlloc(globalHeap, 0, (MAXFIND + 2) * sizeof(TCHAR)); dbufalloc = 1; }
+					if (!dbufalloc) {
+						dbuf = (LPTSTR)HeapAlloc(globalHeap, 0, (MAXFIND + 2) * sizeof(TCHAR));
+						dbufalloc = 1;
+					}
 				} else
 					dbuf = bout;
 				l = DecodeBase(base, buf, (LPBYTE)dbuf, str ? -1 : mul, 1, str && base != 64 ? 0 : 1, FALSE, &end);
@@ -224,8 +222,10 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPCTSTR errContext)
 					buf = end;
 					if (str && *buf && *buf != '\\') 
 						l = -1;
+#ifdef UNICODE
 					else if (sizeof(TCHAR) >= 2 && uni != 1 && !(m = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)dbuf, m, bout, m * sizeof(TCHAR))))
 						l = -3;
+#endif
 					else if (str && uni == 1 && l % sizeof(TCHAR))
 						l = -2;
 					else if (uni == 1 && l >= sizeof(TCHAR))
@@ -3556,12 +3556,18 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_COPY_B64:
 			case ID_COPY_HEX: {
 				HGLOBAL hMem, hMem2;
-				LPTSTR szOrig, szNew;
+				LPTSTR szOrig, szNew, szTmp = NULL;
+				DWORD l = 0, sl;
+				int base = 0;
 
-				if (LOWORD(wParam) == ID_MYEDIT_CUT)
-					SendMessage(client, WM_CUT, 0, 0);
-				else
-					SendMessage(client, WM_COPY, 0, 0);
+				switch(LOWORD(wParam)){
+					case ID_MYEDIT_CUT:
+						SendMessage(client, WM_CUT, 0, 0); break;
+					case ID_COPY_B64: if (!base) base = 64;
+					case ID_COPY_HEX: if (!base) base = 16;
+					default:
+						SendMessage(client, WM_COPY, 0, 0); break;
+				}
 
 				if (!OpenClipboard(NULL)) {
 					//This happens if another window has the clipboard open. [https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-openclipboard]
@@ -3569,40 +3575,52 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					break;
 				}
 				if ( hMem = GetClipboardData(_CF_TEXT) ) {
-					DWORD dwLastError;
-					szOrig = GlobalLock(hMem);
-					if( szOrig ) {
-						hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (lstrlen(szOrig) + 2));
-						szNew = GlobalLock(hMem2);
-						if (szNew) {
-							lstrcpy(szNew, szOrig);
-						}
-						else {
-							ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
-							break;
-						}
-						SetLastError(NO_ERROR);
-						if (!GlobalUnlock(hMem) && (dwLastError = GetLastError()) != NO_ERROR) {
-							ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
-							ReportError(dwLastError);
-							break;
-						}
-						if (!GlobalUnlock(hMem2) && (dwLastError = GetLastError()) != NO_ERROR) {
-							ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
-							ReportError(dwLastError);
-							break;
-						}
-						if (!EmptyClipboard()) {
-							ReportLastError();
-						} else if (!SetClipboardData(_CF_TEXT, hMem2))
-							ReportLastError();
-					}
-					else {
+					if (!(szOrig = GlobalLock(hMem)))
 						ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
+					else {
+						sl =  lstrlen(szOrig);
+						switch (base){
+							case 16: if (!l) l = sl * 2;
+							case 64: if (!l) l = ((sl + 2) / 3) * 4;
+								if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE)
+									l *= 2;
+							default: if (!l) l = sl; break;
+						}
+						hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (l+1));
+						if (!(szNew = GlobalLock(hMem2)))
+							ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
+						else {
+							if (base) {
+								if (sizeof(TCHAR) >= 2 && nEncodingType != TYPE_UTF_16 && nEncodingType != TYPE_UTF_16_BE) {
+#ifdef UNICODE
+									l = WideCharToMultiByte(CP_ACP, 0, szOrig, sl, NULL, 0, NULL, NULL);
+									szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, l);
+									WideCharToMultiByte(CP_ACP, 0, szOrig, sl, (LPSTR)szTmp, l, NULL, NULL);
+#endif
+									szOrig = szTmp;
+								} else if (sizeof(TCHAR) < 2 && (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE)) {
+									l = 2 * MultiByteToWideChar(CP_ACP, 0, (LPCSTR)szOrig, sl, NULL, 0);
+									szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, l);
+									MultiByteToWideChar(CP_ACP, 0, (LPCSTR)szOrig, sl, (LPWSTR)szTmp, l);
+									szOrig = szTmp;
+								} else l = sl * sizeof(TCHAR);
+								if (nEncodingType == TYPE_UTF_16_BE)
+									ReverseBytes((LPBYTE)szOrig, l);
+								EncodeBase(base, (LPBYTE)szOrig, szNew, l, NULL);
+							} else lstrcpy(szNew, szOrig);
+							SetLastError(NO_ERROR);
+							if ((!GlobalUnlock(hMem) && (l = GetLastError())) || (!GlobalUnlock(hMem2) && (l = GetLastError()))) {
+								ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
+								ReportError(l);
+							}
+							if (!EmptyClipboard() || !SetClipboardData(_CF_TEXT, hMem2))
+								ReportLastError();
+						}
 					}
 				}
 				CloseClipboard();
 				UpdateStatus();
+				FREE(szTmp);
 				break;
 			}
 			case ID_MYEDIT_PASTE: 
@@ -3610,19 +3628,25 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_PASTE_HEX: {
 				HGLOBAL hMem;
 				LPTSTR szTmp, szTmp2 = NULL;
-				OpenClipboard(NULL);
-				hMem = GetClipboardData(_CF_TEXT);
-				if (hMem) {
-					szTmp = GlobalLock(hMem);
-					SSTRCPY(szTmp2, szTmp);
-					GlobalUnlock(hMem);
-#ifdef USE_RICH_EDIT
-					FixTextBuffer(szTmp2);
-#else
-					FixTextBufferLE(&szTmp2);
-#endif
-					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szTmp2);
-					FREE(szTmp2);
+
+				if (!OpenClipboard(NULL)) {
+					ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
+					break;
+				}
+				if ( hMem = GetClipboardData(_CF_TEXT) ) {
+					if (!(szTmp = GlobalLock(hMem)))
+						ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
+					else {
+						SSTRCPY(szTmp2, szTmp);
+						GlobalUnlock(hMem);
+	#ifdef USE_RICH_EDIT
+						FixTextBuffer(szTmp2);
+	#else
+						FixTextBufferLE(&szTmp2);
+	#endif
+						SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szTmp2);
+						FREE(szTmp2);
+					}
 				}
 				CloseClipboard();
 				InvalidateRect(client, NULL, TRUE);
@@ -3779,7 +3803,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				if (GetOpenFileName(&ofn)) {
 					HANDLE hFile = NULL;
 					ULONG lBufferLength;
-					PBYTE pBuffer = NULL;
+					LPBYTE pBuffer = NULL;
 					DWORD dwActualBytesRead;
 					HCURSOR hcur;
 					INT nFileEncoding;

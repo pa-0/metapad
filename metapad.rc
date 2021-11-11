@@ -733,8 +733,8 @@ BEGIN
         BEGIN
             MENUITEM "&Copy As Hex\tCtrl+Alt+C",  ID_COPY_HEX
             MENUITEM "&Paste As Hex\tCtrl+Alt+V", ID_PASTE_HEX
-            MENUITEM "Copy As B&ase-64",          ID_COPY_B64
-            MENUITEM "Paste As &Base-64",         ID_PASTE_B64
+            MENUITEM "Copy As B&ase-64\tCtrl+Alt+Shift+C",          ID_COPY_B64
+            MENUITEM "Paste As &Base-64\tCtrl+Alt+Shift+V",         ID_PASTE_B64
 			MENUITEM "Base Conversion...\tCtrl+F10",  ID_BASECONV
         END
         MENUITEM "Clear clipboard",               ID_CLEAR_CLIPBRD
@@ -929,6 +929,7 @@ BEGIN
     "B",            ID_SHOWSTATUS,          VIRTKEY, CONTROL, NOINVERT
     "C",            ID_MYEDIT_COPY,         VIRTKEY, CONTROL, NOINVERT
     "C",            ID_COPY_HEX,            VIRTKEY, CONTROL, ALT, NOINVERT
+    "C",            ID_COPY_B64,            VIRTKEY, CONTROL, ALT, SHIFT, NOINVERT
     "D",            ID_LAUNCH_ASSOCIATED_VIEWER, VIRTKEY, CONTROL, NOINVERT
     "D",            ID_INSERT_FILE,         VIRTKEY, ALT, NOINVERT
     "E",            ID_READONLY,            VIRTKEY, CONTROL, NOINVERT
@@ -956,6 +957,7 @@ BEGIN
     "V",            ID_MYEDIT_PASTE,        VIRTKEY, CONTROL, NOINVERT
     "V",            ID_PASTE_MUL,           VIRTKEY, CONTROL, SHIFT, NOINVERT
     "V",            ID_PASTE_HEX,           VIRTKEY, CONTROL, ALT, NOINVERT
+    "V",            ID_PASTE_B64,           VIRTKEY, CONTROL, ALT, SHIFT, NOINVERT
     VK_APPS,        ID_CONTEXTMENU,         VIRTKEY, NOINVERT
     VK_DELETE,      ID_MYEDIT_CUT,          VIRTKEY, SHIFT, NOINVERT
     VK_DOWN,        ID_SCROLLDOWN,          VIRTKEY, CONTROL, NOINVERT
