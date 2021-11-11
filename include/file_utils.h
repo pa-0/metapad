@@ -26,8 +26,13 @@
 
 long CalculateFileSize(void);
 void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut);
-BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL bWholeWord);
-DWORD ReplaceAll(LPTSTR* szBuf, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, BOOL bCase, BOOL bWholeWord);
+BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL bWholeWord, LPBYTE anys);
+DWORD ReplaceAll(HWND owner, LPTSTR szFind, LPTSTR szRepl, BOOL selection, BOOL escape, BOOL bCase, BOOL bWholeWord, LPBYTE anys, LPCTSTR header, LPCTSTR footer);
+DWORD StrReplaceAll(LPCTSTR szBuf, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, BOOL bCase, BOOL bWholeWord, LPBYTE anys);
 void SetFileFormat(int nFormat);
+
+LPCTSTR GetShadowBuffer(DWORD* len);
+LPCTSTR GetShadowRange(LONG min, LONG max, DWORD* len);
+LPCTSTR GetShadowSelection(DWORD* len);
 
 #endif

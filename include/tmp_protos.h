@@ -29,10 +29,8 @@
 LPTSTR GetString(UINT uID);
 BOOL GetCheckedState(HMENU hmenu, UINT nID, BOOL bToggle);
 void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap);
-LPCTSTR GetShadowBuffer(void);
 BOOL CALLBACK AbortDlgProc(HDC hdc, int nCode);
 LRESULT CALLBACK AbortPrintJob(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
-BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWord, BOOL bCase, BOOL bFromTop);
 void PrintContents(void);
 void ReportError(UINT);
 void ReportLastError(void);
@@ -40,7 +38,7 @@ void CenterWindow(HWND hwndCenter);
 void SelectWord(LPTSTR* target, BOOL bSmart, BOOL bAutoSelect);
 void SetFont(HFONT* phfnt, BOOL bPrimary);
 void SetTabStops(void);
-void NextWord(BOOL bRight, BOOL bSelect); // Uninmplemented.
+//void NextWord(BOOL bRight, BOOL bSelect); // Uninmplemented.
 void UpdateStatus(void);
 BOOL SetClientFont(BOOL bPrimary);
 BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -55,6 +53,7 @@ void PopulateMRUList(void);
 void SaveMRUInfo(LPCTSTR szFullPath);
 void SwitchReadOnly(BOOL bNewVal);
 BOOL EncodeWithEscapeSeqs(TCHAR* szText);
+BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE anys, LPCTSTR errContext);
 void ReverseBytes(LPBYTE buffer, LONG size);
 void UpdateCaption(void);
 
