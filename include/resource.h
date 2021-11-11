@@ -142,6 +142,7 @@
 #define IDS_ESCAPE_CTX_CLIPBRD          214
 #define IDS_ESCAPE_CTX_MACRO            215
 #define IDS_LARGE_PASTE_WARNING         216
+#define IDS_ITEMS_REPLACED_ITER			217
 #define IDC_STATICX                     1005
 #define IDC_EDIT_URL                    1007
 #define IDC_EDIT_PLUGIN_RELEASE         1008
@@ -244,6 +245,7 @@
 #define IDC_CUSTOMDATE2                 1087
 #define IDC_NUM                         1088
 #define IDC_CLOSE_AFTER_INSERT          1089
+#define IDC_CLOSE_AFTER_REPLACE			1090
 #define ID_DROP_REPLACE                 1153
 #define ID_DROP_FIND                    1154
 #define ID_DROP_INSERT                  1155
