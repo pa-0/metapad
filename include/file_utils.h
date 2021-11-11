@@ -25,7 +25,7 @@
 #define FILE_UTILS_H
 
 long CalculateFileSize(void);
-void ExpandFilename(LPTSTR szBuffer);
+void ExpandFilename(LPTSTR szBuffer, LPTSTR* szOut);
 BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL bWholeWord);
 long ReplaceAll(LPTSTR* szBuf, long* bufLen, LPCTSTR szFind, LPCTSTR szRepl, BOOL bCase, BOOL bWholeWord);
 void SetFileFormat(int nFormat);
