@@ -35,4 +35,6 @@ LPCTSTR GetShadowBuffer(DWORD* len);
 LPCTSTR GetShadowRange(LONG min, LONG max, DWORD* len);
 LPCTSTR GetShadowSelection(DWORD* len);
 
+DWORD GetColNum(LONG pos, LPCTSTR szBuf, DWORD bufLen, LONG line);
+
 #endif
