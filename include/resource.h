@@ -141,6 +141,7 @@
 #define IDS_ESCAPE_CTX_INSERT           213
 #define IDS_ESCAPE_CTX_CLIPBRD          214
 #define IDS_ESCAPE_CTX_MACRO            215
+#define IDS_LARGE_PASTE_WARNING         216
 #define IDC_STATICX                     1005
 #define IDC_EDIT_URL                    1007
 #define IDC_EDIT_PLUGIN_RELEASE         1008

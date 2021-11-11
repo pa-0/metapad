@@ -37,7 +37,7 @@ void PrintContents(void);
 void ReportError(UINT);
 void ReportLastError(void);
 void CenterWindow(HWND hwndCenter);
-void SelectWord(BOOL bFinding, BOOL bSmart, BOOL bAutoSelect);
+void SelectWord(LPTSTR* target, BOOL bSmart, BOOL bAutoSelect);
 void SetFont(HFONT* phfnt, BOOL bPrimary);
 void SetTabStops(void);
 void NextWord(BOOL bRight, BOOL bSelect); // Uninmplemented.
