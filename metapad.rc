@@ -728,16 +728,16 @@ BEGIN
         MENUITEM "Cu&t\tCtrl+X",                ID_MYEDIT_CUT
         MENUITEM "&Copy\tCtrl+C",               ID_MYEDIT_COPY
         MENUITEM "&Paste\tCtrl+V",              ID_MYEDIT_PASTE
-        MENUITEM "Paste Mu&ltiple...\tCtrl+Shift+V",  ID_MYEDIT_PASTE_MUL
+        MENUITEM "Paste Mu&ltiple...\tCtrl+Shift+V",  ID_PASTE_MUL
         POPUP "E&ncoded text"
         BEGIN
-            MENUITEM "&Copy As Hex\tCtrl+Alt+C",  ID_MYEDIT_COPY_HEX
-            MENUITEM "&Paste As Hex\tCtrl+Alt+V", ID_MYEDIT_PASTE_HEX
-            MENUITEM "Copy As B&ase-64",          ID_MYEDIT_COPY_B64
-            MENUITEM "Paste As &Base-64",         ID_MYEDIT_PASTE_B64
+            MENUITEM "&Copy As Hex\tCtrl+Alt+C",  ID_COPY_HEX
+            MENUITEM "&Paste As Hex\tCtrl+Alt+V", ID_PASTE_HEX
+            MENUITEM "Copy As B&ase-64",          ID_COPY_B64
+            MENUITEM "Paste As &Base-64",         ID_PASTE_B64
 			MENUITEM "Base Conversion...\tCtrl+F10",  ID_BASECONV
         END
-        MENUITEM "Clear clipboard",               ID_MYEDIT_CLEAR
+        MENUITEM "Clear clipboard",               ID_CLEAR_CLIPBRD
         MENUITEM SEPARATOR
         POPUP "&Block"
         BEGIN
@@ -928,7 +928,7 @@ BEGIN
     "A",            ID_MYEDIT_SELECTALL,    VIRTKEY, CONTROL, NOINVERT
     "B",            ID_SHOWSTATUS,          VIRTKEY, CONTROL, NOINVERT
     "C",            ID_MYEDIT_COPY,         VIRTKEY, CONTROL, NOINVERT
-    "C",            ID_MYEDIT_COPY_HEX,     VIRTKEY, CONTROL, ALT, NOINVERT
+    "C",            ID_COPY_HEX,            VIRTKEY, CONTROL, ALT, NOINVERT
     "D",            ID_LAUNCH_ASSOCIATED_VIEWER, VIRTKEY, CONTROL, NOINVERT
     "D",            ID_INSERT_FILE,         VIRTKEY, ALT, NOINVERT
     "E",            ID_READONLY,            VIRTKEY, CONTROL, NOINVERT
@@ -954,8 +954,8 @@ BEGIN
     "U",            ID_TRANSPARENT,         VIRTKEY, CONTROL, NOINVERT
     "U",            ID_MAKE_UPPER,          VIRTKEY, ALT, NOINVERT
     "V",            ID_MYEDIT_PASTE,        VIRTKEY, CONTROL, NOINVERT
-    "V",            ID_MYEDIT_PASTE_MUL,    VIRTKEY, CONTROL, SHIFT, NOINVERT
-    "V",            ID_MYEDIT_PASTE_HEX,    VIRTKEY, CONTROL, ALT, NOINVERT
+    "V",            ID_PASTE_MUL,           VIRTKEY, CONTROL, SHIFT, NOINVERT
+    "V",            ID_PASTE_HEX,           VIRTKEY, CONTROL, ALT, NOINVERT
     VK_APPS,        ID_CONTEXTMENU,         VIRTKEY, NOINVERT
     VK_DELETE,      ID_MYEDIT_CUT,          VIRTKEY, SHIFT, NOINVERT
     VK_DOWN,        ID_SCROLLDOWN,          VIRTKEY, CONTROL, NOINVERT
@@ -1171,8 +1171,8 @@ BEGIN
 	IDS_ESCAPE_BADCHARS     "Invalid characters in base-%d string"
 	IDS_ESCAPE_BADALIGN		"The base-%d string is not a multiple of %d characters"
 	IDS_ESCAPE_EXPECTED		"Expected base-%d string"
-	IDS_ESCAPE_CTX_FIND		"Find Text"
-	IDS_ESCAPE_CTX_REPLACE	"Replace Text"
+	IDS_ESCAPE_CTX_FIND		"Find what"
+	IDS_ESCAPE_CTX_REPLACE	"Replace with"
 	IDS_ESCAPE_CTX_INSERT	"Insert Text"
 	IDS_ESCAPE_CTX_CLIPBRD	"Clipboard"
 	IDS_ESCAPE_CTX_MACRO	"Macro"

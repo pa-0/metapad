@@ -29,6 +29,7 @@
 
 #ifdef USE_RICH_EDIT
 #include <richedit.h>
+#include <commdlg.h>
 #endif
 
 #include "include/globals.h"

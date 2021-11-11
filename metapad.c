@@ -215,17 +215,21 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPCTSTR errContext)
 					dbuf = bout;
 				l = DecodeBase(base, buf, (LPBYTE)dbuf, str ? -1 : mul, 1, str && base != 64 ? 0 : 1, FALSE, &end);
 				if (l > 0) {
+					m = l;
 					if (sizeof(TCHAR) >= 2 && uni == 1){
-						while (l % sizeof(TCHAR))
-							*((LPBYTE)(dbuf)+(l++)) = 0;
-						l /= sizeof(TCHAR);
+						while (m % sizeof(TCHAR))
+							*((LPBYTE)(dbuf)+(m++)) = 0;
+						m /= sizeof(TCHAR);
 					}
 					buf = end;
-					m = l;
-					if (str && *buf && *buf != '\\') l = -1;
-					else if (sizeof(TCHAR) >= 2 && uni != 1 && !(m = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)dbuf, l, bout, l * sizeof(TCHAR))))
+					if (str && *buf && *buf != '\\') 
+						l = -1;
+					else if (sizeof(TCHAR) >= 2 && uni != 1 && !(m = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)dbuf, m, bout, m * sizeof(TCHAR))))
 						l = -3;
-					else if (uni == 1) ReverseBytes((LPBYTE)bout, l * sizeof(TCHAR) + 2);
+					else if (str && uni == 1 && l % sizeof(TCHAR))
+						l = -2;
+					else if (uni == 1 && l >= sizeof(TCHAR))
+						ReverseBytes((LPBYTE)bout, l * sizeof(TCHAR));
 					if (!str) buf--;
 				} else if (l == -2 && str && *end && *end != '\\') l = -1;
 				if (l > 0) {
@@ -3155,78 +3159,40 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 	case WM_INITMENUPOPUP: {
 		HMENU hmenuPopup = (HMENU) wParam;
 		INT nPos = LOWORD(lParam);
+		UINT ena;
 		if ((BOOL)HIWORD(lParam) == TRUE)
 			break;
 
 		if (nPos == EDITPOS) {
 			CHARRANGE cr;
-			if (IsClipboardFormatAvailable(_CF_TEXT))
-				EnableMenuItem(hmenuPopup, ID_MYEDIT_PASTE, MF_BYCOMMAND | MF_ENABLED);
-			else
-				EnableMenuItem(hmenuPopup, ID_MYEDIT_PASTE, MF_BYCOMMAND | MF_GRAYED);
-/*
-#ifdef USE_RICH_EDIT
-			if (SendMessage(client, EM_CANPASTE, 0, 0))
-				EnableMenuItem(hmenuPopup, ID_MYEDIT_PASTE, MF_BYCOMMAND | MF_ENABLED);
-			else
-				EnableMenuItem(hmenuPopup, ID_MYEDIT_PASTE, MF_BYCOMMAND | MF_GRAYED);
-#endif
-*/
-			if (bWordWrap)
-				EnableMenuItem(hmenuPopup, ID_COMMIT_WORDWRAP, MF_BYCOMMAND | MF_ENABLED);
-			else
-				EnableMenuItem(hmenuPopup, ID_COMMIT_WORDWRAP, MF_BYCOMMAND | MF_GRAYED);
-
+			ena = IsClipboardFormatAvailable(_CF_TEXT) ? MF_ENABLED : MF_GRAYED;
+			EnableMenuItem(hmenuPopup, ID_MYEDIT_PASTE, MF_BYCOMMAND | ena);
+			EnableMenuItem(hmenuPopup, ID_PASTE_B64, MF_BYCOMMAND | ena);
+			EnableMenuItem(hmenuPopup, ID_PASTE_HEX, MF_BYCOMMAND | ena);
+			EnableMenuItem(hmenuPopup, ID_PASTE_MUL, MF_BYCOMMAND | ena);
+			EnableMenuItem(hmenuPopup, ID_COMMIT_WORDWRAP, MF_BYCOMMAND | (bWordWrap ? MF_ENABLED : MF_GRAYED));
 #ifdef USE_RICH_EDIT
 			SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
 #else
 			SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
 #endif
-			if (cr.cpMin == cr.cpMax) {
-				EnableMenuItem(hmenuPopup, ID_MYEDIT_CUT, MF_BYCOMMAND | MF_GRAYED);
-				EnableMenuItem(hmenuPopup, ID_MYEDIT_COPY, MF_BYCOMMAND | MF_GRAYED);
-				EnableMenuItem(hmenuPopup, ID_MYEDIT_DELETE, MF_BYCOMMAND | MF_GRAYED);
-			}
-			else {
-				EnableMenuItem(hmenuPopup, ID_MYEDIT_CUT, MF_BYCOMMAND | MF_ENABLED);
-				EnableMenuItem(hmenuPopup, ID_MYEDIT_COPY, MF_BYCOMMAND | MF_ENABLED);
-				EnableMenuItem(hmenuPopup, ID_MYEDIT_DELETE, MF_BYCOMMAND | MF_ENABLED);
-			}
-			if (SendMessage(client, EM_CANUNDO, 0, 0))
-				EnableMenuItem(hmenuPopup, ID_MYEDIT_UNDO, MF_BYCOMMAND | MF_ENABLED);
-			else
-				EnableMenuItem(hmenuPopup, ID_MYEDIT_UNDO, MF_BYCOMMAND | MF_GRAYED);
+			ena = (cr.cpMin != cr.cpMax ? MF_ENABLED : MF_GRAYED);
+			EnableMenuItem(hmenuPopup, ID_MYEDIT_CUT, MF_BYCOMMAND | ena);
+			EnableMenuItem(hmenuPopup, ID_MYEDIT_COPY, MF_BYCOMMAND | ena);
+			EnableMenuItem(hmenuPopup, ID_MYEDIT_DELETE, MF_BYCOMMAND | ena);
+			EnableMenuItem(hmenuPopup, ID_COPY_B64, MF_BYCOMMAND | ena);
+			EnableMenuItem(hmenuPopup, ID_COPY_HEX, MF_BYCOMMAND | ena);
+			EnableMenuItem(hmenuPopup, ID_MYEDIT_UNDO, MF_BYCOMMAND | (SendMessage(client, EM_CANUNDO, 0, 0) ? MF_ENABLED : MF_GRAYED));
 #ifdef USE_RICH_EDIT
-			if (SendMessage(client, EM_CANREDO, 0, 0))
-				EnableMenuItem(hmenuPopup, ID_MYEDIT_REDO, MF_BYCOMMAND | MF_ENABLED);
-			else
-				EnableMenuItem(hmenuPopup, ID_MYEDIT_REDO, MF_BYCOMMAND | MF_GRAYED);
+			EnableMenuItem(hmenuPopup, ID_MYEDIT_REDO, MF_BYCOMMAND | (SendMessage(client, EM_CANREDO, 0, 0) ? MF_ENABLED : MF_GRAYED));
 #endif
-		}
-		else if (nPos == 0) {
-			if (SCNUL(szFile)[0] != _T('\0')) {
-				EnableMenuItem(hmenuPopup, ID_RELOAD_CURRENT, MF_BYCOMMAND | MF_ENABLED);
-				EnableMenuItem(hmenuPopup, ID_READONLY, MF_BYCOMMAND | MF_ENABLED);
-			}
-			else {
-				EnableMenuItem(hmenuPopup, ID_RELOAD_CURRENT, MF_BYCOMMAND | MF_GRAYED);
-				EnableMenuItem(hmenuPopup, ID_READONLY, MF_BYCOMMAND | MF_GRAYED);
-			}
-		}
-		else if (!options.bNoFaves && nPos == FAVEPOS) {
-			if (SCNUL(szFile)[0] != _T('\0')) {
-				EnableMenuItem(hmenuPopup, ID_FAV_ADD, MF_BYCOMMAND | MF_ENABLED);
-			}
-			else {
-				EnableMenuItem(hmenuPopup, ID_FAV_ADD, MF_BYCOMMAND | MF_GRAYED);
-			}
-			if (bHasFaves) {
-				EnableMenuItem(hmenuPopup, ID_FAV_EDIT, MF_BYCOMMAND | MF_ENABLED);
-			}
-			else {
-				EnableMenuItem(hmenuPopup, ID_FAV_EDIT, MF_BYCOMMAND | MF_GRAYED);
-			}
-
+		} else if (nPos == 0) {
+			ena = SCNUL(szFile)[0] ? MF_ENABLED : MF_GRAYED;
+			EnableMenuItem(hmenuPopup, ID_RELOAD_CURRENT, MF_BYCOMMAND | ena);
+			EnableMenuItem(hmenuPopup, ID_READONLY, MF_BYCOMMAND | ena);
+		} else if (!options.bNoFaves && nPos == FAVEPOS) {
+			EnableMenuItem(hmenuPopup, ID_FAV_ADD, MF_BYCOMMAND | (SCNUL(szFile)[0] ? MF_ENABLED : MF_GRAYED));
+			EnableMenuItem(hmenuPopup, ID_FAV_EDIT, MF_BYCOMMAND | (bHasFaves ? MF_ENABLED : MF_GRAYED));
 		}
 		break;
 	}
@@ -3236,66 +3202,28 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				LPTOOLTIPTEXT lpttt = (LPTOOLTIPTEXT)lParam;
 				switch (lpttt->hdr.idFrom) {
 					/*
-					case ID_NEW_INSTANCE:
-						lpttt->lpszText = GetString(IDS_NEW_INSTANCE);
-						break;
+					case ID_NEW_INSTANCE: lpttt->lpszText = GetString(IDS_NEW_INSTANCE); break;
 					*/
-					case ID_MYFILE_NEW:
-						lpttt->lpszText = GetString(IDS_TB_NEWFILE);
-						break;
-					case ID_MYFILE_OPEN:
-						lpttt->lpszText = GetString(IDS_TB_OPENFILE);
-						break;
-					case ID_MYFILE_SAVE:
-						lpttt->lpszText = GetString(IDS_TB_SAVEFILE);
-						break;
-					case ID_PRINT:
-						lpttt->lpszText = GetString(IDS_TB_PRINT);
-						break;
-					case ID_FIND:
-						lpttt->lpszText = GetString(IDS_TB_FIND);
-						break;
-					case ID_REPLACE:
-						lpttt->lpszText = GetString(IDS_TB_REPLACE);
-						break;
-					case ID_MYEDIT_CUT:
-						lpttt->lpszText = GetString(IDS_TB_CUT);
-						break;
-					case ID_MYEDIT_COPY:
-						lpttt->lpszText = GetString(IDS_TB_COPY);
-						break;
-					case ID_MYEDIT_PASTE:
-						lpttt->lpszText = GetString(IDS_TB_PASTE);
-						break;
-					case ID_MYEDIT_UNDO:
-						lpttt->lpszText = GetString(IDS_TB_UNDO);
-						break;
+					case ID_MYFILE_NEW: lpttt->lpszText = GetString(IDS_TB_NEWFILE); break;
+					case ID_MYFILE_OPEN: lpttt->lpszText = GetString(IDS_TB_OPENFILE); break;
+					case ID_MYFILE_SAVE: lpttt->lpszText = GetString(IDS_TB_SAVEFILE); break;
+					case ID_PRINT: lpttt->lpszText = GetString(IDS_TB_PRINT); break;
+					case ID_FIND: lpttt->lpszText = GetString(IDS_TB_FIND); break;
+					case ID_REPLACE: lpttt->lpszText = GetString(IDS_TB_REPLACE); break;
+					case ID_MYEDIT_CUT: lpttt->lpszText = GetString(IDS_TB_CUT); break;
+					case ID_MYEDIT_COPY: lpttt->lpszText = GetString(IDS_TB_COPY); break;
+					case ID_MYEDIT_PASTE: lpttt->lpszText = GetString(IDS_TB_PASTE); break;
+					case ID_MYEDIT_UNDO: lpttt->lpszText = GetString(IDS_TB_UNDO); break;
 #ifdef USE_RICH_EDIT
-					case ID_MYEDIT_REDO:
-						lpttt->lpszText = GetString(IDS_TB_REDO);
-						break;
+					case ID_MYEDIT_REDO: lpttt->lpszText = GetString(IDS_TB_REDO); break;
 #endif
-					case ID_VIEW_OPTIONS:
-						lpttt->lpszText = GetString(IDS_TB_SETTINGS);
-						break;
-					case ID_RELOAD_CURRENT:
-						lpttt->lpszText = GetString(IDS_TB_REFRESH);
-						break;
-					case ID_EDIT_WORDWRAP:
-						lpttt->lpszText = GetString(IDS_TB_WORDWRAP);
-						break;
-					case ID_FONT_PRIMARY:
-						lpttt->lpszText = GetString(IDS_TB_PRIMARYFONT);
-						break;
-					case ID_ALWAYSONTOP:
-						lpttt->lpszText = GetString(IDS_TB_ONTOP);
-						break;
-					case ID_FILE_LAUNCHVIEWER:
-						lpttt->lpszText = GetString(IDS_TB_PRIMARYVIEWER);
-						break;
-					case ID_LAUNCH_SECONDARY_VIEWER:
-						lpttt->lpszText = GetString(IDS_TB_SECONDARYVIEWER);
-						break;
+					case ID_VIEW_OPTIONS: lpttt->lpszText = GetString(IDS_TB_SETTINGS); break;
+					case ID_RELOAD_CURRENT: lpttt->lpszText = GetString(IDS_TB_REFRESH); break;
+					case ID_EDIT_WORDWRAP: lpttt->lpszText = GetString(IDS_TB_WORDWRAP); break;
+					case ID_FONT_PRIMARY: lpttt->lpszText = GetString(IDS_TB_PRIMARYFONT); break;
+					case ID_ALWAYSONTOP: lpttt->lpszText = GetString(IDS_TB_ONTOP); break;
+					case ID_FILE_LAUNCHVIEWER: lpttt->lpszText = GetString(IDS_TB_PRIMARYVIEWER); break;
+					case ID_LAUNCH_SECONDARY_VIEWER: lpttt->lpszText = GetString(IDS_TB_SECONDARYVIEWER); break;
 				}
 				break;
 			}
@@ -3442,7 +3370,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_FIND:
 			case ID_REPLACE:
 			case ID_INSERT_TEXT:
-			case ID_MYEDIT_PASTE_MUL: {
+			case ID_PASTE_MUL: {
 				static FINDREPLACE fr;
 				CHARRANGE cr;
 				HGLOBAL hMem;
@@ -3454,7 +3382,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 				ZeroMemory(&wp, sizeof(WINDOWPLACEMENT));
 				if (hdlgFind) {
-					if (frDlgId == LOWORD(wParam) && frDlgId != ID_MYEDIT_PASTE_MUL) {
+					if (frDlgId == LOWORD(wParam) && frDlgId != ID_PASTE_MUL) {
 						SetFocus(hdlgFind);
 						break;
 					} else {
@@ -3490,7 +3418,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
 #endif
 						break;
-					case ID_MYEDIT_PASTE_MUL:
+					case ID_PASTE_MUL:
 						OpenClipboard(NULL);
 						hMem = GetClipboardData(_CF_TEXT);
 						if (hMem) {
@@ -3506,7 +3434,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 				switch (LOWORD(wParam)) {
 					case ID_INSERT_TEXT:
-					case ID_MYEDIT_PASTE_MUL:
+					case ID_PASTE_MUL:
 						fr.lpTemplateName = MAKEINTRESOURCE(IDD_INSERT);
 						hdlgFind = FindText(&fr);
 						SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_LIMITTEXT, (WPARAM)MAXINSERT, 0);
@@ -3614,174 +3542,72 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				UpdateStatus();
 				break;
 			}
-#if defined(USE_RICH_EDIT) || defined(BUILD_METAPAD_UNICODE)
-			case ID_MYEDIT_CUT:
-			case ID_MYEDIT_COPY:
-			{
-#if TRUE // new cut/copy (for chinese crash)
-				HGLOBAL hMem, hMem2;
-				LPTSTR szOrig, szNew;
-
-				if (LOWORD(wParam) == ID_MYEDIT_CUT) {
-					SendMessage(client, WM_CUT, 0, 0);
-				}
-				else {
-					SendMessage(client, WM_COPY, 0, 0);
-				}
-
-				if (!OpenClipboard(hwnd)) {
-					/**
-					 * @BUG The following error pops up spuriously for some users,
-					 * but doesn't actually affect the copy.
-					 * Might be related to an incorrect assumption about how the
-					 * clipboard works or to multiple copy messages.
-					 */
+			case ID_CLEAR_CLIPBRD:
+				if (!OpenClipboard(NULL)) {
 					ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
 					break;
 				}
-				else {
-					if ( (hMem = GetClipboardData(_CF_TEXT)) ) {
-						DWORD dwLastError;
-						szOrig = GlobalLock(hMem);
-						if( szOrig ) {
-							hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (lstrlen(szOrig) + 2));
-							szNew = GlobalLock(hMem2);
-							if (szNew) {
-								lstrcpy(szNew, szOrig);
-							}
-							else {
-								ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
-								break;
-							}
-							SetLastError(NO_ERROR);
-							if (!GlobalUnlock(hMem) && (dwLastError = GetLastError()) != NO_ERROR) {
-								ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
-								SetLastError(dwLastError);
-								ReportLastError();
-								break;
-							}
-							if (!GlobalUnlock(hMem2) && (dwLastError = GetLastError()) != NO_ERROR) {
-								ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
-								SetLastError(dwLastError);
-								ReportLastError();
-								break;
-							}
-							if (!EmptyClipboard()) {
-								ReportLastError();
-								break;
-							}
-							if (!SetClipboardData(_CF_TEXT, hMem2)) {
-								ReportLastError();
-								break;
-							}
+				if (!EmptyClipboard())
+					ReportLastError();
+				CloseClipboard();
+				break;
+			case ID_MYEDIT_CUT:
+			case ID_MYEDIT_COPY:
+			case ID_COPY_B64:
+			case ID_COPY_HEX: {
+				HGLOBAL hMem, hMem2;
+				LPTSTR szOrig, szNew;
+
+				if (LOWORD(wParam) == ID_MYEDIT_CUT)
+					SendMessage(client, WM_CUT, 0, 0);
+				else
+					SendMessage(client, WM_COPY, 0, 0);
+
+				if (!OpenClipboard(NULL)) {
+					//This happens if another window has the clipboard open. [https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-openclipboard]
+					ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
+					break;
+				}
+				if ( hMem = GetClipboardData(_CF_TEXT) ) {
+					DWORD dwLastError;
+					szOrig = GlobalLock(hMem);
+					if( szOrig ) {
+						hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (lstrlen(szOrig) + 2));
+						szNew = GlobalLock(hMem2);
+						if (szNew) {
+							lstrcpy(szNew, szOrig);
 						}
 						else {
 							ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
+							break;
 						}
-					}
-					CloseClipboard();
-				}
-#else // old cut/copy
-/**
- * @fixme Huge block of unreachable code. It's here probably as a means of
- * testing the currently used code. Might be wise to remove. It also includes
- * some commented out sections.
- */
-					HGLOBAL hMem;
-					LPTSTR strTmp;
-					LPTSTR szSrc;
-					CHARRANGE cr;
-					DWORD dwLastError;
-
-					SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-					if (cr.cpMin == cr.cpMax) break;
-/*
-{
-	TCHAR str[100];
-	wsprintf(str, _T("Selection length = %d"), cr.cpMax - cr.cpMin);
-	ERROROUT(str);
-}
-*/
-					szSrc = (LPTSTR) GlobalAlloc(GPTR, (cr.cpMax - cr.cpMin + 1) * sizeof(TCHAR));
-					SendMessage(client, EM_GETSELTEXT, 0, (LPARAM)szSrc);
-
-//DBGOUT(szSrc, _T("original string"));
-					RichModeToDos(&szSrc);
-
-//DBGOUT(szSrc, _T("modified string"));
-
-					hMem = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (lstrlen(szSrc) + 2));
-					strTmp = GlobalLock(hMem);
-					if (strTmp) {
-						lstrcpy(strTmp, szSrc);
+						SetLastError(NO_ERROR);
+						if (!GlobalUnlock(hMem) && (dwLastError = GetLastError()) != NO_ERROR) {
+							ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
+							ReportError(dwLastError);
+							break;
+						}
+						if (!GlobalUnlock(hMem2) && (dwLastError = GetLastError()) != NO_ERROR) {
+							ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
+							ReportError(dwLastError);
+							break;
+						}
+						if (!EmptyClipboard()) {
+							ReportLastError();
+						} else if (!SetClipboardData(_CF_TEXT, hMem2))
+							ReportLastError();
 					}
 					else {
 						ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
-						break;
 					}
-
-//DBGOUT(strTmp, _T("adding to clipboard"));
-
-/*
-{
-	TCHAR str[100];
-	wsprintf(str, _T("hMem = %d"), hMem);
-	ERROROUT(str);
-}
-*/
-					SetLastError(NO_ERROR);
-
-					if (!GlobalUnlock(hMem) && (dwLastError = GetLastError()) != NO_ERROR) {
-						ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
-						SetLastError(dwLastError);
-						ReportLastError();
-						break;
-					}
-
-					if (OpenClipboard(NULL)) {
-						EmptyClipboard();
-						SetClipboardData(_CF_TEXT, hMem);
-						CloseClipboard();
-					}
-					else {
-						ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
-					}
-
-					GlobalFree((HGLOBAL)szSrc);
-/*
-{
-	HGLOBAL hMem;
-	LPTSTR szTmp;
-	OpenClipboard(NULL);
-	hMem = GetClipboardData(_CF_TEXT);
-	if (hMem) {
-		szTmp = GlobalLock(hMem);
-		DBGOUT(szTmp, _T("clipboard contents"));
-		GlobalUnlock(hMem);
-	}
-	CloseClipboard();
-}
-*/
-					if (LOWORD(wParam) == ID_MYEDIT_CUT) {
-						SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)NULL);
-						InvalidateRect(client, NULL, TRUE);
-					}
-#endif
 				}
+				CloseClipboard();
 				UpdateStatus();
 				break;
-#else
-			case ID_MYEDIT_CUT:
-				SendMessage(client, WM_CUT, 0, 0);
-				UpdateStatus();
-				break;
-			case ID_MYEDIT_COPY:
-				SendMessage(client, WM_COPY, 0, 0);
-				UpdateStatus();
-				break;
-#endif
-			case ID_MYEDIT_PASTE: {
-#if defined(USE_RICH_EDIT) || defined(BUILD_METAPAD_UNICODE)
+			}
+			case ID_MYEDIT_PASTE: 
+			case ID_PASTE_B64:
+			case ID_PASTE_HEX: {
 				HGLOBAL hMem;
 				LPTSTR szTmp, szTmp2 = NULL;
 				OpenClipboard(NULL);
@@ -3800,9 +3626,6 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				}
 				CloseClipboard();
 				InvalidateRect(client, NULL, TRUE);
-#else
-				SendMessage(client, WM_PASTE, 0, 0);
-#endif
 				UpdateStatus();
 				break;
 			}
@@ -5334,7 +5157,7 @@ endinsertfile:
 					break;
 				case ID_INSERT_TEXT:
 
-				case ID_MYEDIT_PASTE_MUL:
+				case ID_PASTE_MUL:
 
 				default:
 					return FALSE;

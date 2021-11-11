@@ -253,7 +253,7 @@ BOOL SaveIfDirty(void)
 {
 	if (bDirtyFile) {
 		TCHAR szBuffer[MAXFN+MAXSTRING];
-		if (!SCNUL(szFile)) {
+		if (!SCNUL(szFile)[0]) {
 			if (GetWindowTextLength(client) == 0) {
 				return TRUE;
 			}
