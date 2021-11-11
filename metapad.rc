@@ -657,7 +657,12 @@ BEGIN
         MENUITEM "Newline",                     ID_ESCAPE_NEWLINE
         MENUITEM "Tab",                         ID_ESCAPE_TAB
         MENUITEM "Backslash",                   ID_ESCAPE_BACKSLASH
-		MENUITEM "Any Character",               ID_ESCAPE_ANY
+        MENUITEM SEPARATOR
+		MENUITEM "Any 1 Character",				ID_ESCAPE_ANY
+		MENUITEM "Any 0+ Characters",			ID_ESCAPE_WILD0
+		MENUITEM "Any 1+ Characters",			ID_ESCAPE_WILD1
+		MENUITEM "0+ of Preceding Character",	ID_ESCAPE_REP0
+		MENUITEM "1+ of Preceding Character",	ID_ESCAPE_REP1
 		MENUITEM "Random Character",			ID_ESCAPE_RAND
         MENUITEM SEPARATOR
         MENUITEM "Hex Value",                   ID_ESCAPE_HEX

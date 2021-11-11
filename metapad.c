@@ -203,7 +203,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext)
 					if (!*specials) *specials = (LPBYTE)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, lstrlen(op)+1);
 					(*specials)[p] = spi;
 				}
-				if (spi == 4){
+				if (spi == 6){
 					if (sizeof(TCHAR) > 1 && (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE))
 						*bout++ = RAND()%0xffe0+0x20;
 					else
@@ -751,6 +751,10 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 				EnableMenuItem(hsub, ID_ESCAPE_TAB, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(hsub, ID_ESCAPE_BACKSLASH, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(hsub, ID_ESCAPE_ANY, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(hsub, ID_ESCAPE_WILD0, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(hsub, ID_ESCAPE_WILD1, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(hsub, ID_ESCAPE_REP0, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(hsub, ID_ESCAPE_REP1, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(hsub, ID_ESCAPE_RAND, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(hsub, ID_ESCAPE_HEX, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(hsub, ID_ESCAPE_DEC, MF_BYCOMMAND | MF_GRAYED);
@@ -771,7 +775,11 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 				case ID_ESCAPE_NEWLINE:		lstrcat(szText, _T("\\n")); break;
 				case ID_ESCAPE_TAB:			lstrcat(szText, _T("\\t")); break;
 				case ID_ESCAPE_BACKSLASH:	lstrcat(szText, _T("\\\\")); break;
-				case ID_ESCAPE_ANY:			lstrcat(szText, _T("\\?")); break;
+				case ID_ESCAPE_ANY:			lstrcat(szText, _T("\\_")); break;
+				case ID_ESCAPE_WILD0:		lstrcat(szText, _T("\\?")); break;
+				case ID_ESCAPE_WILD1:		lstrcat(szText, _T("\\*")); break;
+				case ID_ESCAPE_REP0:		lstrcat(szText, _T("\\-")); break;
+				case ID_ESCAPE_REP1:		lstrcat(szText, _T("\\+")); break;
 				case ID_ESCAPE_RAND:		lstrcat(szText, _T("\\$")); break;
 				case ID_ESCAPE_HEX: 		lstrcat(szText, _T("\\x")); break;
 				case ID_ESCAPE_DEC: 		lstrcat(szText, _T("\\d")); break;

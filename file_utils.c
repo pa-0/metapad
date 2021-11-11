@@ -360,14 +360,14 @@ CHARRANGE DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWho
 	}
 
 	while( lpszStop != szBuffer && lpsz - (bDown? 0 : cf) < lpszStop && (!bDown || (bDown && lpszFound == NULL)) ) {
-		if ( m && ((pbFindSpec && pbFindSpec[cf] && (pbFindSpec[cf] < 4 || (cf && pbFindSpec[cf] < 6 && *lpsz == gc) || !(RAND()%0x60))) 
+		if ( m && ((pbFindSpec && (k = pbFindSpec[cf]) && (k < 4 || (cf && k < 6 && *lpsz == gc) || (k == 6 && !(RAND()%0x60)))) 
 			|| *lpsz == szText[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*lpsz) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szText[cf])) )) {
 			if (pbFindSpec){
-				if ((k = pbFindSpec[cf]) && k < 6) {
+				if (k && k < 6) {
 					if ((k == 2 || (lg && k == 3)) && cf+1 < nFindLen && (*lpsz == szText[cf+1] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*lpsz) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szText[cf+1])))) {
 						cg = ++cf; continue;
-					} else if (k != 1) { 
-						cg = 0; lg++;
+					} else if (k != 1) {
+						lg++;
 						if (lpsz+1 != lpszStop) cf--;
 						else m = 2;
 					}
@@ -390,12 +390,18 @@ CHARRANGE DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWho
 				cf = cg = lg = 0;
 			}
 		} else if (lpfs) {
-			m = 1;
-			if (cg) { cf = cg-1; lg=1; }
-			else if (!(pbFindSpec && (k = pbFindSpec[cf++]) && (k == 4 || (lg && k == 5)))) {
+			if (pbFindSpec){
+				m = 2;
+				if ((lg || k == 2 || k == 4) && cf+1 < nFindLen && (*lpsz == szText[cf+1] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*lpsz) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szText[cf+1]))))
+					cf++;
+				else if (cg) { cf = cg-1; lg=1; }
+				else if (!((k == 4 || (lg && k == 5)) && ++cf)) m = 1;
+			}
+			if (m < 2) {
 				lpfs = NULL;
 				cf = lg = 0;
 			}
+			m = 1;
 			continue;
 		}
 		lpsz++;
@@ -448,7 +454,7 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 	//0123456
 	// _?*-+$
 	LONG ld;
-	DWORD k, len, alen, ilen, lf, lr, ct = 0, cf = 0, cg = 0, lg = 0, nglob[6] = {0}, cglob[6] = {0}, sglob[6], gu = 0;
+	DWORD k, m = 1, len, alen, ilen, lf, lr, ct = 0, cf = 0, cg = 0, lg = 0, nglob[6] = {0}, cglob[6] = {0}, sglob[6], gu = 0;
 	LPTSTR dst, odst, pd = NULL;
 	LPCTSTR *globs[6], *globe[6];
 	TCHAR gc;
@@ -474,10 +480,10 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 		memset(cglob, 0, sizeof(cglob));
 	}
 	while (--ilen) {
-		if ( (pbFindSpec && pbFindSpec[cf] && (pbFindSpec[cf] < 4 || (cf && pbFindSpec[cf] < 6 && *szIn == gc) || !(RAND()%0x60)))
-			|| (*szIn == szFind[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szIn) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szFind[cf]))) ) {
+		if ( m && ((pbFindSpec && (k = pbFindSpec[cf]) && (k < 4 || (cf && k < 6 && *szIn == gc) || (k == 6 && !(RAND()%0x60))))
+			|| (*szIn == szFind[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szIn) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szFind[cf]))) )) {
 			if (pbFindSpec) {
-				if ((k = pbFindSpec[cf]) && k < 6) {
+				if (k && k < 6) {
 					if (gu && nglob[k] && cglob[k] <= nglob[k]) {
 						if (!lg && cglob[k] < nglob[k])
 							globs[k][cglob[k]++] = szIn;
@@ -489,9 +495,12 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 						ilen++;
 						continue;
 					} else if (k != 1) { 
-						lg++; cg = 0;
+						lg++;
 						if (ilen-1) cf--;
-						else if (gu && nglob[k] && cglob[k] <= nglob[k]) globe[k][cglob[k]-1] = szIn + 1;
+						else {
+							m = 2;
+							if (gu && nglob[k] && cglob[k] <= nglob[k]) globe[k][cglob[k]-1] = szIn + 1;
+						} 
 					}
 				} else {
 					lg = 0; gc = *szIn;
@@ -524,6 +533,9 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 						lstrcpyn(pd, szRepl, lr + 1);
 						dst = pd + lr;
 					}
+					m = 1;
+				} else if (cg) {
+					m = 0; ilen++; continue;
 				}
 				pd = NULL;
 				cf = cg = lg = 0;
@@ -533,22 +545,37 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 				continue;
 			}
 		} else if (pd) {
-			if (cg) {
-				cf = cg-1;
-				lg = 1;
-				memcpy(cglob, sglob, sizeof(cglob));
-			} else if (pbFindSpec && (k = pbFindSpec[cf++]) && (k == 4 || (lg && k == 5))) {
-				if (gu && nglob[k] && cglob[k] <= nglob[k]) {
-					if (!lg && cglob[k] < nglob[k])
-						globs[k][cglob[k]++] = szIn;
-					globe[k][cglob[k]-1] = szIn;
-				}
-			} else {
+			if (pbFindSpec){
+				m = 2;
+				if ((lg || k == 2 || k == 4) && cf+1 < lf && (*szIn == szFind[cf+1] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szIn) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szFind[cf+1]))))
+					cf++;
+				else if (cg) {
+					cf = cg-1;
+					lg=1;
+					memcpy(cglob, sglob, sizeof(cglob));
+				} else if ((k == 4 || (lg && k == 5)) && ++cf){
+					if (gu && nglob[k] && cglob[k] <= nglob[k]) {
+						if (!lg && cglob[k] < nglob[k])
+							globs[k][cglob[k]++] = szIn;
+						globe[k][cglob[k]-1] = szIn;
+					}
+				} else 
+					m = 1;
+			}
+			if (m < 2) {
 				pd = NULL;
 				cf = lg = 0;
 				if (gu) memset(cglob, 0, sizeof(cglob));
 			}
+			m = 1;
 			ilen++;
+			continue;
+		}
+		if (m == 2){
+			m = 1;
+			szIn -= (dst - pd);
+			ilen += (dst - pd);
+			dst = ++pd;
 			continue;
 		}
 		*dst++ = *szIn++;
