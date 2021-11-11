@@ -170,7 +170,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext)
 	INT l, m, base = 0, mul = 3, uni = 0, str, expl = 0, dbufalloc = 0, spi = 0;
 	DWORD p = 0;
 #ifdef UNICODE
-	const TCHAR spsub[] = {_T('\xFFFD'), _T('\xD7'), _T('\x2026'), _T('\xFFFC')};
+	const TCHAR spsub[] = {_T('\x332'), _T('\xFFFD'), _T('\xD7'), _T('\x2014'), _T('\x2026'), _T('\xFFFC')};
 #endif
 
 	if (!SCNUL(buf)[0]) return TRUE;
@@ -194,10 +194,12 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext)
 			case _T('e'): *bout++ = _T('\x1e'); continue;
 			case _T('f'): *bout++ = _T('\f'); continue;
 			case _T('v'): *bout++ = _T('\v'); continue;
-			case _T('?'): if (!spi) spi = 1;
-			case _T('*'): if (!spi) spi = 2;
-			case _T('+'): if (!spi) spi = 3;
-			case _T('$'): if (!spi) spi = 4;
+			case _T('_'): if (!spi) spi = 1;
+			case _T('?'): if (!spi) spi = 2;
+			case _T('*'): if (!spi) spi = 3;
+			case _T('-'): if (!spi) spi = 4;
+			case _T('+'): if (!spi) spi = 5;
+			case _T('$'): if (!spi) spi = 6;
 				if (specials) {
 					if (!*specials) *specials = (LPBYTE)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, lstrlen(op)+1);
 					(*specials)[p] = spi;
@@ -306,8 +308,8 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext)
 	*bout = _T('\0');
 	if (dbufalloc) FREE(dbuf);
 	return TRUE;
-	// abcdefghijklmnopqrstuvwxyz ?$
-	// xM Mxx       XM  XMxMxMM  Mxx
+	// abcdefghijklmnopqrstuvwxyz _?*-+$
+	// xM Mxx       XM  XMxMxMM  M123456
 }
 
 /**
