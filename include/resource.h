@@ -339,11 +339,11 @@
 #define ID_BINARY_FILE                  40203
 #define ID_DATE_TIME_CUSTOM             40204
 #define ID_DATE_TIME_CUSTOM2            40205
-#define ID_MYEDIT_PASTE_MUL             40206
+#define ID_PASTE_MUL                    40206
 #define ID_INSERT_TEXT                  40207
-#define ID_MYEDIT_COPY_HEX              40208
-#define ID_MYEDIT_PASTE_HEX             40209
-#define ID_MYEDIT_CLEAR                 40210
+#define ID_COPY_HEX                     40208
+#define ID_PASTE_HEX                    40209
+#define ID_CLEAR_CLIPBRD                40210
 #define ID_ESCAPE_HEX                   40211
 #define ID_ESCAPE_DEC                   40212
 #define ID_ESCAPE_OCT                   40213
@@ -353,8 +353,8 @@
 #define ID_ESCAPE_HEXSU                 40217
 #define ID_ESCAPE_B64S                  40218
 #define ID_ESCAPE_B64SU                 40219
-#define ID_MYEDIT_COPY_B64              40220
-#define ID_MYEDIT_PASTE_B64             40221
+#define ID_COPY_B64                     40220
+#define ID_PASTE_B64                    40221
 #define ID_BASECONV                     40222
 #define ID_MRU_BASE                     44000
 #define ID_MRU_1                        44001
