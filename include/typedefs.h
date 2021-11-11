@@ -24,6 +24,11 @@
 #ifndef TYPEDEFS_H
 #define TYPEDEFS_H
 
+#if !defined(UNICODE) && !defined(__MINGW64_VERSION_MAJOR)
+extern long _ttol(const TCHAR*);
+extern int _ttoi(const TCHAR*);
+#endif
+
 #include "consts.h"
 #include <pshpack1.h>
 typedef struct DLGTEMPLATEEX
