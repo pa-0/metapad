@@ -654,6 +654,7 @@ BEGIN
         MENUITEM "Newline",                     ID_ESCAPE_NEWLINE
         MENUITEM "Tab",                         ID_ESCAPE_TAB
         MENUITEM "Backslash",                   ID_ESCAPE_BACKSLASH
+		MENUITEM "Any Character",               ID_ESCAPE_ANY
         MENUITEM SEPARATOR
         MENUITEM "Hex Value",                   ID_ESCAPE_HEX
 #ifdef UNICODE

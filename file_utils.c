@@ -49,6 +49,8 @@ extern HWND hwnd;
 extern LPTSTR szCaptionFile;
 extern LPTSTR szDir;
 extern LPTSTR szFile;
+extern lpszShadow, lpszShadowRange;
+extern shadowLen, shadowRngStart, shadowRngLen, shadowAlloc;
 
 extern option_struct options;
 
@@ -57,9 +59,9 @@ extern option_struct options;
  *
  * @return Current file's size.
  */
-long CalculateFileSize(void)
+DWORD CalculateFileSize(void)
 {
-	long nBytes;
+	DWORD nBytes;
 	extern HANDLE globalHeap;
 	if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE) {
 		nBytes = GetWindowTextLength(client) * 2 + SIZEOFBOM_UTF_16;
@@ -74,13 +76,11 @@ long CalculateFileSize(void)
 				- Do this in the background with ratelimiting
 				- Keep a local copy of the text buffer
 			*/
-			LPTSTR szBuffer = (LPTSTR)HeapAlloc(globalHeap, 0, (nBytes + 1)*sizeof(TCHAR));
-			GetWindowText(client, szBuffer, nBytes+1);
+			LPTSTR szBuffer = GetShadowBuffer(&nBytes);
 			nBytes = WideCharToMultiByte(CP_UTF8, 0, szBuffer, nBytes, NULL, 0, NULL, NULL);
 			for ( ; *szBuffer; szBuffer++)
 				if (*szBuffer == _T('\r'))
 					nBytes--;
-			FREE(szBuffer);
 		}
 #endif
 		nBytes += SIZEOFBOM_UTF_8;
@@ -224,114 +224,75 @@ void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut)
 	}
 }
 
-BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL bWholeWord)
-{
-	BOOL bRes;
-	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
-	CHARRANGE cr;
 
+
+
+
+
+LPCTSTR GetShadowBuffer(DWORD* len) {
+	if (!lpszShadow || SendMessage(client, EM_GETMODIFY, 0, 0)) {
+		shadowLen = GetWindowTextLength(client);
+		if (shadowLen + 1 > shadowAlloc) {
+			FREE(lpszShadow);
+			lpszShadow = (LPTSTR) HeapAlloc(globalHeap, 0, shadowAlloc * sizeof(TCHAR));
+			if (!lpszShadow) ReportLastError();
+			shadowAlloc = shadowLen + 1;
+		}
+#ifdef USE_RICH_EDIT
+		{
+			TEXTRANGE tr;
+			tr.chrg.cpMin = 0;
+			tr.chrg.cpMax = -1;
+			tr.lpstrText = lpszShadow;
+			SendMessage(client, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
+		}
+#else
+		GetWindowText(client, lpszShadow, nSize);
+#endif
+		SendMessage(client, EM_SETMODIFY, (WPARAM) FALSE, 0);
+	}
+	if (len) *len = shadowLen;
+	return lpszShadow;
+}
+LPCTSTR GetShadowRange(LONG min, LONG max, DWORD* len) {
+	LPCTSTR sbuf, osbuf = lpszShadow;
+	DWORD len = max - min;
+	if (max <= min && max >= 0){
+		if (len) *len = 0;
+		return _T("");
+	}
+	sbuf = GetShadowBuffer();
+	if (min < 0) min = 0;
+	if (max < 0) len = shadowLen;
+	if (!lpszShadowRange || sbuf != osbuf || min != shadowRngStart || len != shadowRngLen){
+		shadowRngStart = min;
+		shadowRngLen = len;
+		FREE(lpszShadowRange);
+		lpszShadowRange = (LPTSTR) HeapAlloc(globalHeap, 0, (len+1) * sizeof(TCHAR));
+		lstrcpyn(lpszShadowRange, sbuf + min, len + 1);
+	}
+	if (len) *len = shadowRngLen;
+	return lpszShadowRange;
+}
+LPCTSTR GetShadowSelection(DWORD* len) {
+	CHARRANGE cr;
 #ifdef USE_RICH_EDIT
 	SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
 #else
 	SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
 #endif
-	bRes = DoSearch(szText, cr.cpMin, cr.cpMax, bDown, bWholeWord, bCase, FALSE);
-
-	if (bRes || bReplaceAll) {
-		SetCursor(hcur);
-		return bRes;
-	}
-
-	if (!options.bFindAutoWrap && MessageBox(hdlgFind ? hdlgFind : client, bDown ? GetString(IDS_QUERY_SEARCH_TOP) : GetString(IDS_QUERY_SEARCH_BOTTOM), STR_METAPAD, MB_OKCANCEL|MB_ICONQUESTION) == IDCANCEL) {
-		SetCursor(hcur);
-		return FALSE;
-	}
-	else if (options.bFindAutoWrap) MessageBeep(MB_OK);
-
-	bRes = DoSearch(szText, cr.cpMin, cr.cpMax, bDown, bWholeWord, bCase, TRUE);
-
-	SetCursor(hcur);
-	if (!bRes)
-		MessageBox(hdlgFind ? hdlgFind : client, GetString(IDS_ERROR_SEARCH), STR_METAPAD, MB_OK|MB_ICONINFORMATION);
-
-	return bRes;
+	return GetShadowRange(cr.cpMin, cr.cpMax, len);
 }
 
-#ifdef USE_RICH_EDIT
-BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWord, BOOL bCase, BOOL bFromTop)
-{
-	LONG lPrevStart = 0;
-	UINT nFlags = FR_DOWN;
-	FINDTEXT ft;
-	CHARRANGE cr;
 
-	if (bWholeWord)
-		nFlags |= FR_WHOLEWORD;
 
-	if (bCase)
-		nFlags |= FR_MATCHCASE;
 
-	ft.lpstrText = (LPTSTR)szText;
-
-	if (bDown) {
-		if (bFromTop)
-			ft.chrg.cpMin = 0;
-		else
-			ft.chrg.cpMin = lStart + (lStart == lEnd ? 0 : 1);
-		ft.chrg.cpMax = nReplaceMax;
-
-		cr.cpMin = SendMessage(client, EM_FINDTEXT, (WPARAM)nFlags, (LPARAM)&ft);
-
-		if (_tcschr(szText, _T('\r'))) {
-			LONG lLine, lLines;
-
-			lLine = SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)cr.cpMin);
-			lLines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
-
-			if (lLine == lLines - 1) {
-				return FALSE;
-			}
-		}
-
-		if (cr.cpMin == -1)
-			return FALSE;
-		cr.cpMax = cr.cpMin + lstrlen(szText);
-
-		SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-	}
-	else {
-		ft.chrg.cpMin = 0;
-		if (bFromTop)
-			ft.chrg.cpMax = -1;
-		else
-			ft.chrg.cpMax = (lStart == lEnd ? lEnd : lEnd - 1);
-		lStart = SendMessage(client, EM_FINDTEXT, (WPARAM)nFlags, (LPARAM)&ft);
-		if (lStart == -1)
-			return FALSE;
-		else {
-			while (lStart != -1) {
-				lPrevStart = lStart;
-				lStart = SendMessage(client, EM_FINDTEXT, (WPARAM)nFlags, (LPARAM)&ft);
-				ft.chrg.cpMin = lStart + 1;
-			}
-		}
-		cr.cpMin = lPrevStart;
-		cr.cpMax = lPrevStart + lstrlen(szText);
-		SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-	}
-	if (!bReplacingAll)	UpdateStatus();
-	return TRUE;
-}
-#else
-typedef int (WINAPI* CMPFUNC)(LPCTSTR str1, LPCTSTR str2);
-
-BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWord, BOOL bCase, BOOL bFromTop)
+BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWord, BOOL bCase, BOOL bFromTop, LPBYTE anys)
 {
 	LONG lSize;
-	int nFindLen = lstrlen(szText);
 	LPCTSTR szBuffer = GetShadowBuffer();
-	LPCTSTR lpszStop, lpsz, lpszFound = NULL;
-	CMPFUNC pfnCompare = bCase ? lstrcmp : lstrcmpi;
+	LPCTSTR lpszStop, lpsz, lpfs = NULL, lpszFound = NULL;
+	DWORD cf, nFindLen = lstrlen(szText), f = 1;
 
 	lSize = GetWindowTextLength(client);
 
@@ -354,29 +315,21 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 		lpsz = szBuffer;
 	}
 
-	while (lpszStop != szBuffer && lpsz <= lpszStop - (bDown ? 0 : nFindLen-1) && (!bDown || (bDown && lpszFound == NULL))) {
-		if ((bCase && *lpsz == *szText) || (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*lpsz) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szText)) {
-			LPTSTR lpch = (LPTSTR)(lpsz + nFindLen);
-			TCHAR chSave = *lpch;
-			int nResult;
-
-			*lpch = _T('\0');
-			nResult = (*pfnCompare)(lpsz, szText);
-			*lpch = chSave;
-
-
-			if (bWholeWord && lpsz > szBuffer && (_istalnum(*(lpsz-1)) || *(lpsz-1) == _T('_') || _istalnum(*(lpsz + nFindLen)) || *(lpsz + nFindLen) == _T('_')))
-			;
-			else if (nResult == 0) {
+	for (cf = 0; lpszStop != szBuffer && lpsz <= lpszStop - (bDown ? 0 : nFindLen-1) && (!bDown || (bDown && lpszFound == NULL)); lpsz++, f = 0) {
+		if ((anys && *anys++) || *lpsz == szText[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*lpsz) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szText[cf]))) {
+			if (!lpfs) lpfs = lpsz;
+			if (++cf == nFindLen && (!bWholeWord || ( (f || !(_istalnum(*(lpfs-1)) || *(lpfs-1) == _T('_'))) && !(*(lpsz+1) && (_istalnum(*(lpsz+1)) || *(lpsz+1) == _T('_'))) )))
 				lpszFound = lpsz;
-			}
+		} else if (lpfs) {
+			lpfs = NULL;
+			cf = 0;
+			continue;
 		}
 		lpsz++;
 	}
 
 	if (lpszFound != NULL) {
 		LONG lEnd;
-
 		lStart = lpszFound - szBuffer;
 		lEnd = lStart + nFindLen;
 		SendMessage(client, EM_SETSEL, (WPARAM)lStart, (LPARAM)lEnd);
@@ -385,8 +338,148 @@ BOOL DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWor
 	}
 	return FALSE;
 }
+
+BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL bWholeWord, LPBYTE anys)
+{
+	BOOL bRes;
+	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
+	CHARRANGE cr;
+
+#ifdef USE_RICH_EDIT
+	SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
+#else
+	SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
 #endif
+	bRes = DoSearch(szText, cr.cpMin, cr.cpMax, bDown, bWholeWord, bCase, FALSE, anys);
 
-DWORD ReplaceAll(LPTSTR* szBuf, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, BOOL bCase, BOOL bWholeWord){
+	if (bRes || bReplaceAll) {
+		SetCursor(hcur);
+		return bRes;
+	}
 
+	if (!options.bFindAutoWrap && MessageBox(hdlgFind ? hdlgFind : client, bDown ? GetString(IDS_QUERY_SEARCH_TOP) : GetString(IDS_QUERY_SEARCH_BOTTOM), STR_METAPAD, MB_OKCANCEL|MB_ICONQUESTION) == IDCANCEL) {
+		SetCursor(hcur);
+		return FALSE;
+	}
+	else if (options.bFindAutoWrap) MessageBeep(MB_OK);
+
+	bRes = DoSearch(szText, cr.cpMin, cr.cpMax, bDown, bWholeWord, bCase, TRUE, anys);
+
+	SetCursor(hcur);
+	if (!bRes)
+		MessageBox(hdlgFind ? hdlgFind : client, GetString(IDS_ERROR_SEARCH), STR_METAPAD, MB_OK|MB_ICONINFORMATION);
+
+	return bRes;
 }
+
+
+
+
+
+DWORD StrReplaceAll(LPCTSTR szBuf, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, BOOL bCase, BOOL bWholeWord, LPBYTE anys){
+	LONG ld;
+	DWORD len, alen, lf, lr, ct = 0, cf, f = 1;
+	LPTSTR src, dst, odst, pd;
+	if (!szBuf || !szFind || !*szFind) return ct;
+	len = alen = (bufLen && *bufLen >= 0 ? *bufLen : lstrlen(*szBuf));
+	if (len < 1) return ct;
+	src = szBuf;
+	dst = odst = (LPTSTR)HeapAlloc(globalHeap, 0, (alen+1) * sizeof(TCHAR));
+	szRepl = SCNUL(szRepl);
+	lf = lstrlen(szFind);
+	lr = lstrlen(szRepl);
+	ld = lr - lf;
+	src[len] = _T('\0');
+	for (cf = 0, pd = NULL; *src; f = 0) {
+		if ((anys && *anys++) || *src == szFind[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*src) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szFind[cf]))) {
+			if (!pd) pd = dst;
+			if (++cf == lf && (!bWholeWord || ( (f || !(_istalnum(*(pd-1)) || *(pd-1) == _T('_'))) && !(*(src+1) && (_istalnum(*(src+1)) || *(src+1) == _T('_'))) ))) {
+				len += ld;
+				if (len > alen) {
+					alen = ((len + 1) / 2) * 3;
+					dst = (LPTSTR)HeapAlloc(globalHeap, 0, (alen+1) * sizeof(TCHAR));
+					lstrcpyn(dst, odst, pd - odst + 1);
+					pd = dst + (pd - odst);
+					FREE(odst);
+					odst = dst;
+				}
+				lstrcpyn(pd, szRepl, lr + 1);
+				dst = pd + lr;
+				pd = NULL;
+				cf = 0;
+				src++;
+				ct++;
+				continue;
+			}
+		} else if (pd) {
+			pd = NULL;
+			cf = 0;
+			if (anys) anys--;
+			continue;
+		}
+		*dst++ = *src++;
+	}
+	*dst = _T('\0');
+	if (bufLen) *bufLen = len;
+	if (szOut) {
+		FREE(*szOut);
+		*szOut = odst;
+	}
+	return ct;
+}
+
+DWORD ReplaceAll(HWND owner, LPTSTR szFind, LPTSTR szRepl, BOOL selection, BOOL escape, BOOL bCase, BOOL bWholeWord, LPBYTE anys, LPCTSTR header, LPCTSTR footer){
+	HCURSOR hCur;
+	LPCTSTR szIn;
+	LPTSTR szBuf = NULL, szTmp = NULL;
+	CHARRANGE cr;
+	DWORD l, r, lh = 0, lf = 0;
+
+	if (!szFind || !*szFind) return 0;
+	if (!owner) owner = hwnd;
+	if (header) lh = lstrlen(header);
+	if (footer) lf = lstrlen(footer);
+	hCur = SetCursor(LoadCursor(NULL, IDC_WAIT));
+	if (selection){
+		szIn = GetShadowSelection(&l);
+		if (!l) {
+			MessageBox(owner, GetString(IDS_NO_SELECTED_TEXT), STR_METAPAD, MB_OK|MB_ICONINFORMATION);
+			return 0;
+		}
+	} else
+		szIn = GetShadowBuffer(&l);
+	if (lh || lf) {
+		szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, (l + lh + lf) * sizeof(TCHAR));
+		if (lh) lstrcpy(szTmp, header);
+		lstrcpy(szTmp + lh, szIn);
+		if (lf) lstrcpy(szTmp+lh+l, footer);
+		szIn = (LPCTSTR)szTmp;
+	}
+	l += lh+lf;
+	if (escape){
+		FREE(anys);
+		anys = (LPBYTE)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, lstrlen(szFind)+1);
+		ParseForEscapeSeqs(szFind, anys, NULL);
+		ParseForEscapeSeqs(szRepl, NULL, NULL);
+	}
+	r = StrReplaceAll(szIn, &szBuf, &l, szFind, szRepl, bMatchCase, bWholeWord, anys);
+	SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
+	if (!selection) {
+		cr.cpMin = 0; cr.cpMax = -1;
+#ifdef USE_RICH_EDIT
+		SendMessage(client, EM_EXSETSEL, 0, (LPARAM)cr);
+#else
+		SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
+#endif
+	}
+	szBuf[l - lf] = _T('\0');
+	SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)(szBuf+lh));
+	FREE(szTmp);
+	FREE(szBuf);
+	FREE(anys);
+	SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
+	InvalidateRect(client, NULL, TRUE);
+	SetCursor(hCur);
+	return r;
+}
+

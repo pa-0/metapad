@@ -68,22 +68,21 @@ BOOL SaveFile(LPCTSTR szFilename);
  * @param[in] szBuffer String to convert.
  * @note This conversion consist in removing carriage returns.
  */
-static __inline void ConvertToUnix(LPTSTR szBuffer)
+static __inline void ConvertToUnix(LPCTSTR *szBuffer, BOOL *bufDirty)
 {
-	UINT i = 0, j = 0;
 	LPTSTR szTemp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(szBuffer)+1) * sizeof(TCHAR));
-
 	lstrcpy(szTemp, szBuffer);
-
-	while (szTemp[i]) {
-		if (szTemp[i] != _T('\r')) {
-			szBuffer[j] = szTemp[i];
-			j++;
-		}
-		i++;
+	for (*szBuffer--; **++szBuffer; ) {
+		if (**szBuffer != _T('\r'))
+			szTemp++ = **szBuffer;
 	}
-	szBuffer[j] = _T('\0');
-	HeapFree(globalHeap, 0, (HGLOBAL)szTemp);
+	szTemp++ = _T('\0');
+	if (bufDirty){
+		if (*bufDirty)
+			FREE(*szBuffer);
+		*bufDirty = TRUE;
+	}
+	*szBuffer = szTemp;
 }
 #else
 /**
@@ -92,7 +91,7 @@ static __inline void ConvertToUnix(LPTSTR szBuffer)
  * @param[in] szBuffer Pointer to the string to convert.
  * @note This conversion consists in adding one line break after every carriage return.
  */
-static __inline void RichModeToDos(LPTSTR *szBuffer)
+static __inline void RichModeToDos(LPCTSTR *szBuffer, BOOL *bufDirty)
 {
 	int cnt = 0;
 	int i = 0, j;
@@ -104,7 +103,7 @@ static __inline void RichModeToDos(LPTSTR *szBuffer)
 	}
 
 	if (cnt) {
-		LPTSTR szNewBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(*szBuffer)+cnt+2) * sizeof(TCHAR));
+		LPTSTR szNewBuffer = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(*szBuffer)+cnt+2) * sizeof(TCHAR));
 		i = j = 0;
 		while ((*szBuffer)[i] != _T('\0')) {
 			if ((*szBuffer)[i] == _T('\r')) {
@@ -118,7 +117,11 @@ static __inline void RichModeToDos(LPTSTR *szBuffer)
 		}
 		szNewBuffer[j] = _T('\0');
 
-		HeapFree(globalHeap, 0, (HGLOBAL) *szBuffer);
+		if (bufDirty){
+			if (*bufDirty)
+				FREE(*szBuffer);
+			*bufDirty = TRUE;
+		}
 		*szBuffer = szNewBuffer;
 	}
 }
@@ -282,18 +285,19 @@ BOOL SaveFile(LPCTSTR szFilename)
 {
 	HANDLE hFile;
 	LONG i, lChars;
-	DWORD dwActualBytesWritten = 0;
-	LPTSTR szBuffer;
+	DWORD dwActualBytesWritten = 0, l;
+	LPCTSTR szBuffer;
+	LPTSTR szTmp;
 	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
-	LPTSTR pNewBuffer = NULL;
 	TCHAR cPad;
 	LONG nBytesNeeded = 0;
 	UINT nonansi = 0;
 	UINT cp = CP_ACP;
 	TCHAR szUncFn[MAXFN+6] = _T("\\\\?\\");
+	BOOL bufDirty = FALSE;
 
-	lChars = GetWindowTextLength(client);
-	szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lChars + 1)*sizeof(TCHAR));
+	szBuffer = GetShadowBuffer(&l);
+	lChars = (LONG)l;
 
 	lstrcpy(szUncFn+4, szFilename);
 	hFile = (HANDLE)CreateFile(szUncFn, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -302,27 +306,17 @@ BOOL SaveFile(LPCTSTR szFilename)
 		return FALSE;
 	}
 
-#ifdef USE_RICH_EDIT
-		{
-			TEXTRANGE tr;
-
-			tr.chrg.cpMin = 0;
-			tr.chrg.cpMax = -1;
-			tr.lpstrText = szBuffer;
-
-			SendMessage(client, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
-		}
-#else
-	GetWindowText(client, szBuffer, lChars+1);
-#endif
-
 	if (bBinaryFile && sizeof(TCHAR) > 1) {
 #ifdef UNICODE
 		cPad = _T('\x2400');
 #endif
+		szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, (l+1) * sizeof(TCHAR));
+		lstrcpy(pNewBuffer, szBuffer);
 		for (i = 0; i < lChars; i++)
-			if (szBuffer[i] == cPad)
-				szBuffer[i] = _T('\0');
+			if (szTmp[i] == cPad)
+				szTmp[i] = _T('\0');
+		szBuffer = (LPCTSTR)szTmp;
+		bufDirty = TRUE;
 	}
 
 	if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE) {
@@ -330,27 +324,35 @@ BOOL SaveFile(LPCTSTR szFilename)
 		if (lChars) {
 
 #ifdef USE_RICH_EDIT
-			RichModeToDos(&szBuffer);
+			RichModeToDos(&szBuffer, &bufDirty);
 #endif
 
 			if (sizeof(TCHAR) < 2) {
 				nBytesNeeded = 2 * MultiByteToWideChar(cp, 0, (LPCSTR)szBuffer, lChars, NULL, 0);
-				pNewBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+1);
-				if (pNewBuffer == NULL)
+				szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, nBytesNeeded+1);
+				if (!szTmp)
 					ReportLastError();
-				else if (!MultiByteToWideChar(cp, 0, (LPCSTR)szBuffer, lChars, (LPWSTR)pNewBuffer, nBytesNeeded)) {
+				else if (!MultiByteToWideChar(cp, 0, (LPCSTR)szBuffer, lChars, (LPWSTR)szTmp, nBytesNeeded)) {
 					ReportLastError();
 					ERROROUT(GetString(IDS_UNICODE_STRING_ERROR));
 				}
-			} else {
-				pNewBuffer = szBuffer;
+				if (bufDirty) FREE(szBuffer);
+				szBuffer = (LPCTSTR)szTmp;
+				bufDirty = TRUE;
+			} else
 				nBytesNeeded = lChars * sizeof(TCHAR);
-			}
 		}
 
 		if (nEncodingType == TYPE_UTF_16_BE) {
 			const CHAR szBOM_UTF_16_BE[SIZEOFBOM_UTF_16] = {'\376', '\377'};
-			if (pNewBuffer) ReverseBytes((LPBYTE)pNewBuffer, nBytesNeeded);
+			if (!bufDirty) {
+				szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, nBytesNeeded+1);
+				lstrcpy(szTmp, szBuffer);
+				FREE(szBuffer);
+				szBuffer = (LPCTSTR)szTmp;
+				bufDirty = TRUE;
+			}
+			ReverseBytes((LPBYTE)szBuffer, nBytesNeeded);
 			// 0xFE, 0xFF - leave off _T() macro.
 			WriteFile(hFile, szBOM_UTF_16_BE, SIZEOFBOM_UTF_16, &dwActualBytesWritten, NULL);
 		} else {
@@ -364,33 +366,31 @@ BOOL SaveFile(LPCTSTR szFilename)
 		}
 
 		if (lChars) {
-			if (!WriteFile(hFile, pNewBuffer, nBytesNeeded, &dwActualBytesWritten, NULL)) {
+			if (!WriteFile(hFile, szBuffer, nBytesNeeded, &dwActualBytesWritten, NULL))
 				ReportLastError();
-			}
-			if (sizeof(TCHAR) < 2)
-				HeapFree(globalHeap, 0, (HGLOBAL)pNewBuffer);
 		}
-		else {
+		else
 			dwActualBytesWritten = 0;
-		}
 	}
 	else {
 #ifdef USE_RICH_EDIT
 		if (bUnix) {
 			int i = 0;
-			while (szBuffer[i]) {
-				if (szBuffer[i] == _T('\r'))
-					szBuffer[i] = _T('\n');
+			szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, (l+1) * sizeof(TCHAR));
+			while (szTmp[i]) {
+				if (szTmp[i] == _T('\r'))
+					szTmp[i] = _T('\n');
 				i++;
 			}
-			lChars = lstrlen(szBuffer);
-		}
-		else {
-			RichModeToDos(&szBuffer);
+			if (bufDirty) FREE(szBuffer);
+			szBuffer = (LPCTSTR)szTmp;
+			bufDirty = TRUE;
+		} else {
+			RichModeToDos(&szBuffer, &bufDirty);
 		}
 #else
 		if (bUnix) {
-			ConvertToUnix(szBuffer);
+			ConvertToUnix(&szBuffer, &bufDirty);
 			lChars = lstrlen(szBuffer);
 		}
 #endif
@@ -405,39 +405,33 @@ BOOL SaveFile(LPCTSTR szFilename)
 			cp = CP_UTF8;
 		}
 
+		nBytesNeeded = lChars;
 #ifdef UNICODE
 		if (lChars && sizeof(TCHAR) > 1) {	//if we're internally Unicode and the buffer is non-empty, conversion is needed
 			nBytesNeeded = WideCharToMultiByte(cp, 0, szBuffer, lChars, NULL, 0, NULL, NULL);
-			if (NULL == (pNewBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded)))
+			if (NULL == (szTmp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded)))
 				ReportLastError();
-			else if (!WideCharToMultiByte(cp, 0, szBuffer, lChars, (LPSTR)pNewBuffer, nBytesNeeded, NULL, (cp != CP_ACP ? NULL : &nonansi)))
+			else if (!WideCharToMultiByte(cp, 0, szBuffer, lChars, (LPSTR)szTmp, nBytesNeeded, NULL, (cp != CP_ACP ? NULL : &nonansi)))
 				ReportLastError();
 			else if (nonansi)
 				ERROROUT(GetString(IDS_UNICODE_SAVE_TRUNCATION));
-		} else 
+			if (bufDirty) FREE(szBuffer);
+			szBuffer = (LPCTSTR)szTmp;
+			bufDirty = TRUE;
+		}
 #endif
-		{
-			pNewBuffer = szBuffer;
-			nBytesNeeded = lChars;
-
-		}
-		if (!WriteFile(hFile, pNewBuffer, nBytesNeeded, &dwActualBytesWritten, NULL)) {
+		if (!WriteFile(hFile, szBuffer, nBytesNeeded, &dwActualBytesWritten, NULL))
 			ReportLastError();
-		}
-		if (lChars && sizeof(TCHAR) > 1)
-			HeapFree(globalHeap, 0, (HGLOBAL)pNewBuffer);
 	}
 
 	SetEndOfFile(hFile);
 	CloseHandle(hFile);
-
+	if (bufDirty) FREE(szBuffer);
 	SetCursor(hcur);
-	HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
 	if (dwActualBytesWritten != (DWORD)nBytesNeeded) {
 		ERROROUT(GetString(IDS_ERROR_LOCKED));
 		return FALSE;
 	}
-	else
-		return TRUE;
+	return TRUE;
 }
 

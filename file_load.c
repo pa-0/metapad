@@ -604,7 +604,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 #endif
 	if (lActualCharsRead != GetWindowTextLength(client) && bLoading) {
 		i = (sizeof(TCHAR) > 1 ? IDS_BINARY_FILE_WARNING_SAFE : IDS_BINARY_FILE_WARNING);
-		if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(i), STR_METAPAD, MB_ICONQUESTION|MB_YESNO) == IDYES) {
+		if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(i), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDOK) {
 			for (i = 0; i < lBufferLength; i++)
 				if (szBuffer[i] == _T('\0'))
 					szBuffer[i] = cPad;
