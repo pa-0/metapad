@@ -34,6 +34,7 @@
 #define HEIGHT(x)		(x.bottom - x.top + 1)
 
 #define FREE(x) {\
+	/*if (x) printf("FREE %08X : %.32ls\n", x, x);*/\
 	if (x) HeapFree(globalHeap, 0, (HGLOBAL)x);\
 	x = NULL; }
 #define SSTRCPY(tgt, src) SSTRCPYA(tgt, src, 1)

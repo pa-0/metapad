@@ -27,7 +27,7 @@
 long CalculateFileSize(void);
 void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut);
 BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bReplaceAll, BOOL bDown, BOOL bWholeWord, LPBYTE anys);
-DWORD ReplaceAll(HWND owner, LPTSTR szFind, LPTSTR szRepl, BOOL selection, BOOL escape, BOOL bCase, BOOL bWholeWord, LPBYTE anys, LPCTSTR header, LPCTSTR footer);
+DWORD ReplaceAll(HWND owner, LPCTSTR szFind, LPCTSTR szRepl, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, LPBYTE anys, LPCTSTR header, LPCTSTR footer);
 DWORD StrReplaceAll(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, BOOL bCase, BOOL bWholeWord, LPBYTE anys);
 void SetFileFormat(int nFormat);
 
