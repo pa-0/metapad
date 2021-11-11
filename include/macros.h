@@ -48,13 +48,25 @@
 #define SCNULD(x, def)	(x ? x : def)
 /*#define ALLOCF(x, t, f, sz) {\
 	x = (t)HeapAlloc(globalHeap, f, sz);\
-	if (!x) { ReportLastError(); x = NULL; }\
+	if (!x) ReportLastError();\
 }
 #define ALLOCF(t, f, sz) ((t)HeapAlloc(globalHeap, f, sz))
 #define ALLOC(t, sz) ALLOCF(t, 0, sz)
 #define ALLOCZ(t, sz) ALLOCF(t, HEAP_ZERO_MEMORY, sz)
 #define ALLOCS(sz) ALLOC(LPTSTR, ((sz)+1) * sizeof(TCHAR))
 #define ALLOCSZ(sz) ALLOCZ(LPTSTR, ((sz)+1) * sizeof(TCHAR))*/
+#define GROWBUF(old, new, len, alen, pos, type, size) {\
+	if (len > alen) {\
+		alen = ((len + 1) / 2) * 3;\
+		if (!(new = (type)HeapAlloc(globalHeap, 0, (alen+1) * sizeof(size)))) {\
+			ReportLastError();\
+			return 0;\
+		}\
+		lstrcpyn(new, old, pos - old + 1);\
+		pos = new + (pos - old);\
+		FREE(old);\
+		old = new;\
+	} }
 
 #define RAND() ((randVal = randVal * 214013L + 2531011L) >> 16)
 
