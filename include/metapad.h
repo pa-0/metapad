@@ -103,7 +103,7 @@ typedef struct tag_options {
 	BOOL bUnFlatToolbar;
 	BOOL bStickyWindow;
 	BOOL bReadOnlyMenu;
-	UINT nStatusFontWidth;
+//	UINT nStatusFontWidth;
 	UINT nSelectionMarginWidth;
 	UINT nMaxMRU;
 	DWORD nFormat;
@@ -141,19 +141,27 @@ typedef struct tag_options {
 ///// Prototypes /////
 
 LPTSTR GetString(UINT uID);
+BOOL EncodeWithEscapeSeqs(TCHAR* szText);
+BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext);
+void SwitchReadOnly(BOOL bNewVal);
 BOOL GetCheckedState(HMENU hmenu, UINT nID, BOOL bToggle);
 void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap);
+void UpdateCaption(void);
+void QueueUpdateStatus(void);
+void UpdateStatus(BOOL refresh);
+LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK AbortDlgProc(HDC hdc, int nCode);
 LRESULT CALLBACK AbortPrintJob(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 void PrintContents(void);
 void ReportError(UINT);
 void ReportLastError(void);
+void SaveMRUInfo(LPCTSTR szFullPath);
+void PopulateMRUList(void);
 void CenterWindow(HWND hwndCenter);
 void SelectWord(LPTSTR* target, BOOL bSmart, BOOL bAutoSelect);
 void SetFont(HFONT* phfnt, BOOL bPrimary);
-void SetTabStops(void);
-void UpdateStatus(BOOL refresh);
 BOOL SetClientFont(BOOL bPrimary);
+void SetTabStops(void);
 BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -161,13 +169,6 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam);
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow);
-LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void PopulateMRUList(void);
-void SaveMRUInfo(LPCTSTR szFullPath);
-void SwitchReadOnly(BOOL bNewVal);
-BOOL EncodeWithEscapeSeqs(TCHAR* szText);
-BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext);
-void UpdateCaption(void);
 
 
 // language_plugin.c //
@@ -182,10 +183,9 @@ void LaunchExternalViewer(int);
 
 
 // file_load.c //
-DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* format);
 BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert);
 BOOL LoadFileFromMenu(WORD wMenu, BOOL bMRU);
-BOOL BrowseFile(BOOL load, BOOL bMRU, BOOL insert, LPTSTR* fileName)
+BOOL BrowseFile(LPCTSTR defExt, LPCTSTR defDir, LPCTSTR filter, BOOL load, BOOL bMRU, BOOL insert, LPTSTR* fileName);
 
 
 // file_save.c //
@@ -208,8 +208,8 @@ LPCTSTR GetShadowLine(LONG line, LONG cp, DWORD* len, LONG* lineout, CHARRANGE* 
 DWORD GetColNum(LONG cp, LONG line, DWORD* lineLen, LONG* lineout, CHARRANGE* pcr);
 DWORD GetCharIndex(DWORD col, LONG line, LONG cp, DWORD* lineLen, LONG* lineout, CHARRANGE* pcr);
 
-DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BOOL inclBOM, DWORD* numChars);
-DWORD GetTextChars(LPCTSTR szText, BOOL unix);
+DWORD GetTextChars(LPCTSTR szText);
+DWORD CalcTextSize(LPCTSTR* szText, CHARRANGE* range, DWORD estBytes, DWORD format, BOOL inclBOM, DWORD* numChars);
 void UpdateSavedInfo();
 
 BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE pbFindSpec);

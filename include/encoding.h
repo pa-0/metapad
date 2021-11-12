@@ -45,6 +45,7 @@ BOOL IsTextUTF8(LPBYTE buf);
 WORD GetLineFmt(LPCTSTR sz, DWORD len, DWORD* nCR, DWORD* nLF, DWORD* nStrays, DWORD* nSub, BOOL* binary);
 void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DWORD nStrays, DWORD nSub, BOOL* bufDirty);
 void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDirty);
+LONG ExportLineFmtDelta(LPCTSTR sz, DWORD* chars, WORD lfmt);
 void ImportBinary(LPTSTR sz, DWORD len);
 void ExportBinary(LPTSTR sz, DWORD len);
 
