@@ -61,18 +61,11 @@
 #define STATUS_FONT_CONST 1.4
 #define IDT_UPDATE 1
 
-#ifdef USE_RICH_EDIT
-#define RECENTPOS (options.bReadOnlyMenu ? 15 : 14)
-#define CONVERTPOS 8
-#else
-#define RECENTPOS (options.bReadOnlyMenu ? 14 : 13)
-#define CONVERTPOS 7
-#endif
-
-#define FILEFORMATPOS (options.bReadOnlyMenu ? 8 : 7)
-#define EDITPOS (options.bRecentOnOwn ? 2 : 1)
-#define READONLYPOS 4
-#define FAVEPOS (options.bRecentOnOwn ? 3 : 2)
+#define MPOS_FILE_READONLY 4
+#define MPOS_FILE_FORMAT (options.bReadOnlyMenu ? 8 : 7)
+#define MPOS_FILE_RECENT (options.bReadOnlyMenu ? 14 : 13)
+#define MPOS_EDIT (options.bRecentOnOwn ? 2 : 1)
+#define MPOS_FAVE (options.bRecentOnOwn ? 3 : 2)
 
 #define ID_CLIENT 100
 #define ID_STATUSBAR 101

@@ -51,7 +51,7 @@ void SelectWord(LPTSTR* target, BOOL bSmart, BOOL bAutoSelect);
 void SetFont(HFONT* phfnt, BOOL bPrimary);
 void SetTabStops(void);
 //void NextWord(BOOL bRight, BOOL bSelect); // Uninmplemented.
-void UpdateStatus(void);
+void UpdateStatus(BOOL refresh);
 BOOL SetClientFont(BOOL bPrimary);
 BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);

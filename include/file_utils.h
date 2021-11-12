@@ -31,7 +31,7 @@
 
 void MakeNewFile(void);
 
-long CalculateFileSize(void);
+DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BOOL inclBOM);
 void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut);
 BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE pbFindSpec);
 DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* szRepl, LPBYTE* pbFindSpec, LPBYTE* pbReplSpec, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen, LPCTSTR header, LPCTSTR footer);
@@ -43,7 +43,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len);
 LPCTSTR GetShadowSelection(DWORD* len, CHARRANGE* pcr);
 LPCTSTR GetShadowLine(LONG line, LONG cp, DWORD* len, LONG* lineout, CHARRANGE* pcr);
 
-DWORD GetColNum(LONG cp, LONG line, DWORD* lineLen, CHARRANGE* pcr);
-DWORD GetCharIndex(DWORD col, LONG line, LONG cp, DWORD* lineLen, CHARRANGE* pcr);
+DWORD GetColNum(LONG cp, LONG line, DWORD* lineLen, LONG* lineout, CHARRANGE* pcr);
+DWORD GetCharIndex(DWORD col, LONG line, LONG cp, DWORD* lineLen, LONG* lineout, CHARRANGE* pcr);
 
 #endif

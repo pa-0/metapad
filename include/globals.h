@@ -67,28 +67,27 @@ UINT nMRUTop;
 //UINT uFindReplaceMsg;
 int nStatusHeight, nToolbarHeight;
 LPTSTR szCustomFilter;
-BOOL bInsertMode;
-int nReplaceMax;
+BOOL bInsertMode, bQuitApp;
 HWND hwndSheet;
 LPTSTR FindArray[NUMFINDS];
 LPTSTR ReplaceArray[NUMFINDS];
 LPTSTR InsertArray[NUMINSERTS];
-int nEncodingType;
+int nEncodingType, frDlgId, fontmainHt;
 DWORD randVal;
 BOOL g_bDisablePluginVersionChecking;
 BOOL g_bIniMode;
 
 #ifdef USE_RICH_EDIT
-BOOL bUpdated, bHyperlinks;
+BOOL bHyperlinks;
 #else
 HBRUSH BackBrush;
-BOOL bQuitApp;
 #endif
 
 int _fltused; // see CMISCDAT.C for more info on this
 
 option_struct options;
 
+DWORD updateThrottle, updateTime;
 WORD savedFormat;
 LONGLONG savedLen;
 LPBYTE savedHash[32], savedHead[32], savedFoot[32];
