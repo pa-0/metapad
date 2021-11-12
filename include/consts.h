@@ -31,7 +31,6 @@
 #define MAXQUOTE 1024
 #define MAXFIND 32767
 #define MAXINSERT 32767
-#define NUMPANES 5
 #define MAXFAVESIZE 65536
 #define MAXSTRING 500
 //#define MAXFAVES 16
@@ -46,6 +45,9 @@
 #else
 #define NUMBUTTONS 25
 #endif
+#define NUMSTATPANES 6
+#define PERFBUCKETS 32
+#define PERFRES 100
 
 #define CUSTOMBMPBASE 15
 #define NUMFINDS 25
@@ -53,10 +55,12 @@
 #define EGGNUM 15
 #define SBPANE_TYPE 0
 #define SBPANE_INS 1
-#define SBPANE_LINE 2
-#define SBPANE_COL 3
-#define SBPANE_MESSAGE 4
+#define SBPANE_SIZE 2
+#define SBPANE_LINE 3
+#define SBPANE_COL 4
+#define SBPANE_MESSAGE 5
 #define STATUS_FONT_CONST 1.4
+#define IDT_UPDATE 1
 
 #ifdef USE_RICH_EDIT
 #define RECENTPOS (options.bReadOnlyMenu ? 15 : 14)
