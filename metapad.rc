@@ -161,6 +161,16 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,171,24,50,14
 END
 
+IDD_CP DIALOG DISCARDABLE  0, 0, 228, 46
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Enter codepage number:"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDC_DATA,7,21,156,12,ES_AUTOHSCROLL | ES_NUMBER
+    DEFPUSHBUTTON   "OK",IDOK,87,7,35,14
+    PUSHBUTTON      "Cancel",IDCANCEL,87,24,35,14
+END
+
 IDD_REPLACE DIALOG DISCARDABLE  30, 18, 236, 96
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Replace"
@@ -382,9 +392,7 @@ BEGIN
     LTEXT           "Recent files to re&member:",IDC_STATIC,102,129,82,8
     EDITTEXT        IDC_EDIT_MAX_MRU,194,127,24,12,ES_CENTER |
                     ES_AUTOHSCROLL | ES_NUMBER
-    LTEXT           "&Default file format:",IDC_STATIC,102,148,58,8
-    COMBOBOX        IDC_COMBO_FORMAT,163,146,55,63,CBS_DROPDOWNLIST |
-                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Save &Default File Format",IDC_BUTTON_SAVEFORMAT,119,111,99,13
 END
 #endif
 
@@ -517,6 +525,14 @@ BEGIN
     END
 
     IDD_FAV_NAME, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 221
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 39
+    END
+
+    IDD_CP, DIALOG
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 221
@@ -705,17 +721,23 @@ BEGIN
 
         END
         MENUITEM SEPARATOR
-        POPUP "F&ile Format"
+		POPUP "F&ile Format"
         BEGIN
-            MENUITEM "&DOS Text (CR+LF)\tCtrl+1",   ID_DOS_FILE, CHECKED
-            MENUITEM "&UNIX Text (LF)\tCtrl+2",     ID_UNIX_FILE
-            MENUITEM "Un&icode\tCtrl+3",            ID_UNICODE_FILE
-            MENUITEM "Unicode (&Big Endian)\tCtrl+4", ID_UNICODE_BE_FILE
-            MENUITEM "UTF-&8 (CR+LF)\tCtrl+5",        ID_UTF8_FILE
-			MENUITEM "UTF-8 UNI&X (LF)\tCtrl+6",      ID_UTF8_UNIX_FILE
+			MENUITEM "Line Endings:",				ID_LFMT_UNKNOWN, DISABLED
+			MENUITEM "&DOS (CR+LF)\tCtrl+1",		ID_LFMT_DOS, CHECKED
+			MENUITEM "&Unix (LF)\tCtrl+2",			ID_LFMT_UNIX
+			MENUITEM "Old &Mac (CR)",				ID_LFMT_MAC
+			MENUITEM "&Unmanaged\tCtrl+0",			ID_LFMT_MIXED
+			MENUITEM SEPARATOR
+			MENUITEM "Text Encoding:",				ID_ENC_UNKNOWN, DISABLED
+			MENUITEM "&ANSI\tCtrl+7",				ID_ENC_ANSI, CHECKED
+            MENUITEM "&UTF-8\tCtrl+8",				ID_ENC_UTF8
+            MENUITEM "Un&icode\tCtrl+3",			ID_ENC_UNICODE
+            MENUITEM "Unicode (&Big Endian)\tCtrl+4",		ID_ENC_UNICODE_BE
 #ifdef UNICODE
-			MENUITEM "&Binary (Preserve NULLs)\tCtrl+7",  ID_BINARY_FILE
+			MENUITEM "&Binary (Preserve NULLs)\tCtrl+5",	ID_ENC_BINARY
 #endif
+			MENUITEM "&Other (enter codepage)...\tCtrl+9",	ID_ENC_CUSTOM
         END
         MENUITEM "&Refresh/Revert\tF5",         ID_RELOAD_CURRENT
 /*        MENUITEM "&Calculate Size\tF11",        ID_SHOWFILESIZE */
@@ -912,31 +934,32 @@ IDC_MYHAND                CURSOR  DISCARDABLE     "linkhand.cur"
 
 IDR_ACCELERATOR ACCELERATORS DISCARDABLE
 BEGIN
+    "0",            ID_LFMT_MIXED,          VIRTKEY, CONTROL, NOINVERT
     "0",            ID_MACRO_10,            VIRTKEY, ALT, NOINVERT
     "0",            ID_SET_MACRO_10,        VIRTKEY, SHIFT, ALT, NOINVERT
-    "1",            ID_DOS_FILE,            VIRTKEY, CONTROL, NOINVERT
+    "1",            ID_LFMT_DOS,            VIRTKEY, CONTROL, NOINVERT
     "1",            ID_MACRO_1,             VIRTKEY, ALT, NOINVERT
     "1",            ID_SET_MACRO_1,         VIRTKEY, SHIFT, ALT, NOINVERT
-    "2",            ID_UNIX_FILE,           VIRTKEY, CONTROL, NOINVERT
+    "2",            ID_FLMT_UNIX,           VIRTKEY, CONTROL, NOINVERT
     "2",            ID_MACRO_2,             VIRTKEY, ALT, NOINVERT
     "2",            ID_SET_MACRO_2,         VIRTKEY, SHIFT, ALT, NOINVERT
-    "3",            ID_UNICODE_FILE,        VIRTKEY, CONTROL, NOINVERT
+    "3",            ID_ENC_UNICODE,         VIRTKEY, CONTROL, NOINVERT
     "3",            ID_MACRO_3,             VIRTKEY, ALT, NOINVERT
     "3",            ID_SET_MACRO_3,         VIRTKEY, SHIFT, ALT, NOINVERT
-    "4",            ID_UNICODE_BE_FILE,     VIRTKEY, CONTROL, NOINVERT
+    "4",            ID_ENC_UNICODE_BE,      VIRTKEY, CONTROL, NOINVERT
     "4",            ID_MACRO_4,             VIRTKEY, ALT, NOINVERT
     "4",            ID_SET_MACRO_4,         VIRTKEY, SHIFT, ALT, NOINVERT
-    "5",            ID_UTF8_FILE,           VIRTKEY, CONTROL, NOINVERT
+#ifdef UNICODE
+    "5",            ID_ENC_BINARY,          VIRTKEY, CONTROL, NOINVERT
+#endif
     "5",            ID_MACRO_5,             VIRTKEY, ALT, NOINVERT
     "5",            ID_SET_MACRO_5,         VIRTKEY, SHIFT, ALT, NOINVERT
-    "6",            ID_UTF8_UNIX_FILE,      VIRTKEY, CONTROL, NOINVERT
     "6",            ID_MACRO_6,             VIRTKEY, ALT, NOINVERT
     "6",            ID_SET_MACRO_6,         VIRTKEY, SHIFT, ALT, NOINVERT
-#ifdef UNICODE
-    "7",            ID_BINARY_FILE,         VIRTKEY, CONTROL, NOINVERT
-#endif
+    "7",            ID_ENC_ANSI,            VIRTKEY, CONTROL, NOINVERT
     "7",            ID_MACRO_7,             VIRTKEY, ALT, NOINVERT
     "7",            ID_SET_MACRO_7,         VIRTKEY, SHIFT, ALT, NOINVERT
+    "8",            ID_ENC_UTF8,            VIRTKEY, CONTROL, NOINVERT
     "8",            ID_MACRO_8,             VIRTKEY, ALT, NOINVERT
     "8",            ID_SET_MACRO_8,         VIRTKEY, SHIFT, ALT, NOINVERT
     "9",            ID_MACRO_9,             VIRTKEY, ALT, NOINVERT
@@ -1037,9 +1060,9 @@ BEGIN
     IDS_PLUGIN_RELEASE      "1"
     IDS_PLUGIN_TRANSLATOR   "Alex Davidson"
     IDS_PLUGIN_EMAIL        "metapad-feedback@liquidninja.com"
-    IDS_RESERVED2           "-"
-    IDS_RESERVED3           "-"
-    IDS_DEFAULT_FILTER      "All File Types|*.txt;*.htm;*.html;*.c;*.cpp;*.h;*.java|Text Files (*.txt)|*.txt|HTML (*.html; *.htm)|*.html;*.htm|Source Code (*.c; *.cpp; *.h; *.java)|*.c;*.cpp;*.h;*.java|All Files (*.*)|*.*"
+//    IDS_RESERVED2           "-"
+//    IDS_RESERVED3           "-"
+    IDS_DEFAULT_FILTER      "All Textual File Types|*.txt;*.htm;*.html;*.c;*.cpp;*.h;*.java|Text Files (*.txt)|*.txt|HTML (*.html; *.htm)|*.html;*.htm|Source Code (*.c; *.cpp; *.h; *.java)|*.c;*.cpp;*.h;*.java|All Files (*.*)|*.*"
     IDS_DIRTYFILE           "Save changes to %s?"
     IDS_ERROR_LOCKED        "Error writing to file - it may be locked or read only."
     IDS_ERROR_SEARCH        "Search string not found."
@@ -1059,16 +1082,15 @@ BEGIN
     IDS_PRINT_START_ERROR   "StartDoc printing error. Printing canceled."
     IDS_DRAWTEXT_ERROR      "Error calling DrawText."
     IDS_PRINT_ERROR         "There was an error during printing. Print canceled."
-    IDS_PRIMARY_VIEWER_ERROR "Error launching primary external viewer"
-    IDS_SECONDARY_VIEWER_ERROR "Error launching secondary external viewer"
-    IDS_PRIMARY_VIEWER_MISSING "No primary external viewer configured."
-    IDS_SECONDARY_VIEWER_MISSING "No secondary external viewer configured."
+    IDS_VIEWER_ERROR		"Error launching external viewer"
+    IDS_VIEWER_MISSING		"External viewer is not configured."
     IDS_NO_DEFAULT_VIEWER   "No viewer associated with this file type."
-    IDS_DEFAULT_VIEWER_ERROR "Unknown error launching default viewer."
     IDS_REGISTRY_WINDOW_ERROR
                             "Missing window placement registry values - using default settings."
+#ifdef USE_RICH_EDIT
     IDS_CARRIAGE_RETURN_WARNING
                             "Some number of solitary carriage returns were detected and removed."
+#endif
 END
 
 STRINGTABLE DISCARDABLE
@@ -1078,14 +1100,15 @@ BEGIN
     IDS_FILE_CREATE_ERROR   "File creation error."
     IDS_FILE_NOT_FOUND      "File not found."
     IDS_FILE_LOCKED_ERROR   "File is locked by another process."
+#ifndef UNICODE
     IDS_UNICODE_CONVERT_ERROR "Error converting from Unicode file"
     IDS_UNICODE_CHARS_WARNING
                             "Detected non-ANSI characters in this Unicode file.\n\nData will be lost if this file is saved!"
-    IDS_BINARY_FILE_WARNING "This file is not a valid text file. It may be a binary file.\nConvert any NULL terminators to spaces and load anyway?"
+    IDS_BINARY_FILE_WARNING "This is a binary file.\nConvert any NULL terminators to spaces and load anyway?"
     IDS_UNICODE_STRING_ERROR "Error converting to Unicode string"
+#endif
     IDS_UNICODE_BOM_ERROR   "Error writing BOM"
-    IDS_FONT_UNDO_WARNING   "Applying new font settings. This action will empty the undo buffer."
-    IDS_TCHAR_WIDTH_ERROR   "Couldn't get TCHAR width!"
+    IDS_CHAR_WIDTH_ERROR   "Couldn't get char width."
     IDS_PARA_FORMAT_ERROR   "Couldn't set para format."
     IDS_QUERY_SEARCH_TOP    "Reached end of file. Continue searching from the top?"
     IDS_QUERY_SEARCH_BOTTOM "Reached beginning of file. Continue searching from the bottom?"
@@ -1097,7 +1120,7 @@ BEGIN
     IDS_RECENT_FILES_MENU   "Recent &Files"
     IDS_MAX_RECENT_WARNING  "Enter a maximum Recent File size between 0 and 16"
     IDS_STICKY_MESSAGE      "Main window will now always start up with its current size and position."
-    IDS_CLEAR_FIND_WARNING  "This action will clear both the find and replace histories."
+    IDS_CLEAR_FIND_WARNING  "This action will clear find, replace, and insert histories."
     IDS_CLEAR_RECENT_WARNING "This action will clear the recent files history"
     IDS_SELECT_PLUGIN_WARNING
                             "Select a language plugin or choose Default (English)."
@@ -1119,7 +1142,6 @@ BEGIN
     IDS_TB_COPY             "Copy"
     IDS_TB_PASTE            "Paste"
     IDS_TB_UNDO             "Undo"
-    IDS_TB_REDO             "Redo"
     IDS_TB_SETTINGS         "Settings"
     IDS_TB_REFRESH          "Refresh/Revert"
     IDS_TB_WORDWRAP         "Word Wrap"
@@ -1127,32 +1149,39 @@ BEGIN
     IDS_TB_ONTOP            "Always On Top"
     IDS_TB_PRIMARYVIEWER    "Launch Primary Viewer"
     IDS_TB_SECONDARYVIEWER  "Launch Secondary Viewer"
-    IDS_CANT_UNDO_WARNING   "Cant undo this action!"
+#ifdef USE_RICH_EDIT
+    IDS_TB_REDO             "Redo"
+    IDS_CANT_UNDO_WARNING   "Can't undo this action!"
     IDS_MEMORY_LIMIT        "Reached memory limit at %d bytes!"
+    IDS_FONT_UNDO_WARNING   "Applying new font settings. This action will empty the undo buffer."
+    IDS_UNDO_HYPERLINKS_WARNING
+                            "Updating hyperlinks. This action will empty the undo buffer."
+    IDS_RICHED_MISSING_ERROR
+                            "metapad requires RICHED20.DLL to be installed on your system.\n\nSee the FAQ on the website for further information."
+#else
     IDS_QUERY_LAUNCH_VIEWER "This version of Windows does not support loading files this large into an Edit window.\nLaunch in external viewer?"
+	IDS_LE_MEMORY_LIMIT     "Reached memory limit!\nSave file now and use another editor (metapad full not LE)!"
+#endif
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_LE_MEMORY_LIMIT     "Reached memory limit!\nSave file now and use another editor  (metapad full not LE)!"
-    IDS_UNDO_HYPERLINKS_WARNING
-                            "Updating hyperlinks. This action will empty the undo buffer."
     IDS_CHANGE_READONLY_ERROR
                             "Unable to change the readonly attribute for this file."
     IDS_SETTINGS_TITLE      "Settings"
     IDS_NO_SELECTED_TEXT    "No selected text."
-    IDS_BYTE_LENGTH         "...text is %d bytes long."
+//    IDS_BYTE_LENGTH         "...text is %d bytes long."
     IDS_ITEMS_REPLACED      "Replaced %d item(s)."
     IDS_MENU_LANGUAGE_PLUGIN "&Language Plugin..."
-    IDS_RICHED_MISSING_ERROR
-                            "metapad requires RICHED20.DLL to be installed on your system.\n\nSee the FAQ on the website for further information."
     IDS_COMMAND_LINE_OPTIONS
 	"Usage:  metapad [/i | /m | /v | /s] [/p | /g row:col | /e] [filename]\n\nOption descriptions:\n\n\t/i - force INI mode for settings\n\t/m - migrate all registry settings to INI file\n\t/g row:col - goto position at row and column\n\t/e - goto end of file\n\t/p - print file\n\t/v - disable plugin version checking\n\t/s - skip loading language plugin"
     IDS_GLOBALLOCK_ERROR    "GlobalLock failed"
     IDS_CLIPBOARD_UNLOCK_ERROR
                             "There was an error unlocking the clipboard memory."
     IDS_FILE_READ_ERROR     "Error reading file."
+#ifdef USE_RICH_EDIT
     IDS_RESTART_HIDE_SB     "The change in ""Hide scrollbars when possible"" will be reflected upon restarting the program."
+#endif
     IDS_RESTART_FAVES       "The change in ""Disable Favourites"" will be reflected upon restarting the program."
 END
 
@@ -1170,7 +1199,7 @@ BEGIN
     IDS_DEFAULT_FILTER_TEXT "Text (*.*)|*.*"
     IDS_NEW_FILE            "new file"
     IDS_MACRO_LENGTH_ERROR  "Selection is larger than maximum quick buffer length."
-    IDS_NEW_INSTANCE        "New Window"
+//    IDS_NEW_INSTANCE        "New Window"
 END
 
 STRINGTABLE DISCARDABLE
@@ -1183,7 +1212,7 @@ BEGIN
     IDS_UNICODE_LOAD_TRUNCATION 
                             "Detected unsupported or invalid code points in this Unicode file.\n\nData will be lost if this file is saved!"
     IDS_BINARY_FILE_WARNING_SAFE
-                            "This file is not a valid text file. It may be a binary file.\nLoad anyway?\nNULL terminators will be preserved unless the File Format is changed."
+                            "This is a binary file. Load anyway?\nNull terminators will be preserved unless the File Format is changed."
     IDS_LARGE_FILE_WARNING  "This file is very large ( >16 MB). Loading it may take a long time.\nLoad anyway?"
 	IDS_UNICODE_CONV_ERROR  "Error converting string to Unicode"
 	IDS_ESCAPE_ERROR		"%s in '%s' near:\n"
@@ -1198,6 +1227,21 @@ BEGIN
 	IDS_ESCAPE_CTX_QUOTE	"Quote string"
 	IDS_LARGE_PASTE_WARNING	"About to insert %I64u characters of text.\nThis may take a very long time!\nContinue?"
 	IDS_ITEMS_REPLACED_ITER "Replaced %d item(s) in %d iteration(s)."
+	IDS_ENC_REINTERPRET		"Reinterpret the current text as codepage %d?"
+	IDS_LFMT_MIXED			"This text has mixed line endings.\nYou can normalize the line endings in the File > Format menu."
+	IDS_LFMT_FIXED			"Mixed line endings have been normalized.\nYou can change this function in the File > Format menu."
+	IDS_SETDEF_FORMAT		"The default file format has been set as %s."
+	ID_LFMT_DOS				"DOS"
+	ID_LFMT_UNIX			"Unix"
+	ID_LFMT_MAC				"Mac"
+	ID_LFMT_MIXED			"MIXED"
+	ID_ENC_ANSI				"ANSI"
+	ID_ENC_UTF8				"UTF-8"
+	ID_ENC_UNICODE			"Unicode"
+	ID_ENC_UNICODE_BE		"Unicode BE"
+	ID_ENC_BINARY			"BIN"
+	ID_ENC_CUSTOM			"CP%d"
+	IDS_ENC_BAD				"This codepage is not available on your system."
 END
 
 #endif    // English (U.S.) resources

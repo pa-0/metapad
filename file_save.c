@@ -140,8 +140,7 @@ BOOL SaveCurrentFileAs(void)
 		ofn.lpstrFilter = GetString(IDS_DEFAULT_FILTER_TEXT);
 		FixFilterString((LPTSTR)ofn.lpstrFilter);
 		ofn.lpstrDefExt = NULL;
-	}
-	else {
+	} else {
 		ofn.lpstrFilter = SCNUL(szCustomFilter);
 		ofn.lpstrDefExt = _T("txt");
 	}

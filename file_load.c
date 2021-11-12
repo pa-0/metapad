@@ -448,7 +448,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 	LPBYTE pBuffer = NULL;
 	LPTSTR szBuffer = NULL;
 	TCHAR cPad = _T(' ');
-	LONG lActualCharsRead;
+	DWORD lChars;
 	HCURSOR hcur;
 	UINT i;
 	TCHAR szUncFn[MAXFN+6] = _T("\\\\?\\");
@@ -518,7 +518,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 	if (bMRU)
 		SaveMRUInfo(szFilename);
 
-	if ((lActualCharsRead = LoadFileIntoBuffer(hFile, &pBuffer, &lBufferLength, &nEncodingType)) < 0) {
+	if ((lChars = LoadFileIntoBuffer(hFile, &pBuffer, &lBufferLength, &nEncodingType)) < 0) {
 		bDirtyStatus = TRUE;
 		CloseHandle(hFile);
 		bLoading = FALSE;
@@ -527,11 +527,11 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 
 	if (lBufferLength) {
 #ifdef USE_RICH_EDIT
-		lActualCharsRead -= FixTextBuffer((LPTSTR)pBuffer);
+		lChars -= FixTextBuffer((LPTSTR)pBuffer);
 #endif
 
 		SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
-		lActualCharsRead += ConvertAndSetWindowText((LPTSTR)pBuffer, lActualCharsRead);
+		lChars += ConvertAndSetWindowText((LPTSTR)pBuffer, lChars);
 		SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
 		switch (nEncodingType) {
 			case TYPE_UTF_16:
@@ -558,9 +558,12 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 #ifdef UNICODE
 	cPad = _T('\x2400');
 #endif
-	if (lActualCharsRead != GetWindowTextLength(client) && bLoading) {
-		i = (sizeof(TCHAR) > 1 ? IDS_BINARY_FILE_WARNING_SAFE : IDS_BINARY_FILE_WARNING);
-		if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(i), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDOK) {
+	if (lChars != GetWindowTextLength(client) && bLoading) {
+#ifdef UNICODE
+		if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING_SAFE), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDOK) {
+#else
+		if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDOK) {
+#endif
 			for (i = 0; i < lBufferLength; i++)
 				if (szBuffer[i] == _T('\0'))
 					szBuffer[i] = cPad;

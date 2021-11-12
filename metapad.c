@@ -3371,7 +3371,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						if (bLoading) {
 							if (options.bAlwaysLaunch || MessageBox(hwnd, GetString(IDS_QUERY_LAUNCH_VIEWER), STR_METAPAD, MB_ICONQUESTION | MB_YESNO) == IDYES) {
 								if (!SCNUL(options.szBrowser)[0]) {
-									MessageBox(hwnd, GetString(IDS_PRIMARY_VIEWER_MISSING), STR_METAPAD, MB_OK|MB_ICONEXCLAMATION);
+									MessageBox(hwnd, GetString(IDS_VIEWER_MISSING), STR_METAPAD, MB_OK|MB_ICONEXCLAMATION);
 									SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_VIEW_OPTIONS, 0), 0);
 									FREE(szFile);
 									break;
@@ -3381,8 +3381,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 							bLoading = FALSE;
 							if (!IsWindowVisible(hwnd))
 								bQuitApp = TRUE;
-						}
-						else {
+						} else {
 							MessageBox(hwnd, GetString(IDS_LE_MEMORY_LIMIT), STR_METAPAD, MB_ICONEXCLAMATION | MB_OK);
 						}
 #endif

@@ -103,7 +103,7 @@ void LaunchExternalViewer(int id)
 	lstrcat(szLaunch, SCNUL(szFile));
 	lstrcat(szLaunch, _T("\""));
 	if (!ExecuteProgram(SCNUL(id ? options.szBrowser2 : options.szBrowser), szLaunch))
-	ERROROUT(GetString(id ? IDS_SECONDARY_VIEWER_ERROR : IDS_PRIMARY_VIEWER_ERROR));
+	ERROROUT(GetString(IDS_VIEWER_ERROR));
 }
 
 /**
@@ -117,7 +117,7 @@ void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 	LPTSTR prg = bSecondary ? options.szBrowser2 : options.szBrowser;
 	if (bCustom)
 		if (!SCNUL(prg)[0]) {
-			MessageBox(hwnd, GetString(bSecondary ? IDS_SECONDARY_VIEWER_MISSING : IDS_PRIMARY_VIEWER_MISSING), STR_METAPAD, MB_OK|MB_ICONEXCLAMATION);
+			MessageBox(hwnd, GetString(IDS_VIEWER_MISSING), STR_METAPAD, MB_OK|MB_ICONEXCLAMATION);
 			SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_VIEW_OPTIONS, 0), 0);
 			return;
 		}
@@ -147,7 +147,7 @@ void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 					ERROROUT(GetString(IDS_NO_DEFAULT_VIEWER));
 					break;
 				default:
-					ERROROUT(GetString(IDS_DEFAULT_VIEWER_ERROR));
+					ERROROUT(GetString(IDS_VIEWER_ERROR));
 				}
 			}
 		}
