@@ -25,6 +25,7 @@
 #define _WIN32_WINNT 0x0400
 
 #include <windows.h>
+#include <commdlg.h>
 #include <tchar.h>
 
 #include "include/consts.h"
@@ -62,7 +63,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* format) {
 	if (!bResult || dwBytes != buflen)
 		ReportLastError();
 	buflen = dwBytes;
-	ppBuffer[dwBytes] = 0;
+	(*ppBuffer)[dwBytes] = 0;
 	enc = CheckBOM(ppBuffer, &buflen);
 	cp = (*format >> 31 ? (WORD)*format : 0);
 
@@ -86,6 +87,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* format) {
 BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 	HANDLE hFile = NULL;
 	LPTSTR szBuffer, lfn = NULL, dfn = NULL, rfn = NULL;
+	LPCTSTR tbuf;
 	TCHAR cPad = _T(' '), buffer[MAXFN + 40];
 	DWORD lChars, nCR, nLF, nStrays, nSub, cfmt = nFormat;
 	BOOL b;
@@ -106,7 +108,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 		if (hFile == INVALID_HANDLE_VALUE) {
 			DWORD dwError = GetLastError();
 			if (dwError == ERROR_FILE_NOT_FOUND && bCreate) {
-				if (nCR == 0 && lstrchr(lfn, _T('.')) == NULL) {
+				if (lstrchr(lfn, _T('.')) == NULL) {
 					lstrcat(lfn, _T(".txt"));
 					continue;
 				}
@@ -116,8 +118,8 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 					hFile = (HANDLE)CreateFile(lfn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 					if (hFile == INVALID_HANDLE_VALUE) {
 						ERROROUT(GetString(IDS_FILE_CREATE_ERROR));
-						UpdateStatus(TRUE);
 						bLoading = FALSE;
+						UpdateStatus(TRUE);
 						SetCursor(hcur);
 						FREE(lfn); FREE(dfn); FREE(rfn);
 						return FALSE;
@@ -129,6 +131,8 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 					FREE(lfn); FREE(dfn); FREE(rfn);
 					return TRUE;
 				case IDCANCEL:
+					bLoading = FALSE;
+					UpdateStatus(TRUE);
 					SetCursor(hcur);
 					FREE(lfn); FREE(dfn); FREE(rfn);
 					return FALSE;
@@ -143,22 +147,22 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 					SetLastError(dwError);
 					ReportLastError();
 				}
-				UpdateStatus(TRUE);
 				bLoading = FALSE;
+				UpdateStatus(TRUE);
 				SetCursor(hcur);
 				FREE(lfn); FREE(dfn); FREE(rfn);
 				return FALSE;
 			}
 		} else {
-			SwitchReadOnly(GetFileAttributes(szUncFn) & FILE_ATTRIBUTE_READONLY);
+			SwitchReadOnly(GetFileAttributes(lfn) & FILE_ATTRIBUTE_READONLY);
 			break;
 		}
 	}
 
 	if ((LONG)(lChars = LoadFileIntoBuffer(hFile, (LPBYTE*)&szBuffer, &cfmt)) < 0) {
-		bDirtyStatus = TRUE;
 		CloseHandle(hFile);
 		bLoading = FALSE;
+		UpdateStatus(TRUE);
 		SetCursor(hcur);
 		FREE(lfn); FREE(dfn); FREE(rfn);
 		return FALSE;
@@ -166,16 +170,20 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 	CloseHandle(hFile);
 
 	if (lChars) {
-		cfmt &= 0xf000ffff;
+		cfmt &= 0x8000ffff;
 		cfmt |= (GetLineFmt(szBuffer, lChars, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
 		if (b) {
 			cfmt = ID_ENC_BIN | ((cfmt >> 16) & 0xfff);
+			tbuf = GetShadowBuffer(NULL);
 			SetWindowText(client, szBuffer);
 #ifdef UNICODE
 			if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING_SAFE), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
 #else
 			if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
 #endif
+				SetWindowText(client, tbuf);
+				bLoading = FALSE;
+				UpdateStatus(TRUE);
 				SetCursor(hcur);
 				FREE(lfn); FREE(dfn); FREE(rfn);
 				return FALSE;
@@ -193,12 +201,11 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 	} else {
 		if (lChars) {
 			SetWindowText(client, szBuffer);
-			nFormat = cfmt;
+			SetFileFormat(cfmt, 0);
 		} else {
 			SetWindowText(client, _T(""));
-			nFormat = options.nFormat;
+			SetFileFormat(options.nFormat, 0);
 		}
-		SetFileFormat(nFormat, 0);
 		UpdateSavedInfo();
 		SetTabStops();
 		SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
@@ -207,7 +214,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 		FREE(szCaptionFile);
 		szDir = dfn;
 		szFile = lfn;
-		if (szBuffer[0] == _T('.') &&
+		if (lChars >=4 && szBuffer && szBuffer[0] == _T('.') &&
 			szBuffer[1] == _T('L') &&
 			szBuffer[2] == _T('O') &&
 			szBuffer[3] == _T('G')) {
@@ -227,10 +234,10 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 		SaveMRUInfo(rfn);
 	FREE(rfn);
 	FREE(szBuffer);
+	bLoading = FALSE;
 	UpdateStatus(TRUE);
 	InvalidateRect(client, NULL, TRUE);
 	SetCursor(hcur);
-	bLoading = FALSE;
 	return TRUE;
 }
 
@@ -240,36 +247,37 @@ BOOL LoadFileFromMenu(WORD wMenu, BOOL bMRU) {
 	HMENU hmenu = GetMenu(hwnd);
 	HMENU hsub = NULL;
 	MENUITEMINFO mio;
-	TCHAR szBuffer[MAXFN] = _T("\n");
+	TCHAR szBuffer[MAXFN+4] = _T("");
+	LPTSTR pbuf = szBuffer+3;
 
 	if (!SaveIfDirty())
-		return;
+		return FALSE;
 	if (bMRU) {
 		if (options.bRecentOnOwn) 	hsub = GetSubMenu(hmenu, 1);
 		else 						hsub = GetSubMenu(GetSubMenu(hmenu, 0), MPOS_FILE_RECENT);
 	} else if (!options.bNoFaves) {
 		hsub = GetSubMenu(hmenu, MPOS_FAVE);
 	} else
-		return;
+		return FALSE;
 
+	*pbuf = _T('\0');
 	mio.cbSize = sizeof(MENUITEMINFO);
 	mio.fMask = MIIM_TYPE;
 	mio.fType = MFT_STRING;
 	mio.cch = MAXFN;
 	mio.dwTypeData = szBuffer;
 	GetMenuItemInfo(hsub, wMenu, FALSE, &mio);
-	szBuffer+=3;
-	if (*szBuffer) {
+	if (*pbuf) {
 		if (!bMRU) {
-			GetPrivateProfileString(STR_FAV_APPNAME, szBuffer, _T(""), szBuffer, MAXFN, SCNUL(szFav));
+			GetPrivateProfileString(STR_FAV_APPNAME, pbuf, _T(""), pbuf, MAXFN, SCNUL(szFav));
 			if (!*szBuffer) {
 				ERROROUT(GetString(IDS_ERROR_FAVOURITES));
-				//MakeNewFile();
-				return;
+				return FALSE;
 			}
 		}
-		return LoadFile(szBuffer, FALSE, TRUE, FALSE);
+		return LoadFile(pbuf, FALSE, TRUE, FALSE);
 	}
+	return FALSE;
 }
 
 BOOL BrowseFile(LPCTSTR defExt, LPCTSTR defDir, LPCTSTR filter, BOOL load, BOOL bMRU, BOOL insert, LPTSTR* fileName){

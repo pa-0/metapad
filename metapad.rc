@@ -1242,7 +1242,7 @@ BEGIN
 	ID_ENC_UTF16			"Unicode"
 	ID_ENC_UTF16BE			"Unicode BE"
 	ID_ENC_BIN				"Binary"
-	ID_ENC_CUSTOM			"Codepage %d"
+	ID_ENC_CUSTOM			"CP%d"
 	IDS_ENC_BAD				"This codepage is not available on your system."
 	IDS_ENC_FAILED			"Error converting to the selected codepage!\nThe data was instead saved as ANSI."
 END

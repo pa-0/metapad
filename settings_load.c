@@ -256,7 +256,7 @@ void LoadOptionString(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData)
 		buf[0] = _T('\0');
 		if (hKey) RegQueryValueEx(hKey, name, NULL, NULL, (LPBYTE)buf, &buflen);
 		else GetPrivateProfileString(_T("Options"), name, buf, buf, clen, SCNUL(szMetapadIni));
-		SSTRCPY(*lpData, buf);
+		SSTRCPYA(*lpData, buf, 2);
 		HeapFree(globalHeap, 0, (HGLOBAL)buf);
 	}
 }
@@ -264,7 +264,7 @@ void LoadOptionStringDefault(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbDa
 {
 	LoadOptionString(hKey, name, lpData, cbData);
 	if (defVal && defVal[0] && (!*lpData || !*lpData[0])) {
-		SSTRCPY(*lpData, defVal);
+		SSTRCPYA(*lpData, defVal, 2);
 	}
 }
 
@@ -372,7 +372,7 @@ void LoadMenusAndData(void)
 			LoadOptionNumeric(key, _T("bCloseAfterInsert"), (LPBYTE)&bCloseAfterInsert, sizeof(BOOL));
 			LoadOptionNumeric(key, _T("bNoFindHidden"), (LPBYTE)&bNoFindHidden, sizeof(BOOL));
 		}
-		LoadOptionStringDefault(key, _T("FileFilter"), &szCustomFilter, MAXFN, GetString(IDS_DEFAULT_FILTER));
+		LoadOptionStringDefault(key, _T("FileFilter"), &szCustomFilter, MAXMACRO, GetString(IDS_DEFAULT_FILTER));
 
 		if (!options.bNoSaveHistory) {
 			for (i = 0; i < NUMFINDS; ++i) {

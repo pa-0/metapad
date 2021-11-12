@@ -167,7 +167,7 @@ BOOL SaveCurrentFileAs(void) {
 	ofn.nFileOffset = 0;
 	ofn.nFileExtension = 0;
 	if (!GetSaveFileName(&ofn)) return FALSE;
-	FixShortFilename(fn, &fn);
+	FixShortFilename(fn, (LPTSTR*)&fn);
 	return SaveFile(fn, TRUE);
 }
 

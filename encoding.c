@@ -313,7 +313,7 @@ WORD GetLineFmt(LPCTSTR sz, DWORD len, DWORD* nCR, DWORD* nLF, DWORD* nStrays, D
 }
 
 void ImportBinary(LPTSTR sz, DWORD len){
-	while (len--){
+	for ( ; len--; sz++){
 		if (*sz == _T('\0'))
 #ifdef UNICODE
 			*sz = _T('\x2400');
@@ -325,7 +325,7 @@ void ImportBinary(LPTSTR sz, DWORD len){
 void ExportBinary(LPTSTR sz, DWORD len){
 #ifdef UNICODE
 	if (!len) len = lstrlen(sz);
-	while (len--){
+	for ( ; len--; sz++){
 		if (*sz == _T('\x2400'))
 			*sz = _T('\0');
 	}
@@ -363,7 +363,7 @@ void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDi
 	for ( ; len--; (*sz)++, *dst++) {
 		*dst = **sz;
 		if (lfmt == ID_LFMT_MIXED && **sz == _T('\x14')) {
-			if (*(*sz)++ == _T('\r')) *dst = _T('\n');
+			if (*++(*sz) == _T('\r')) *dst = _T('\n');
 		} else if (**sz == _T('\r')) {
 			if (lfmt == ID_LFMT_UNIX) *dst = _T('\n');
 			else if (lfmt == ID_LFMT_DOS) *++dst = _T('\n');
@@ -378,6 +378,24 @@ void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDi
 		}
 		*sz = odst;
 	}
+}
+LONG ExportLineFmtDelta(LPCTSTR sz, DWORD* chars, WORD lfmt){
+	DWORD len, olen, ct;
+	if (!sz) return (lfmt == ID_LFMT_MAC || lfmt == ID_LFMT_UNIX ? 0 : (lfmt == ID_LFMT_DOS ? 1 : -1));
+	if (lfmt == ID_LFMT_MAC || lfmt == ID_LFMT_UNIX) return 0;
+	ct = len = olen = (chars && *chars) ? *chars : lstrlen(sz);
+	for ( ; len--; sz++) {
+		switch(lfmt){
+			case ID_LFMT_MIXED:
+				if (*sz == _T('\x14')) { sz++; ct--; }
+				break;
+			case ID_LFMT_DOS:
+				if (*sz == _T('\r')) ct++;
+				break;
+		}
+	}
+	if (chars) *chars = ct;
+	return ct - olen;
 }
 #else
 void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DWORD nStrays, DWORD nSub, BOOL* bufDirty){
@@ -418,6 +436,18 @@ void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDi
 	}
 	if (chars) *chars = dst - odst;
 	*dst = _T('\0');
+}
+LONG ExportLineFmtDelta(LPCTSTR sz, DWORD* chars, WORD lfmt){
+	DWORD len, olen, ct;
+	if (!sz) return (lfmt != ID_LFMT_UNIX && lfmt != ID_LFMT_MAC ? 0 : -1);
+	if (lfmt != ID_LFMT_UNIX && lfmt != ID_LFMT_MAC) return 0;
+	ct = len = olen = (chars && *chars) ? *chars : lstrlen(sz);
+	while ( len-- ) {
+		if (*sz++ == _T('\r'))
+			ct--;
+	}
+	if (chars) *chars = ct;
+	return ct - olen;
 }
 #endif
 

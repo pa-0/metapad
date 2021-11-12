@@ -49,7 +49,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 
 	if (!hMenu || !format) return;
 	if (format < 0xffff && format > ID_LFMT_UNKNOWN && format <= ID_LFMT_MIXED) format <<= 16;
-	if (!(format & 0xf000ffff)) format |= nFormat & 0xf000ffff;
+	if (!(format & 0x8000ffff)) format |= nFormat & 0x8000ffff;
 	if (!(format & 0xfff0000)) format |= nFormat & 0xfff0000;
 	if (format == nFormat) return;
 	enc = cp = (WORD)nFormat;
@@ -82,7 +82,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 			if (nenc == ID_ENC_CUSTOM)
 				len = DecodeText((LPBYTE*)&buf, len, &format, &bufDirty);
 			if (len) {
-				format &= 0xf000ffff;
+				format &= 0x8000ffff;
 				format |= (GetLineFmt(buf, len, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
 				if (nenc == ID_ENC_BIN)
 					ImportBinary(buf, len);
@@ -110,6 +110,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	CheckMenuRadioItem(hMenu, nenc/10*10, (nenc/10+1)*10, nenc, MF_BYCOMMAND);
 	CheckMenuRadioItem(hMenu, nlfmt/10*10, (nlfmt/10+1)*10, nlfmt, MF_BYCOMMAND);
 	bDirtyShadow = bDirtyStatus = TRUE;
+	QueueUpdateStatus();
 	SetCursor(hcur);
 }
 
@@ -121,7 +122,7 @@ void MakeNewFile(void) {
 	FREE(szCaptionFile);
 	SetFileFormat(options.nFormat, 0);
 	UpdateSavedInfo();
-	bDirtyFile = bLoading = FALSE;
+	bLoading = FALSE;
 	UpdateStatus(TRUE);
 }
 
@@ -135,7 +136,7 @@ void FixFilterString(LPTSTR szIn) {
 		if (*szIn == _T('|'))
 			*szIn = _T('\0');
 	}
-	*szIn = _T('\0');
+	*++szIn = _T('\0');
 }
 
 BOOL FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt) {
@@ -145,7 +146,7 @@ BOOL FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt) {
 	LPTSTR pdst = dst, psrc;
 	BOOL bOK = TRUE, alloc = FALSE;
 
-	if (!szSrc || !szTgt) return NULL;
+	if (!szSrc || !szTgt) return FALSE;
 	if (szSrc != *szTgt) alloc = TRUE;
 	if (szSrc[0] && szSrc[1] && szSrc[2] != _T('?')) {
 		lstrcpy(pdst, _T("\\\\?\\"));
@@ -162,7 +163,7 @@ BOOL FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt) {
 		if (!*szSrc) break;
 		pdst[0] = _T('*');
 		pdst[1] = _T('\0');
-		for (psrc = szSrc; *psrc && *psrc != _T('\\'); psrc++) ;
+		for (psrc = (LPTSTR)szSrc; *psrc && *psrc != _T('\\'); psrc++) ;
 		ssto = *psrc;
 		*psrc = _T('\0');
 		hHandle = FindFirstFile(dst, &FindFileData);
@@ -194,11 +195,11 @@ BOOL GetReadableFilename(LPCTSTR lfn, LPTSTR* dst){
 			lfn += 2;
 		}
 	}
-	if (alloc)
+	if (alloc) {
 		SSTRCPY(*dst, lfn);
-	else
+	} else
 		*dst = (LPTSTR)lfn;
-	if (unc) *dst = _T('\\');
+	if (unc) **dst = _T('\\');
 	return TRUE;
 }
 
@@ -213,6 +214,15 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 		return _T("");
 	}
 	if (bDirtyShadow || !szShadow || !shadowLen) {
+		if (line < 0) {
+#ifdef USE_RICH_EDIT
+			line = SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)min);
+			if (line != SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)max)) line = -1;
+#else
+			line = SendMessage(client, EM_LINEFROMCHAR, (WPARAM)min, 0);
+			if (line != SendMessage(client, EM_LINEFROMCHAR, (WPARAM)max, 0)) line = -1;
+#endif
+		}
 		if (line >= 0 && (l = max - min + 1) > 0)
 			shadowLen = 0;
 		else {
@@ -322,12 +332,20 @@ DWORD GetColNum(LONG cp, LONG line, DWORD* lineLen, LONG* lineout, CHARRANGE* pc
 	LPCTSTR ts;
 	CHARRANGE cr;
 	DWORD c = 1, i, l;
+	if (cp < 0) {
+#ifdef USE_RICH_EDIT
+		SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
+#else
+		SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
+#endif
+		cp = cr.cpMax;
+		if (pcr) *pcr = cr;
+	}
 	ts = GetShadowLine(line, cp, lineLen, lineout, &cr);
 	for (i = 0, l = cp - cr.cpMin; i < l && ts[i]; i++, c++) {
 		if (ts[i] == _T('\t'))
 			c += (options.nTabStops - (c-1) % options.nTabStops)-1;
 	}
-	if (pcr) *pcr = cr;
 	return c;
 }
 DWORD GetCharIndex(DWORD col, LONG line, LONG cp, DWORD* lineLen, LONG* lineout, CHARRANGE* pcr){
@@ -343,62 +361,62 @@ DWORD GetCharIndex(DWORD col, LONG line, LONG cp, DWORD* lineLen, LONG* lineout,
 
 
 
-/**
- * Calculate the size of the given text.
- * If no text is given, the current file's size is calculated and the full buffer is optionally returned
- * 	if getting it was necessary in the calculation
- */
-DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BOOL inclBOM, DWORD* numChars) {
-	LPCTSTR szBuffer = (szText ? *szText : NULL);
-	DWORD chars, mul = 1, bom = 0;
+DWORD GetTextChars(LPCTSTR szText){
+	//This must exactly mirror the text length calculation in GetShadowRange() 
 #ifdef USE_RICH_EDIT
 	GETTEXTLENGTHEX gtl = {0};
-	if (!unix) gtl.flags = GTL_USECRLF;
-	unix = FALSE;
-	if (!szBuffer) estBytes = SendMessage(client, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
-#else
-	if (!szBuffer && !unix) estBytes = GetWindowTextLength(client);
-#endif
-	else if (!estBytes) estBytes = lstrlen(szBuffer);
-	chars = estBytes;
-/*TODO	if (encoding == TYPE_UTF_16 || encoding == TYPE_UTF_16_BE) {
-		mul = 2;
-		bom = SIZEOFBOM_UTF_16;
-	} else if (encoding == TYPE_UTF_8) {
-		if (!szBuffer) szBuffer = GetShadowBuffer(&estBytes);
-		chars = estBytes;
-#ifdef UNICODE
-		if (estBytes)
-			estBytes = WideCharToMultiByte(CP_UTF8, 0, szBuffer, estBytes, NULL, 0, NULL, NULL);
-#endif
-		bom = SIZEOFBOM_UTF_8;
-	}*/
-#ifndef USE_RICH_EDIT
-	if (unix) {
-		if (!szBuffer) szBuffer = GetShadowBuffer(&estBytes);
-		chars = estBytes;
-		for ( ; *szBuffer; szBuffer++)
-			if (*szBuffer == _T('\r'))
-				estBytes--;
-	}
-#endif
-	if (szText) *szText = szBuffer;
-	if (numChars) *numChars = chars;
-	return estBytes * mul + (inclBOM ? bom : 0);;
-}
-
-DWORD GetTextChars(LPCTSTR szText, BOOL unix){
-	DWORD chars = 0;
-#ifdef USE_RICH_EDIT
-	GETTEXTLENGTHEX gtl = {0};
-	if (!unix) gtl.flags = GTL_USECRLF;
-	unix = FALSE;
+	//if (lfmt != ID_LFMT_UNIX && lfmt != ID_LFMT_MAC) gtl.flags = GTL_USECRLF;
 	if (!szText) return SendMessage(client, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
 #else
 	if (!szText) return GetWindowTextLength(client);
 #endif
 	else return lstrlen(szText);
 }
+/**
+ * Calculate the size of the given text.
+ * If no text is given, the current file's size is calculated and the full buffer is optionally returned
+ * 	if getting it was necessary in the calculation
+ */
+DWORD CalcTextSize(LPCTSTR* szText, CHARRANGE* range, DWORD estBytes, DWORD format, BOOL inclBOM, DWORD* numChars) {
+	LPCTSTR szBuffer = (szText ? *szText : NULL);
+	DWORD chars, mul = 1, bom = 0;
+	WORD enc, cp = CP_ACP;
+	BOOL deep = FALSE, urange = FALSE;
+	if (format >> 31) {
+		enc = ID_ENC_CUSTOM;
+		cp = (WORD)format;
+	} else enc = (WORD)format;
+	if (range && range->cpMin <= range->cpMax && range->cpMin > 0 && range->cpMax > 0) urange = TRUE;
+	if (!estBytes && urange) estBytes = range->cpMax - range->cpMin;
+	if (enc == ID_ENC_UTF8 || enc == ID_ENC_CUSTOM || ExportLineFmtDelta(NULL, NULL, (format >> 16) & 0xfff)){
+		deep = TRUE;
+		if (!szBuffer) {
+			if (urange) szBuffer = GetShadowRange(range->cpMin, range->cpMax, -1, &estBytes);
+			else szBuffer = GetShadowBuffer(&estBytes);
+		} else if (!estBytes && !urange) estBytes = lstrlen(szBuffer);
+	} else if (!estBytes && !urange)
+		estBytes = GetTextChars(szBuffer);
+	chars = estBytes;
+	if (deep && estBytes)
+		ExportLineFmtDelta(szBuffer, &estBytes, (format >> 16) & 0xfff);
+	if (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE) {
+		mul = bom = 2;
+	} else if (enc == ID_ENC_UTF8 || enc == ID_ENC_CUSTOM) {
+		if (enc == ID_ENC_UTF8) {
+			bom = 3;
+			cp = CP_UTF8;
+		}
+#ifdef UNICODE
+		if (estBytes)
+			estBytes = WideCharToMultiByte(cp, 0, szBuffer, estBytes, NULL, 0, NULL, NULL);
+#endif
+	}
+	if (szText) *szText = szBuffer;
+	if (numChars) *numChars = chars;
+	return estBytes * mul + (inclBOM ? bom : 0);
+}
+
+
 
 
 
@@ -521,7 +539,7 @@ BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE 
 	SetCursor(hcur);
 	if (f1.cpMin >= 0) {
 		SendMessage(client, EM_SETSEL, (WPARAM)f1.cpMin, (LPARAM)f1.cpMax);
-		UpdateStatus(FALSE);
+		QueueUpdateStatus();
 		return TRUE;
 	}
 	MessageBox(hdlgFind ? hdlgFind : client, GetString(IDS_ERROR_SEARCH), STR_METAPAD, MB_OK|MB_ICONINFORMATION);

@@ -104,7 +104,7 @@ LPTSTR GetString(UINT uID)
 }
 
 BOOL EncodeWithEscapeSeqs(TCHAR* szText)
-{
+{                     
 	TCHAR* szStore = gTmpBuf2;
 	INT i,j;
 
@@ -290,39 +290,6 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
 }
 
 /**
- * Updates window title to reflect current working file's name and state.
- */
-void UpdateCaption(void) {
-	USHORT u;
-	LPTSTR sz = NULL, szfn;
-	if (!szCaptionFile) {
-		if (szFile && *szFile){
-			GetReadableFilename(szFile, &sz);
-			SSTRCPYAO(szCaptionFile, sz, 32, 8);
-			FREE(sz);
-			if (options.bNoCaptionDir && (sz = lstrrchr(szCaptionFile+8, _T('\\'))))
-				lstrcpy(szCaptionFile+8, sz);
-		} else
-			SSTRCPYAO(szCaptionFile, GetString(IDS_NEW_FILE), 32, 8);
-		szCaptionFile[5] = szCaptionFile[7] = _T(' ');
-		szCaptionFile[6] = _T('*');
-		u = (USHORT)lstrlen(szCaptionFile+8);
-		*((LPWORD)szCaptionFile+1) = u;
-		lstrcat(szCaptionFile+8, STR_CAPTION_FILE);
-		*((LPWORD)szCaptionFile) = (USHORT)lstrlen(szCaptionFile+8) - u - 1;
-		lstrcat(szCaptionFile+8, GetString(IDS_READONLY_INDICATOR));
-		szCaptionFile[u + 8 + *((LPWORD)szCaptionFile)] = _T('\0');
-	}
-	u = *((LPWORD)szCaptionFile+1) + 8;
-	szCaptionFile[u] = _T(' ');
-	if (bReadOnly) 
-		szCaptionFile[u + *((LPWORD)szCaptionFile)] = _T(' ');
-	SetWindowText(hwnd, szCaptionFile + (bDirtyFile ? 5 : 8));
-	szCaptionFile[u] = _T('\0');
-	szCaptionFile[u + *((LPWORD)szCaptionFile)] = _T('\0');
-}
-
-/**
  * Cleanup objects.
  */
 void CleanUp(void)
@@ -346,20 +313,6 @@ void CleanUp(void)
 	if (BackBrush) DeleteObject(BackBrush);
 #endif
 }
-
-#ifdef USE_RICH_EDIT
-void UpdateWindowText(void)
-{
-	LPCTSTR szBuffer = GetShadowBuffer(NULL);
-	bLoading = TRUE;
-	SetWindowText(client, szBuffer);
-	bLoading = FALSE;
-	SetTabStops();
-	SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
-	UpdateStatus(TRUE);
-	InvalidateRect(client, NULL, TRUE);
-}
-#endif
 
 /**
  * Get status bar height.
@@ -554,19 +507,68 @@ void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 #endif
 }
 
-void UpdateStatus(BOOL refresh)
+#ifdef USE_RICH_EDIT
+void UpdateWindowText(void)
 {
+	LPCTSTR szBuffer = GetShadowBuffer(NULL);
+	bLoading = TRUE;
+	SetWindowText(client, szBuffer);
+	bLoading = FALSE;
+	SetTabStops();
+	SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
+	UpdateStatus(TRUE);
+	InvalidateRect(client, NULL, TRUE);
+}
+#endif
 
+/**
+ * Updates window title to reflect current working file's name and state.
+ */
+void UpdateCaption(void) {
+	USHORT u;
+	LPTSTR sz = NULL;
+	if (!szCaptionFile) {
+		if (szFile && *szFile){
+			GetReadableFilename(szFile, &sz);
+			SSTRCPYAO(szCaptionFile, sz, 32, 8);
+			FREE(sz);
+			if (options.bNoCaptionDir && (sz = lstrrchr(szCaptionFile+8, _T('\\'))))
+				lstrcpy(szCaptionFile+8, sz+1);
+		} else
+			SSTRCPYAO(szCaptionFile, GetString(IDS_NEW_FILE), 32, 8);
+		szCaptionFile[5] = szCaptionFile[7] = _T(' ');
+		szCaptionFile[6] = _T('*');
+		u = (USHORT)lstrlen(szCaptionFile+8);
+		*((LPWORD)szCaptionFile+1) = u;
+		lstrcat(szCaptionFile+8, STR_CAPTION_FILE);
+		*((LPWORD)szCaptionFile) = (USHORT)lstrlen(szCaptionFile+8) - u - 1;
+		lstrcat(szCaptionFile+8, GetString(IDS_READONLY_INDICATOR));
+		szCaptionFile[u + 8 + *((LPWORD)szCaptionFile)] = _T('\0');
+	}
+	u = *((LPWORD)szCaptionFile+1) + 8;
+	szCaptionFile[u] = _T(' ');
+	if (bReadOnly) 
+		szCaptionFile[u + *((LPWORD)szCaptionFile)] = _T(' ');
+	SetWindowText(hwnd, szCaptionFile + (bDirtyFile ? 5 : 8));
+	szCaptionFile[u] = _T('\0');
+	szCaptionFile[u + *((LPWORD)szCaptionFile)] = _T('\0');
+}
+
+void QueueUpdateStatus(){
+	SetTimer(hwnd, IDT_UPDATE, 16, NULL);
+}
+void UpdateStatus(BOOL refresh) {
 	static TCHAR szPane[32];
-	static CHARRANGE oldcr = {0};
-	static int nPaneSizes[NUMSTATPANES] = {0};
+	static CHARRANGE oldcr = {0}, ecr = {0};
+	static int nPaneSizes[NUMSTATPANES] = {0}, txtScale = 0;
 	int tpsz[NUMSTATPANES] = {0};
 	DWORD i, j, st, bytes, chars;
 	LONG lLine = -1, lLines, lCol;
 	BOOL tmu, full = TRUE, statup = FALSE, oldDirty = bDirtyFile;
 	CHARRANGE cr;
-	LPCTSTR szBuf = NULL, szTmp;
-	LPBYTE pbTmp[32];
+	LPCTSTR szBuf;
+	HDC dc;
+	SIZE sz;
 
 	bDirtyStatus |= refresh;
 	tmu = KillTimer(hwnd, IDT_UPDATE);
@@ -579,58 +581,56 @@ void UpdateStatus(BOOL refresh)
 		updateThrottle = st + MIN(updateTime/2, 96);
 		full = FALSE;
 	}
+	if (!txtScale) txtScale = (int)(LOWORD(GetDialogBaseUnits())/STATUS_FONT_CONST);
 	//printf("\n....%d", updateTime);
 
 	if (full) {
-		if (bDirtyStatus || bDirtyFile){
-			/*if (status && bShowStatus){
-
-
-				//TODOwsprintf(szPane, _T(" Bytes: %d "), bytes = CalcTextSize(&szBuf, 0, nFormat, bUnix, TRUE, &chars));
-				nPaneSizes[SBPANE_SIZE] = (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane));
-				SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_SIZE, (LPARAM)(LPTSTR)szPane);
-
-				nPaneSizes[SBPANE_TYPE] = 4 * options.nStatusFontWidth;
-				if (bBinaryFile) {
-					lstrcpy(szPane, _T("  BIN"));
-				} else if (nEncodingType == TYPE_UTF_8) {
-					lstrcpy(szPane, bUnix ? _T(" UTF-8 UNIX") : _T(" UTF-8"));
-					nPaneSizes[SBPANE_TYPE] = (bUnix ? 9 : 5) * options.nStatusFontWidth + 4;
-				} else if (nEncodingType == TYPE_UTF_16) {
-					lstrcpy(szPane, _T(" Unicode"));
-					nPaneSizes[SBPANE_TYPE] = 6 * options.nStatusFontWidth + 4;
-				} else if (nEncodingType == TYPE_UTF_16_BE) {
-					lstrcpy(szPane, _T(" Unicode BE"));
-					nPaneSizes[SBPANE_TYPE] = 8 * options.nStatusFontWidth + 4;
-				} else if (bUnix) {
-					lstrcpy(szPane, _T("UNIX"));
-				} else {
-					lstrcpy(szPane, _T(" DOS"));
+		if (bDirtyStatus){
+			if (status && bShowStatus){
+				printf("F");
+				if (!((nFormat >> 30) & 1)) {
+					lstrcpy(szPane, _T("  "));
+					if (nFormat >> 31)
+						wsprintf(szPane+2, GetString(ID_ENC_CUSTOM), (WORD)nFormat);
+					else
+						lstrcpy(szPane+2, GetString((WORD)nFormat));
+					lstrcat(szPane+3, _T(" "));
+					lstrcat(szPane+4, GetString((nFormat >> 16) & 0xfff));
+					dc = GetDC(status);
+					SelectObject(dc, GetStockObject(DEFAULT_GUI_FONT));
+					GetTextExtentPoint(dc, _T("0"), 1, &sz);
+					txtScale = sz.cx;
+					GetTextExtentPoint(dc, szPane, lstrlen(szPane), &sz);
+					nPaneSizes[SBPANE_TYPE] = sz.cx + txtScale * 2;
+					ReleaseDC(status, dc);
+					SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_TYPE, (LPARAM)(LPTSTR)szPane);
+					nFormat |= (1<<30);
 				}
-				SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_TYPE, (LPARAM)(LPTSTR)szPane);
+				wsprintf(szPane, _T(" Bytes: %d "), bytes = CalcTextSize(NULL, NULL, 0, nFormat, TRUE, &chars));
+				nPaneSizes[SBPANE_SIZE] = txtScale * (lstrlen(szPane) - 1);
+				SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_SIZE, (LPARAM)(LPTSTR)szPane);
 				statup = TRUE;
 			} else
-				chars = GetTextChars(NULL, bUnix);
+				chars = GetTextChars(NULL);
 
 			bDirtyFile = TRUE;
 			if (chars == savedChars && savedFormat == nFormat) {
 				if (!chars) bDirtyFile = FALSE;
 				else {
-					szBuf = 1;
 					j = 32 / sizeof(TCHAR);
-					memset(pbTmp, 0, sizeof(pbTmp));
-					szTmp = GetShadowRange(0, j, -1, &i);
-					if (!memcmp(szTmp, savedHead, i * sizeof(TCHAR))) {
-						memset(pbTmp, 0, sizeof(pbTmp));
-						szTmp = GetShadowRange(chars < j ? 0 : chars-j, chars, -1, &i);
-						if (!memcmp(szTmp, savedFoot, i * sizeof(TCHAR))) {
+					//memset(pbTmp, 0, sizeof(pbTmp));
+					szBuf = GetShadowRange(0, j, -1, &i);
+					if (!memcmp(szBuf, savedHead, i * sizeof(TCHAR))) {
+						//memset(pbTmp, 0, sizeof(pbTmp));
+						szBuf = GetShadowRange(chars < j ? 0 : chars-j, chars, -1, &i);
+						if (!memcmp(szBuf, savedFoot, i * sizeof(TCHAR))) {
 							bDirtyFile = FALSE;
 
 
 						}
 					}
 				}
-			}*/
+			}
 
 			if (!szCaptionFile || oldDirty != bDirtyFile)
 				UpdateCaption();
@@ -652,7 +652,7 @@ void UpdateStatus(BOOL refresh)
 #ifdef USE_RICH_EDIT
 		if (bInsertMode) 	lstrcpy(szPane, _T(" INS"));
 		else 				lstrcpy(szPane, _T("OVR"));
-		nPaneSizes[SBPANE_INS] = 4 * options.nStatusFontWidth - 3;
+		nPaneSizes[SBPANE_INS] = 4 * txtScale - 3;
 		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_INS, (LPARAM)(LPTSTR)szPane);
 #else
 		nPaneSizes[SBPANE_INS] = 0;
@@ -660,46 +660,35 @@ void UpdateStatus(BOOL refresh)
 		statup = TRUE;
 	}
 
-	if ((status && bShowStatus) || (toolbar && bShowToolbar)){
-#ifdef USE_RICH_EDIT
-		SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-#else
-		SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-#endif
-	}
-	if (full) {
-		if (toolbar && bShowToolbar) {
+	if ((status && bShowStatus) || (full && toolbar && bShowToolbar)){
+		lCol = GetColNum(-1, -1, NULL, &lLine, &cr);
+		if (full && toolbar && bShowToolbar) {
 			SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_CUT, MAKELONG((cr.cpMin != cr.cpMax), 0));
 			SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_COPY, MAKELONG((cr.cpMin != cr.cpMax), 0));
+			SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_PASTE, MAKELONG(IsClipboardFormatAvailable(_CF_TEXT), 0));
 		}
-	}
-	if (toolbar && bShowToolbar) {
-		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_PASTE, MAKELONG(IsClipboardFormatAvailable(_CF_TEXT), 0));
 	}
 	if (status && bShowStatus && (bDirtyStatus || cr.cpMin != oldcr.cpMin || cr.cpMax != oldcr.cpMax)) {
 		printf("s");
-		if (full) oldcr = cr;
+		oldcr = full ? cr : ecr;
 		lLines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
-		lCol = GetColNum(cr.cpMax, -1, NULL, &lLine, NULL);
 		wsprintf(szPane, _T(" Line: %d/%d"), lLine+1, lLines);
 		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_LINE, (LPARAM)(LPTSTR)szPane);
-		nPaneSizes[SBPANE_LINE] = (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
+		nPaneSizes[SBPANE_LINE] = txtScale * lstrlen(szPane);
 		wsprintf(szPane, _T(" Col: %d"), lCol);
 		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_COL, (LPARAM)(LPTSTR)szPane);
-		nPaneSizes[SBPANE_COL] = (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
+		nPaneSizes[SBPANE_COL] = txtScale * lstrlen(szPane) + 2;
 
 		if (cr.cpMax > cr.cpMin) {
 			*szPane = 0;
-			if (full) {
-				szBuf = GetShadowSelection(&chars, NULL);
-				//TODOwsprintf(szPane, _T("Bytes: %d"), CalcTextSize(&szBuf, chars, nFormat, bUnix, FALSE, NULL));
-			}
+			if (full)
+				wsprintf(szPane, _T("Bytes: %d"), CalcTextSize(NULL, &cr, 0, nFormat, FALSE, NULL));
 			i = GetColNum(cr.cpMin, -1, NULL, &lLine, NULL);
 			j = GetColNum(cr.cpMax, -1, NULL, &lLines, NULL);
 			wsprintf(szStatusMessage, _T(" Selected %d:%d  ->  %d:%d   %s"), lLine+1, i, lLines+1, j, szPane);
 		} else if (!bLoading)
 			*szStatusMessage = 0;
-		nPaneSizes[SBPANE_MESSAGE] = (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szStatusMessage) + 5);
+		nPaneSizes[SBPANE_MESSAGE] = txtScale * (lstrlen(szStatusMessage) + 5);
 		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_MESSAGE | SBT_NOBORDERS, (LPARAM)szStatusMessage);
 		statup = TRUE;
 	}
@@ -719,8 +708,7 @@ void UpdateStatus(BOOL refresh)
 		SetTimer(hwnd, IDT_UPDATE, 64, NULL);
 }
 
-LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
+LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	HMENU hmenu, hsub;
 	CHARRANGE cr;
 	POINT pt;
@@ -912,7 +900,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					}
 					SSTRCPY(szInsert, szBuf);
 #ifdef USE_RICH_EDIT
-//					FixTextBuffer(szInsert);
+//TODO					FixTextBuffer(szInsert);
 #else
 					//FixTextBufferLE(&szInsert);
 #endif
@@ -929,7 +917,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					bCloseAfterInsert = (BST_CHECKED == SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_INSERT, BM_GETCHECK, 0, 0));
 					if (bCloseAfterInsert) PostMessage(hdlgFind, WM_CLOSE, 0, 0);
 					FREE(szNew);
-					UpdateStatus(FALSE);
+					QueueUpdateStatus();
 				default:
 					return FALSE;
 			}
@@ -952,7 +940,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 				case 0x402:
 				case 0x401:
 					ReplaceAll(hdlgFind, 1, (LOWORD(wParam) == 0x402 ? 1 : 0), &szFindText, &szReplaceText, &pbFindTextSpec, &pbReplaceTextSpec, szTmp, bOkEna = (BST_CHECKED == SendDlgItemMessage(hdlgFind, IDC_RADIO_SELECTION, BM_GETCHECK, 0, 0)), bMatchCase, bWholeWord, 0, 0, FALSE, NULL, NULL);
-					UpdateStatus(FALSE);
+					QueueUpdateStatus();
 					bCloseAfterReplace = (BST_CHECKED == SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_REPLACE, BM_GETCHECK, 0, 0));
 					if (bCloseAfterReplace) PostMessage(hdlgFind, WM_CLOSE, 0, 0);
 					if (!bOkEna) return FALSE;
@@ -1135,7 +1123,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 	case WM_LBUTTONUP:
 	case WM_LBUTTONDOWN:
 			lRes = CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
-			UpdateStatus(FALSE);
+			QueueUpdateStatus();
 			return lRes;
 	case WM_LBUTTONDBLCLK:
 #ifndef USE_RICH_EDIT
@@ -1204,7 +1192,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 	case WM_KEYUP:
 	case WM_KEYDOWN:
 			lRes = CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
-			UpdateStatus(FALSE);
+			QueueUpdateStatus();
 			return lRes;
 	case WM_CHAR:
 		if (options.bAutoIndent && (TCHAR)wParam == _T('\r')) {
@@ -1252,7 +1240,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 #endif
 		//Selection was changed
 		if (!bLoading)
-			UpdateStatus(FALSE);
+			QueueUpdateStatus();
 		break;
 	}
 	return CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
@@ -1686,7 +1674,7 @@ void SaveMRUInfo(LPCTSTR szFullPath)
 }
 
 void PopulateFavourites(void) {
-	LPTSTR szBuffer;
+	LPTSTR szBuffer = NULL;
 	TCHAR *szName = gTmpBuf2, *szMenu = gTmpBuf;
 	INT i, j, cnt, accel;
 	MENUITEMINFO mio;
@@ -1694,19 +1682,14 @@ void PopulateFavourites(void) {
 	HMENU hsub = GetSubMenu(hmenu, MPOS_FAVE);
 
 	bHasFaves = FALSE;
-	while (GetMenuItemCount(hsub) > 4) {
+	while (GetMenuItemCount(hsub) > 4)
 		DeleteMenu(hsub, 4, MF_BYPOSITION);
-	}
 	mio.cbSize = sizeof(MENUITEMINFO);
 	mio.fMask = MIIM_TYPE | MIIM_ID;
-	i = (MAX(0,GetFileSize(SCNUL(szFav), NULL)) + 1) * sizeof(TCHAR);
-	szBuffer = (LPTSTR)HeapAlloc(globalHeap, 0, i);
+	szBuffer = (LPTSTR)HeapAlloc(globalHeap, 0, 0xffff*sizeof(TCHAR));
 
-	if (GetPrivateProfileString(STR_FAV_APPNAME, NULL, NULL, szBuffer, i, SCNUL(szFav))) {
+	if (GetPrivateProfileString(STR_FAV_APPNAME, NULL, NULL, szBuffer, 0xffff, SCNUL(szFav))) {
 		bHasFaves = TRUE;
-		//TODO does this work?
-		/** @fixme Commented out condition for a for loop. The whole
-				block is probably never executed. */
 		for (i = 0, j = 0, cnt = accel = 1; /*cnt <= MAXFAVES*/; ++j, ++i) {
 			szName[j] = szBuffer[i];
 			if (szBuffer[i] == _T('\0')) {
@@ -2202,15 +2185,13 @@ BOOL CALLBACK AboutPluginDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 }
 
 
-BOOL CALLBACK GotoDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
+BOOL CALLBACK GotoDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	TCHAR szLine[12];
 	LONG lLine, lCol = 0;
-	CHARRANGE cr;
 	switch (uMsg) {
 		case WM_INITDIALOG: {
 			CenterWindow(hwndDlg);
-			lCol = GetColNum(-1, -1, NULL, &lLine, &cr);
+			lCol = GetColNum(-1, -1, NULL, &lLine, NULL);
 			wsprintf(szLine, _T("%d"), lLine+1);
 			SetDlgItemText(hwndDlg, IDC_LINE, szLine);
 
@@ -3013,7 +2994,6 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 	ENLINK* pLink;
 	POINT pt;
 #endif
-	HANDLE hFile;
 	HBITMAP hb;
 	HCURSOR hCur;
 	HDROP hDrop;
@@ -3021,14 +3001,13 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 	HKEY key;
 	HMENU hMenu;
 	LPTOOLTIPTEXT lpttt;
-	LPBYTE pBuf;
 	LPCTSTR szOld;
 	LPTSTR sz, szNew, szBuf;
 	LPTSTR szTmp = gTmpBuf, szFileName = gTmpBuf;
 	LPTSTR szTmp2 = gTmpBuf2;
 	BOOL b = FALSE, abort, uni;
 	BYTE base;
-	DWORD l, sl, len, lread;
+	DWORD l, sl, len;
 	LONG i, j, k, nPos, ena, enc;
 
 	switch(Msg) {
@@ -3065,7 +3044,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 		if (bWordWrap) {
 			SetWindowLongPtr(client, GWL_STYLE, GetWindowLongPtr(client, GWL_STYLE) & ~WS_HSCROLL);
 			SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-			UpdateStatus(FALSE);
+			QueueUpdateStatus();
 		}
 		if (bShowStatus) {
 			SendMessage(status, WM_SIZE, 0, 0);
@@ -3227,10 +3206,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					case EN_CHANGE:
 						*szStatusMessage = 0;
 						bDirtyShadow = bDirtyStatus = TRUE;
-						if (!bDirtyFile && !bLoading) {
-							bDirtyFile = TRUE;
-							UpdateCaption();
-						}
+						QueueUpdateStatus();
 						break;
 #ifdef USE_RICH_EDIT
 					case EN_STOPNOUNDO:
@@ -3350,7 +3326,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 							break;
 						}
 						if ( hMem = GetClipboardData(_CF_TEXT) ) {
-							if (!(szTmp = GlobalLock(hMem))) {
+							if (!(szTmp = (LPTSTR)GlobalLock(hMem))) {
 								ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
 								abort = TRUE;
 							} else {
@@ -3455,17 +3431,17 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 			case ID_MYEDIT_DELETE:
 				SendMessage(client, WM_CLEAR, 0, 0);
-				UpdateStatus(FALSE);
+				QueueUpdateStatus();
 				break;
 #ifdef USE_RICH_EDIT
 			case ID_MYEDIT_REDO:
 				SendMessage(client, EM_REDO, 0, 0);
-				UpdateStatus(FALSE);
+				QueueUpdateStatus();
 				break;
 #endif
 			case ID_MYEDIT_UNDO:
 				SendMessage(client, EM_UNDO, 0, 0);
-				UpdateStatus(FALSE);
+				QueueUpdateStatus();
 				break;
 			case ID_CLEAR_CLIPBRD:
 				if (!OpenClipboard(NULL)) {
@@ -3501,7 +3477,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					break;
 				}
 				if ( hMem = GetClipboardData(_CF_TEXT) ) {
-					if (!(szOld = GlobalLock(hMem)))
+					if (!(szOld = (LPCTSTR)GlobalLock(hMem)))
 						ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
 					else {
 						sl =  lstrlen(szOld);
@@ -3513,7 +3489,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 							default: if (!l) l = sl; break;
 						}
 						hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (l+1));
-						if (!(szNew = GlobalLock(hMem2)))
+						if (!(szNew = (LPTSTR)GlobalLock(hMem2)))
 							ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
 						else {
 							if (base) {
@@ -3545,7 +3521,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					}//TODO test/fix this!
 				}
 				CloseClipboard();
-				UpdateStatus(FALSE);
+				QueueUpdateStatus();
 				FREE(szTmp);
 				break;
 			case ID_MYEDIT_PASTE: 
@@ -3560,7 +3536,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					break;
 				}
 				if ( hMem = GetClipboardData(_CF_TEXT) ) {
-					if (!(szTmp = GlobalLock(hMem)))
+					if (!(szTmp = (LPTSTR)GlobalLock(hMem)))
 						ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
 					else {
 						uni = (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE);
@@ -3585,7 +3561,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 								sl |= (GetLineFmt(szTmp2, l, &i, &j, &k, &nPos, &b) << 16);
 								if (enc == ID_ENC_BIN)
 									ImportBinary(szTmp2, l);
-								ImportLineFmt(&szTmp2, &l, sl, i, j, k, nPos, NULL);
+								ImportLineFmt(&szTmp2, &l, (WORD)((sl >> 16) & 0xfff), i, j, k, nPos, NULL);
 								SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szTmp2);
 							}
 							FREE(szTmp2);
@@ -3594,7 +3570,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				}
 				CloseClipboard();
 				InvalidateRect(client, NULL, TRUE);
-				UpdateStatus(FALSE);
+				QueueUpdateStatus();
 				break;
 			case ID_HOME:
 #ifdef USE_RICH_EDIT
@@ -3714,7 +3690,6 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					break;
 				}
 				SwitchReadOnly(bReadOnly);
-				UpdateStatus(FALSE);
 				UpdateCaption();
 				break;
 			case ID_FONT_PRIMARY:
@@ -3884,7 +3859,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					DialogBox(hinstLang, MAKEINTRESOURCE(IDD_ABOUT_PLUGIN), hwndMain, (DLGPROC)AboutPluginDialogProc);
 				break;
 			case ID_MYFILE_OPEN:
-				SetCurrentDirectory(SCNUL(szDir));
+				//SetCurrentDirectory(SCNUL(szDir));
 				if (!SaveIfDirty())
 					break;
 				LoadOptions();
@@ -4092,14 +4067,14 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 #ifdef USE_RICH_EDIT
 							static LPCTSTR usf[] = {_T("\r  \t"), _T("\r   "), _T("\r\t")};
 							static LPCTSTR usr[] = {_T("\r   \t"), _T("\r "), _T("\r")};
-							static LPBYTE usfs[] = {"\0\0\4\0", "\0\0\4\1", NULL};
-							static LPBYTE usrs[] = {"\0\0\0\4\0", "\0\1", NULL};
+							static LPBYTE usfs[] = {(LPBYTE)"\0\0\4\0", (LPBYTE)"\0\0\4\1", NULL};
+							static LPBYTE usrs[] = {(LPBYTE)"\0\0\0\4\0", (LPBYTE)"\0\1", NULL};
 							ReplaceAll(hwnd, 3, 0, usf, usr, usfs, usrs, NULL, TRUE, TRUE, FALSE, 0, options.nTabStops+1, TRUE, sz, NULL);
 #else
 							static LPCTSTR usf[] = {_T("\r\n  \t"), _T("\r\n   "), _T("\r\n\t")};
 							static LPCTSTR usr[] = {_T("\r\n   \t"), _T("\r\n "), _T("\r\n")};
-							static LPBYTE usfs[] = {"\0\0\0\4\0", "\0\0\0\4\1", NULL};
-							static LPBYTE usrs[] = {"\0\0\0\0\4\0", "\0\0\1", NULL};
+							static LPBYTE usfs[] = {(LPBYTE)"\0\0\0\4\0", (LPBYTE)"\0\0\0\4\1", NULL};
+							static LPBYTE usrs[] = {(LPBYTE)"\0\0\0\0\4\0", (LPBYTE)"\0\0\1", NULL};
 							ReplaceAll(hwnd, 3, 0, usf, usr, usfs, usrs, NULL, TRUE, TRUE, FALSE, 0, options.nTabStops+2, TRUE, sz, NULL);
 #endif
 						}
@@ -4108,12 +4083,12 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 #ifdef USE_RICH_EDIT
 						static LPCTSTR usf[] = {_T("\r\r"), _T("\r\r"), _T("\r ")};
 						static LPCTSTR usr[] = {_T("\r \r"), _T("\r \r"), _T("\r")};
-						static LPBYTE usfs[] = {NULL, NULL, "\0\1"};
+						static LPBYTE usfs[] = {NULL, NULL, (LPBYTE)"\0\1"};
 						ReplaceAll(hwnd, 3, 0, usf, usr, usfs, NULL, NULL, TRUE, TRUE, FALSE, 0, 0, FALSE, sz, NULL);
 #else
 						static LPCTSTR usf[] = {_T("\r\n\r"), _T("\r\n\r"), _T("\r\n ")};
 						static LPCTSTR usr[] = {_T("\r\n \r"), _T("\r\n \r"), _T("\r\n")};
-						static LPBYTE usfs[] = {NULL, NULL, "\0\0\1"};
+						static LPBYTE usfs[] = {NULL, NULL, (LPBYTE)"\0\0\1"};
 						ReplaceAll(hwnd, 3, 0, usf, usr, usfs, NULL, NULL, TRUE, TRUE, FALSE, 0, 0, FALSE, sz, NULL);
 #endif
 						}
@@ -4128,14 +4103,14 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 #ifdef USE_RICH_EDIT
 				InvalidateRect(client, NULL, TRUE);
 #endif
-				UpdateStatus(FALSE);
+				QueueUpdateStatus();
 				break;
 #ifdef USE_RICH_EDIT
 			case ID_INSERT_MODE:
 				bInsertMode = !bInsertMode;
 				SendMessage(client, WM_KEYDOWN, (WPARAM)VK_INSERT, (LPARAM)0x510001);
 				SendMessage(client, WM_KEYUP, (WPARAM)VK_INSERT, (LPARAM)0xC0510001);
-				UpdateStatus(TRUE);
+				QueueUpdateStatus();
 				break;
 #endif
 			case ID_DATE_TIME_LONG:
@@ -4171,7 +4146,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 				if (bLoading)
 					UpdateSavedInfo();
-				UpdateStatus(FALSE);
+				QueueUpdateStatus();
 				break;
 			case ID_PAGESETUP:
 				ZeroMemory(&psd, sizeof(PAGESETUPDLG));
@@ -4397,7 +4372,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				LaunchInViewer(FALSE, FALSE);
 				break;
 			case ID_ENC_CUSTOM:
-				DialogBox(hinstLang, MAKEINTRESOURCE(IDD_CP), hwndMain, (DLGPROC)CPDialogProc);
+				//TODO DialogBox(hinstLang, MAKEINTRESOURCE(IDD_CP), hwndMain, (DLGPROC)CPDialogProc);
 				break;
 			case ID_LFMT_DOS:
 			case ID_LFMT_UNIX:
@@ -4616,6 +4591,9 @@ DWORD WINAPI LoadThread(LPVOID lpParameter) {
 			SendMessage(client, EM_SCROLLCARET, 0, 0);
 		}
 #endif
+	} else {
+		bQuit = TRUE;
+		return 1;
 	}
 	SendMessage(client, EM_SETREADONLY, (WPARAM)FALSE, 0);
 #ifdef USE_RICH_EDIT
@@ -4682,6 +4660,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	szShadow = NULL;
 	shadowLen = shadowAlloc = shadowRngEnd = 0;
 	bDirtyShadow = bDirtyStatus = TRUE;
+	nFormat = 0;
 	g_bIniMode = FALSE;
 	updateThrottle = updateTime = 0;
 	savedFormat = 0;
@@ -4703,7 +4682,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	{
 		TCHAR* pch;
 		GetModuleFileName(hinstThis, bufFn, MAXFN);
-		SSTRCPYA(szMetapadIni, bufFn, 11);
+		SSTRCPYA(szMetapadIni, bufFn, 12);
 
 		pch = lstrrchr(szMetapadIni, _T('\\'));
 		++pch;
@@ -4762,7 +4741,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	SSTRCPY(szDir, bufFn);
 	LoadOptions();
 	
-	options.nStatusFontWidth = LOWORD(GetDialogBaseUnits());
+//	options.nStatusFontWidth = LOWORD(GetDialogBaseUnits());
 	bWordWrap = FALSE;
 	bPrimaryFont = TRUE;
 	bSmartSelect = TRUE;
