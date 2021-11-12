@@ -66,6 +66,7 @@ void MakeNewFile(void) {
 	szCaptionFile[0] = _T('\0');
 	bDirtyShadow = bDirtyStatus = TRUE;
 	savedChars = 0;
+	savedFormat = (nEncodingType | ((bUnix ? 1 : 0) << 8) | ((bBinaryFile ? 1 : 0) << 9));
 	UpdateStatus(TRUE);
 	bLoading = FALSE;
 }
@@ -190,7 +191,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 		else {
 #ifdef USE_RICH_EDIT
 			GETTEXTLENGTHEX gtl = {0};
-			l = shadowLen = SendMessage(client, EM_GETTEXTLENGTHEX, &gtl, 0);
+			l = shadowLen = SendMessage(client, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
 #else
 			l = shadowLen = GetWindowTextLength(client);
 #endif
@@ -327,7 +328,7 @@ DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BO
 	GETTEXTLENGTHEX gtl = {0};
 	if (!unix) gtl.flags = GTL_USECRLF;
 	unix = FALSE;
-	if (!szBuffer) estBytes = SendMessage(client, EM_GETTEXTLENGTHEX, &gtl, 0);
+	if (!szBuffer) estBytes = SendMessage(client, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
 #else
 	if (!szBuffer && !unix) estBytes = GetWindowTextLength(client);
 #endif
@@ -339,8 +340,10 @@ DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BO
 	} else if (encoding == TYPE_UTF_8) {
 		if (!szBuffer) szBuffer = GetShadowBuffer(&estBytes);
 		chars = estBytes;
+#ifdef UNICODE
 		if (estBytes)
 			estBytes = WideCharToMultiByte(CP_UTF8, 0, szBuffer, estBytes, NULL, 0, NULL, NULL);
+#endif
 		bom = SIZEOFBOM_UTF_8;
 	}
 #ifndef USE_RICH_EDIT
@@ -363,7 +366,7 @@ DWORD GetTextChars(LPCTSTR szText, BOOL unix){
 	GETTEXTLENGTHEX gtl = {0};
 	if (!unix) gtl.flags = GTL_USECRLF;
 	unix = FALSE;
-	if (!szText) return SendMessage(client, EM_GETTEXTLENGTHEX, &gtl, 0);
+	if (!szText) return SendMessage(client, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
 #else
 	if (!szText) return GetWindowTextLength(client);
 #endif
@@ -562,7 +565,7 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 								pd += cg;
 							} else if (pbReplSpec[cf] == 6) {
 #ifdef UNICODE
-								if (sizeof(TCHAR) > 1 && (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE))
+								if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE)
 									*pd++ = RAND()%0xffe0+0x20;
 								else
 #endif

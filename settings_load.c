@@ -31,7 +31,7 @@
 
 #include <windows.h>
 #include <tchar.h>
-#ifdef BUILD_METAPAD_UNICODE
+#ifdef UNICODE
 #include <wchar.h>
 #endif
 
@@ -189,7 +189,7 @@ void LoadOptions(void)
 		LoadOptionNumeric(key, _T("nPrimaryFont"), (LPBYTE)&options.nPrimaryFont, dwBufferSize);
 		LoadOptionNumeric(key, _T("nSecondaryFont"), (LPBYTE)&options.nSecondaryFont, dwBufferSize);
 		dwBufferSize = sizeof(LOGFONT);
-#ifdef BUILD_METAPAD_UNICODE
+#ifdef UNICODE
 		LoadOptionBinary(key, _T("PrimaryFontU"), (LPBYTE)&options.PrimaryFont, dwBufferSize);
 		LoadOptionBinary(key, _T("SecondaryFontU"), (LPBYTE)&options.SecondaryFont, dwBufferSize);
 #else

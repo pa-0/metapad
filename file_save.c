@@ -41,6 +41,7 @@
 #include "include/strings.h"
 #include "include/macros.h"
 #include "include/metapad.h"
+#include "include/encoding.h"
 #include "include/file_utils.h"
 
 
@@ -291,6 +292,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 #ifdef USE_RICH_EDIT
 			RichModeToDos(&szBuffer, &bufDirty);
 #endif
+#ifndef UNICODE
 			if (sizeof(TCHAR) < 2) {
 				nBytes = 2 * MultiByteToWideChar(cp, 0, (LPCSTR)szBuffer, nChars, NULL, 0);
 				szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, nBytes+1);
@@ -304,6 +306,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 				szBuffer = (LPCTSTR)szTmp;
 				bufDirty = TRUE;
 			} else
+#endif
 				nBytes = nChars * sizeof(TCHAR);
 		}
 

@@ -32,7 +32,7 @@
 #include <windows.h>
 #include <tchar.h>
 
-#ifdef BUILD_METAPAD_UNICODE
+#ifdef UNICODE
 #include <wchar.h>
 #endif
 
@@ -153,7 +153,7 @@ void SaveOptions(void)
 	writeSucceeded &= SaveOption(key, _T("nTabStops"), REG_DWORD, (LPBYTE)&options.nTabStops, sizeof(int));
 	writeSucceeded &= SaveOption(key, _T("nPrimaryFont"), REG_DWORD, (LPBYTE)&options.nPrimaryFont, sizeof(int));
 	writeSucceeded &= SaveOption(key, _T("nSecondaryFont"), REG_DWORD, (LPBYTE)&options.nSecondaryFont, sizeof(int));
-#ifdef BUILD_METAPAD_UNICODE
+#ifdef UNICODE
 	writeSucceeded &= SaveOption(key, _T("PrimaryFontU"), REG_BINARY, (LPBYTE)&options.PrimaryFont, sizeof(LOGFONT));
 	writeSucceeded &= SaveOption(key, _T("SecondaryFontU"), REG_BINARY, (LPBYTE)&options.SecondaryFont, sizeof(LOGFONT));
 #else

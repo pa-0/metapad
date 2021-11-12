@@ -28,7 +28,7 @@
 #include <windows.h>
 #include <tchar.h>
 
-#ifdef BUILD_METAPAD_UNICODE
+#ifdef UNICODE
 #include <wchar.h>
 #endif
 
@@ -52,6 +52,7 @@ static unsigned short encLut[] = {
 	0x7720, 0x7820, 0x7920, 0x7a20,  0x3020, 0x3120, 0x3220, 0x3320,  0x3420, 0x3520, 0x3620, 0x3720,  0x3820, 0x3920, 0x2b20, 0x2f20,
 	0x3d20
 };
+
 
 /**
  * Decodes a string of ANSI or wide characters, of given [base], to the binary data it represents.
@@ -211,3 +212,21 @@ INT EncodeBase( BYTE base, LPBYTE bin, LPTSTR code, INT len, LPBYTE* end ) {
 	if (end) *end = bin;
 	return ct;
 }
+
+
+
+/**
+ * Reverse byte pairs.
+ *
+ * @param[in] buffer Pointer to the start of the data to be reversed.
+ * @param[in] size Size of the data to be reversed.
+ */
+void ReverseBytes(LPBYTE buffer, LONG size) {
+	BYTE temp;
+	for (size /= 2; size; size--){
+		temp = *buffer;
+		*buffer++ = *(buffer+1);
+		*buffer++ = temp;
+	}
+}
+

@@ -29,7 +29,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0400
 
-#ifdef BUILD_METAPAD_UNICODE
+#ifdef UNICODE
 #include <wchar.h>
 #define _CF_TEXT CF_UNICODETEXT
 #define _SF_TEXT (SF_TEXT || SF_UNICODE)
@@ -189,7 +189,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext)
 				}
 				if (spi == 6){
 #ifdef UNICODE
-					if (sizeof(TCHAR) > 1 && (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE))
+					if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE)
 						*bout++ = RAND()%0xffe0+0x20;
 					else
 #endif
@@ -243,8 +243,10 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext)
 #endif
 					else if (str && uni == 1 && l % sizeof(TCHAR))
 						l = -2;
-					else if (uni == 1 && l >= sizeof(TCHAR) && nEncodingType != TYPE_UTF_16_BE)
-						ReverseBytes((LPBYTE)bout, l * sizeof(TCHAR));
+#ifdef UNICODE
+					else if (uni == 1 && l >= 2 && nEncodingType != TYPE_UTF_16_BE)
+						ReverseBytes((LPBYTE)bout, l * 2);
+#endif
 					if (!str) buf--;
 				} else if (l == -2 && str && *end && *end != '\\') l = -1;
 				if (l > 0) {
@@ -298,25 +300,6 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext)
 }
 
 /**
- * Reverse byte pairs.
- *
- * @param[in] buffer Pointer to the start of the data to be reversed.
- * @param[in] size Size of the data to be reversed.
- */
-void ReverseBytes(LPBYTE buffer, LONG size)
-{
-	BYTE temp;
-	long i, end;
-
-	end = size - 2;
-	for (i = 0; i <= end; i+=2) {
-		temp = buffer[i];
-		buffer[i] = buffer[i+1];
-		buffer[i+1] = temp;
-	}
-}
-
-/**
  * Updates window title to reflect current working file's name and state.
  */
 void UpdateCaption(void)
@@ -328,13 +311,13 @@ void UpdateCaption(void)
 		szCaptionFile[5] = szCaptionFile[7] = _T(' ');
 		szCaptionFile[6] = _T('*');
 		u = (USHORT)lstrlen(szCaptionFile+8);
-		*((LPWORD)szCaptionFile+2) = u;
+		*((LPWORD)szCaptionFile+1) = u;
 		lstrcat(szCaptionFile+8, STR_CAPTION_FILE);
 		*((LPWORD)szCaptionFile) = (USHORT)lstrlen(szCaptionFile+8) - u - 1;
 		lstrcat(szCaptionFile+8, GetString(IDS_READONLY_INDICATOR));
 		szCaptionFile[u + 8 + *((LPWORD)szCaptionFile)] = _T('\0');
 	}
-	u = *((LPWORD)szCaptionFile+2) + 8;
+	u = *((LPWORD)szCaptionFile+1) + 8;
 	szCaptionFile[u] = _T(' ');
 	if (bReadOnly) 
 		szCaptionFile[u + *((LPWORD)szCaptionFile)] = _T(' ');
@@ -575,31 +558,36 @@ void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 
 void UpdateStatus(BOOL refresh)
 {
+
 	static TCHAR szPane[32];
-	static int nPaneSizes[NUMSTATPANES] = {0}, lastw = 0;
+	static CHARRANGE oldcr = {0};
+	static int nPaneSizes[NUMSTATPANES] = {0};
 	int tpsz[NUMSTATPANES] = {0};
 	DWORD i, j, st, bytes, chars;
 	LONG lLine = -1, lLines, lCol;
-	BOOL full = TRUE, oldDirty = bDirtyFile;
+	BOOL tmu, full = TRUE, statup = FALSE, oldDirty = bDirtyFile;
 	CHARRANGE cr;
-	RECT rc;
 	LPCTSTR szBuf = NULL, szTmp;
 	LPBYTE pbTmp[32];
 
 	bDirtyStatus |= refresh;
-	KillTimer(hwnd, IDT_UPDATE);
+	tmu = KillTimer(hwnd, IDT_UPDATE);
 	st = GetTickCount();
 	if (st < updateThrottle && (i = updateThrottle - st) < THROTTLEMAX*4) {
 		//printf("\n....%d", (updateThrottle - st));
-		if (i < THROTTLEMAX) updateThrottle += updateTime/2;
+		if (i < THROTTLEMAX) updateThrottle += MIN(updateTime/2, 96);
+		full = FALSE;
+	} else if (!tmu && updateTime > 64) {
+		updateThrottle = st + MIN(updateTime/2, 96);
 		full = FALSE;
 	}
+	//printf("\n....%d", updateTime);
 
-	if (status && bShowStatus)
-		SendMessage(status, WM_SETREDRAW, FALSE, 0);
 	if (full) {
 		if (bDirtyStatus || bDirtyFile){
 			if (status && bShowStatus){
+
+
 				wsprintf(szPane, _T(" Bytes: %d "), bytes = CalcTextSize(&szBuf, 0, nEncodingType, bUnix, TRUE, &chars));
 				nPaneSizes[SBPANE_SIZE] = (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane));
 				SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_SIZE, (LPARAM)(LPTSTR)szPane);
@@ -622,6 +610,7 @@ void UpdateStatus(BOOL refresh)
 					lstrcpy(szPane, _T(" DOS"));
 				}
 				SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_TYPE, (LPARAM)(LPTSTR)szPane);
+				statup = TRUE;
 			} else
 				chars = GetTextChars(NULL, bUnix);
 
@@ -661,6 +650,7 @@ void UpdateStatus(BOOL refresh)
 		}
 	}
 	if (bDirtyStatus) {
+		printf("D");
 #ifdef USE_RICH_EDIT
 		if (bInsertMode) 	lstrcpy(szPane, _T(" INS"));
 		else 				lstrcpy(szPane, _T("OVR"));
@@ -669,6 +659,7 @@ void UpdateStatus(BOOL refresh)
 #else
 		nPaneSizes[SBPANE_INS] = 0;
 #endif
+		statup = TRUE;
 	}
 
 	if ((status && bShowStatus) || (toolbar && bShowToolbar)){
@@ -687,9 +678,11 @@ void UpdateStatus(BOOL refresh)
 	if (toolbar && bShowToolbar) {
 		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_PASTE, MAKELONG(IsClipboardFormatAvailable(_CF_TEXT), 0));
 	}
-	if (status && bShowStatus) {
+	if (status && bShowStatus && (bDirtyStatus || cr.cpMin != oldcr.cpMin || cr.cpMax != oldcr.cpMax)) {
+		printf("s");
+		if (full) oldcr = cr;
 		lLines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
-		lCol = GetColNum(-1, -1, NULL, &lLine, NULL);
+		lCol = GetColNum(cr.cpMax, -1, NULL, &lLine, NULL);
 		wsprintf(szPane, _T(" Line: %d/%d"), lLine+1, lLines);
 		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_LINE, (LPARAM)(LPTSTR)szPane);
 		nPaneSizes[SBPANE_LINE] = (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
@@ -706,18 +699,17 @@ void UpdateStatus(BOOL refresh)
 			i = GetColNum(cr.cpMin, -1, NULL, &lLine, NULL);
 			j = GetColNum(cr.cpMax, -1, NULL, &lLines, NULL);
 			wsprintf(szStatusMessage, _T(" Selected %d:%d  ->  %d:%d   %s"), lLine+1, i, lLines+1, j, szPane);
-		}
+		} else if (!bLoading)
+			*szStatusMessage = 0;
 		nPaneSizes[SBPANE_MESSAGE] = (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szStatusMessage) + 5);
 		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_MESSAGE | SBT_NOBORDERS, (LPARAM)szStatusMessage);
-
+		statup = TRUE;
+	}
+	if (statup) {
+		printf("u");
 		for (i = 0; i < NUMSTATPANES; i++)
 			tpsz[i] = (i ? tpsz[i-1] : 0) + nPaneSizes[i];
-		rc.top = 0; rc.left = 0; rc.bottom = 32; rc.right = MAX(tpsz[NUMSTATPANES - 1], lastw);
-		if (lastw > tpsz[NUMSTATPANES - 1]) lastw-=2;
-		else lastw = tpsz[NUMSTATPANES - 1];
 		SendMessage(status, SB_SETPARTS, NUMSTATPANES, (DWORD_PTR)(LPINT)tpsz);
-		SendMessage(status, WM_SETREDRAW, TRUE, 0);
-		InvalidateRect(status, &rc, TRUE);
 	}
 
 	if (full){
@@ -1053,6 +1045,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 	LRESULT lRes;
 	LPTSTR sz, szBuf;
 
+	//printf("\n%X %X %X  ", uMsg, wParam, lParam);
 	switch (uMsg) {
 #ifdef USE_RICH_EDIT
 	case WM_VSCROLL:
@@ -1252,6 +1245,15 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 			return lRes;
 		}*/
+#ifdef USE_RICH_EDIT
+	case WM_PAINT:
+#else
+	case WM_IME_NOTIFY:
+#endif
+		//Selection was changed
+		if (!bLoading)
+			UpdateStatus(FALSE);
+		break;
 	}
 	return CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
 }
@@ -1573,7 +1575,7 @@ void PrintContents(void)
 	di.lpszDocName = SCNUL8(szCaptionFile)+8;
 	di.lpszOutput = NULL;
 
-	lTextLength = SendMessage(client, EM_GETTEXTLENGTHEX, &gtl, 0);
+	lTextLength = SendMessage(client, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
 	for (i = 0; i < pd.nCopies; ++i) {
 
 		if (!(pd.Flags & PD_SELECTION)) {
@@ -3154,6 +3156,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 		PostQuitMessage(0);
 		break;
 	case WM_ACTIVATE:
+		if (bLoading) break;
 		UpdateStatus(TRUE);
 		if (status && bShowStatus)
 			InvalidateRect(status, NULL, TRUE);
@@ -3644,8 +3647,8 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 									l = WideCharToMultiByte(CP_ACP, 0, szOld, sl, NULL, 0, NULL, NULL);
 									szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, l);
 									WideCharToMultiByte(CP_ACP, 0, szOld, sl, (LPSTR)szTmp, l, NULL, NULL);
-#endif
 									szOld = szTmp;
+#endif
 								} else if (sizeof(TCHAR) < 2 && (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE)) {
 									l = 2 * MultiByteToWideChar(CP_ACP, 0, (LPCSTR)szOld, sl, NULL, 0);
 									szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, l);
@@ -3837,11 +3840,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 					lread = LoadFileIntoBuffer(hFile, &pBuf, &len, &enc);
 					CloseHandle(hFile);
-					*szTmp2 = _T(' ');
 #ifdef UNICODE
-					if (sizeof(TCHAR) > 1) *szTmp2 = _T('\x2400');
+					*szTmp2 = _T('\x2400');
 					if (wmemchr((const void*)pBuf, _T('\0'), len) != NULL) {
 #else
+					*szTmp2 = _T(' ');
 					if (memchr((const void*)pBuf, _T('\0'), len) != NULL) {
 #endif
 						if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_YESNO) == IDYES) {
@@ -4299,6 +4302,7 @@ endinsertfile:
 						if (!ParseForEscapeSeqs(szTmp, &pbReplaceTextSpec, GetString(IDS_ESCAPE_CTX_QUOTE))) break;
 						ReplaceAll(hwnd, 1, 0, &sz, &szTmp, NULL, &pbReplaceTextSpec, NULL, TRUE, TRUE, FALSE, 0, 0, FALSE, sz, NULL);
 						break;
+				/* TODO: (Un)Tabify impl. is very naive and breaks alignment! */
 					case ID_UNTABIFY:
 						ReplaceAll(hwnd, 1, 0, &szTmp, &sz, NULL, NULL, NULL, TRUE, TRUE, FALSE, 0, 0, FALSE, NULL, NULL);
 						break;
@@ -4588,26 +4592,20 @@ endinsertfile:
 				case ID_MAKE_OEM:
 					CharToOemBuff(szOld, (LPSTR)szNew, k);
 #ifdef UNICODE
-					if (sizeof(TCHAR) > 1) {
-						lstrcpy((LPTSTR)szOld, szNew);
-						MultiByteToWideChar(CP_ACP, 0, (LPSTR)szOld, k, szNew, k);
-					}
+					lstrcpy((LPTSTR)szOld, szNew);
+					MultiByteToWideChar(CP_ACP, 0, (LPSTR)szOld, k, szNew, k);
 #endif
 					break;
 				case ID_MAKE_ANSI:
 #ifdef UNICODE
-					if (sizeof(TCHAR) > 1) {
-						lstrcpy(szNew, szOld);
-						WideCharToMultiByte(CP_ACP, 0, szNew, k, (LPSTR)szOld, k, NULL, NULL);
-					}
+					lstrcpy(szNew, szOld);
+					WideCharToMultiByte(CP_ACP, 0, szNew, k, (LPSTR)szOld, k, NULL, NULL);
 #endif
 					OemToCharBuffA((LPSTR)szOld, (LPSTR)szNew, k);
 #ifdef UNICODE
-					if (sizeof(TCHAR) > 1) {
-						//OemToCharBuffW corrupts newlines, use original ANSI function instead and re-convert to unicode here
-						lstrcpy((LPTSTR)szOld, szNew);
-						MultiByteToWideChar(CP_ACP, 0, (LPSTR)szOld, k, szNew, k);
-					}
+					//OemToCharBuffW corrupts newlines, use original ANSI function instead and re-convert to unicode here
+					lstrcpy((LPTSTR)szOld, szNew);
+					MultiByteToWideChar(CP_ACP, 0, (LPSTR)szOld, k, szNew, k);
 #endif
 					break;
 				}
@@ -4658,9 +4656,10 @@ endinsertfile:
 				else if (LOWORD(wParam) == ID_UNICODE_BE_FILE) 								nEncodingType = TYPE_UTF_16_BE;
 				else 																		nEncodingType = TYPE_UNKNOWN;
 
-				if (!bLoading)
+				if (!bLoading) {
 					*szStatusMessage = 0;
-				UpdateStatus(TRUE);
+					UpdateStatus(TRUE);
+				}
 				break;
 			case ID_RELOAD_CURRENT:
 				if (SCNUL(szFile)[0]) {
@@ -4857,7 +4856,7 @@ endinsertfile:
 	case WM_TIMER:
 		switch (LOWORD(wParam)) {
 			case IDT_UPDATE:
-				if ((l = GetTickCount()) < updateThrottle && updateThrottle - l < THROTTLEMAX*4) break;
+				if (bLoading || ((l = GetTickCount()) < updateThrottle && updateThrottle - l < THROTTLEMAX*4)) break;
 				UpdateStatus(FALSE);
 				break;
 		}
@@ -4969,7 +4968,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	*szStatusMessage = 0;
 	randVal = GetTickCount();
 
-#if defined(BUILD_METAPAD_UNICODE) && ( !defined(__MINGW32__) || defined(__MINGW64_VERSION_MAJOR) )
+#if defined(UNICODE) && ( !defined(__MINGW32__) || defined(__MINGW64_VERSION_MAJOR) )
 	szCmdLine = GetCommandLine();
 	szCmdLine = _tcschr(szCmdLine, _T(' ')) + 1;
 #else

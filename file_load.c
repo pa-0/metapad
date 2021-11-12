@@ -37,6 +37,7 @@
 #include "include/strings.h"
 #include "include/macros.h"
 #include "include/metapad.h"
+#include "include/encoding.h"
 #include "include/file_save.h"
 #include "include/file_utils.h"
 
@@ -331,10 +332,12 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, ULONG* plBufferLength, 
 	BOOL bResult;
 	INT unitest = IS_TEXT_UNICODE_UNICODE_MASK | IS_TEXT_UNICODE_REVERSE_MASK | IS_TEXT_UNICODE_NOT_UNICODE_MASK | IS_TEXT_UNICODE_NOT_ASCII_MASK;
 	LPINT lpiResult = &unitest;
-	long nBytesNeeded;
-	BOOL bUsedDefault;
+	ULONG nBytesNeeded;
 	LPBYTE pNewBuffer = NULL;
 	UINT cp = CP_ACP;
+#ifndef UNICODE
+	BOOL bUsedDefault;
+#endif
 
 	*plBufferLength = GetFileSize(hFile, NULL);
 	if (!options.bNoWarningPrompt && *plBufferLength > LARGEFILESIZEWARN && MessageBox(hwnd, GetString(IDS_LARGE_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDCANCEL) {
@@ -342,35 +345,29 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, ULONG* plBufferLength, 
 		return -1;
 	}
 
-	*ppBuffer = (LPBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (*plBufferLength+2) * sizeof(TCHAR));
+	*ppBuffer = (LPBYTE) HeapAlloc(globalHeap, 0, *plBufferLength+2);
 	if (*ppBuffer == NULL) {
 		ReportLastError();
 		return -1;
 	}
 
-	*pnFileEncoding = TYPE_UNKNOWN;
-
 	// check for bom
+	*pnFileEncoding = TYPE_UNKNOWN;
 	if (*plBufferLength >= SIZEOFBOM_UTF_8) {
-
 		bResult = ReadFile(hFile, *ppBuffer, SIZEOFBOM_UTF_8, &dwBytesRead, NULL);
 		if (!bResult || dwBytesRead != (DWORD)SIZEOFBOM_UTF_8)
 			ReportLastError();
-
 		if (IsBOM(*ppBuffer, TYPE_UTF_8)) {
 			*pnFileEncoding = TYPE_UTF_8;
 			*plBufferLength -= SIZEOFBOM_UTF_8;
-		}
-		else {
+		} else {
 			SetFilePointer(hFile, -SIZEOFBOM_UTF_8, NULL, FILE_CURRENT);
 		}
 	}
 	if (*pnFileEncoding == TYPE_UNKNOWN && *plBufferLength >= SIZEOFBOM_UTF_16) {
-
 		bResult = ReadFile(hFile, *ppBuffer, SIZEOFBOM_UTF_16, &dwBytesRead, NULL);
 		if (!bResult || dwBytesRead != (DWORD)SIZEOFBOM_UTF_16)
 			ReportLastError();
-
 		if (IsBOM(*ppBuffer, TYPE_UTF_16)) {
 			*pnFileEncoding = TYPE_UTF_16;
 			*plBufferLength -= SIZEOFBOM_UTF_16;
@@ -378,8 +375,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, ULONG* plBufferLength, 
 		else if (IsBOM(*ppBuffer, TYPE_UTF_16_BE)) {
 			*pnFileEncoding = TYPE_UTF_16_BE;
 			*plBufferLength -= SIZEOFBOM_UTF_16;
-		}
-		else {
+		} else {
 			SetFilePointer(hFile, -SIZEOFBOM_UTF_16, NULL, FILE_CURRENT);
 		}
 	}
@@ -397,26 +393,20 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, ULONG* plBufferLength, 
 		if (dwBytesRead > 2 && (IsTextUnicode(*ppBuffer, *plBufferLength, lpiResult) || 
 			(!(*lpiResult & IS_TEXT_UNICODE_NOT_UNICODE_MASK) && (*lpiResult & IS_TEXT_UNICODE_NOT_ASCII_MASK)))) {
 			*pnFileEncoding = ((*lpiResult & IS_TEXT_UNICODE_REVERSE_MASK) ? TYPE_UTF_16_BE : TYPE_UTF_16);
-
-			// add unicode null - already zeroed
-			/*
-			(*ppBuffer)[*plBufferLength] = 0;
-			(*ppBuffer)[*plBufferLength+1] = 0;
-			*/
 		}
 	}
 
 	nBytesNeeded = *plBufferLength;
 	if ((*pnFileEncoding == TYPE_UTF_16 || *pnFileEncoding == TYPE_UTF_16_BE) && *plBufferLength) {
 
-		if (*pnFileEncoding == TYPE_UTF_16_BE) {
+		if (*pnFileEncoding == TYPE_UTF_16_BE)
 			ReverseBytes(*ppBuffer, *plBufferLength);
-		}
-		*plBufferLength = *plBufferLength / 2;
+		*plBufferLength /= 2;
 
+#ifndef UNICODE
 		if (sizeof(TCHAR) < 2) {
 			nBytesNeeded = WideCharToMultiByte(cp, 0, (LPCWSTR)*ppBuffer, *plBufferLength, NULL, 0, NULL, NULL);
-			if (NULL == (pNewBuffer = (LPBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+sizeof(TCHAR)))) {
+			if (NULL == (pNewBuffer = (LPBYTE)HeapAlloc(globalHeap, 0, nBytesNeeded+1))) {
 				ReportLastError();
 				return -1;
 			} else if (!WideCharToMultiByte(cp, 0, (LPCWSTR)*ppBuffer, *plBufferLength, (LPSTR)pNewBuffer, nBytesNeeded, NULL, &bUsedDefault)) {
@@ -424,17 +414,17 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, ULONG* plBufferLength, 
 				ERROROUT(GetString(IDS_UNICODE_CONVERT_ERROR));
 				nBytesNeeded = 0;
 			}
-			if (bUsedDefault) {
+			if (bUsedDefault)
 				ERROROUT(GetString(IDS_UNICODE_CHARS_WARNING));
-			}
 			HeapFree(globalHeap, 0, (HGLOBAL)*ppBuffer);
 			*ppBuffer = pNewBuffer;
 		}
+#endif
 	} else if (sizeof(TCHAR) > 1 && *plBufferLength) {
 		if (*pnFileEncoding == TYPE_UTF_8 && *plBufferLength)
 			cp = CP_UTF8;
 		nBytesNeeded = MultiByteToWideChar(cp, 0, *ppBuffer, *plBufferLength, NULL, 0)*sizeof(TCHAR);
-		if (NULL == (pNewBuffer = (LPBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+sizeof(TCHAR)))) {
+		if (NULL == (pNewBuffer = (LPBYTE) HeapAlloc(globalHeap, 0, nBytesNeeded+sizeof(TCHAR)))) {
 			ReportLastError();
 			return -1;
 		} else if (!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, *ppBuffer, *plBufferLength, (LPWSTR)pNewBuffer, nBytesNeeded)){
@@ -447,7 +437,8 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, ULONG* plBufferLength, 
 		HeapFree(globalHeap, 0, (HGLOBAL)*ppBuffer);
 		*ppBuffer = pNewBuffer;
 	}
-	return nBytesNeeded/sizeof(TCHAR);
+	((LPTSTR)(*ppBuffer))[nBytesNeeded/=sizeof(TCHAR)] = _T('\0');
+	return nBytesNeeded;
 }
 
 void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
@@ -565,7 +556,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 
 	szBuffer = (LPTSTR)pBuffer;
 #ifdef UNICODE
-	if (sizeof(TCHAR) > 1) cPad = _T('\x2400');
+	cPad = _T('\x2400');
 #endif
 	if (lActualCharsRead != GetWindowTextLength(client) && bLoading) {
 		i = (sizeof(TCHAR) > 1 ? IDS_BINARY_FILE_WARNING_SAFE : IDS_BINARY_FILE_WARNING);
@@ -594,7 +585,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 		}
 	}
 
-#ifdef BUILD_METAPAD_UNICODE
+#ifdef UNICODE
 	if (bBinaryFile) SetFileFormat(FILE_FORMAT_BINARY);
 #else
 	if (bBinaryFile) SetFileFormat(FILE_FORMAT_DOS);
