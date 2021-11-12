@@ -24,16 +24,18 @@
 #ifndef FILE_UTILS_H
 #define FILE_UTILS_H
 
+#include "include/typedefs.h"
+
 long CalculateFileSize(void);
 void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut);
 BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE pbFindSpec);
-DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* szRepl, LPBYTE* pbFindSpec, LPBYTE* pbReplSpec, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, LPCTSTR header, LPCTSTR footer);
-DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, LPBYTE pbReplSpec, BOOL bCase, BOOL bWholeWord, DWORD maxLen, DWORD maxMatch);
+DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* szRepl, LPBYTE* pbFindSpec, LPBYTE* pbReplSpec, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen, LPCTSTR header, LPCTSTR footer);
+DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, LPBYTE pbReplSpec, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen);
 void SetFileFormat(int nFormat);
 
 LPCTSTR GetShadowBuffer(DWORD* len);
 LPCTSTR GetShadowRange(LONG min, LONG max, DWORD* len);
-LPCTSTR GetShadowSelection(DWORD* len);
+LPCTSTR GetShadowSelection(DWORD* len, CHARRANGE* pcr);
 
 DWORD GetColNum(LONG pos, LPCTSTR szBuf, DWORD bufLen, LONG line);
 
