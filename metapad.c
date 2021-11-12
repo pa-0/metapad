@@ -364,7 +364,10 @@ void UpdateCaption(void)
  */
 void CleanUp(void)
 {
-	FREE(szShadow);
+	if (szShadow) {
+		szShadow -= 8;
+		FREE(szShadow);
+	}
 	if (hrecentmenu) DestroyMenu(hrecentmenu);
 	if (hfontmain) DeleteObject(hfontmain);
 	if (hfontfind) DeleteObject(hfontfind);
@@ -691,7 +694,7 @@ void UpdateStatus(void)
 
 	nPaneSizes[SBPANE_LINE] = nPaneSizes[SBPANE_LINE - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
 
-	wsprintf(szPane, _T(" Col: %d"), GetColNum(cr.cpMax, NULL, 0, lLine));
+	wsprintf(szPane, _T(" Col: %d"), GetColNum(cr.cpMax, lLine, NULL, NULL));
 	//wsprintf(szPane, _T(" Col: %d"), GetColNum(cr.cpMax, GetShadowBuffer(NULL), 0, lLine));
 	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_COL, (LPARAM)(LPTSTR)szPane);
 	nPaneSizes[SBPANE_COL] = nPaneSizes[SBPANE_COL - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
@@ -1027,8 +1030,11 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 	return FALSE;
 }
 
-LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
+LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	CHARRANGE cr;
+	LRESULT lRes;
+	LPTSTR sz, szBuf;
+
 	switch (uMsg) {
 #ifdef USE_RICH_EDIT
 	case WM_VSCROLL:
@@ -1117,17 +1123,12 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 #endif
 	case WM_LBUTTONUP:
 	case WM_LBUTTONDOWN:
-		{
-			LRESULT lRes = CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
+			lRes = CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
 			UpdateStatus();
 			return lRes;
-		}
 	case WM_LBUTTONDBLCLK:
 #ifndef USE_RICH_EDIT
 		if (bSmartSelect) {
-
-			CHARRANGE cr;
-
 			SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
 			CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
 			SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
@@ -1139,8 +1140,6 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 		}
 #else
 		{
-			CHARRANGE cr;
-
 			SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
 			CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
 			SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
@@ -1160,7 +1159,6 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 			HMENU hsub = GetSubMenu(hmenu, 0);
 			POINT pt;
 			UINT id;
-			CHARRANGE cr;
 
 #ifndef USE_RICH_EDIT
 			DeleteMenu(hsub, 1, MF_BYPOSITION);
@@ -1197,54 +1195,28 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 		}
 	case WM_KEYUP:
 	case WM_KEYDOWN:
-		{
-			LRESULT lRes = CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
+			lRes = CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
 			UpdateStatus();
 			return lRes;
-		}
 	case WM_CHAR:
-		if ((TCHAR) wParam == _T('\r')) {
-			CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
-			if (options.bAutoIndent) {
-				int i = 0;
-				LONG lLineLen, lLine;
-				LPTSTR szBuffer, szIndent;
-				CHARRANGE cr;
-
-#ifdef USE_RICH_EDIT
-				CallWindowProc(wpOrigEditProc, client, EM_EXGETSEL, 0, (LPARAM)&cr);
-				lLine = CallWindowProc(wpOrigEditProc, client, EM_EXLINEFROMCHAR, 0, (LPARAM)cr.cpMin);
-#else
-				CallWindowProc(wpOrigEditProc, client, EM_GETSEL, (WPARAM)&cr.cpMin, 0);
-				lLine = CallWindowProc(wpOrigEditProc, client, EM_LINEFROMCHAR, (WPARAM)cr.cpMin, 0);
+		if (options.bAutoIndent && (TCHAR)wParam == _T('\r')) {
+			sz = (szBuf = ((LPTSTR)GetShadowLine(-1, -1, NULL, NULL, NULL))) - 1;
+			if (!*szBuf) break;
+			while (*++sz == _T('\t') || *sz == _T(' ')) ;
+			*sz = _T('\0');
+#ifndef USE_RICH_EDIT
+			*--szBuf = _T('\n');
+			*--szBuf = _T('\r');
 #endif
-				lLineLen = CallWindowProc(wpOrigEditProc, client, EM_LINELENGTH, (WPARAM)cr.cpMin, 0);
-
-				lLineLen = CallWindowProc(wpOrigEditProc, client, EM_LINELENGTH, (WPARAM)cr.cpMin - 1, 0);
-
-				szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
-				szIndent = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
-
-				*((LPWORD)szBuffer) = (USHORT)(lLineLen + 1);
-				CallWindowProc(wpOrigEditProc, client, EM_GETLINE, (WPARAM)lLine - 1, (LPARAM)(LPCTSTR)szBuffer);
-				szBuffer[lLineLen] = _T('\0');
-				while (szBuffer[i] == _T('\t') || szBuffer[i] == _T(' ')) {
-					szIndent[i] = szBuffer[i];
-					i++;
-				}
-				szIndent[i] = _T('\0');
-				CallWindowProc(wpOrigEditProc, client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szIndent);
-				HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
-				HeapFree(globalHeap, 0, (HGLOBAL)szIndent);
-			}
+			CallWindowProc(wpOrigEditProc, client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szBuf);
 			return 0;
 		}
 		break;
-	case EM_REPLACESEL:
+/*	case EM_REPLACESEL:
+// This seems to cause more refresh blinking rather than preventing it... 
 		{
-			LRESULT lTmp;
 			LONG lStartLine, lEndLine;
-			CHARRANGE cr;
+			break;
 
 #ifdef USE_RICH_EDIT
 			SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
@@ -1259,12 +1231,12 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 			if (cr.cpMin == cr.cpMax || lStartLine == lEndLine) break;
 
 			SendMessage(hwndEdit, WM_SETREDRAW, (WPARAM)FALSE, 0);
-			lTmp = CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
+			lRes = CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
 			SendMessage(hwndEdit, WM_SETREDRAW, (WPARAM)TRUE, 0);
 			SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
-			return lTmp;
-		}
+			return lRes;
+		}*/
 	}
 	return CallWindowProc(wpOrigEditProc, hwndEdit, uMsg, wParam, lParam);
 }
@@ -1351,7 +1323,7 @@ void PrintContents()
 		return;
 	}
 
-	szBuffer = GetShadowRange(cr.cpMin, cr.cpMax, &l);
+	szBuffer = GetShadowRange(cr.cpMin, cr.cpMax, -1, &l);
 	lStringLen = (LONG)l;
 	bPrint = TRUE;
 
@@ -1833,10 +1805,9 @@ void CenterWindow(HWND hwndCenter)
 
 void SelectWord(LPTSTR* target, BOOL bSmart, BOOL bAutoSelect)
 {
-	LONG lLine, lLineIndex, lLineLen;
-	LPTSTR szBuffer;
-	CHARRANGE cr;
-	LONG l;
+	LONG lLine, lLineLen;
+	LPCTSTR szBuf;
+	CHARRANGE cr, cr2;
 
 #ifdef USE_RICH_EDIT
 	SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
@@ -1847,64 +1818,55 @@ void SelectWord(LPTSTR* target, BOOL bSmart, BOOL bAutoSelect)
 	lLine = SendMessage(client, EM_LINEFROMCHAR, (WPARAM)cr.cpMin, 0);
 	if (lLine == SendMessage(client, EM_LINEFROMCHAR, (WPARAM)cr.cpMax, 0)) {
 #endif
-		lLineLen = SendMessage(client, EM_LINELENGTH, (WPARAM)cr.cpMin, 0);
-		szBuffer = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
-		*((LPWORD)szBuffer) = (USHORT)(lLineLen + 1);
-		SendMessage(client, EM_GETLINE, (WPARAM)lLine, (LPARAM) (LPCTSTR)szBuffer);
-		szBuffer[lLineLen] = _T('\0');
-		lLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lLine, 0);
-		cr.cpMin -= lLineIndex;
-		cr.cpMax -= lLineIndex;
+		szBuf = GetShadowLine(lLine, -1, &lLineLen, NULL, &cr2);
+		cr.cpMin -= cr2.cpMin;
+		cr.cpMax -= cr2.cpMin;
 		if (cr.cpMin == cr.cpMax && bAutoSelect) {
 			if (bSmart) {
-				if (_istprint(szBuffer[cr.cpMax]) && !_istspace(szBuffer[cr.cpMax])) {
+				if (_istprint(szBuf[cr.cpMax]) && !_istspace(szBuf[cr.cpMax])) {
 					cr.cpMax++;
-				}
-				else {
-					while (cr.cpMin && (_istalnum(szBuffer[cr.cpMin-1]) || szBuffer[cr.cpMin-1] == _T('_')))
+				} else {
+					while (cr.cpMin && (_istalnum(szBuf[cr.cpMin-1]) || szBuf[cr.cpMin-1] == _T('_')))
 						cr.cpMin--;
 				}
-				if (_istalnum(szBuffer[cr.cpMin]) || szBuffer[cr.cpMin] == _T('_')) {
-					while (cr.cpMin && (_istalnum(szBuffer[cr.cpMin-1]) || szBuffer[cr.cpMin-1] == _T('_')))
+				if (_istalnum(szBuf[cr.cpMin]) || szBuf[cr.cpMin] == _T('_')) {
+					while (cr.cpMin && (_istalnum(szBuf[cr.cpMin-1]) || szBuf[cr.cpMin-1] == _T('_')))
 						cr.cpMin--;
-					while (cr.cpMax < lLineLen && (_istalnum(szBuffer[cr.cpMax]) || szBuffer[cr.cpMax] == _T('_')))
+					while (cr.cpMax < lLineLen && (_istalnum(szBuf[cr.cpMax]) || szBuf[cr.cpMax] == _T('_')))
 						cr.cpMax++;
 				}
-			}
-			else {
-				if (_istprint(szBuffer[cr.cpMax])) {
-					while (cr.cpMin && (!_istspace(szBuffer[cr.cpMin-1])))
+			} else {
+				if (_istprint(szBuf[cr.cpMax])) {
+					while (cr.cpMin && (!_istspace(szBuf[cr.cpMin-1])))
 						cr.cpMin--;
-					while (cr.cpMax < lLineLen && (!_istspace(szBuffer[cr.cpMax])))
+					while (cr.cpMax < lLineLen && (!_istspace(szBuf[cr.cpMax])))
 						cr.cpMax++;
-				}
-				else {
-					while (cr.cpMin && (_istspace(szBuffer[cr.cpMin-1])))
+				} else {
+					while (cr.cpMin && (_istspace(szBuf[cr.cpMin-1])))
 						cr.cpMin--;
-					while (cr.cpMin && (!_istspace(szBuffer[cr.cpMin-1])))
+					while (cr.cpMin && (!_istspace(szBuf[cr.cpMin-1])))
 						cr.cpMin--;
 				}
-				while (cr.cpMax < lLineLen && _istspace(szBuffer[cr.cpMax]) && szBuffer[cr.cpMax])
+				while (cr.cpMax < lLineLen && _istspace(szBuf[cr.cpMax]) && szBuf[cr.cpMax])
 					cr.cpMax++;
 			}
 		}
 		if (bAutoSelect || cr.cpMin != cr.cpMax) {
 			if (target) {
-				l = MIN(cr.cpMax - cr.cpMin, MAXFIND);
+				lLineLen = MIN(cr.cpMax - cr.cpMin, MAXFIND);
 				FREE(*target);
-				*target = (LPTSTR)HeapAlloc(globalHeap, 0, (l+1) * sizeof(TCHAR));
-				lstrcpyn(*target, szBuffer + cr.cpMin, l+1);
-				(*target)[l] = _T('\0');
+				*target = (LPTSTR)HeapAlloc(globalHeap, 0, (lLineLen+1) * sizeof(TCHAR));
+				lstrcpyn(*target, szBuf + cr.cpMin, lLineLen+1);
+				(*target)[lLineLen] = _T('\0');
 			}
-			cr.cpMin += lLineIndex;
-			cr.cpMax += lLineIndex;
+			cr.cpMin += cr2.cpMin;
+			cr.cpMax += cr2.cpMin;
 #ifdef USE_RICH_EDIT
 			SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 #else
 			SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
 		}
-		HeapFree(globalHeap, 0, (HGLOBAL)szBuffer);
 		UpdateStatus();
 	}
 }
@@ -2145,45 +2107,21 @@ void FixMRUMenus(void)
 	DrawMenuBar(hwnd);
 }
 
-void GotoLine(LONG lLine, LONG lOffset)
-{
-	LONG lTmp, lLineLen;
+void GotoLine(LONG lLine, LONG lOffset) {
+	DWORD l;
 	CHARRANGE cr;
-
 	if (lLine == -1 || lOffset == -1) return;
-
-	lTmp = SendMessage(client, EM_GETLINECOUNT, 0, 0);
-	if (lLine > lTmp)
-		lLine = lTmp;
-	else if (lLine < 1)
-		lLine = 1;
-	lTmp = SendMessage(client, EM_LINEINDEX, (WPARAM)lLine-1, 0);
-	lLineLen = SendMessage(client, EM_LINELENGTH, (WPARAM)lTmp, 0);
-
-	if (!options.bHideGotoOffset) {
-
-		if (lOffset > lLineLen)
-			lOffset = lLineLen + 1;
-		else if (lOffset < 1)
-			lOffset = 1;
-		lTmp += lOffset - 1;
-
-		cr.cpMin = cr.cpMax = lTmp;
+	l = SendMessage(client, EM_GETLINECOUNT, 0, 0);
+	if (lLine > (LONG)l) lLine = l;
+	else if (lLine < 1) lLine = 1;
+	l = GetCharIndex(options.bHideGotoOffset ? 1 : lOffset, lLine-1, -1, NULL, &cr);
+	if (!options.bHideGotoOffset)
+		cr.cpMax = (cr.cpMin += l);
 #ifdef USE_RICH_EDIT
-		SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
+	SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 #else
-		SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
+	SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
-	}
-	else {
-		cr.cpMin = lTmp;
-		cr.cpMax = lTmp + lLineLen;
-#ifdef USE_RICH_EDIT
-		SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-#else
-		SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-#endif
-	}
 	SendMessage(client, EM_SCROLLCARET, 0, 0);
 	UpdateStatus();
 }
@@ -2299,7 +2237,7 @@ BOOL CALLBACK GotoDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 {
 	switch (uMsg) {
 		case WM_INITDIALOG: {
-			LONG lLine, lLineIndex;
+			LONG lLine;
 			TCHAR szLine[6];
 			CHARRANGE cr;
 
@@ -2322,8 +2260,7 @@ BOOL CALLBACK GotoDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 				ShowWindow(hwndItem, SW_HIDE);
 			}
 			else {
-				lLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lLine, 0);
-				wsprintf(szLine, _T("%d"), 1 + cr.cpMax - lLineIndex);
+				wsprintf(szLine, _T("%d"), GetColNum(cr.cpMax, lLine, NULL, NULL));
 				SetDlgItemText(hwndDlg, IDC_OFFSET, szLine);
 				SendDlgItemMessage(hwndDlg, IDC_LINE, EM_SETSEL, 0, (LPARAM)-1);
 			}
@@ -3825,52 +3762,33 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				InvalidateRect(client, NULL, TRUE);
 				UpdateStatus();
 				break;
-			case ID_HOME: {
-				LONG lStartLine, lStartLineIndex, lLineLen;
-
-				if (options.bNoSmartHome) {
+			case ID_HOME:
+#ifdef USE_RICH_EDIT
+				SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
+#else
+				SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
+#endif
+				szOld = GetShadowLine(-1, -1, &len, NULL, &cr2);
+				for (l = 0; l < len; l++) {
+					if (szOld[l] != _T('\t') && szOld[l] != _T(' '))
+						break;
+				}
+				if (options.bNoSmartHome || (LONG)l == cr.cpMin - cr2.cpMin) {
 					SendMessage(client, WM_KEYDOWN, (WPARAM)VK_HOME, 0);
 					SendMessage(client, WM_KEYUP, (WPARAM)VK_HOME, 0);
 					break;
 				}
-
+				cr2.cpMax = (cr2.cpMin += l);
 #ifdef USE_RICH_EDIT
-				SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-				lStartLine = SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)cr.cpMin);
+				SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr2);
 #else
-				SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-				lStartLine = SendMessage(client, EM_LINEFROMCHAR, (WPARAM)cr.cpMin, 0);
+				SendMessage(client, EM_SETSEL, (WPARAM)cr2.cpMin, (LPARAM)cr2.cpMax);
 #endif
-				lStartLineIndex = SendMessage(client, EM_LINEINDEX, (WPARAM)lStartLine, 0);
-				lLineLen = SendMessage(client, EM_LINELENGTH, (WPARAM)lStartLineIndex, 0);
-
-				szTmp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+2) * sizeof(TCHAR));
-				*((LPWORD)szTmp) = (USHORT)(lLineLen + 1);
-				SendMessage(client, EM_GETLINE, (WPARAM)lStartLine, (LPARAM)(LPCTSTR)szTmp);
-				szTmp[lLineLen] = _T('\0');
-
-				for (i = 0; i < lLineLen; ++i)
-					if (szTmp[i] != _T('\t') && szTmp[i] != _T(' '))
-						break;
-
-				if (cr.cpMin - lStartLineIndex == i)
-					cr.cpMin = cr.cpMax = lStartLineIndex;
-				else
-					cr.cpMin = cr.cpMax = lStartLineIndex + i;
-
-#ifdef USE_RICH_EDIT
-				SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-#else
-				SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-#endif
-				FREE(szTmp);
 				SendMessage(client, EM_SCROLLCARET, 0, 0);
 				break;
-			}
 			case ID_MYEDIT_SELECTALL:
 				cr.cpMin = 0;
 				cr.cpMax = -1;
-
 #ifdef USE_RICH_EDIT
 				SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 #else
@@ -4407,7 +4325,7 @@ endinsertfile:
 							memset(szTmp+4, _T(' '), options.nTabStops);
 #endif
 							if (i >= j && LOWORD(wParam) == ID_INDENT)
-								szTmp[4 + options.nTabStops - (GetColNum(cr.cpMin, szOld, l, i)-1) % options.nTabStops] = _T('\0');
+								szTmp[4 + options.nTabStops - (GetColNum(cr.cpMin, i, NULL, NULL)-1) % options.nTabStops] = _T('\0');
 							else
 								szTmp[4 + options.nTabStops] = _T('\0');
 						}
@@ -4949,36 +4867,26 @@ endinsertfile:
 				break;
 			case ID_COMMIT_WORDWRAP:
 				if (bWordWrap) {
-					LONG lLineLen, lMaxLine;
 					hCur = SetCursor(LoadCursor(NULL, IDC_WAIT));
-
 					l = GetWindowTextLength(client);
-					lMaxLine = SendMessage(client, EM_GETLINECOUNT, 0, 0);
-					szBuf = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (l + lMaxLine + 1) * sizeof(TCHAR));
-
-					for (i = 0; i < lMaxLine; i++) {
-						j = SendMessage(client, EM_LINEINDEX, (WPARAM)i, 0);
-						lLineLen = SendMessage(client, EM_LINELENGTH, (WPARAM)j, 0);
-
-						szTmp = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lLineLen+3) * sizeof(TCHAR));
-						*((LPWORD)szTmp) = (USHORT)(lLineLen + 1);
-						SendMessage(client, EM_GETLINE, (WPARAM)i, (LPARAM)(LPCTSTR)szTmp);
-						szTmp[lLineLen] = _T('\0');
-						lstrcat(szBuf, szTmp);
-						if (i < lMaxLine - 1) {
-#ifdef USE_RICH_EDIT
-							lstrcat(szBuf, _T("\r"));
-#else
-							lstrcat(szBuf, _T("\r\n"));
+					nPos = SendMessage(client, EM_GETLINECOUNT, 0, 0);
+					sz = szBuf = (LPTSTR) HeapAlloc(globalHeap, 0, (l + nPos + 1) * sizeof(TCHAR));
+					for (i = 0; i < nPos; i++) {
+						szOld = GetShadowLine(i, -1, &sl, NULL, NULL);
+						lstrcpyn(sz, szOld, sl+1);
+						sz += sl;
+						if (i < nPos - 1) {
+							*sz++ = _T('\r');
+#ifndef USE_RICH_EDIT
+							*sz++ = _T('\n');
 #endif
 						}
-						HeapFree(globalHeap, 0, (HGLOBAL)szTmp);
 					}
+					*sz = _T('\0');
 
 					cr.cpMin = 0;
 					cr.cpMax = -1;
 					SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
-
 #ifdef USE_RICH_EDIT
 					SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 #else
@@ -4992,7 +4900,7 @@ endinsertfile:
 					SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
 					SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
-					HeapFree(globalHeap, 0, (HGLOBAL)szBuf);
+					FREE(szBuf);
 					InvalidateRect(client, NULL, TRUE);
 					SetCursor(hCur);
 				}
