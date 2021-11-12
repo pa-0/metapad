@@ -33,18 +33,19 @@
 #include "include/strings.h"
 #include "include/macros.h"
 #include "include/metapad.h"
+#include "include/encoding.h"
 
 
 
 void SetFileFormat(DWORD format, WORD reinterp) {
 	HCURSOR hcur;
-	HMENU hMenu = GetSubMenu(GetSubMenu(GetMenu(hwndMain), 0), MPOS_FILE_FORMAT);
+	HMENU hMenu = GetSubMenu(GetSubMenu(GetMenu(hwnd), 0), MPOS_FILE_FORMAT);
 	MENUITEMINFO mio;
 	LPTSTR buf = NULL;
 	TCHAR mbuf[32];
 	WORD enc, lfmt, cp, nenc, nlfmt, ncp;
-	DWORD len, lines;
-	BOOL bufDirty = FALSE;
+	DWORD len, lines, nCR, nLF, nStrays, nSub;
+	BOOL bufDirty = FALSE, b;
 
 	if (!hMenu || !format) return;
 	if (format < 0xffff && format > ID_LFMT_UNKNOWN && format <= ID_LFMT_MIXED) format <<= 16;
@@ -58,7 +59,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	if (format >> 31) enc = ID_ENC_CUSTOM;
 	if (nFormat >> 31) nenc = ID_ENC_CUSTOM;
 	if ((enc == ID_ENC_CUSTOM || nenc == ID_ENC_CUSTOM) && cp != ncp && reinterp)
-		buf = GetShadowBuffer(&len);
+		buf = (LPTSTR)GetShadowBuffer(&len);
 	else
 		reinterp = 0;
 	if (reinterp == 1) {
@@ -72,18 +73,20 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 	if (reinterp) {
 		lines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
-		len = ExportLineFmt(&buf, len, lfmt, lines, &bufDirty);
+		ExportLineFmt(&buf, &len, lfmt, lines, &bufDirty);
 		if (enc == ID_ENC_BIN)
 			ExportBinary(buf, len);
 		if (enc == ID_ENC_CUSTOM)
-			len = EncodeText(&buf, len, nFormat, &bufDirty, NULL);
+			len = EncodeText((LPBYTE*)&buf, len, nFormat, &bufDirty, NULL);
 		if (len) {
 			if (nenc == ID_ENC_CUSTOM)
-				len = DecodeText(&buf, len, format, &bufDirty);
+				len = DecodeText((LPBYTE*)&buf, len, &format, &bufDirty);
 			if (len) {
+				format &= 0xf000ffff;
+				format |= (GetLineFmt(buf, len, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
 				if (nenc == ID_ENC_BIN)
 					ImportBinary(buf, len);
-				len = ImportLineFmt(&buf, len, nlfmt, lines, &bufDirty);
+				ImportLineFmt(&buf, &len, nlfmt, nCR, nLF, nStrays, nSub, &bufDirty);
 				SetWindowText(client, buf);
 				InvalidateRect(client, NULL, TRUE);
 			}
@@ -106,6 +109,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	}
 	CheckMenuRadioItem(hMenu, nenc/10*10, (nenc/10+1)*10, nenc, MF_BYCOMMAND);
 	CheckMenuRadioItem(hMenu, nlfmt/10*10, (nlfmt/10+1)*10, nlfmt, MF_BYCOMMAND);
+	bDirtyShadow = bDirtyStatus = TRUE;
 	SetCursor(hcur);
 }
 
@@ -122,21 +126,29 @@ void MakeNewFile(void) {
 	UpdateStatus(TRUE);
 }
 
-int FixShortFilename(LPCTSTR szSrc, TCHAR *szDest)
-{
+LPTSTR FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt) {
 	WIN32_FIND_DATA FindFileData;
 	HANDLE hHandle;
+	TCHAR dst[MAXFN];
+	LPTSTR pdst = dst;
 	TCHAR sDir[MAXFN], sName[MAXFN];
 	int nDestPos=0, nSrcPos=0, i;
 	BOOL bOK = TRUE;
 
+
+	LPTSTR szDest = dst;
+
+
+	if (!szSrc) return NULL;
+
+	
+
 	// Copy drive letter over
 	if (szSrc[1] == _T(':')) {
-		szDest[nDestPos++] = szSrc[nSrcPos++];
-		szDest[nDestPos++] = szSrc[nSrcPos++];
+		*pdst++ = *szSrc++;
+		*pdst++ = *szSrc++;
 	}
-
-	while (szSrc[nSrcPos]) {
+	while (*szSrc) {
 		// If the next TCHAR is '\' we are starting from the root and want to add '\*' to sDir.
 		// Otherwise we are doing relative search, so we just append '*' to sDir
 		if (szSrc[nSrcPos]==_T('\\')) {

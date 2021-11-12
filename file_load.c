@@ -47,7 +47,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* format) {
 	BOOL bUsedDefault;
 #endif
 
-	if (!ppBuffer || !format) return;
+	if (!ppBuffer || !format) return -1;
 	buflen = GetFileSize(hFile, NULL);
 	if (!options.bNoWarningPrompt && buflen > LARGEFILESIZEWARN && MessageBox(hwnd, GetString(IDS_LARGE_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDCANCEL) {
 		bQuitApp = TRUE;
@@ -65,15 +65,15 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* format) {
 		ReportLastError();
 	buflen = dwBytes;
 	ppBuffer[dwBytes] = 0;
-	enc = CheckBOM(ppBuffer, buflen);
-	cp = (format >> 31 ? (WORD)format : 0);
+	enc = CheckBOM(ppBuffer, &buflen);
+	cp = (*format >> 31 ? (WORD)*format : 0);
 
 	if (!cp) {
 		// check if UTF-8 even if no bom
 		if (enc == ID_ENC_UNKNOWN && buflen > 1 && IsTextUTF8(*ppBuffer))
 			enc = ID_ENC_UTF8;
 		// check if unicode even if no bom
-		if (enc == ID_ENC_UNKNOWN && buflen > 2 && (IsTextUnicode(*ppBuffer, *plBufLen, lpiResult) || 
+		if (enc == ID_ENC_UNKNOWN && buflen > 2 && (IsTextUnicode(*ppBuffer, buflen, lpiResult) || 
 			(!(*lpiResult & IS_TEXT_UNICODE_NOT_UNICODE_MASK) && (*lpiResult & IS_TEXT_UNICODE_NOT_ASCII_MASK))))
 			enc = ((*lpiResult & IS_TEXT_UNICODE_REVERSE_MASK) ? ID_ENC_UTF16BE : ID_ENC_UTF16);
 		if (enc == ID_ENC_UNKNOWN)
@@ -105,7 +105,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 			DWORD dwError = GetLastError();
 			if (dwError == ERROR_FILE_NOT_FOUND && bCreate) {
 				if (nCR == 0) {
-					if (_tcschr(szFilename, _T('.')) == NULL) {
+					if (lstrchr(szFilename, _T('.')) == NULL) {
 						lstrcat(szFilename, _T(".txt"));
 						continue;
 					}
@@ -156,7 +156,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 	if (bMRU)
 		SaveMRUInfo(szFilename);
 
-	if ((lChars = LoadFileIntoBuffer(hFile, (LPBYTE*)&szBuffer, &nFormat) < 0) {
+	if ((LONG)(lChars = LoadFileIntoBuffer(hFile, (LPBYTE*)&szBuffer, &nFormat)) < 0) {
 		bDirtyStatus = TRUE;
 		CloseHandle(hFile);
 		bLoading = FALSE;
@@ -184,7 +184,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 		} else if (((nFormat >> 16) & 0xfff) == ID_LFMT_MIXED && !options.bNoWarningPrompt)
 			ERROROUT(GetString(IDS_LFMT_MIXED));
 		b = TRUE;
-		lChars = ImportLineFmt(&szBuffer, lChars, (WORD)((nFormat >> 16) & 0xfff), nCR, nLF, nStrays, nSub, &b);
+		ImportLineFmt(&szBuffer, &lChars, (WORD)((nFormat >> 16) & 0xfff), nCR, nLF, nStrays, nSub, &b);
 	}
 	if (lChars) {
 		SetWindowText(client, szBuffer);

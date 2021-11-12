@@ -38,6 +38,8 @@
 
 extern HWND hwnd;
 extern HANDLE globalHeap;
+LPTSTR GetString(UINT uID);
+void ReportLastError(void);
 
 #define NUMBOMS 3
 static const BYTE bomLut[NUMBOMS][4] = {{0x3,0xEF,0xBB,0xBF}, {0x2,0xFF,0xFE}, {0x2,0xFE,0xFF}};
@@ -263,7 +265,7 @@ WORD GetBOM(LPBYTE* bom, WORD enc){
 		case ID_ENC_UTF8:
 		case ID_ENC_UTF16:
 		case ID_ENC_UTF16BE:
-			*bom = bomLut[enc - ID_ENC_UTF8] + 1;
+			*bom = (LPBYTE)bomLut[enc - ID_ENC_UTF8] + 1;
 			return bomLut[enc - ID_ENC_UTF8][0];
 	}
 	return 0;
@@ -353,6 +355,7 @@ void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DW
 }
 void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDirty){
 	LPTSTR odst, dst, osz;
+	DWORD len;
 	if (lfmt == ID_LFMT_MAC || !sz || !*sz) return;
 	len = (chars && *chars) ? *chars : lstrlen(*sz);
 	odst = dst = osz = *sz;
@@ -380,6 +383,7 @@ void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDi
 void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DWORD nStrays, DWORD nSub, BOOL* bufDirty){
 	LPTSTR odst, dst, osz;
 	TCHAR cc, cp = _T('\0');
+	DWORD len;
 	if (lfmt == ID_LFMT_MIXED || !sz || !*sz || !nStrays) return;
 	len = (chars && *chars) ? *chars : lstrlen(*sz);
 	osz = *sz;
@@ -402,6 +406,7 @@ void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DW
 }
 void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDirty){
 	LPTSTR odst = *sz, dst = *sz;
+	DWORD len;
 	if ((lfmt != ID_LFMT_UNIX && lfmt != ID_LFMT_MAC) || !sz || !*sz || !lines) return;
 	len = (chars && *chars) ? *chars : lstrlen(*sz);
 	for ( ; len--; dst++) {
@@ -425,7 +430,7 @@ DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty) {
 	LPBYTE newbuf = NULL;
 	WORD enc, cp;
 	if (!buf || !*buf || !format || !bytes) return 0;
-	cp = (format >> 31 ? (WORD)*format : 0);
+	cp = (*format >> 31 ? (WORD)*format : 0);
 	enc = cp ? ID_ENC_CUSTOM : (WORD)*format;
 	if (!cp || enc == ID_ENC_ANSI) cp = CP_ACP;
 	if (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE) {
@@ -490,8 +495,8 @@ DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* t
 	WORD enc, cp;
 	LPBYTE newbuf = NULL;
 	if (!buf || !*buf || !chars) return 0;
-	cp = (format >> 31 ? (WORD)*format : 0);
-	enc = cp ? ID_ENC_CUSTOM : (WORD)*format;
+	cp = (format >> 31 ? (WORD)format : 0);
+	enc = cp ? ID_ENC_CUSTOM : (WORD)format;
 	if (!cp || enc == ID_ENC_ANSI) cp = CP_ACP;
 	if (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE) {
 #ifndef UNICODE
@@ -513,11 +518,11 @@ DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* t
 			cp = CP_UTF8;
 		do {
 			FREE(newbuf)
-			bytes = WideCharToMultiByte(cp, 0, *buf, chars, NULL, 0, NULL, NULL);
-			if (!(newbuf = (LPTSTR)HeapAlloc(globalHeap, 0, bytes))) {
+			bytes = WideCharToMultiByte(cp, 0, (LPTSTR)*buf, chars, NULL, 0, NULL, NULL);
+			if (!(newbuf = (LPBYTE)HeapAlloc(globalHeap, 0, bytes))) {
 				ReportLastError();
 				return 0;
-			} else if (!WideCharToMultiByte(cp, 0, *buf, chars, (LPSTR)newbuf, bytes, NULL, (cp != CP_UTF8 && truncated ? truncated : NULL))) {
+			} else if (!WideCharToMultiByte(cp, 0, (LPTSTR)*buf, chars, (LPSTR)newbuf, bytes, NULL, (cp != CP_UTF8 && truncated ? truncated : NULL))) {
 				if (enc == ID_ENC_CUSTOM) {
 					cp = CP_ACP;
 					ERROROUT(GetString(IDS_ENC_FAILED));

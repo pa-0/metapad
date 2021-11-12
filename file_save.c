@@ -63,8 +63,8 @@ void FixFilterString(LPTSTR szIn) {
  */
 BOOL SaveFile(LPCTSTR szFilename) {
 	HANDLE hFile;
-	DWORD i, written = 0, nChars, nBytes;
-	LPTSTR szBuffer, szEncd;
+	DWORD written = 0, nChars, nBytes;
+	LPTSTR szBuffer, szEncd = NULL;
 	LPBYTE bom;
 	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 	UINT nonansi = 0, cp = CP_ACP;
@@ -78,13 +78,13 @@ BOOL SaveFile(LPCTSTR szFilename) {
 	szBuffer = (LPTSTR)GetShadowBuffer(&nChars);
 	nBytes = nChars;
 	if (nChars) {
-		nChars = ExportLineFmt(&szBuffer, nChars, lfmt, lines, &bufDirty);
+		ExportLineFmt(&szBuffer, &nChars, lfmt, lines, &bufDirty);
 		if (enc == ID_ENC_BIN)
 			ExportBinary(szBuffer, nChars);
 		for ( ; 1; fail = FALSE) {
 			if (szEncd != szBuffer) FREE(szEncd);
 			szEncd = szBuffer;
-			nBytes = EncodeText(&szEncd, nChars, nFormat, NULL, &fail);
+			nBytes = EncodeText((LPBYTE*)&szEncd, nChars, nFormat, NULL, &fail);
 			if (enc != ID_ENC_UTF8 && fail) {
 				switch (MessageBox(hwnd, GetString(IDS_UNICODE_SAVE_TRUNCATION), STR_METAPAD, MB_YESNOCANCEL | MB_ICONEXCLAMATION)) {
 					case IDYES:
@@ -113,7 +113,7 @@ BOOL SaveFile(LPCTSTR szFilename) {
 		if (nChars) {
 			WriteFile(hFile, bom, nChars, &written, NULL);
 			if (written != nChars)
-				ERROROUT(GetString(IDS_UNICODE_BOM_ERROR));
+				ERROROUT(GetString(IDS_WRITE_BOM_ERROR));
 		}
 		if (!WriteFile(hFile, szBuffer, nBytes, &written, NULL))
 			ReportLastError();

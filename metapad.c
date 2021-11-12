@@ -4046,8 +4046,8 @@ endinsertfile:
 				if (!SaveIfDirty())
 					break;
 				b = TRUE;
-			case ID_INSERT_FILE:
-				sz = _T("txt");
+//			case ID_INSERT_FILE:
+/*TODO				sz = _T("txt");
 				*szFileName =_T('\0');
 				ofn.lStructSize = sizeof(OPENFILENAME);
 				ofn.hwndOwner = client;
@@ -4097,7 +4097,7 @@ endinsertfile:
 		} else
 			MakeNewFile();
 
-				UpdateStatus(TRUE);
+				UpdateStatus(TRUE);*/
 				break;
 			case ID_MYFILE_NEW:
 				if (!SaveIfDirty())
@@ -4604,7 +4604,7 @@ endinsertfile:
 				LaunchInViewer(FALSE, FALSE);
 				break;
 			case ID_ENC_CUSTOM:
-				DialogBox(hinstLang, MAKEINTRESOURCE(IDD_CP), hwndMain, (DLGPROC)CPDialogProc);
+				//TODODialogBox(hinstLang, MAKEINTRESOURCE(IDD_CP), hwndMain, (DLGPROC)CPDialogProc);
 				break;
 			case ID_LFMT_DOS:
 			case ID_LFMT_UNIX:
@@ -4920,7 +4920,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
 #if defined(UNICODE) && ( !defined(__MINGW32__) || defined(__MINGW64_VERSION_MAJOR) )
 	szCmdLine = GetCommandLine();
-	szCmdLine = _tcschr(szCmdLine, _T(' ')) + 1;
+	szCmdLine = lstrchr(szCmdLine, _T(' ')) + 1;
 #else
 	szCmdLine = lpCmdLine;
 #endif
@@ -4930,7 +4930,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		GetModuleFileName(hinstThis, bufFn, MAXFN);
 		SSTRCPYA(szMetapadIni, bufFn, 11);
 
-		pch = _tcsrchr(szMetapadIni, _T('\\'));
+		pch = lstrrchr(szMetapadIni, _T('\\'));
 		++pch;
 		*pch = _T('\0');
 		lstrcat(szMetapadIni, _T("metapad.ini"));
@@ -5149,7 +5149,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 			GetModuleFileName(hInstance, bufFn, MAXFN);
 			SSTRCPYA(szFav, bufFn, lstrlen(STR_FAV_FILE)+4);
 
-			pch = _tcsrchr(szFav, _T('\\'));
+			pch = lstrrchr(szFav, _T('\\'));
 			++pch;
 			*pch = _T('\0');
 		} else {
@@ -5221,7 +5221,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		else {
 			//ERROROUT(szCmdLine);
 			if (szCmdLine[0] == _T('\"')) {
-				lstrcpyn(szFile, szCmdLine + 1, _tcschr(szCmdLine+1, _T('\"')) - szCmdLine);
+				lstrcpyn(szFile, szCmdLine + 1, lstrchr(szCmdLine+1, _T('\"')) - szCmdLine);
 			}
 			else {
 				lstrcpyn(szFile, szCmdLine, nCmdLen + 1);
