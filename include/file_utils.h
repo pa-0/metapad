@@ -24,6 +24,9 @@
 #ifndef FILE_UTILS_H
 #define FILE_UTILS_H
 
+#ifdef USE_RICH_EDIT
+#include <richedit.h>
+#endif
 #include "include/typedefs.h"
 
 long CalculateFileSize(void);
@@ -34,9 +37,11 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 void SetFileFormat(int nFormat);
 
 LPCTSTR GetShadowBuffer(DWORD* len);
-LPCTSTR GetShadowRange(LONG min, LONG max, DWORD* len);
+LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len);
 LPCTSTR GetShadowSelection(DWORD* len, CHARRANGE* pcr);
+LPCTSTR GetShadowLine(LONG line, LONG cp, DWORD* len, LONG* lineout, CHARRANGE* pcr);
 
-DWORD GetColNum(LONG pos, LPCTSTR szBuf, DWORD bufLen, LONG line);
+DWORD GetColNum(LONG cp, LONG line, DWORD* lineLen, CHARRANGE* pcr);
+DWORD GetCharIndex(DWORD col, LONG line, LONG cp, DWORD* lineLen, CHARRANGE* pcr);
 
 #endif
