@@ -24,7 +24,7 @@
 #ifndef STRINGS_H
 #define STRINGS_H
 
-#ifdef BUILD_METAPAD_UNICODE
+#ifdef UNICODE
 #ifdef USE_RICH_EDIT
 #define STR_ABOUT_NORMAL _T("metapad 3.7")
 #else
@@ -50,6 +50,6 @@
 #define STR_URL _T("http://liquidninja.com/metapad")
 #define STR_REGKEY _T("SOFTWARE\\metapad")
 #define STR_FAV_APPNAME _T("Favourites")
-#define STR_COPYRIGHT _T("ï¿½ 1999-2011 Alexander Davidson")
+#define STR_COPYRIGHT _T("© 1999-2011 Alexander Davidson")
 
 #endif

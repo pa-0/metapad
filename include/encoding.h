@@ -30,11 +30,12 @@
 #include <windows.h>
 #include <tchar.h>
 
-#ifdef BUILD_METAPAD_UNICODE
+#ifdef UNICODE
 #include <wchar.h>
 #endif
 
 INT DecodeBase( BYTE base, LPCTSTR code, LPBYTE bin, INT len, BYTE extractMode, BYTE alignMode, BOOL showError, LPCTSTR* end );
 INT EncodeBase( BYTE base, LPBYTE bin, LPTSTR code, INT len, LPBYTE* end );
+void ReverseBytes(LPBYTE buffer, LONG size);
 
 #endif

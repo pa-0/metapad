@@ -46,7 +46,7 @@
 #define NUMBUTTONS 25
 #endif
 #define NUMSTATPANES 6
-#define THROTTLEMAX 1024
+#define THROTTLEMAX 768
 
 #define CUSTOMBMPBASE 15
 #define NUMFINDS 25
