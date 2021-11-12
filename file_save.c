@@ -43,6 +43,24 @@
 
 BOOL SaveFile(LPCTSTR szFilename);
 
+
+/**
+ * Replace '|' with '\0', and adds a '\0' at the end.
+ *
+ * @param[in] szIn String to fix.
+ */
+void FixFilterString(LPTSTR szIn)
+{
+	int i;
+
+	for (i = 0; szIn[i]; ++i) {
+		if (szIn[i] == _T('|')) {
+			szIn[i] = _T('\0');
+		}
+	}
+	szIn[i+1] = _T('\0');
+}
+
 /**
  * Save a file.
  *
@@ -378,22 +396,4 @@ static __inline void RichModeToDos(LPCTSTR *szBuffer, BOOL *bufDirty)
 	}
 }
 #endif
-
-/**
- * Replace '|' with '\0', and adds a '\0' at the end.
- *
- * @param[in] szIn String to fix.
- */
-void FixFilterString(LPTSTR szIn)
-{
-	int i;
-
-	for (i = 0; szIn[i]; ++i) {
-		if (szIn[i] == _T('|')) {
-			szIn[i] = _T('\0');
-		}
-	}
-	szIn[i+1] = _T('\0');
-}
-
 
