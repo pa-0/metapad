@@ -25,13 +25,12 @@
 #ifndef CONSTS_H
 #define CONSTS_H
 
-#define MAXFN 32767
+#define MAXFN 4096
 #define MAXFONT 32
 #define MAXARGS 4096
 #define MAXQUOTE 1024
 #define MAXFIND 32767
 #define MAXINSERT 32767
-#define MAXFAVESIZE 65536
 #define MAXSTRING 500
 //#define MAXFAVES 16
 #define MAXMACRO 32767

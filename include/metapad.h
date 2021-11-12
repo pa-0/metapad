@@ -182,13 +182,13 @@ void LaunchExternalViewer(int);
 
 
 // file_load.c //
+DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* format);
 BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert);
 BOOL LoadFileFromMenu(WORD wMenu, BOOL bMRU);
-DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* format);
+BOOL BrowseFile(BOOL load, BOOL bMRU, BOOL insert, LPTSTR* fileName)
 
 
 // file_save.c //
-void FixFilterString(LPTSTR szIn);
 BOOL SaveCurrentFileAs(void);
 BOOL SaveCurrentFile(void);
 BOOL SaveIfDirty(void);
@@ -197,7 +197,9 @@ BOOL SaveIfDirty(void);
 // file_utils.c //
 void SetFileFormat(DWORD format, WORD reinterp);
 void MakeNewFile(void);
-void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut);
+void FixFilterString(LPTSTR szIn);
+BOOL FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt);
+BOOL GetReadableFilename(LPCTSTR lfn, LPTSTR* dst);
 
 LPCTSTR GetShadowBuffer(DWORD* len);
 LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len);
