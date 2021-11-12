@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+//
 // Used by metapad.rc
 //
 
@@ -8,8 +8,8 @@
 #define IDS_PLUGIN_RELEASE              3
 #define IDS_PLUGIN_TRANSLATOR           4
 #define IDS_PLUGIN_EMAIL                5
-#define IDS_RESERVED2                   6
-#define IDS_RESERVED3                   7
+//#define IDS_RESERVED2                   6
+//#define IDS_RESERVED3                   7
 #define IDS_DEFAULT_FILTER              8
 #define IDS_DIRTYFILE                   9
 #define IDS_ERROR_LOCKED                10
@@ -28,8 +28,11 @@
 #define IDS_DRAWTEXT_ERROR              22
 #define IDS_PRINT_ERROR                 23
 #define IDS_VIEWER_ERROR				24
+//#define IDS_SECONDARY_VIEWER_ERROR      25
 #define IDS_VIEWER_MISSING				26
+//#define IDS_SECONDARY_VIEWER_MISSING    27
 #define IDS_NO_DEFAULT_VIEWER           28
+//#define IDS_DEFAULT_VIEWER_ERROR        29
 #define IDS_REGISTRY_WINDOW_ERROR       30
 #define IDS_CARRIAGE_RETURN_WARNING     31
 #define IDS_MAC_FILE_WARNING            32
@@ -144,7 +147,7 @@
 #define IDS_ENC_REINTERPRET				219
 #define IDS_LFMT_MIXED					220
 #define IDS_LFMT_FIXED					221
-#define IDS_SETDEF_FORMAT				222
+#define IDS_SETDEF_FORMAT_WARN			222
 #define IDS_ENC_BAD						223
 #define IDC_STATICX                     1005
 #define IDC_EDIT_URL                    1007
@@ -269,9 +272,9 @@
 #define ID_ENC_UNKNOWN					1890
 #define ID_ENC_ANSI						1891
 #define ID_ENC_UTF8						1892
-#define ID_ENC_UNICODE					1893
-#define ID_ENC_UNICODE_BE				1894
-#define ID_ENC_BINARY					1895
+#define ID_ENC_UTF16					1893
+#define ID_ENC_UTF16BE					1894
+#define ID_ENC_BIN						1895
 #define ID_ENC_CUSTOM					1899
 #define ID_HELP_ABOUT                   40002
 #define ID_MYFILE_OPEN                  40003
@@ -421,9 +424,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        135
-#define _APS_NEXT_COMMAND_VALUE         40109
-#define _APS_NEXT_CONTROL_VALUE         1086
+#define _APS_NEXT_RESOURCE_VALUE        301
+#define _APS_NEXT_COMMAND_VALUE         40301
+#define _APS_NEXT_CONTROL_VALUE         1301
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

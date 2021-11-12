@@ -57,7 +57,7 @@ LPTSTR szShadow;
 TCHAR shadowHold;
 DWORD shadowLen, shadowAlloc, shadowRngEnd;
 BOOL bDirtyShadow, bDirtyStatus;
-BOOL bDirtyFile, bLoading, bMatchCase, bDown, bWholeWord, bUnix, bReadOnly, bBinaryFile;
+BOOL bDirtyFile, bLoading, bMatchCase, bDown, bWholeWord, bReadOnly;
 BOOL bWordWrap, bPrimaryFont, bPrint, bSmartSelect, bShowStatus;
 BOOL bShowToolbar, bAlwaysOnTop, bCloseAfterFind, bHasFaves, bNoFindHidden;
 BOOL bCloseAfterReplace, bCloseAfterInsert;
@@ -88,7 +88,7 @@ int _fltused; // see CMISCDAT.C for more info on this
 option_struct options;
 
 DWORD updateThrottle, updateTime;
-WORD savedFormat;
+DWORD savedFormat;
 DWORD savedChars;
 LPBYTE savedHash[32], savedHead[32], savedFoot[32];
 

@@ -129,7 +129,7 @@ typedef struct tag_options {
 	UINT nStatusFontWidth;
 	UINT nSelectionMarginWidth;
 	UINT nMaxMRU;
-	UINT nFormatIndex;
+	DWORD nFormat;
 	UINT nTransparentPct;
 	BOOL bSystemColours;
 	BOOL bSystemColours2;
