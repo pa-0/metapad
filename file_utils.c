@@ -242,13 +242,14 @@ LPCTSTR GetShadowRange(LONG min, LONG max, DWORD* len) {
 	if (len) *len = l;
 	return szShadow + min;
 }
-LPCTSTR GetShadowSelection(DWORD* len) {
+LPCTSTR GetShadowSelection(DWORD* len, CHARRANGE* pcr) {
 	CHARRANGE cr;
 #ifdef USE_RICH_EDIT
 	SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
 #else
 	SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
 #endif
+	if (pcr) *pcr = cr;
 	return GetShadowRange(cr.cpMin, cr.cpMax, len);
 }
 LPCTSTR GetShadowBuffer(DWORD* len) {
@@ -450,10 +451,9 @@ BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE 
 
 
 
-DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, LPBYTE pbReplSpec, BOOL bCase, BOOL bWholeWord, DWORD maxLen, DWORD maxMatch){
+DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, LPBYTE pbReplSpec, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen){
 	//0123456
 	// _?*-+$
-	LONG ld;
 	DWORD k, m = 1, len, alen, ilen, lf, lr, ct = 0, cf = 0, cg = 0, lg = 0, nglob[6] = {0}, cglob[6] = {0}, sglob[6], gu = 0;
 	LPTSTR dst, odst, pd = NULL;
 	LPCTSTR *globs[6], *globe[6];
@@ -465,7 +465,6 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 	szRepl = SCNUL(szRepl);
 	lf = lstrlen(szFind);
 	lr = lstrlen(szRepl);
-	ld = lr - lf;
 	if (pbFindSpec && pbReplSpec) {
 		for (k = 0; k < lf; ) if (pbFindSpec[k] < 6) nglob[pbFindSpec[k++]]++;
 		for (k = 0; k < lr; ) if (pbReplSpec[k] < 6) cglob[pbReplSpec[k++]]++;
@@ -485,9 +484,10 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 			if (pbFindSpec) {
 				if (k && k < 6) {
 					if (gu && nglob[k] && cglob[k] <= nglob[k]) {
-						if (!lg && cglob[k] < nglob[k])
-							globs[k][cglob[k]++] = szIn;
-						globe[k][cglob[k]-1] = szIn + (k == 1 ? 1 : 0);
+						if (!lg && ++cglob[k] <= nglob[k])
+							globs[k][cglob[k]-1] = szIn;
+						if (cglob[k] <= nglob[k]) 
+							globe[k][cglob[k]-1] = szIn + (k == 1 ? 1 : 0);
 					}
 					if ((k == 2 || (lg && k == 3)) && cf+1 < lf && (*szIn == szFind[cf+1] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szIn) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szFind[cf+1])))) {
 						cg = ++cf;
@@ -499,7 +499,8 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 						if (ilen-1) cf--;
 						else {
 							m = 2;
-							if (gu && nglob[k] && cglob[k] <= nglob[k]) globe[k][cglob[k]-1] = szIn + 1;
+							if (gu && nglob[k] && cglob[k] <= nglob[k])
+								globe[k][cglob[k]-1] = szIn + 1;
 						} 
 					}
 				} else {
@@ -507,7 +508,7 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 				}
 			}
 			if (!pd) pd = dst;
-			if (++cf == lf) {
+			if (++cf == lf || (matchLen && maxLen && (DWORD)(dst-pd+1) >= maxLen)) {
 				if ((!maxLen || (DWORD)(dst-pd) < maxLen) && (!bWholeWord || ( (pd == odst || !(_istalnum(*(pd-1)) || *(pd-1) == _T('_'))) && !(*(szIn+1) && (_istalnum(*(szIn+1)) || *(szIn+1) == _T('_'))) ))) {
 					len += (pd - dst) + lr - 1;
 					GROWBUF(odst, dst, len, alen, pd, LPTSTR, TCHAR);
@@ -515,9 +516,14 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 						if (gu) memset(cglob, 0, sizeof(cglob));
 						for(cf = 0, lg = 0, dst = pd; cf < lr; cf++, lg++){
 							if (gu && (k = pbReplSpec[cf]) && k < 6 && nglob[k]) {
-								lg += (cg = (globe[k][cglob[k]%nglob[k]] - globs[k][cglob[k]++%nglob[k]])) - 1;
+								if (globs[k][cglob[k]%nglob[k]])
+									lg += (cg = (globe[k][cglob[k]%nglob[k]] - globs[k][cglob[k]%nglob[k]])) - 1;
+								else {
+									globs[k][cglob[k]%nglob[k]] = _T("");
+									lg--; cg = 0;
+								}
 								GROWBUF(odst, dst, (len + lg), alen, pd, LPTSTR, TCHAR);
-								lstrcpyn(pd, globs[k][cglob[k]%nglob[k]], (cg = (globe[k][cglob[k]%nglob[k]] - globs[k][cglob[k]++%nglob[k]])) + 1);
+								lstrcpyn(pd, globs[k][cglob[k]++%nglob[k]], cg + 1);
 								pd += cg;
 							} else if (pbReplSpec[cf] == 6) {
 #ifdef UNICODE
@@ -541,33 +547,49 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 				}
 				pd = NULL;
 				cf = cg = lg = 0;
-				if (gu) memset(cglob, 0, sizeof(cglob));
+				if (gu) { 
+					memset(cglob, 0, sizeof(cglob));		
+					for (k = 0; ++k < 6; ) {
+						memset(globs[k], 0, nglob[k] * sizeof(LPCTSTR*));
+						memset(globe[k], 0, nglob[k] * sizeof(LPCTSTR*));
+					}
+				}
 				szIn++;
-				if (++ct >= maxMatch && maxMatch) break;
+				if (++ct >= maxMatch && maxMatch) { ilen--; break; }
 				continue;
 			}
 		} else if (pd) {
 			if (pbFindSpec){
 				m = 2;
-				if ((lg || k == 2 || k == 4) && cf+1 < lf && (*szIn == szFind[cf+1] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szIn) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szFind[cf+1]))))
+				if ((lg || k == 2 || k == 4) && cf+1 < lf && (*szIn == szFind[cf+1] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szIn) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szFind[cf+1])))) {
 					cf++;
-				else if (cg) {
+					if (gu && nglob[k] && cglob[k] <= nglob[k])
+						globe[k][cglob[k]-1] = szIn;
+				} else if (cg) {
 					cf = cg-1;
-					lg=1;
+					lg = 1;
 					memcpy(cglob, sglob, sizeof(cglob));
 				} else if ((k == 4 || (lg && k == 5)) && ++cf){
 					if (gu && nglob[k] && cglob[k] <= nglob[k]) {
-						if (!lg && cglob[k] < nglob[k])
-							globs[k][cglob[k]++] = szIn;
-						globe[k][cglob[k]-1] = szIn;
+						if (!lg && ++cglob[k] <= nglob[k])
+							globs[k][cglob[k]-1] = szIn;
+						if (cglob[k] <= nglob[k]) 
+							globe[k][cglob[k]-1] = szIn;
 					}
+					lg = 0;
 				} else 
 					m = 1;
 			}
 			if (m < 2) {
 				pd = NULL;
 				cf = lg = 0;
-				if (gu) memset(cglob, 0, sizeof(cglob));
+				if (gu) { 
+					memset(cglob, 0, sizeof(cglob));		
+					for (k = 0; ++k < 6; ) {
+						memset(globs[k], 0, nglob[k] * sizeof(LPCTSTR*));
+						memset(globe[k], 0, nglob[k] * sizeof(LPCTSTR*));
+					}
+				}
 			}
 			m = 1;
 			ilen++;
@@ -597,22 +619,22 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 	return ct;
 }
 
-DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* szRepl, LPBYTE* pbFindSpec, LPBYTE* pbReplSpec, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, LPCTSTR header, LPCTSTR footer){
+DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* szRepl, LPBYTE* pbFindSpec, LPBYTE* pbReplSpec, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen, LPCTSTR header, LPCTSTR footer){
 	HCURSOR hCur;
 	LPCTSTR szIn;
 	LPTSTR szBuf = NULL, szTmp = NULL;
 	CHARRANGE cr;
 	DWORD l, r = 0, lh = 0, lf = 0, ict = 0, nr, gr, op;
 
-	if (!szFind || !szRepl || !nOps) return 0;
+	if (!szFind || !nOps) return 0;
 	if (!owner) owner = hwnd;
 	if (header) lh = lstrlen(header);
 	if (footer) lf = lstrlen(footer);
 	hCur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 	if (selection){
-		szIn = GetShadowSelection(&l);
+		szIn = GetShadowSelection(&l, &cr);
 		if (!l) {
-			MessageBox(owner, GetString(IDS_NO_SELECTED_TEXT), STR_METAPAD, MB_OK|MB_ICONINFORMATION);
+			if (szMsgBuf) MessageBox(owner, GetString(IDS_NO_SELECTED_TEXT), STR_METAPAD, MB_OK|MB_ICONINFORMATION);
 			return 0;
 		}
 	} else
@@ -629,7 +651,8 @@ DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* 
 		gr = 0;
 		for (op = 0; op < nOps; op++){
 			do {
-				r += (nr = StrReplace(szIn, &szBuf, &l, szFind[op], szRepl[op], pbFindSpec ? pbFindSpec[op] : NULL, pbReplSpec ? pbReplSpec[op] : NULL, bMatchCase, bWholeWord, 0, 0));
+				r += (nr = StrReplace(szIn, &szBuf, &l, szFind[op], szRepl ? szRepl[op] : NULL, pbFindSpec ? pbFindSpec[op] : NULL, pbReplSpec ? pbReplSpec[op] : NULL, bMatchCase, bWholeWord, maxMatch, maxLen, matchLen));
+				maxMatch -= r;
 				gr += nr;
 				ict++;
 				szIn = (LPCTSTR)szBuf;
@@ -648,6 +671,14 @@ DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* 
 		}
 		szBuf[l - lf] = _T('\0');
 		SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)(szBuf+lh));
+		if (selection) {
+			cr.cpMax = cr.cpMin + l - lf;
+#ifdef USE_RICH_EDIT
+			SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
+#else
+			SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
+#endif
+		}
 	}
 	FREE(szTmp);
 	FREE(szBuf);
