@@ -103,7 +103,6 @@
 #define IDS_PLUGIN_MISMATCH_ERROR       99
 #define IDS_ALLRIGHTS                   100
 #define IDD_ABOUT                       101
-#define IDS_OK_BUTTON                   101
 #define ID_FIND_PREV_WORD               102
 #define IDS_DEFAULT_FILTER_TEXT         102
 #define IDS_NEW_FILE                    103
@@ -124,6 +123,10 @@
 #define IDR_MENU                        130
 #define IDB_DROP_ARROW                  131
 #define IDR_POPUP                       131
+//#define IDS_METAPAD						150
+#define IDS_OK							151
+//#define IDS_CANCEL						152
+//#define IDS_CLOSE						153
 #define IDS_ERROR                       199
 #define IDS_ERROR_MSG                   200
 #define IDS_UNICODE_SAVE_TRUNCATION     201
