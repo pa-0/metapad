@@ -27,7 +27,9 @@
 #ifdef USE_RICH_EDIT
 #include <richedit.h>
 #endif
-#include "include/typedefs.h"
+#include "include/metapad.h"
+
+void MakeNewFile(void);
 
 long CalculateFileSize(void);
 void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut);

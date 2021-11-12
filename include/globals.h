@@ -25,11 +25,12 @@
 #define GLOBALS_H
 
 #include "consts.h"
-#include "typedefs.h"
+#include "metapad.h"
 
 
 
 SLWA SetLWA;
+HANDLE globalHeap;
 HINSTANCE hinstThis;
 HINSTANCE hinstLang;
 HWND hwnd;
@@ -48,7 +49,7 @@ LPTSTR szCaptionFile, szFile;
 LPTSTR szFav;
 LPTSTR szMetapadIni;
 LPTSTR szDir;
-LPTSTR szFindText, szReplaceText;
+LPTSTR szFindText, szReplaceText, szInsert;
 LPBYTE pbFindTextSpec, pbReplaceTextSpec;
 TCHAR szStatusMessage[MAXSTRING];
 TCHAR _szString[MAXSTRING];
@@ -77,7 +78,6 @@ DWORD randVal;
 BOOL g_bDisablePluginVersionChecking;
 BOOL g_bIniMode;
 
-
 #ifdef USE_RICH_EDIT
 BOOL bUpdated, bHyperlinks;
 #else
@@ -88,5 +88,9 @@ BOOL bQuitApp;
 int _fltused; // see CMISCDAT.C for more info on this
 
 option_struct options;
+
+WORD savedFormat;
+LONGLONG savedLen;
+LPBYTE savedHash[32], savedHead[32], savedFoot[32];
 
 #endif

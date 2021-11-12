@@ -46,8 +46,7 @@
 #define NUMBUTTONS 25
 #endif
 #define NUMSTATPANES 6
-#define PERFBUCKETS 32
-#define PERFRES 100
+#define THROTTLEMAX 1024
 
 #define CUSTOMBMPBASE 15
 #define NUMFINDS 25

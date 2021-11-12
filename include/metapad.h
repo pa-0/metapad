@@ -21,8 +21,20 @@
 /*                                                                          */
 /****************************************************************************/
 
-#ifndef TMP_PROTOS_H
-#define TMP_PROTOS_H
+#ifndef METAPAD_H
+#define METAPAD_H
+
+#ifdef _DEBUG
+#include <stdio.h>
+#endif
+
+#if !defined(UNICODE) && !defined(__MINGW64_VERSION_MAJOR)
+extern long _ttol(const TCHAR*);
+extern int _ttoi(const TCHAR*);
+#endif
+
+#include "consts.h"
+
 
 ///// Prototypes /////
 
@@ -57,8 +69,96 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext);
 void ReverseBytes(LPBYTE buffer, LONG size);
 void UpdateCaption(void);
 
-#ifdef _DEBUG
-#include <stdio.h>
+
+///// Typedefs /////
+
+
+#include <pshpack1.h>
+typedef struct DLGTEMPLATEEX
+{
+	WORD dlgVer;
+	WORD signature;
+	DWORD helpID;
+	DWORD exStyle;
+	DWORD style;
+	WORD cDlgItems;
+	short x;
+	short y;
+	short cx;
+	short cy;
+} DLGTEMPLATEEX, *LPDLGTEMPLATEEX;
+#include <poppack.h>
+
+#ifndef USE_RICH_EDIT
+typedef struct _charrange
+{
+	LONG	cpMin;
+	LONG	cpMax;
+} CHARRANGE;
 #endif
+
+typedef BOOL (WINAPI *SLWA)(HWND hwnd, COLORREF crKey, BYTE bAlpha, DWORD dwFlags);
+
+typedef struct tag_options {
+	BOOL bQuickExit;
+	BOOL bSaveWindowPlacement;
+	BOOL bSaveMenuSettings;
+	BOOL bSaveDirectory;
+	BOOL bLaunchClose;
+	int nTabStops;
+	int nPrimaryFont;
+	int nSecondaryFont;
+	int nLaunchSave;
+	RECT rMargins;
+	LOGFONT PrimaryFont, SecondaryFont;
+	LPTSTR szBrowser;
+	LPTSTR szArgs;
+	LPTSTR szBrowser2;
+	LPTSTR szArgs2;
+	LPTSTR szQuote;
+	BOOL bFindAutoWrap;
+	BOOL bAutoIndent;
+	BOOL bInsertSpaces;
+	BOOL bNoCaptionDir;
+	BOOL bHideGotoOffset;
+	BOOL bRecentOnOwn;
+	BOOL bDontInsertTime;
+	BOOL bNoWarningPrompt;
+	BOOL bUnFlatToolbar;
+	BOOL bStickyWindow;
+	BOOL bReadOnlyMenu;
+	UINT nStatusFontWidth;
+	UINT nSelectionMarginWidth;
+	UINT nMaxMRU;
+	UINT nFormatIndex;
+	UINT nTransparentPct;
+	BOOL bSystemColours;
+	BOOL bSystemColours2;
+	COLORREF BackColour, FontColour;
+	COLORREF BackColour2, FontColour2;
+	BOOL bNoSmartHome;
+	BOOL bNoAutoSaveExt;
+	BOOL bContextCursor;
+	BOOL bCurrentFindFont;
+#ifndef USE_RICH_EDIT
+	BOOL bDefaultPrintFont;
+	BOOL bAlwaysLaunch;
+#else
+	BOOL bSuppressUndoBufferPrompt;
+	BOOL bLinkDoubleClick;
+	BOOL bHideScrollbars;
+#endif
+	BOOL bNoFaves;
+	BOOL bPrintWithSecondaryFont;
+	BOOL bNoSaveHistory;
+	BOOL bNoFindAutoSelect;
+	LPTSTR szLangPlugin;
+	LPTSTR MacroArray[10];
+	LPTSTR szFavDir;
+	LPTSTR szCustomDate;
+	LPTSTR szCustomDate2;
+} option_struct;
+
+
 
 #endif
