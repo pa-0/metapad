@@ -257,6 +257,18 @@ WORD CheckBOM(LPBYTE *pb, DWORD* pbLen) {
 	}
 	return ID_ENC_UNKNOWN;
 }
+WORD GetBOM(LPBYTE* bom, WORD enc){
+	if (!bom) return 0;
+	switch (enc) {
+		case ID_ENC_UTF8:
+		case ID_ENC_UTF16:
+		case ID_ENC_UTF16BE:
+			*bom = bomLut[enc - ID_ENC_UTF8] + 1;
+			return bomLut[enc - ID_ENC_UTF8][0];
+	}
+	return 0;
+}
+
 
 BOOL IsTextUTF8(LPBYTE buf){
 	BOOL yes = 0;
@@ -270,11 +282,12 @@ BOOL IsTextUTF8(LPBYTE buf){
 	return yes;
 }
 
-WORD GetLineFmt(LPCTSTR sz, DWORD len, DWORD* nCR, DWORD* nLF, DWORD* nStrays, BOOL* binary){
+WORD GetLineFmt(LPCTSTR sz, DWORD len, DWORD* nCR, DWORD* nLF, DWORD* nStrays, DWORD* nSub, BOOL* binary){
 	DWORD i, crlf = 1, cr = 0, lf = 0;
 	TCHAR cc, cp = _T('\0');
 	if (binary) *binary = FALSE;
 	if (nStrays) *nStrays = 0;
+	if (nSub) *nSub = 0;
 	for (i = 0; (len && i++ < len) || (!len && *sz); cp = cc) {
 		if ((cc = *sz++) == _T('\r')){
 			cr++;
@@ -282,7 +295,10 @@ WORD GetLineFmt(LPCTSTR sz, DWORD len, DWORD* nCR, DWORD* nLF, DWORD* nStrays, B
 		} else if (cc == _T('\n')) {
 			lf++;
 			if ((nStrays || crlf) && cp != _T('\r')) { crlf = 0; (*nStrays)++; }
-		}
+		} 
+#ifdef USE_RICH_EDIT
+		  else if (nSub && cc == '\x14') (*nSub)++;
+#endif
 		if (cr && lf && !crlf && !nStrays) return ID_LFMT_MIXED;
 		if (len && binary && cc == '\0') *binary = TRUE;
 	}
@@ -294,7 +310,7 @@ WORD GetLineFmt(LPCTSTR sz, DWORD len, DWORD* nCR, DWORD* nLF, DWORD* nStrays, B
 	else return ID_LFMT_UNIX;
 }
 
-void NormalizeBinary(LPTSTR sz, DWORD len){
+void ImportBinary(LPTSTR sz, DWORD len){
 	while (len--){
 		if (*sz == _T('\0'))
 #ifdef UNICODE
@@ -304,7 +320,7 @@ void NormalizeBinary(LPTSTR sz, DWORD len){
 #endif
 	}
 }
-void RestoreBinary(LPTSTR sz, DWORD len){
+void ExportBinary(LPTSTR sz, DWORD len){
 #ifdef UNICODE
 	if (!len) len = lstrlen(sz);
 	while (len--){
@@ -315,48 +331,57 @@ void RestoreBinary(LPTSTR sz, DWORD len){
 }
 
 #ifdef USE_RICH_EDIT
-void NormalizeLineFmt(LPTSTR* sz, DWORD len, WORD lfmt, DWORD nCR, DWORD nLF, DWORD nStrays){
+void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DWORD nStrays, DWORD nSub, BOOL* bufDirty){
 	LPTSTR odst, dst, osz;
-	if (lfmt != ID_LFMT_MIXED || !sz || !*sz) return;
-	if (!len) len = lstrlen(*sz);
+	DWORD len;
+	if (lfmt != ID_LFMT_MIXED || !sz || !*sz || !(nLF + nSub)) return;
+	len = (chars && *chars) ? *chars : lstrlen(*sz);
 	osz = *sz;
-	odst = dst = (LPTSTR)HeapAlloc(globalHeap, 0, (len+nLF+1) * sizeof(TCHAR));
+	odst = dst = (LPTSTR)HeapAlloc(globalHeap, 0, (len+nLF+nSub+1) * sizeof(TCHAR));
 	for ( ; len--; (*sz)++) {
-		if (**sz == _T('\n'))
-			*dst++ = _T(' ');
+		if (**sz == _T('\n') || **sz == _T('\x14'))
+			*dst++ = _T('\x14');
 		*dst++ = **sz;
 	}
 	*dst = _T('\0');
-	FREE(osz);
+	if (chars) *chars = dst - odst;
+	if (bufDirty) {
+		if (*bufDirty) FREE(osz)
+		*bufDirty = TRUE;
+	}
 	*sz = odst;
 }
-void RestoreLineFmt(LPTSTR* sz, DWORD len, WORD lfmt, DWORD lines){
+void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDirty){
 	LPTSTR odst, dst, osz;
-	TCHAR cc, cp = _T('\0');
 	if (lfmt == ID_LFMT_MAC || !sz || !*sz) return;
-	if (!len) len = lstrlen(*sz);
-	dst = osz = *sz;
-	if (lfmt == ID_LFMT_DOS) odst, dst = (LPTSTR)HeapAlloc(globalHeap, 0, (len+lines+1) * sizeof(TCHAR));
-	for ( ; len--; dst++, cp = cc) {
-		cc = *dst = *(*sz)++;
-		if (cc == _T('\r')) {
-			if (lfmt == ID_LFMT_MIXED && cp == _T(' ')) *--dst = _T('\n');
-			else if (lfmt == ID_LFMT_UNIX) *dst = _T('\n');
+	len = (chars && *chars) ? *chars : lstrlen(*sz);
+	odst = dst = osz = *sz;
+	if (lfmt == ID_LFMT_DOS && lines) odst = dst = (LPTSTR)HeapAlloc(globalHeap, 0, (len+lines+1) * sizeof(TCHAR));
+	for ( ; len--; (*sz)++, *dst++) {
+		*dst = **sz;
+		if (lfmt == ID_LFMT_MIXED && **sz == _T('\x14')) {
+			if (*(*sz)++ == _T('\r')) *dst = _T('\n');
+		} else if (**sz == _T('\r')) {
+			if (lfmt == ID_LFMT_UNIX) *dst = _T('\n');
 			else if (lfmt == ID_LFMT_DOS) *++dst = _T('\n');
 		}
 	}
 	*dst = _T('\0');
-	if (lfmt == ID_LFMT_DOS) {
-		FREE(osz);
+	if (chars) *chars = dst - odst;
+	if (odst != osz) {
+		if (bufDirty) {
+			if (*bufDirty) FREE(osz)
+			*bufDirty = TRUE;
+		}
 		*sz = odst;
 	}
 }
 #else
-void NormalizeLineFmt(LPTSTR* sz, DWORD len, WORD lfmt, DWORD nCR, DWORD nLF, DWORD nStrays){
+void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DWORD nStrays, DWORD nSub, BOOL* bufDirty){
 	LPTSTR odst, dst, osz;
 	TCHAR cc, cp = _T('\0');
-	if (lfmt == ID_LFMT_MIXED || !nStrays || !sz || !*sz) return;
-	if (!len) len = lstrlen(*sz);
+	if (lfmt == ID_LFMT_MIXED || !sz || !*sz || !nStrays) return;
+	len = (chars && *chars) ? *chars : lstrlen(*sz);
 	osz = *sz;
 	odst = dst = (LPTSTR)HeapAlloc(globalHeap, 0, (len+nStrays+1) * sizeof(TCHAR));
 	for ( ; len--; cp = cc) {
@@ -368,13 +393,17 @@ void NormalizeLineFmt(LPTSTR* sz, DWORD len, WORD lfmt, DWORD nCR, DWORD nLF, DW
 		*dst++ = cc;
 	}
 	*dst = _T('\0');
-	FREE(osz);
+	if (chars) *chars = dst - odst;
+	if (bufDirty) {
+		if (*bufDirty) FREE(osz)
+		*bufDirty = TRUE;
+	}
 	*sz = odst;
 }
-void RestoreLineFmt(LPTSTR* sz, DWORD len, WORD lfmt, DWORD lines){
-	LPTSTR dst = *sz;
-	if ((lfmt != ID_LFMT_UNIX && lfmt != ID_LFMT_MAC) || !sz || !*sz) return;
-	if (!len) len = lstrlen(*sz);
+void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDirty){
+	LPTSTR odst = *sz, dst = *sz;
+	if ((lfmt != ID_LFMT_UNIX && lfmt != ID_LFMT_MAC) || !sz || !*sz || !lines) return;
+	len = (chars && *chars) ? *chars : lstrlen(*sz);
 	for ( ; len--; dst++) {
 		*dst = *(*sz)++;
 		if (*dst == _T('\r')) {
@@ -382,6 +411,132 @@ void RestoreLineFmt(LPTSTR* sz, DWORD len, WORD lfmt, DWORD lines){
 			*sz++;
 		}
 	}
+	if (chars) *chars = dst - odst;
 	*dst = _T('\0');
 }
 #endif
+
+//Returns number of decoded chars (not including the null terminator)
+DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty) {
+#ifndef UNICODE
+	BOOL bUsedDefault;
+#endif
+	DWORD chars = bytes;
+	LPBYTE newbuf = NULL;
+	WORD enc, cp;
+	if (!buf || !*buf || !format || !bytes) return 0;
+	cp = (format >> 31 ? (WORD)*format : 0);
+	enc = cp ? ID_ENC_CUSTOM : (WORD)*format;
+	if (!cp || enc == ID_ENC_ANSI) cp = CP_ACP;
+	if (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE) {
+		chars /= 2;
+		if (enc == ID_ENC_UTF16BE)
+			ReverseBytes(*buf, bytes);
+#ifndef UNICODE
+		if (sizeof(TCHAR) < 2) {
+			bytes = WideCharToMultiByte(cp, 0, (LPCWSTR)*buf, chars, NULL, 0, NULL, NULL);
+			if (!(newbuf = (LPBYTE)HeapAlloc(globalHeap, 0, bytes+1))) {
+				ReportLastError();
+				return 0;
+			} else if (!WideCharToMultiByte(cp, 0, (LPCWSTR)*buf, chars, (LPSTR)newbuf, bytes, NULL, &bUsedDefault)) {
+				ReportLastError();
+				ERROROUT(GetString(IDS_UNICODE_CONVERT_ERROR));
+				bytes = 0;
+			}
+			if (bUsedDefault)
+				ERROROUT(GetString(IDS_UNICODE_CHARS_WARNING));
+		}
+#else
+	} else if (sizeof(TCHAR) > 1) {
+		if (enc == ID_ENC_UTF8)
+			cp = CP_UTF8;
+		do {
+			FREE(newbuf);
+			bytes = MultiByteToWideChar(cp, 0, *buf, chars, NULL, 0)*sizeof(TCHAR);
+			if (!(newbuf = (LPBYTE)HeapAlloc(globalHeap, 0, bytes+sizeof(TCHAR)))) {
+				ReportLastError();
+				return 0;
+			} else if (!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, *buf, chars, (LPWSTR)newbuf, bytes)){
+				if (!MultiByteToWideChar(cp, 0, *buf, chars, (LPWSTR)newbuf, bytes)){
+					if (enc == ID_ENC_CUSTOM) {
+						cp = CP_ACP;
+						*format &= 0xfff0000;
+						*format |= ID_ENC_ANSI;
+						continue;
+					}
+					ReportLastError();
+					ERROROUT(GetString(IDS_UNICODE_LOAD_ERROR));
+					bytes = 0;
+				} else ERROROUT(GetString(IDS_UNICODE_LOAD_TRUNCATION));
+			}
+			break;
+		} while (1);
+#endif
+	}
+	if (newbuf) {
+		if (bufDirty) {
+			if (*bufDirty) FREE(*buf)
+			*bufDirty = TRUE;
+		}
+		*buf = newbuf;
+	}
+	((LPTSTR)(*buf))[bytes/=sizeof(TCHAR)] = _T('\0');
+	return bytes;
+}
+
+//Returns number of encoded bytes (not including the null terminator)
+DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* truncated) {
+	DWORD bytes = chars;
+	WORD enc, cp;
+	LPBYTE newbuf = NULL;
+	if (!buf || !*buf || !chars) return 0;
+	cp = (format >> 31 ? (WORD)*format : 0);
+	enc = cp ? ID_ENC_CUSTOM : (WORD)*format;
+	if (!cp || enc == ID_ENC_ANSI) cp = CP_ACP;
+	if (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE) {
+#ifndef UNICODE
+		if (sizeof(TCHAR) < 2) {
+			bytes = 2 * MultiByteToWideChar(cp, 0, (LPCSTR)*buf, chars, NULL, 0);
+			if (!(newbuf = (LPBYTE)HeapAlloc(globalHeap, 0, bytes+1))) {
+				ReportLastError();
+				return 0;
+			} else if (!MultiByteToWideChar(cp, 0, (LPCSTR)*buf, chars, (LPWSTR)newbuf, bytes)) {
+				ReportLastError();
+				ERROROUT(GetString(IDS_UNICODE_STRING_ERROR));
+				bytes = 0;
+			}
+		} else
+#else
+			bytes = chars * sizeof(TCHAR);
+	} else if (sizeof(TCHAR) > 1) {
+		if (enc == ID_ENC_UTF8)
+			cp = CP_UTF8;
+		do {
+			FREE(newbuf)
+			bytes = WideCharToMultiByte(cp, 0, *buf, chars, NULL, 0, NULL, NULL);
+			if (!(newbuf = (LPTSTR)HeapAlloc(globalHeap, 0, bytes))) {
+				ReportLastError();
+				return 0;
+			} else if (!WideCharToMultiByte(cp, 0, *buf, chars, (LPSTR)newbuf, bytes, NULL, (cp != CP_UTF8 && truncated ? truncated : NULL))) {
+				if (enc == ID_ENC_CUSTOM) {
+					cp = CP_ACP;
+					ERROROUT(GetString(IDS_ENC_FAILED));
+					continue;
+				}
+				ReportLastError();
+				bytes = 0;
+			}
+			break;
+		} while (1);
+#endif	
+	}
+	if (newbuf) {
+		if (*bufDirty) FREE(*buf)
+		*buf = newbuf;
+		*bufDirty = TRUE;
+	}
+	if (enc == ID_ENC_UTF16BE)
+		ReverseBytes(*buf, bytes);
+	((LPTSTR)(*buf))[bytes] = _T('\0');
+	return bytes;
+}

@@ -723,17 +723,17 @@ BEGIN
 			MENUITEM "&DOS (CR+LF)\tCtrl+1",		ID_LFMT_DOS, CHECKED
 			MENUITEM "&Unix (LF)\tCtrl+2",			ID_LFMT_UNIX
 			MENUITEM "Old &Mac (CR)",				ID_LFMT_MAC
-			MENUITEM "&Unmanaged\tCtrl+0",			ID_LFMT_MIXED
+			MENUITEM "Unmana&ged\tCtrl+0",			ID_LFMT_MIXED
 			MENUITEM SEPARATOR
 			MENUITEM "Text Encoding:",				ID_ENC_UNKNOWN, GRAYED
 			MENUITEM "&ANSI\tCtrl+7",				ID_ENC_ANSI, CHECKED
-            MENUITEM "&UTF-8\tCtrl+8",				ID_ENC_UTF8
-            MENUITEM "Un&icode\tCtrl+3",			ID_ENC_UTF16
-            MENUITEM "Unicode (&Big Endian)\tCtrl+4",		ID_ENC_UTF16BE
+			MENUITEM "UTF-&8\tCtrl+8",				ID_ENC_UTF8
+			MENUITEM "Un&icode\tCtrl+3",			ID_ENC_UTF16
+			MENUITEM "Unicode (&Big Endian)\tCtrl+4",		ID_ENC_UTF16BE
 #ifdef UNICODE
-			MENUITEM "&Binary (Preserve NULLs)\tCtrl+5",	ID_ENC_BIN
+			MENUITEM "Bi&nary (Preserve NULLs)\tCtrl+5",	ID_ENC_BIN
+			MENUITEM "Enter &Codepage...\tCtrl+9",	ID_ENC_CUSTOM
 #endif
-			MENUITEM "&Enter Codepage...\tCtrl+9",	ID_ENC_CUSTOM
         END
         MENUITEM "&Refresh/Revert\tF5",         ID_RELOAD_CURRENT
 /*        MENUITEM "&Calculate Size\tF11",        ID_SHOWFILESIZE */
@@ -958,7 +958,9 @@ BEGIN
     "8",            ID_ENC_UTF8,            VIRTKEY, CONTROL, NOINVERT
     "8",            ID_MACRO_8,             VIRTKEY, ALT, NOINVERT
     "8",            ID_SET_MACRO_8,         VIRTKEY, SHIFT, ALT, NOINVERT
+#ifdef UNICODE
     "9",            ID_ENC_CUSTOM,			VIRTKEY, CONTROL, NOINVERT
+#endif
     "9",            ID_MACRO_9,             VIRTKEY, ALT, NOINVERT
     "9",            ID_SET_MACRO_9,         VIRTKEY, SHIFT, ALT, NOINVERT
     "A",            ID_MYEDIT_SELECTALL,    VIRTKEY, CONTROL, NOINVERT
@@ -1104,7 +1106,7 @@ BEGIN
     IDS_BINARY_FILE_WARNING "This is a binary file.\nConvert any NULL terminators to spaces and load anyway?"
     IDS_UNICODE_STRING_ERROR "Error converting to Unicode string"
 #endif
-    IDS_UNICODE_BOM_ERROR   "Error writing BOM"
+	IDS_WRITE_BOM_ERROR		"Error writing BOM"
     IDS_CHAR_WIDTH_ERROR	"Couldn't get char width."
     IDS_PARA_FORMAT_ERROR   "Couldn't set para format."
     IDS_QUERY_SEARCH_TOP    "Reached end of file. Continue searching from the top?"
@@ -1207,12 +1209,12 @@ BEGIN
     IDS_ERROR				"Error"
     IDS_ERROR_MSG           "\nError 0x%08X"
     IDS_UNICODE_SAVE_TRUNCATION 
-                            "Detected non-ANSI characters in this Unicode file.\n\nThis data was lost during save!\n\nTo keep the Unicode information, resave this file in Unicode or UTF-8 format."
+							"Some characters in this text cannot be saved in the selected encoding!\n\nWould you like to save this file as UTF-8?"
     IDS_UNICODE_LOAD_ERROR  "Error converting file to Unicode"
     IDS_UNICODE_LOAD_TRUNCATION 
-                            "Detected unsupported or invalid code points.\n\nData will be lost if this file is saved!"
+							"Detected unsupported or invalid code points.\n\nData will be lost if this file is saved!"
     IDS_BINARY_FILE_WARNING_SAFE
-                            "This is a binary file. Load anyway?\nNull terminators will be preserved unless the File Format is changed."
+							"This is a binary file. Load anyway?\nNull terminators will be preserved unless the File Format is changed."
     IDS_LARGE_FILE_WARNING  "This file is very large ( >16 MB). Loading it may take a long time.\nLoad anyway?"
 	IDS_UNICODE_CONV_ERROR  "Error converting string to Unicode"
 	IDS_ESCAPE_ERROR		"%s in '%s' near:\n"
@@ -1227,7 +1229,7 @@ BEGIN
 	IDS_ESCAPE_CTX_QUOTE	"Quote string"
 	IDS_LARGE_PASTE_WARNING	"About to insert %I64u characters of text.\nThis may take a very long time!\nContinue?"
 	IDS_ITEMS_REPLACED_ITER "Replaced %d item(s) in %d iteration(s)."
-	IDS_ENC_REINTERPRET		"Reinterpret the current text as Codepage %d?"
+	IDS_ENC_REINTERPRET		"Reinterpret the current text with the newly selected encoding?"
 	IDS_LFMT_MIXED			"This text has mixed line endings.\nYou can normalize the line endings in the File > Format menu."
 	IDS_LFMT_FIXED			"Mixed line endings have been normalized.\nYou can change this function in the File > Format menu."
 	IDS_SETDEF_FORMAT_WARN	"Note that all files without a Byte-Order Mark will now be interpreted as %s!"
@@ -1242,6 +1244,7 @@ BEGIN
 	ID_ENC_BIN				"Binary"
 	ID_ENC_CUSTOM			"Codepage %d"
 	IDS_ENC_BAD				"This codepage is not available on your system."
+	IDS_ENC_FAILED			"Error converting to the selected codepage!\nThe data was instead saved as ANSI."
 END
 
 #endif    // English (U.S.) resources

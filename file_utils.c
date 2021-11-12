@@ -36,30 +36,90 @@
 
 
 
-void SetFileFormat(int nFormat) {
-/*	switch (nFormat) {
-	case FILE_FORMAT_DOS: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DOS_FILE, 0), 0); break;
-	case FILE_FORMAT_UNIX: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNIX_FILE, 0), 0); break;
-	case FILE_FORMAT_UTF8: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UTF8_FILE, 0), 0); break;
-	case FILE_FORMAT_UTF8_UNIX: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UTF8_UNIX_FILE, 0), 0); break;
-	case FILE_FORMAT_UNICODE: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNICODE_FILE, 0), 0); break;
-	case FILE_FORMAT_UNICODE_BE: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNICODE_BE_FILE, 0), 0); break;
-	case FILE_FORMAT_BINARY: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_BINARY_FILE, 0), 0); break;
-	}*/
+void SetFileFormat(DWORD format, WORD reinterp) {
+	HCURSOR hcur;
+	HMENU hMenu = GetSubMenu(GetSubMenu(GetMenu(hwndMain), 0), MPOS_FILE_FORMAT);
+	MENUITEMINFO mio;
+	LPTSTR buf = NULL;
+	TCHAR mbuf[32];
+	WORD enc, lfmt, cp, nenc, nlfmt, ncp;
+	DWORD len, lines;
+	BOOL bufDirty = FALSE;
+
+	if (!hMenu || !format) return;
+	if (format < 0xffff && format > ID_LFMT_UNKNOWN && format <= ID_LFMT_MIXED) format <<= 16;
+	if (!(format & 0xf000ffff)) format |= nFormat & 0xf000ffff;
+	if (!(format & 0xfff0000)) format |= nFormat & 0xfff0000;
+	if (format == nFormat) return;
+	enc = cp = (WORD)nFormat;
+	nenc = ncp = (WORD)format;
+	lfmt = (nFormat >> 16) & 0xfff;
+	nlfmt = (format >> 16) & 0xfff;
+	if (format >> 31) enc = ID_ENC_CUSTOM;
+	if (nFormat >> 31) nenc = ID_ENC_CUSTOM;
+	if ((enc == ID_ENC_CUSTOM || nenc == ID_ENC_CUSTOM) && cp != ncp && reinterp)
+		buf = GetShadowBuffer(&len);
+	else
+		reinterp = 0;
+	if (reinterp == 1) {
+		switch (MessageBox(hwnd, GetString(IDS_ENC_REINTERPRET), STR_METAPAD, MB_YESNOCANCEL | MB_ICONQUESTION)) {
+			case IDCANCEL:
+				return;
+			case IDNO:
+				reinterp = 0;
+		}
+	}
+	hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
+	if (reinterp) {
+		lines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
+		len = ExportLineFmt(&buf, len, lfmt, lines, &bufDirty);
+		if (enc == ID_ENC_BIN)
+			ExportBinary(buf, len);
+		if (enc == ID_ENC_CUSTOM)
+			len = EncodeText(&buf, len, nFormat, &bufDirty, NULL);
+		if (len) {
+			if (nenc == ID_ENC_CUSTOM)
+				len = DecodeText(&buf, len, format, &bufDirty);
+			if (len) {
+				if (nenc == ID_ENC_BIN)
+					ImportBinary(buf, len);
+				len = ImportLineFmt(&buf, len, nlfmt, lines, &bufDirty);
+				SetWindowText(client, buf);
+				InvalidateRect(client, NULL, TRUE);
+			}
+		}
+	}
+	if (bufDirty)
+		FREE(buf);
+
+	nFormat = format;
+	DeleteMenu(hMenu, ID_ENC_CUSTOM-1, MF_BYCOMMAND);
+	if (nenc == ID_ENC_CUSTOM){
+		wsprintf(mbuf, GetString(IDS_LFMT_MIXED), ncp);
+		mio.cbSize = sizeof(MENUITEMINFO);
+		mio.fMask = MIIM_TYPE | MIIM_ID;
+		mio.fType = MFT_STRING;
+		mio.dwTypeData = mbuf;
+		mio.wID = ID_ENC_CUSTOM-1;
+		InsertMenuItem(hMenu, GetMenuItemCount(hMenu), TRUE, &mio);
+		nenc = ID_ENC_CUSTOM-1;
+	}
+	CheckMenuRadioItem(hMenu, nenc/10*10, (nenc/10+1)*10, nenc, MF_BYCOMMAND);
+	CheckMenuRadioItem(hMenu, nlfmt/10*10, (nlfmt/10+1)*10, nlfmt, MF_BYCOMMAND);
+	SetCursor(hcur);
 }
 
 void MakeNewFile(void) {
 	bLoading = TRUE;
-	SetFileFormat(options.nFormat);
 	SetWindowText(client, _T(""));
 	SwitchReadOnly(FALSE);
 	FREE(szFile);
 	SSTRCPYAO(szCaptionFile, GetString(IDS_NEW_FILE), 32, 8);
 	szCaptionFile[0] = _T('\0');
+	SetFileFormat(options.nFormat, 0);
 	UpdateSavedInfo();
 	bDirtyFile = bLoading = FALSE;
 	UpdateStatus(TRUE);
-	//TODO
 }
 
 int FixShortFilename(LPCTSTR szSrc, TCHAR *szDest)
@@ -367,7 +427,7 @@ DWORD GetTextChars(LPCTSTR szText, BOOL unix){
 
 
 void UpdateSavedInfo() {
-	DWORD lChars;
+	DWORD lChars, l;
 	LPCTSTR buf;
 	bDirtyFile = FALSE;
 	bDirtyShadow = bDirtyStatus = TRUE;
@@ -376,8 +436,8 @@ void UpdateSavedInfo() {
 	savedFormat = nFormat;
 	memset(savedHead, 0, sizeof(savedHead));
 	memset(savedFoot, 0, sizeof(savedFoot));
-	memcpy(savedHead, (LPBYTE)buf, lChars = MIN(lChars/sizeof(TCHAR), sizeof(savedHead)));
-	memcpy(savedFoot, ((LPBYTE)buf) - lChars, lChars);
+	memcpy(savedHead, (LPBYTE)buf, l = MIN(lChars*sizeof(TCHAR), sizeof(savedHead)));
+	memcpy(savedFoot, ((LPBYTE)(buf + lChars)) - l, l);
 }
 
 

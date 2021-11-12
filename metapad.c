@@ -51,10 +51,6 @@
 #define TBSTYLE_FLAT 0x0800
 #endif
 
-#ifdef USE_RICH_EDIT
-#include <richedit.h>
-#endif
-
 #include "include/resource.h"
 
 #if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
@@ -74,13 +70,6 @@
 #include "include/strings.h"
 #include "include/macros.h"
 #include "include/metapad.h"
-#include "include/language_plugin.h"
-#include "include/external_viewers.h"
-#include "include/settings_save.h"
-#include "include/settings_load.h"
-#include "include/file_load.h"
-#include "include/file_save.h"
-#include "include/file_utils.h"
 #include "include/encoding.h"
 
 
@@ -291,7 +280,8 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext)
 				return FALSE;
 			}
 		}
-		*bout++ = *buf;
+		if (*buf)	*bout++ = *buf;
+		else		*buf--;
 	}
 	*bout = _T('\0');
 	if (dbufalloc) FREE(dbuf);
@@ -523,11 +513,13 @@ void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 
 	SendMessage(client, EM_SETTARGETDEVICE, (WPARAM)0, (LPARAM)(LONG) !bWrap);
 	SendMessage(client, EM_AUTOURLDETECT, (WPARAM)bHyperlinks, 0);
-	SendMessage(client, EM_SETEVENTMASK, 0, (LPARAM)(ENM_LINK | ENM_CHANGE));
+	SendMessage(client, EM_SETEVENTMASK, 0, (LPARAM)(ENM_LINK | ENM_CHANGE | ENM_SELCHANGE));
 	SendMessage(client, EM_EXLIMITTEXT, 0, (LPARAM)(DWORD)0x7fffffff);
 
 	// sort of fixes font problems but cannot set tab size
 	SendMessage(client, EM_SETTEXTMODE, (WPARAM)TM_PLAINTEXT || (WPARAM)TM_ENCODING, 0);
+	//SendMessage(client, EM_SETEDITSTYLE, (WPARAM)SES_USECRLF, (LPARAM)SES_USECRLF);	//obsolete, doesn't work
+	SendMessage(client, EM_SETEDITSTYLE, (WPARAM)SES_XLTCRCRLFTOCR, (LPARAM)SES_XLTCRCRLFTOCR);
 
 	wpOrigEditProc = (WNDPROC) SetWindowLongPtr(client, GWLP_WNDPROC, (LONG) EditProc);
 #else
@@ -905,7 +897,8 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 						SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_SETCURSEL, (LPARAM)0, 0);
 					}
 					if (!bNoFindHidden && !ParseForEscapeSeqs(szBuf, NULL, GetString(IDS_ESCAPE_CTX_INSERT))) return FALSE;
-					l1 = lstrlen(szBuf);
+					if (!(l1 = lstrlen(szBuf)))
+						return FALSE;
 					if (!options.bNoWarningPrompt && (LONGLONG)l1 * l2 > LARGEPASTEWARN) {
 						wsprintf(szTmp2, GetString(IDS_LARGE_PASTE_WARNING), (LONGLONG)l1 * l2);
 						nPos = MessageBox(hdlgFind, szTmp2, STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL);
@@ -914,10 +907,11 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					}
 					SSTRCPY(szInsert, szBuf);
 #ifdef USE_RICH_EDIT
-					FixTextBuffer(szInsert);
+//					FixTextBuffer(szInsert);
 #else
-					FixTextBufferLE(&szInsert);
+					//FixTextBufferLE(&szInsert);
 #endif
+					l1 = lstrlen(szInsert);
 					szNew = (LPTSTR)HeapAlloc(globalHeap, 0, ((LONGLONG)l1 * l2 + 1) * sizeof(TCHAR));
 					if (!szNew) {
 						ReportLastError();
@@ -2035,7 +2029,7 @@ void SetTabStops(void) {
 	clientDC = GetDC(client);
 	SelectObject (clientDC, hfontmain);
 	if (!GetCharWidth32(clientDC, (UINT)VK_SPACE, (UINT)VK_SPACE, &nWidth))
-		ERROROUT(GetString(IDS_TCHAR_WIDTH_ERROR));
+		ERROROUT(GetString(IDS_CHAR_WIDTH_ERROR));
 	ReleaseDC(client, clientDC);
 
 	ZeroMemory(&pf, sizeof(pf));
@@ -2148,18 +2142,12 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 	static BOOL bIcon = FALSE;
 	switch (uMsg) {
 		case WM_INITDIALOG: {
-			if (bIcon) {
+			if (bIcon)
 				SendDlgItemMessage(hwndDlg, IDC_DLGICON, STM_SETICON, (WPARAM)LoadIcon(hinstThis, MAKEINTRESOURCE(IDI_EYE)), 0);
-				SetDlgItemText(hwndDlg, IDC_STATICX, STR_ABOUT_HACKER);
-			}
-			else {
-				SetDlgItemText(hwndDlg, IDC_STATICX, STR_ABOUT_NORMAL);
-			}
-
 			CenterWindow(hwndDlg);
 			SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED); // hack for icon jitter
 			SetDlgItemText(hwndDlg, IDC_EDIT_URL, STR_URL);
-			SetDlgItemText(hwndDlg, IDOK, GetString(IDS_OK_BUTTON));
+			SetDlgItemText(hwndDlg, IDOK, GetString(IDS_OK));
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT, STR_COPYRIGHT);
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT2, GetString(IDS_ALLRIGHTS));
 			break;
@@ -2175,22 +2163,11 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 						HICON hicon;
 						int i;
 						RECT r;
-						int rands[EGGNUM] = {0, -3, 6, -8, 0, -6, 10, -3, -8, 5, 9, 2, -3, -4, 0};
-
+						INT8 rands[EGGNUM] = {0, -3, 6, -8, 0, -6, 10, -3, -8, 5, 9, 2, -3, -4, 0};
 						GetWindowRect(hwndDlg, &r);
-
 						for (i = 0; i < 300; ++i)
 							SetWindowPos(hwndDlg, HWND_TOP, r.left+rands[i % EGGNUM], r.top+rands[(i+1) % EGGNUM], 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
-
-						if (bIcon) {
-							hicon = LoadIcon(hinstThis, MAKEINTRESOURCE(IDI_PAD));
-							SetDlgItemText(hwndDlg, IDC_STATICX, STR_ABOUT_NORMAL);
-						}
-						else {
-							hicon = LoadIcon(hinstThis, MAKEINTRESOURCE(IDI_EYE));
-							SetDlgItemText(hwndDlg, IDC_STATICX, STR_ABOUT_HACKER);
-						}
-
+						hicon = LoadIcon(hinstThis, MAKEINTRESOURCE(bIcon ? IDI_PAD : IDI_EYE));
 						SetClassLongPtr(GetParent(hwndDlg), GCLP_HICON, (LONG_PTR) hicon);
 						SendDlgItemMessage(hwndDlg, IDC_DLGICON, STM_SETICON, (WPARAM)hicon, 0);
 						bIcon = !bIcon;
@@ -3135,16 +3112,10 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 	LPTSTR sz, szNew, szBuf;
 	LPTSTR szTmp = gTmpBuf, szFileName = gTmpBuf;
 	LPTSTR szTmp2 = gTmpBuf2;
-	BOOL b, abort, uni;
+	BOOL b = FALSE, abort, uni;
 	BYTE base;
 	DWORD l, sl, len, lread, err;
 	LONG i, j, k, nPos, ena, enc;
-
-
-	if (Msg == WM_COMMAND && ID_FAV_RANGE_BASE < LOWORD(wParam) && LOWORD(wParam) <= ID_FAV_RANGE_MAX) {
-		LoadFileFromMenu(LOWORD(wParam), FALSE);
-		return FALSE;
-	}
 
 	switch(Msg) {
 //	case WM_ERASEBKGND:
@@ -3167,23 +3138,9 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 		hDrop = (HDROP) wParam;
 		if (!SaveIfDirty())
 			break;
-
 		DragQueryFile(hDrop, 0, szFileName, MAXFN);
 		DragFinish(hDrop);
-		SSTRCPY(szFile, szFileName);
-
-		bLoading = TRUE;
-		lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
-		UpdateStatus(TRUE);
-		LoadFile(szFile, FALSE, TRUE);
-		if (bLoading) {
-			bLoading = FALSE;
-			bDirtyFile = FALSE;
-			UpdateCaption();
-		}
-		else {
-			MakeNewFile();
-		}
+		LoadFile(szFileName, FALSE, TRUE, TRUE);
 		break;
 	case WM_SIZING:
 		InvalidateRect(client, NULL, FALSE); // ML: for decreasing window size, update scroll bar
@@ -3343,6 +3300,9 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						HeapFree(globalHeap, 0, (HGLOBAL)tr.lpstrText);
 						break;
 				}
+			case EN_SELCHANGE:
+//TODO TEST
+				break;
 #endif
 		}
 		break;
@@ -3706,9 +3666,9 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						GlobalUnlock(hMem);
 						if (szTmp2) {
 #ifdef USE_RICH_EDIT
-							FixTextBuffer(szTmp2);
+//TODO							FixTextBuffer(szTmp2);
 #else
-							FixTextBufferLE(&szTmp2);
+//							FixTextBufferLE(&szTmp2);
 #endif
 							SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szTmp2);
 							FREE(szTmp2);
@@ -4082,21 +4042,20 @@ endinsertfile:
 					DialogBox(hinstLang, MAKEINTRESOURCE(IDD_ABOUT_PLUGIN), hwndMain, (DLGPROC)AboutPluginDialogProc);
 				break;
 			case ID_MYFILE_OPEN:
-				sz = _T("txt");
-				szTmp = gTmpBuf2;
-				szTmp[0] = '\0';
-
 				SetCurrentDirectory(SCNUL(szDir));
 				if (!SaveIfDirty())
 					break;
-
+				b = TRUE;
+			case ID_INSERT_FILE:
+				sz = _T("txt");
+				*szFileName =_T('\0');
 				ofn.lStructSize = sizeof(OPENFILENAME);
 				ofn.hwndOwner = client;
 				ofn.lpstrFilter = SCNUL(szCustomFilter);
 				ofn.lpstrCustomFilter = (LPTSTR)NULL;
 				ofn.nMaxCustFilter = 0L;
 				ofn.nFilterIndex = 1L;
-				ofn.lpstrFile = szTmp;
+				ofn.lpstrFile = szFileName;
 				ofn.nMaxFile = MAXFN;
 				ofn.lpstrFileTitle = (LPTSTR)NULL;
 				ofn.nMaxFileTitle = 0L;
@@ -4106,8 +4065,13 @@ endinsertfile:
 				ofn.nFileOffset = 0;
 				ofn.nFileExtension = 0;
 				ofn.lpstrDefExt = sz;
-
 				if (GetOpenFileName(&ofn)) {
+					abort = !LoadFile(szFileName, FALSE, b, !b);
+					if (b) {
+						if (abort) MakeNewFile();
+						UpdateCaption();
+					}
+
 					GetCurrentDirectory(MAXFN, szFileName);
 					SSTRCPY(szDir, szFileName);
 					LoadOptions();
@@ -4115,15 +4079,24 @@ endinsertfile:
 					lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
 					UpdateStatus(TRUE);
 					SSTRCPY(szFile, szTmp);
-					LoadFile(szFile, FALSE, TRUE);
+					LoadFile(szFile, FALSE, b, !b);
 					if (bLoading) {
 						bLoading = FALSE;
 						bDirtyFile = FALSE;
-						UpdateCaption();
+						
 					}
-					else
-						MakeNewFile();
 				}
+
+		ExpandFilename(sztFile, &sztFile);
+
+		if (bLoading) {
+			bLoading = FALSE;
+			bDirtyFile = FALSE;
+			SSTRCPY(szFile, sztFile);
+			UpdateCaption();
+		} else
+			MakeNewFile();
+
 				UpdateStatus(TRUE);
 				break;
 			case ID_MYFILE_NEW:
@@ -4630,34 +4603,19 @@ endinsertfile:
 			case ID_LAUNCH_ASSOCIATED_VIEWER:
 				LaunchInViewer(FALSE, FALSE);
 				break;
-/*			case ID_BINARY_FILE:
-			case ID_UTF8_FILE:
-			case ID_UTF8_UNIX_FILE:
-			case ID_UNICODE_FILE:
-			case ID_UNICODE_BE_FILE:
-			case ID_DOS_FILE:
-			case ID_UNIX_FILE:
-				hMenu = GetSubMenu(GetSubMenu(GetMenu(hwndMain), 0), MPOS_FILE_FORMAT);
-				CheckMenuRadioItem(hMenu, ID_DOS_FILE, ID_BINARY_FILE, LOWORD(wParam), MF_BYCOMMAND);
-
-				if (!bLoading) {
-					if (LOWORD(wParam) == ID_UTF8_FILE && !bUnix && nEncodingType == TYPE_UTF_8) break;
-					else if (LOWORD(wParam) == ID_UTF8_UNIX_FILE && bUnix && nEncodingType == TYPE_UTF_8) break;
-					else if (LOWORD(wParam) == ID_UNICODE_FILE && nEncodingType == TYPE_UTF_16) break;
-					else if (LOWORD(wParam) == ID_UNICODE_BE_FILE && nEncodingType == TYPE_UTF_16_BE) break;
-					else if (LOWORD(wParam) == ID_UNIX_FILE && bUnix && !bBinaryFile && nEncodingType == TYPE_UNKNOWN) break;
-					else if (LOWORD(wParam) == ID_DOS_FILE && !bUnix && !bBinaryFile && nEncodingType == TYPE_UNKNOWN) break;
-					else if (LOWORD(wParam) == ID_BINARY_FILE && bBinaryFile && nEncodingType == TYPE_UNKNOWN) break;
-				}
-
-				bBinaryFile = (LOWORD(wParam) == ID_BINARY_FILE);
-				bUnix = (LOWORD(wParam) == ID_UNIX_FILE || LOWORD(wParam) == ID_UTF8_UNIX_FILE);
-
-				if (LOWORD(wParam) == ID_UTF8_FILE || LOWORD(wParam) == ID_UTF8_UNIX_FILE) 	nEncodingType = TYPE_UTF_8;
-				else if (LOWORD(wParam) == ID_UNICODE_FILE) 								nEncodingType = TYPE_UTF_16;
-				else if (LOWORD(wParam) == ID_UNICODE_BE_FILE) 								nEncodingType = TYPE_UTF_16_BE;
-				else 																		nEncodingType = TYPE_UNKNOWN;
-*/
+			case ID_ENC_CUSTOM:
+				DialogBox(hinstLang, MAKEINTRESOURCE(IDD_CP), hwndMain, (DLGPROC)CPDialogProc);
+				break;
+			case ID_LFMT_DOS:
+			case ID_LFMT_UNIX:
+			case ID_LFMT_MAC:
+			case ID_LFMT_MIXED:
+			case ID_ENC_ANSI:
+			case ID_ENC_UTF8:
+			case ID_ENC_UTF16:
+			case ID_ENC_UTF16BE:
+			case ID_ENC_BIN:
+				SetFileFormat(LOWORD(wParam), 1);
 				if (!bLoading) {
 					*szStatusMessage = 0;
 					UpdateStatus(TRUE);
@@ -4667,29 +4625,16 @@ endinsertfile:
 				if (SCNUL(szFile)[0]) {
 					if (!SaveIfDirty())
 						break;
-
-					lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
-					UpdateStatus(TRUE);
-
-					bLoading = TRUE;
-
 #ifdef USE_RICH_EDIT
 					SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-					LoadFile(szFile, FALSE, FALSE);
+					LoadFile(szFile, FALSE, FALSE, TRUE);
 					SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 #else
 					SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-					LoadFile(szFile, FALSE, FALSE);
+					LoadFile(szFile, FALSE, FALSE, TRUE);
 					SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 					SendMessage(client, EM_SCROLLCARET, 0, 0);
 #endif
-
-					UpdateStatus(TRUE);
-					if (bLoading) {
-						bLoading = FALSE;
-						bDirtyFile = FALSE;
-						UpdateCaption();
-					}
 				}
 				break;
 /*#ifdef USE_RICH_EDIT
@@ -4854,6 +4799,10 @@ endinsertfile:
 				PopulateFavourites();
 				break;
 		}
+		if (ID_FAV_RANGE_BASE < LOWORD(wParam) && LOWORD(wParam) <= ID_FAV_RANGE_MAX) {
+			LoadFileFromMenu(LOWORD(wParam), FALSE);
+			return FALSE;
+		}
 		break;
 	case WM_TIMER:
 		switch (LOWORD(wParam)) {
@@ -4869,9 +4818,8 @@ endinsertfile:
 	return FALSE;
 }
 
-DWORD WINAPI LoadThread(LPVOID lpParameter)
-{
-	LoadFile(SCNUL(szFile), TRUE, TRUE);
+DWORD WINAPI LoadThread(LPVOID lpParameter) {
+/* TODO 	LoadFile(SCNUL(szFile), TRUE, TRUE, FALSE);
 	if (bLoading) {
 		bLoading = FALSE;
 		if (!SCNUL(szFile)[0]) {
@@ -4899,7 +4847,7 @@ DWORD WINAPI LoadThread(LPVOID lpParameter)
 		SetWindowLongPtr(client, GWL_STYLE, GetWindowLongPtr(client, GWL_STYLE) | WS_HSCROLL);
 		SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 	}
-#endif
+#endif*/
 
 	EnableWindow(hwnd, TRUE);
 	SendMessage(hwnd, WM_ACTIVATE, 0, 0);
@@ -5229,7 +5177,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 					lstrcpyn(szFile, szCmdLine + 1, nCmdLen - 1);
 				else
 					lstrcpyn(szFile, szCmdLine, nCmdLen + 1);
-				LoadFile(szFile, FALSE, FALSE);
+				if (!LoadFile(szFile, FALSE, FALSE, FALSE))
+					return FALSE;
 				SSTRCPYAO(szCaptionFile, szFile, 32, 8);
 				szCaptionFile[0] = _T('\0');
 				PrintContents();
