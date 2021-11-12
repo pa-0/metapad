@@ -74,6 +74,7 @@ typedef struct _charrange
 #endif
 
 typedef BOOL (WINAPI *SLWA)(HWND hwnd, COLORREF crKey, BYTE bAlpha, DWORD dwFlags);
+typedef BOOL (WINAPI *SWT)(HWND hwnd, LPTSTR textSubAppName, LPTSTR textSubIdList);
 
 typedef struct tag_options {
 	BOOL bQuickExit;
@@ -185,7 +186,7 @@ void LaunchExternalViewer(int);
 // file_load.c //
 BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert);
 BOOL LoadFileFromMenu(WORD wMenu, BOOL bMRU);
-BOOL BrowseFile(LPCTSTR defExt, LPCTSTR defDir, LPCTSTR filter, BOOL load, BOOL bMRU, BOOL insert, LPTSTR* fileName);
+BOOL BrowseFile(HWND owner, LPCTSTR defExt, LPCTSTR defDir, LPCTSTR filter, BOOL load, BOOL bMRU, BOOL insert, LPTSTR* fileName);
 
 
 // file_save.c //

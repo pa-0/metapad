@@ -30,6 +30,7 @@
 
 
 SLWA SetLWA;
+SWT SetWindowTheme;
 HANDLE globalHeap;
 HINSTANCE hinstThis;
 HINSTANCE hinstLang;
@@ -71,7 +72,7 @@ LPTSTR FindArray[NUMFINDS];
 LPTSTR ReplaceArray[NUMFINDS];
 LPTSTR InsertArray[NUMINSERTS];
 int frDlgId, fontmainHt;
-DWORD nFormat, randVal;
+DWORD nFormat, newFormat, randVal;
 BOOL g_bDisablePluginVersionChecking;
 BOOL g_bIniMode;
 

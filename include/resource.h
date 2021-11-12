@@ -153,6 +153,7 @@
 #define IDS_SETDEF_FORMAT_WARN			222
 #define IDS_ENC_BAD						223
 #define IDS_ENC_FAILED					224
+#define IDS_ENC_CUSTOM_CAPTION			225
 #define ID_ENC_UNKNOWN					480
 #define ID_ENC_ANSI						481
 #define ID_ENC_UTF8						482
@@ -239,7 +240,7 @@
 #define IDC_MACRO_3                     1072
 #define IDC_BUTTON_CLEAR_RECENT         1073
 #define IDC_MACRO_4                     1073
-#define IDC_BUTTON_SAVEFORMAT			1074
+#define IDC_BUTTON_FORMAT				1074
 #define IDC_MACRO_5                     1074
 #define IDC_HIDE_SCROLLBARS             1075
 #define IDC_MACRO_6                     1075
