@@ -36,6 +36,15 @@
 
 INT DecodeBase( BYTE base, LPCTSTR code, LPBYTE bin, INT len, BYTE extractMode, BYTE alignMode, BOOL showError, LPCTSTR* end );
 INT EncodeBase( BYTE base, LPBYTE bin, LPTSTR code, INT len, LPBYTE* end );
+
 void ReverseBytes(LPBYTE buffer, LONG size);
+WORD CheckBOM(LPBYTE *pb, DWORD* pbLen);
+BOOL IsTextUTF8(LPBYTE buf);
+
+WORD GetLineFmt(LPCTSTR sz, DWORD len, DWORD* nCR, DWORD* nLF, DWORD* nStrays, BOOL* binary);
+void NormalizeLineFmt(LPTSTR* sz, DWORD len, WORD lfmt, DWORD nCR, DWORD nLF, DWORD nStrays);
+void RestoreLineFmt(LPTSTR* sz, DWORD len, WORD lfmt, DWORD lines);
+void NormalizeBinary(LPTSTR sz, DWORD len);
+void RestoreBinary(LPTSTR sz, DWORD len);
 
 #endif

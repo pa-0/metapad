@@ -34,8 +34,8 @@
 #define IDS_NO_DEFAULT_VIEWER           28
 //#define IDS_DEFAULT_VIEWER_ERROR        29
 #define IDS_REGISTRY_WINDOW_ERROR       30
-#define IDS_CARRIAGE_RETURN_WARNING     31
-#define IDS_MAC_FILE_WARNING            32
+//#define IDS_CARRIAGE_RETURN_WARNING     31
+//#define IDS_MAC_FILE_WARNING            32
 #define IDS_CREATE_FILE_MESSAGE         33
 #define IDS_FILE_CREATE_ERROR           34
 #define IDS_FILE_NOT_FOUND              35

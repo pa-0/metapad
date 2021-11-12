@@ -28,6 +28,10 @@
 #include <stdio.h>
 #endif
 
+#ifdef USE_RICH_EDIT
+#include <richedit.h>
+#include <commdlg.h>
+#endif
 #if !defined(UNICODE) && !defined(__MINGW64_VERSION_MAJOR)
 extern long _ttol(const TCHAR*);
 extern int _ttoi(const TCHAR*);
@@ -36,41 +40,7 @@ extern int _ttoi(const TCHAR*);
 #include "consts.h"
 
 
-///// Prototypes /////
-
-LPTSTR GetString(UINT uID);
-BOOL GetCheckedState(HMENU hmenu, UINT nID, BOOL bToggle);
-void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap);
-BOOL CALLBACK AbortDlgProc(HDC hdc, int nCode);
-LRESULT CALLBACK AbortPrintJob(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
-void PrintContents(void);
-void ReportError(UINT);
-void ReportLastError(void);
-void CenterWindow(HWND hwndCenter);
-void SelectWord(LPTSTR* target, BOOL bSmart, BOOL bAutoSelect);
-void SetFont(HFONT* phfnt, BOOL bPrimary);
-void SetTabStops(void);
-//void NextWord(BOOL bRight, BOOL bSelect); // Uninmplemented.
-void UpdateStatus(BOOL refresh);
-BOOL SetClientFont(BOOL bPrimary);
-BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam);
-int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow);
-LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void PopulateMRUList(void);
-void SaveMRUInfo(LPCTSTR szFullPath);
-void SwitchReadOnly(BOOL bNewVal);
-BOOL EncodeWithEscapeSeqs(TCHAR* szText);
-BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext);
-void UpdateCaption(void);
-
-
 ///// Typedefs /////
-
 
 #include <pshpack1.h>
 typedef struct DLGTEMPLATEEX
@@ -158,6 +128,102 @@ typedef struct tag_options {
 	LPTSTR szCustomDate2;
 } option_struct;
 
+
+
+
+///// Prototypes /////
+
+LPTSTR GetString(UINT uID);
+BOOL GetCheckedState(HMENU hmenu, UINT nID, BOOL bToggle);
+void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap);
+BOOL CALLBACK AbortDlgProc(HDC hdc, int nCode);
+LRESULT CALLBACK AbortPrintJob(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
+void PrintContents(void);
+void ReportError(UINT);
+void ReportLastError(void);
+void CenterWindow(HWND hwndCenter);
+void SelectWord(LPTSTR* target, BOOL bSmart, BOOL bAutoSelect);
+void SetFont(HFONT* phfnt, BOOL bPrimary);
+void SetTabStops(void);
+//void NextWord(BOOL bRight, BOOL bSelect); // Uninmplemented.
+void UpdateStatus(BOOL refresh);
+BOOL SetClientFont(BOOL bPrimary);
+BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam);
+int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow);
+LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void PopulateMRUList(void);
+void SaveMRUInfo(LPCTSTR szFullPath);
+void SwitchReadOnly(BOOL bNewVal);
+BOOL EncodeWithEscapeSeqs(TCHAR* szText);
+BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext);
+void UpdateCaption(void);
+
+
+// language_plugin.c //
+HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin);
+void FindAndLoadLanguagePlugin(void);
+
+
+// external_viewers.c //
+BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine);
+void LaunchInViewer(BOOL bCustom, BOOL bSecondary);
+void LaunchExternalViewer(int);
+
+
+// file_load.c //
+void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU);
+void LoadFileFromMenu(WORD wMenu, BOOL bMRU);
+DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* plBufLen, DWORD* pnFileEncoding, WORD codepage);
+
+
+// file_save.c //
+void FixFilterString(LPTSTR szIn);
+BOOL SaveCurrentFileAs(void);
+BOOL SaveCurrentFile(void);
+BOOL SaveIfDirty(void);
+
+
+// file_utils.c //
+void MakeNewFile(void);
+
+DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BOOL inclBOM, DWORD* numChars);
+DWORD GetTextChars(LPCTSTR szText, BOOL unix);
+void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut);
+BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE pbFindSpec);
+DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* szRepl, LPBYTE* pbFindSpec, LPBYTE* pbReplSpec, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen, LPCTSTR header, LPCTSTR footer);
+DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, LPBYTE pbReplSpec, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen);
+void SetFileFormat(int nFormat);
+
+LPCTSTR GetShadowBuffer(DWORD* len);
+LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len);
+LPCTSTR GetShadowSelection(DWORD* len, CHARRANGE* pcr);
+LPCTSTR GetShadowLine(LONG line, LONG cp, DWORD* len, LONG* lineout, CHARRANGE* pcr);
+
+DWORD GetColNum(LONG cp, LONG line, DWORD* lineLen, LONG* lineout, CHARRANGE* pcr);
+DWORD GetCharIndex(DWORD col, LONG line, LONG cp, DWORD* lineLen, LONG* lineout, CHARRANGE* pcr);
+
+void UpdateSavedInfo();
+
+
+// settings_load.h //
+void LoadWindowPlacement(int* left, int* top, int* width, int* height, int* nShow);
+void LoadOptionString(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData);
+void LoadOptionStringDefault(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData, LPCTSTR);
+void LoadOptions(void);
+BOOL LoadOptionNumeric(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData);
+void LoadMenusAndData(void);
+
+
+// settings_save.h //
+BOOL SaveOption(HKEY hKey, LPCTSTR name, DWORD dwType, CONST LPBYTE lpData, DWORD cbData);
+void SaveWindowPlacement(HWND hWndSave);
+void SaveOptions(void);
+void SaveMenusAndData(void);
 
 
 #endif
