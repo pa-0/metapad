@@ -112,6 +112,10 @@ int fontmainHt;
 int _fltused = 0x9875; // see CMISCDAT.C for more info on this
 
 option_struct options;
+WORD perfUpdateTop = 0;
+WORD perfUpdateC[PERFBUCKETS] = {0};
+DWORD perfUpdateT[PERFBUCKETS] = {0};
+
 
 #ifdef _DEBUG
 	size_t __stktop;
@@ -365,6 +369,7 @@ void UpdateCaption(void)
  */
 void CleanUp(void)
 {
+	KillTimer(hwnd, IDT_UPDATE);
 	if (szShadow) {
 		szShadow -= 8;
 		FREE(szShadow);
@@ -504,7 +509,8 @@ void CreateToolbar(void)
 
 void CreateStatusbar(void)
 {
-	int nPaneSizes[NUMPANES] = {0,0,0};
+	RECT rect;
+	int nPaneSizes[NUMSTATPANES] = {0};
 
 	status = CreateWindowEx(
 		WS_EX_DLGMODALFRAME,
@@ -518,14 +524,9 @@ void CreateStatusbar(void)
 		NULL);
 
 	SendMessage(status, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
-
-	{
-		RECT rect;
-		GetWindowRect(status, &rect);
-		nStatusHeight = rect.bottom - rect.top - 5;
-	}
-
-	SendMessage(status, SB_SETPARTS, NUMPANES, (DWORD_PTR)(LPINT)nPaneSizes);
+	GetWindowRect(status, &rect);
+	nStatusHeight = rect.bottom - rect.top - 5;
+	SendMessage(status, SB_SETPARTS, NUMSTATPANES, (DWORD_PTR)(LPINT)nPaneSizes);
 }
 
 void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
@@ -599,10 +600,28 @@ void UpdateStatus(void)
 	static TCHAR szPane[50];
 	static int lastw = 0;
 	LONG lLine, lLines;
-	int nPaneSizes[NUMPANES];
+	DWORD i, s, pt, pb;
+	int nPaneSizes[NUMSTATPANES];
 	LPTSTR szBuffer;
 	CHARRANGE cr;
 	RECT rc;
+	static float DIVV = 2;
+
+	KillTimer(hwnd, IDT_UPDATE);
+	pb = (pt = GetTickCount()) / PERFRES;
+	for (i = s = 0; i < PERFBUCKETS; i++) {
+		if (pb >= perfUpdateT[i] && pb-perfUpdateT[i] < PERFBUCKETS)
+			s += perfUpdateC[i];
+	}
+	printf("\n%d / %d", s, PERFRES*PERFBUCKETS);
+	if (s > PERFRES*PERFBUCKETS / DIVV) {
+		printf(".");
+		SetTimer(hwnd, IDT_UPDATE, 64, NULL);
+		return;
+	}
+
+
+	
 
 	if (szCaptionFile && !*szCaptionFile)
 		UpdateCaption();
@@ -686,6 +705,8 @@ void UpdateStatus(void)
 	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_READ, (LPARAM)(LPTSTR)szPane);
 	*/
 
+	nPaneSizes[SBPANE_SIZE] = nPaneSizes[SBPANE_SIZE - 1];
+
 #ifdef USE_RICH_EDIT
 	SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
 	lLine = SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)cr.cpMax);
@@ -703,16 +724,26 @@ void UpdateStatus(void)
 	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_COL, (LPARAM)(LPTSTR)szPane);
 	nPaneSizes[SBPANE_COL] = nPaneSizes[SBPANE_COL - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
 	
-	szBuffer = SCNUL(szStatusMessage);
+	szBuffer = szStatusMessage;
 	nPaneSizes[SBPANE_MESSAGE] = nPaneSizes[SBPANE_MESSAGE - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szBuffer) + 5);
 	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_MESSAGE | SBT_NOBORDERS, (LPARAM)szBuffer);
 
-	SendMessage(status, SB_SETPARTS, NUMPANES, (DWORD_PTR)(LPINT)nPaneSizes);
+	SendMessage(status, SB_SETPARTS, NUMSTATPANES, (DWORD_PTR)(LPINT)nPaneSizes);
 	SendMessage(status, WM_SETREDRAW, TRUE, 0);
 	rc.top = 0; rc.left = 0; rc.bottom = 32; rc.right = MAX(nPaneSizes[SBPANE_MESSAGE], lastw);
 	if (lastw > nPaneSizes[SBPANE_MESSAGE]) lastw-=2;
 	else lastw = nPaneSizes[SBPANE_MESSAGE];
 	InvalidateRect(status, &rc, TRUE);
+
+
+	if ((i = GetTickCount()) >= pt) {
+		if (perfUpdateT[perfUpdateTop] != pb) {
+			perfUpdateTop = (++perfUpdateTop)%PERFBUCKETS;
+			perfUpdateC[perfUpdateTop] = 0;
+		}
+		perfUpdateT[perfUpdateTop] = pb;
+		perfUpdateC[perfUpdateTop] += (WORD)(i - pt);
+	}
 }
 
 LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1882,7 +1913,7 @@ DWORD CALLBACK EditStreamIn(DWORD dwCookie, LPBYTE pbBuff, LONG cb, LONG *pcb)
 	LONG lBufferLength = lstrlen(szBuffer);
 	static LONG nBytesDone = 0;
 
-	SSTRCPY(szStatusMessage, _T("Loading file... %d            "));
+	lstrcpy(szStatusMessage, _T("Loading file... %d            "));
 	wsprintf(szStatusMessage, szStatusMessage, nBytesDone);
 	UpdateStatus();
 
@@ -3194,7 +3225,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 		SSTRCPY(szFile, szFileName);
 
 		bLoading = TRUE;
-		SSTRCPY(szStatusMessage, GetString(IDS_FILE_LOADING));
+		lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
 		UpdateStatus();
 		LoadFile(szFile, FALSE, TRUE);
 		if (bLoading) {
@@ -3380,11 +3411,12 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						break;
 #endif
 					case EN_CHANGE:
+						bDirtyShadow = bDirtyStatus = TRUE;
 						if (!bDirtyFile && !bLoading) {
 							bDirtyFile = TRUE;
 							UpdateCaption();
 						}
-						FREE(szStatusMessage);
+						*szStatusMessage = 0;
 						break;
 #ifdef USE_RICH_EDIT
 					case EN_STOPNOUNDO:
@@ -4143,7 +4175,7 @@ endinsertfile:
 					SSTRCPY(szDir, szFileName);
 					LoadOptions();
 					bLoading = TRUE;
-					SSTRCPY(szStatusMessage, GetString(IDS_FILE_LOADING));
+					lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
 					UpdateStatus();
 					SSTRCPY(szFile, szTmp);
 					LoadFile(szFile, FALSE, TRUE);
@@ -4706,8 +4738,9 @@ endinsertfile:
 
 				CheckMenuRadioItem(hMenu, ID_DOS_FILE, ID_BINARY_FILE, LOWORD(wParam), MF_BYCOMMAND);
 
+				bDirtyStatus = TRUE;
 				if (!bLoading)
-					FREE(szStatusMessage);
+					*szStatusMessage = 0;
 				UpdateStatus();
 				break;
 			case ID_RELOAD_CURRENT:
@@ -4715,7 +4748,7 @@ endinsertfile:
 					if (!SaveIfDirty())
 						break;
 
-					SSTRCPY(szStatusMessage, GetString(IDS_FILE_LOADING));
+					lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
 					UpdateStatus();
 
 					bLoading = TRUE;
@@ -4739,7 +4772,8 @@ endinsertfile:
 					}
 				}
 				break;
-#ifdef USE_RICH_EDIT
+/*#ifdef USE_RICH_EDIT
+//This is now done automatically in UpdateStatus(). (v3.7)
 			case ID_SHOWFILESIZE:
 				hCur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 
@@ -4749,7 +4783,7 @@ endinsertfile:
 					SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_SHOWSTATUS, 0), 0);
 				SetCursor(hCur);
 				break;
-#endif
+#endif*/
 			case ID_MRU_1:
 			case ID_MRU_2:
 			case ID_MRU_3:
@@ -4901,6 +4935,13 @@ endinsertfile:
 				break;
 		}
 		break;
+	case WM_TIMER:
+		switch (LOWORD(wParam)) {
+			case IDT_UPDATE:
+				UpdateStatus();
+				break;
+		}
+		break;
 	default:
 		return DefWindowProc(hwndMain, Msg, wParam, lParam);
 	}
@@ -4996,12 +5037,13 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	szCustomFilter = NULL;
 	pbFindTextSpec = NULL;
 	pbReplaceTextSpec = NULL;
-	szStatusMessage = NULL;
 	szShadow = NULL;
 	shadowLen = shadowAlloc = shadowRngEnd = 0;
+	bDirtyShadow = bDirtyStatus = TRUE;
 	ZeroMemory(FindArray, sizeof(FindArray));
 	ZeroMemory(ReplaceArray, sizeof(ReplaceArray));
 	ZeroMemory(InsertArray, sizeof(InsertArray));
+	*szStatusMessage = 0;
 	randVal = GetTickCount();
 
 #if defined(BUILD_METAPAD_UNICODE) && ( !defined(__MINGW32__) || defined(__MINGW64_VERSION_MAJOR) )

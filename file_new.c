@@ -37,11 +37,10 @@
 
 extern HANDLE globalHeap;
 extern BOOL bBinaryFile;
-extern BOOL bDirtyFile;
+extern BOOL bDirtyFile, bDirtyShadow, bDirtyStatus;
 extern BOOL bLoading;
 extern HWND client;
 extern HWND hwnd;
-extern DWORD shadowLen;
 extern LPTSTR szCaptionFile;
 extern LPTSTR szFile;
 
@@ -59,7 +58,7 @@ void MakeNewFile(void)
 	FREE(szFile);
 	SSTRCPYAO(szCaptionFile, GetString(IDS_NEW_FILE), 32, 8);
 	szCaptionFile[0] = _T('\0');
-	shadowLen = 0;
+	bDirtyShadow = bDirtyStatus = TRUE;
 	UpdateStatus();
 	bLoading = FALSE;
 }

@@ -197,7 +197,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 		if (len) *len = 0;
 		return _T("");
 	}
-	if (!szShadow || !shadowLen || SendMessage(client, EM_GETMODIFY, 0, 0)) {
+	if (bDirtyShadow || !szShadow || !shadowLen) {
 		if (line >= 0 && (l = max - min + 1) > 0)
 			shadowLen = 0;
 		else {
@@ -223,13 +223,13 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 			szShadow += 8;
 		}
 		if (line >= 0) {
-			if (shadowRngEnd != line || SendMessage(client, EM_GETMODIFY, 0, 0)) {
+			if (bDirtyShadow || shadowRngEnd != line) {
 				//printf("l");
 				shadowRngEnd = line;
 				*((LPWORD)szShadow) = (USHORT)(l + 1);
 				SendMessage(client, EM_GETLINE, (WPARAM)line, (LPARAM)(LPCTSTR)szShadow);
-				SendMessage(client, EM_SETMODIFY, (WPARAM)FALSE, 0);
 				szShadow[l-1] = '\0';
+				bDirtyShadow = FALSE;
 			}
 			if (len) *len = l;
 			return szShadow;
@@ -246,7 +246,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 #else
 			GetWindowText(client, szShadow, shadowLen+1);
 #endif
-			SendMessage(client, EM_SETMODIFY, (WPARAM)FALSE, 0);
+			bDirtyShadow = FALSE;
 		}
 	}
 	//printf(".");

@@ -42,7 +42,7 @@
 #include "include/strings.h"
 
 extern BOOL bBinaryFile;
-extern BOOL bDirtyFile;
+extern BOOL bDirtyFile, bDirtyShadow, bDirtyStatus;
 extern BOOL bLoading;
 extern BOOL bUnix;
 extern HANDLE globalHeap;
@@ -51,7 +51,7 @@ extern HWND hwnd;
 extern int nEncodingType;
 extern LPTSTR szFav;
 extern LPTSTR szFile;
-extern LPTSTR szStatusMessage;
+extern TCHAR szStatusMessage[MAXSTRING];
 
 extern option_struct options;
 
@@ -317,7 +317,7 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 
 		bLoading = TRUE;
 		ExpandFilename(sztFile, &sztFile);
-		SSTRCPY(szStatusMessage, GetString(IDS_FILE_LOADING));
+		lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
 		UpdateStatus();
 		LoadFile(sztFile, FALSE, TRUE);
 		if (bLoading) {
@@ -434,9 +434,10 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, ULONG* plBufferLength, 
 
 		if (sizeof(TCHAR) < 2) {
 			nBytesNeeded = WideCharToMultiByte(cp, 0, (LPCWSTR)*ppBuffer, *plBufferLength, NULL, 0, NULL, NULL);
-			if (NULL == (pNewBuffer = (LPBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+sizeof(TCHAR))))
+			if (NULL == (pNewBuffer = (LPBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+sizeof(TCHAR)))) {
 				ReportLastError();
-			else if (!WideCharToMultiByte(cp, 0, (LPCWSTR)*ppBuffer, *plBufferLength, (LPSTR)pNewBuffer, nBytesNeeded, NULL, &bUsedDefault)) {
+				return -1;
+			} else if (!WideCharToMultiByte(cp, 0, (LPCWSTR)*ppBuffer, *plBufferLength, (LPSTR)pNewBuffer, nBytesNeeded, NULL, &bUsedDefault)) {
 				ReportLastError();
 				ERROROUT(GetString(IDS_UNICODE_CONVERT_ERROR));
 				nBytesNeeded = 0;
@@ -451,9 +452,10 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, ULONG* plBufferLength, 
 		if (*pnFileEncoding == TYPE_UTF_8 && *plBufferLength)
 			cp = CP_UTF8;
 		nBytesNeeded = MultiByteToWideChar(cp, 0, *ppBuffer, *plBufferLength, NULL, 0)*sizeof(TCHAR);
-		if (NULL == (pNewBuffer = (LPBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+sizeof(TCHAR))))
+		if (NULL == (pNewBuffer = (LPBYTE) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nBytesNeeded+sizeof(TCHAR)))) {
 			ReportLastError();
-		else if (!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, *ppBuffer, *plBufferLength, (LPWSTR)pNewBuffer, nBytesNeeded)){
+			return -1;
+		} else if (!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, *ppBuffer, *plBufferLength, (LPWSTR)pNewBuffer, nBytesNeeded)){
 			if (!MultiByteToWideChar(cp, 0, *ppBuffer, *plBufferLength, (LPWSTR)pNewBuffer, nBytesNeeded)){
 				ReportLastError();
 				ERROROUT(GetString(IDS_UNICODE_LOAD_ERROR));
@@ -463,7 +465,6 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, ULONG* plBufferLength, 
 		HeapFree(globalHeap, 0, (HGLOBAL)*ppBuffer);
 		*ppBuffer = pNewBuffer;
 	}
-
 	return nBytesNeeded/sizeof(TCHAR);
 }
 
@@ -479,7 +480,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 	UINT i;
 	TCHAR szUncFn[MAXFN+6] = _T("\\\\?\\");
 
-	SSTRCPY(szStatusMessage, GetString(IDS_FILE_LOADING));
+	lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
 	UpdateStatus();
 
 	hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
@@ -506,7 +507,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 						hFile = (HANDLE)CreateFile(szUncFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 						if (hFile == INVALID_HANDLE_VALUE) {
 							ERROROUT(GetString(IDS_FILE_CREATE_ERROR));
-							FREE(szStatusMessage);
+							*szStatusMessage = 0;
 							UpdateStatus();
 							bLoading = FALSE;
 							SetCursor(hcur);
@@ -516,7 +517,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 					}
 				case IDNO:
 					{
-						FREE(szStatusMessage);
+						*szStatusMessage = 0;
 						MakeNewFile();
 						SetCursor(hcur);
 						return;
@@ -525,7 +526,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 					{
 						if (bLoading)
 							PostQuitMessage(0);
-						FREE(szStatusMessage);
+						*szStatusMessage = 0;
 						SetCursor(hcur);
 						return;
 					}
@@ -543,7 +544,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 					SetLastError(dwError);
 					ReportLastError();
 				}
-				FREE(szStatusMessage);
+				*szStatusMessage = 0;
 				UpdateStatus();
 				bLoading = FALSE;
 				SetCursor(hcur);
@@ -562,7 +563,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 
 	if ((lActualCharsRead = LoadFileIntoBuffer(hFile, &pBuffer, &lBufferLength, &nEncodingType)) < 0) {
 		CloseHandle(hFile);
-		FREE(szStatusMessage);
+		*szStatusMessage = 0;
 		bLoading = FALSE;
 		return;
 	}
@@ -633,7 +634,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 #else
 	if (bBinaryFile) SetFileFormat(FILE_FORMAT_DOS);
 #endif
-	SendMessage(client, EM_SETMODIFY, (WPARAM)TRUE, 0);
+	bDirtyShadow = bDirtyStatus = TRUE;
 
 	SetTabStops();
 	SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
@@ -657,7 +658,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 //#ifndef BUILD_METAPAD_UNICODE
 //fini:
 //#endif
-	FREE(szStatusMessage);
+	*szStatusMessage = 0;
 	UpdateStatus();
 	CloseHandle(hFile);
 	HeapFree(globalHeap, 0, (HGLOBAL) pBuffer);
