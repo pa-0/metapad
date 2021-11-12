@@ -43,207 +43,6 @@
 
 BOOL SaveFile(LPCTSTR szFilename);
 
-#ifndef USE_RICH_EDIT
-/**
- * Convert a string from DOS mode to Unix mode.
- *
- * @param[in] szBuffer String to convert.
- * @note This conversion consist in removing carriage returns.
- */
-static __inline void ConvertToUnix(LPTSTR szBuffer, DWORD* len)
-{
-	LPTSTR szPtr = szBuffer;
-	for (; *szBuffer; szBuffer++) {
-		if (*szBuffer != _T('\r'))
-			*szPtr++ = *szBuffer;
-	}
-	*szPtr = _T('\0');
-	if (len) *len -= szBuffer - szPtr;
-}
-#else
-/**
- * Convert a string from rich text mode to DOS mode.
- *
- * @param[in] szBuffer Pointer to the string to convert.
- * @note This conversion consists in adding one line break after every carriage return.
- */
-static __inline void RichModeToDos(LPCTSTR *szBuffer, BOOL *bufDirty)
-{
-	int cnt = 0;
-	int i = 0, j;
-
-	while ((*szBuffer)[i] != _T('\0')) {
-		if ((*szBuffer)[i] == _T('\r'))
-			cnt++;
-		i++;
-	}
-
-	if (cnt) {
-		LPTSTR szNewBuffer = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(*szBuffer)+cnt+2) * sizeof(TCHAR));
-		i = j = 0;
-		while ((*szBuffer)[i] != _T('\0')) {
-			if ((*szBuffer)[i] == _T('\r')) {
-				szNewBuffer[j++] = (*szBuffer)[i];
-				szNewBuffer[j] = _T('\n');
-			}
-			else {
-				szNewBuffer[j] = (*szBuffer)[i];
-			}
-			j++; i++;
-		}
-		szNewBuffer[j] = _T('\0');
-		if (bufDirty){
-			if (*bufDirty) FREE(*szBuffer);
-			*bufDirty = TRUE;
-		}
-		*szBuffer = szNewBuffer;
-	}
-}
-#endif
-
-/**
- * Replace '|' with '\0', and adds a '\0' at the end.
- *
- * @param[in] szIn String to fix.
- */
-void FixFilterString(LPTSTR szIn)
-{
-	int i;
-
-	for (i = 0; szIn[i]; ++i) {
-		if (szIn[i] == _T('|')) {
-			szIn[i] = _T('\0');
-		}
-	}
-	szIn[i+1] = _T('\0');
-}
-
-/**
- * Save the current file in a file to be defined by the user.
- *
- * @return TRUE if successfully saved, FALSE if unable to save or cancelled.
- */
-BOOL SaveCurrentFileAs(void)
-{
-	OPENFILENAME ofn;
-	TCHAR szTmp[MAXFN] = _T("");
-	TCHAR* pch;
-
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = client;
-
-	if (options.bNoAutoSaveExt) {
-		ofn.lpstrFilter = GetString(IDS_DEFAULT_FILTER_TEXT);
-		FixFilterString((LPTSTR)ofn.lpstrFilter);
-		ofn.lpstrDefExt = NULL;
-	} else {
-		ofn.lpstrFilter = SCNUL(szCustomFilter);
-		ofn.lpstrDefExt = _T("txt");
-	}
-
-	ofn.lpstrCustomFilter = (LPTSTR)NULL;
-	ofn.nMaxCustFilter = 0L;
-	ofn.nFilterIndex = 1L;
-
-	if (szFile){
-		pch = _tcsrchr(szFile, _T('\\'));
-		if (pch == NULL)
-			lstrcpy(szTmp, szFile);
-		else
-			lstrcpy(szTmp, pch+1);
-	}
-
-	ofn.lpstrFile = szTmp;
-	ofn.nMaxFile = MAXFN;
-
-	ofn.lpstrFileTitle = (LPTSTR)NULL;
-	ofn.nMaxFileTitle = 0L;
-	ofn.lpstrInitialDir = SCNUL(szDir);
-	ofn.lpstrTitle = (LPTSTR)NULL;
-	ofn.Flags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
-	ofn.nFileOffset = 0;
-	ofn.nFileExtension = 0;
-
-	if (GetSaveFileName(&ofn)) {
-		SSTRCPY(szFile, szTmp);
-		if (!SaveFile(szFile))
-			return FALSE;
-		SaveMRUInfo(szFile);
-
-		SwitchReadOnly(FALSE);
-		bLoading = FALSE;
-		bDirtyFile = FALSE;
-		UpdateStatus(TRUE);
-		return TRUE;
-	}
-	else
-		return FALSE;
-}
-
-/**
- * Save current file.
- *
- * @return TRUE if successful, FALSE otherwise.
- */
-BOOL SaveCurrentFile(void)
-{
-	SetCurrentDirectory(SCNUL(szDir));
-
-	if (SCNUL(szFile)[0]) {
-		DWORD dwResult = GetFileAttributes(szFile);
-
-		if (dwResult != 0xffffffff && bReadOnly != (BOOL)(dwResult & FILE_ATTRIBUTE_READONLY)) {
-			bReadOnly = dwResult & FILE_ATTRIBUTE_READONLY;
-			UpdateCaption();
-		}
-		if (bReadOnly) {
-			if (MessageBox(hwnd, GetString(IDS_READONLY_WARNING), STR_METAPAD, MB_ICONEXCLAMATION | MB_OKCANCEL) == IDOK) {
-				return SaveCurrentFileAs();
-			}
-			return FALSE;
-		}
-
-		if (!SaveFile(szFile))
-			return FALSE;
-		ExpandFilename(szFile, &szFile);
-		bDirtyFile = FALSE;
-		UpdateCaption();
-		return TRUE;
-	}
-	else
-		return SaveCurrentFileAs();
-}
-
-/**
- * If the current file has been modified, prompt a message box asking the user
- * if saving the changes is wanted.
- *
- * @return If the file hasn't been modified, TRUE. If the file has been modified
- * and the save is successful or unwanted, TRUE.
- * If the save is unsuccessful or the user chooses CANCEL, return FALSE.
- */
-BOOL SaveIfDirty(void)
-{
-	if (bDirtyFile) {
-		TCHAR szBuffer[MAXFN+MAXSTRING];
-		if (!SCNUL(szFile)[0]) {
-			if (!GetWindowTextLength(client))
-				return TRUE;
-		}
-		wsprintf(szBuffer, GetString(IDS_DIRTYFILE), SCNUL8(szCaptionFile)+8);
-		switch (MessageBox(hwnd, szBuffer, STR_METAPAD, MB_ICONEXCLAMATION | MB_YESNOCANCEL)) {
-			case IDYES:
-				if (!SaveCurrentFile())
-					return FALSE;
-			case IDNO:
-				return TRUE;
-			case IDCANCEL:
-				return FALSE;
-		}
-	}
-	return TRUE;
-}
-
 /**
  * Save a file.
  *
@@ -392,4 +191,209 @@ BOOL SaveFile(LPCTSTR szFilename)
 	}*/
 	return TRUE;
 }
+
+/**
+ * Save the current file in a file to be defined by the user.
+ *
+ * @return TRUE if successfully saved, FALSE if unable to save or cancelled.
+ */
+BOOL SaveCurrentFileAs(void)
+{
+	OPENFILENAME ofn;
+	TCHAR szTmp[MAXFN] = _T("");
+	TCHAR* pch;
+
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = client;
+
+	if (options.bNoAutoSaveExt) {
+		ofn.lpstrFilter = GetString(IDS_DEFAULT_FILTER_TEXT);
+		FixFilterString((LPTSTR)ofn.lpstrFilter);
+		ofn.lpstrDefExt = NULL;
+	} else {
+		ofn.lpstrFilter = SCNUL(szCustomFilter);
+		ofn.lpstrDefExt = _T("txt");
+	}
+
+	ofn.lpstrCustomFilter = (LPTSTR)NULL;
+	ofn.nMaxCustFilter = 0L;
+	ofn.nFilterIndex = 1L;
+
+	if (szFile){
+		pch = _tcsrchr(szFile, _T('\\'));
+		if (pch == NULL)
+			lstrcpy(szTmp, szFile);
+		else
+			lstrcpy(szTmp, pch+1);
+	}
+
+	ofn.lpstrFile = szTmp;
+	ofn.nMaxFile = MAXFN;
+
+	ofn.lpstrFileTitle = (LPTSTR)NULL;
+	ofn.nMaxFileTitle = 0L;
+	ofn.lpstrInitialDir = SCNUL(szDir);
+	ofn.lpstrTitle = (LPTSTR)NULL;
+	ofn.Flags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
+	ofn.nFileOffset = 0;
+	ofn.nFileExtension = 0;
+
+	if (GetSaveFileName(&ofn)) {
+		SSTRCPY(szFile, szTmp);
+		if (!SaveFile(szFile))
+			return FALSE;
+		SaveMRUInfo(szFile);
+
+		SwitchReadOnly(FALSE);
+		bLoading = FALSE;
+		bDirtyFile = FALSE;
+		UpdateStatus(TRUE);
+		return TRUE;
+	}
+	else
+		return FALSE;
+}
+
+/**
+ * Save current file.
+ *
+ * @return TRUE if successful, FALSE otherwise.
+ */
+BOOL SaveCurrentFile(void)
+{
+	SetCurrentDirectory(SCNUL(szDir));
+
+	if (SCNUL(szFile)[0]) {
+		DWORD dwResult = GetFileAttributes(szFile);
+
+		if (dwResult != 0xffffffff && bReadOnly != (BOOL)(dwResult & FILE_ATTRIBUTE_READONLY)) {
+			bReadOnly = dwResult & FILE_ATTRIBUTE_READONLY;
+			UpdateCaption();
+		}
+		if (bReadOnly) {
+			if (MessageBox(hwnd, GetString(IDS_READONLY_WARNING), STR_METAPAD, MB_ICONEXCLAMATION | MB_OKCANCEL) == IDOK) {
+				return SaveCurrentFileAs();
+			}
+			return FALSE;
+		}
+
+		if (!SaveFile(szFile))
+			return FALSE;
+		ExpandFilename(szFile, &szFile);
+		bDirtyFile = FALSE;
+		UpdateCaption();
+		return TRUE;
+	}
+	else
+		return SaveCurrentFileAs();
+}
+
+
+/**
+ * If the current file has been modified, prompt a message box asking the user
+ * if saving the changes is wanted.
+ *
+ * @return If the file hasn't been modified, TRUE. If the file has been modified
+ * and the save is successful or unwanted, TRUE.
+ * If the save is unsuccessful or the user chooses CANCEL, return FALSE.
+ */
+BOOL SaveIfDirty(void)
+{
+	if (bDirtyFile) {
+		TCHAR szBuffer[MAXFN+MAXSTRING];
+		if (!SCNUL(szFile)[0]) {
+			if (!GetWindowTextLength(client))
+				return TRUE;
+		}
+		wsprintf(szBuffer, GetString(IDS_DIRTYFILE), SCNUL8(szCaptionFile)+8);
+		switch (MessageBox(hwnd, szBuffer, STR_METAPAD, MB_ICONEXCLAMATION | MB_YESNOCANCEL)) {
+			case IDYES:
+				if (!SaveCurrentFile())
+					return FALSE;
+			case IDNO:
+				return TRUE;
+			case IDCANCEL:
+				return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+
+
+#ifndef USE_RICH_EDIT
+/**
+ * Convert a string from DOS mode to Unix mode.
+ *
+ * @param[in] szBuffer String to convert.
+ * @note This conversion consist in removing carriage returns.
+ */
+static __inline void ConvertToUnix(LPTSTR szBuffer, DWORD* len)
+{
+	LPTSTR szPtr = szBuffer;
+	for (; *szBuffer; szBuffer++) {
+		if (*szBuffer != _T('\r'))
+			*szPtr++ = *szBuffer;
+	}
+	*szPtr = _T('\0');
+	if (len) *len -= szBuffer - szPtr;
+}
+#else
+/**
+ * Convert a string from rich text mode to DOS mode.
+ *
+ * @param[in] szBuffer Pointer to the string to convert.
+ * @note This conversion consists in adding one line break after every carriage return.
+ */
+static __inline void RichModeToDos(LPCTSTR *szBuffer, BOOL *bufDirty)
+{
+	int cnt = 0;
+	int i = 0, j;
+
+	while ((*szBuffer)[i] != _T('\0')) {
+		if ((*szBuffer)[i] == _T('\r'))
+			cnt++;
+		i++;
+	}
+
+	if (cnt) {
+		LPTSTR szNewBuffer = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(*szBuffer)+cnt+2) * sizeof(TCHAR));
+		i = j = 0;
+		while ((*szBuffer)[i] != _T('\0')) {
+			if ((*szBuffer)[i] == _T('\r')) {
+				szNewBuffer[j++] = (*szBuffer)[i];
+				szNewBuffer[j] = _T('\n');
+			}
+			else {
+				szNewBuffer[j] = (*szBuffer)[i];
+			}
+			j++; i++;
+		}
+		szNewBuffer[j] = _T('\0');
+		if (bufDirty){
+			if (*bufDirty) FREE(*szBuffer);
+			*bufDirty = TRUE;
+		}
+		*szBuffer = szNewBuffer;
+	}
+}
+#endif
+
+/**
+ * Replace '|' with '\0', and adds a '\0' at the end.
+ *
+ * @param[in] szIn String to fix.
+ */
+void FixFilterString(LPTSTR szIn)
+{
+	int i;
+
+	for (i = 0; szIn[i]; ++i) {
+		if (szIn[i] == _T('|')) {
+			szIn[i] = _T('\0');
+		}
+	}
+	szIn[i+1] = _T('\0');
+}
+
 
