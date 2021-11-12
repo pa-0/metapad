@@ -115,7 +115,7 @@ void LoadOptions(void)
 	//options.nStatusFontWidth = 16;
 	options.nSelectionMarginWidth = 10;
 	options.nMaxMRU = 8;
-	options.nFormat = 0;
+	options.nFormat = ID_ENC_ANSI | (ID_LFMT_DOS << 16);
 	options.nTransparentPct = 25;
 	options.BackColour = GetSysColor(COLOR_WINDOW);
 	options.FontColour = GetSysColor(COLOR_WINDOWTEXT);

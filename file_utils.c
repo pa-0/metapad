@@ -118,125 +118,89 @@ void MakeNewFile(void) {
 	SetWindowText(client, _T(""));
 	SwitchReadOnly(FALSE);
 	FREE(szFile);
-	SSTRCPYAO(szCaptionFile, GetString(IDS_NEW_FILE), 32, 8);
-	szCaptionFile[0] = _T('\0');
+	FREE(szCaptionFile);
 	SetFileFormat(options.nFormat, 0);
 	UpdateSavedInfo();
 	bDirtyFile = bLoading = FALSE;
 	UpdateStatus(TRUE);
 }
 
-LPTSTR FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt) {
+/**
+ * Replace '|' with '\0', and adds a '\0' at the end.
+ *
+ * @param[in] szIn String to fix.
+ */
+void FixFilterString(LPTSTR szIn) {
+	while (*++szIn) {
+		if (*szIn == _T('|'))
+			*szIn = _T('\0');
+	}
+	*szIn = _T('\0');
+}
+
+BOOL FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt) {
 	WIN32_FIND_DATA FindFileData;
 	HANDLE hHandle;
-	TCHAR dst[MAXFN];
-	LPTSTR pdst = dst;
-	TCHAR sDir[MAXFN], sName[MAXFN];
-	int nDestPos=0, nSrcPos=0, i;
-	BOOL bOK = TRUE;
+	TCHAR dst[MAXFN], ssto;
+	LPTSTR pdst = dst, psrc;
+	BOOL bOK = TRUE, alloc = FALSE;
 
-
-	LPTSTR szDest = dst;
-
-
-	if (!szSrc) return NULL;
-
-	
-
-	// Copy drive letter over
-	if (szSrc[1] == _T(':')) {
-		*pdst++ = *szSrc++;
-		*pdst++ = *szSrc++;
-	}
-	while (*szSrc) {
-		// If the next TCHAR is '\' we are starting from the root and want to add '\*' to sDir.
-		// Otherwise we are doing relative search, so we just append '*' to sDir
-		if (szSrc[nSrcPos]==_T('\\')) {
-			szDest[nDestPos++] = szSrc[nSrcPos++];
-
-			if (szSrc[nSrcPos] == _T('\\')) { // get UNC server name
-				szDest[nDestPos++] = szSrc[nSrcPos++];
-
-				while (szSrc[nSrcPos] && szSrc[nSrcPos - 1]!=_T('\\')) {
-					szDest[nDestPos++] = szSrc[nSrcPos++];
-				}
-			}
+	if (!szSrc || !szTgt) return NULL;
+	if (szSrc != *szTgt) alloc = TRUE;
+	if (szSrc[0] && szSrc[1] && szSrc[2] != _T('?')) {
+		lstrcpy(pdst, _T("\\\\?\\"));
+		pdst+=4;
+		if (szSrc[0] == _T('\\') && szSrc[1] == _T('\\')) {
+			lstrcpy(pdst, _T("UNC"));
+			pdst+=3;
+			szSrc++;
 		}
-
-		_tcsncpy(sDir, szDest, nDestPos);
-		sDir[nDestPos] = _T('*');
-		sDir[nDestPos + 1] = _T('\0');
-
-		for (i=0; szSrc[nSrcPos] && szSrc[nSrcPos]!=_T('\\'); i++)
-			sName[i] = szSrc[nSrcPos++];
-		sName[i] = _T('\0');
-
-		hHandle = FindFirstFile(sDir, &FindFileData);
+	}
+	while(*szSrc) {
+		while(*szSrc == _T('\\'))
+			*pdst++ = *szSrc++;
+		if (!*szSrc) break;
+		pdst[0] = _T('*');
+		pdst[1] = _T('\0');
+		for (psrc = szSrc; *psrc && *psrc != _T('\\'); psrc++) ;
+		ssto = *psrc;
+		*psrc = _T('\0');
+		hHandle = FindFirstFile(dst, &FindFileData);
 		bOK = (hHandle != INVALID_HANDLE_VALUE);
-		while (bOK && lstrcmpi(FindFileData.cFileName, sName) != 0 && lstrcmpi(FindFileData.cAlternateFileName, sName) != 0)
+		while (bOK && lstrcmpi(FindFileData.cFileName, szSrc) && lstrcmpi(FindFileData.cAlternateFileName, szSrc))
 			bOK = FindNextFile(hHandle, &FindFileData);
-
-    	if (bOK)
-    		_tcscpy(&szDest[nDestPos], FindFileData.cFileName);
-    	else
-    		_tcscpy(&szDest[nDestPos], sName);
-
-		// Fix the length of szDest
-		nDestPos = _tcslen(szDest);
-		if (hHandle)
-			FindClose(hHandle);
+		if (bOK) lstrcpy(pdst, FindFileData.cFileName);
+		else	 lstrcpy(pdst, szSrc);
+		*psrc = ssto;
+		szSrc = psrc;
+		while (*++pdst) ;
+		FindClose(hHandle);
 	}
-	return !bOK;
+	if (alloc) {
+		FREE(*szTgt);
+		*szTgt = (LPTSTR)HeapAlloc(globalHeap, 0, (pdst-dst+9) * sizeof(TCHAR));
+	}
+	lstrcpy(*szTgt, dst);
+	return bOK;
 }
-
-void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut)
-{
-	WIN32_FIND_DATA FileData;
-	HANDLE hSearch;
-	TCHAR szTmp[MAXFN+6] = _T("\\\\?\\");
-	LPTSTR szTmpFn = szTmp+4;
-	LPTSTR szTmpDir;
-
-	if (!szBuffer) return;
-	lstrcpy(szTmpFn, szBuffer);
-	FixShortFilename(szBuffer, szTmpFn);
-	szBuffer = szTmpFn;
-	if (szOut) SSTRCPY(*szOut, szBuffer);
-	if (SCNUL(szDir)[0] != _T('\0'))
-		SetCurrentDirectory(szDir);
-
-	hSearch = FindFirstFile(szTmp, &FileData);
-	FREE(szCaptionFile);
-	if (hSearch != INVALID_HANDLE_VALUE) {
-		LPCTSTR pdest;
-		szTmpDir = (LPTSTR)HeapAlloc(globalHeap, 0, (MAX(lstrlen(szBuffer)+2, lstrlen(SCNUL(szDir))+1)) * sizeof(TCHAR));
-		lstrcpy(szTmpDir, SCNUL(szDir));
-		pdest = _tcsrchr(szBuffer, _T('\\'));
-		if (pdest) {
-			int result;
-			result = pdest - szBuffer + 1;
-			lstrcpyn(szTmpDir, szBuffer, result);
+BOOL GetReadableFilename(LPCTSTR lfn, LPTSTR* dst){
+	BOOL alloc = FALSE, unc = FALSE;
+	if (!lfn || !dst) return FALSE;
+	if (lfn != *dst) alloc = TRUE;
+	if (lfn[0] && lfn[1] && lfn[2] == _T('?')) {
+		lfn += 4;
+		if (lfn[0] == _T('U') && lfn[1] == _T('N')) {
+			unc = TRUE;
+			lfn += 2;
 		}
-		if (szTmpDir[lstrlen(szTmpDir) - 1] != _T('\\'))
-			lstrcat(szTmpDir, _T("\\"));
-		szCaptionFile = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(szTmpDir)+lstrlen(FileData.cFileName)+40) * sizeof(TCHAR));
-		szCaptionFile[0] = szCaptionFile[8] = _T('\0');
-		if (!options.bNoCaptionDir)
-			lstrcat(szCaptionFile+8, szTmpDir);
-		lstrcat(szCaptionFile+8, FileData.cFileName);
-		FindClose(hSearch);
-		if (szDir) HeapFree(globalHeap, 0, (HGLOBAL)szDir);
-		szDir = szTmpDir;
-	} else {
-		int i = (lstrlen(SCNUL(szDir))+lstrlen(SCNUL(szFile))+1) * sizeof(TCHAR);
-		szCaptionFile = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(SCNUL(szDir))+lstrlen(SCNUL(szFile))+40) * sizeof(TCHAR));
-		szCaptionFile[0] = szCaptionFile[8] = _T('\0');
-		if (!options.bNoCaptionDir)
-			lstrcat(szCaptionFile+8, SCNUL(szDir));
-		lstrcat(szCaptionFile+8, SCNUL(szFile));
 	}
+	if (alloc)
+		SSTRCPY(*dst, lfn);
+	else
+		*dst = (LPTSTR)lfn;
+	if (unc) *dst = _T('\\');
+	return TRUE;
 }
-
 
 
 
@@ -397,7 +361,7 @@ DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BO
 #endif
 	else if (!estBytes) estBytes = lstrlen(szBuffer);
 	chars = estBytes;
-/*	if (encoding == TYPE_UTF_16 || encoding == TYPE_UTF_16_BE) {
+/*TODO	if (encoding == TYPE_UTF_16 || encoding == TYPE_UTF_16_BE) {
 		mul = 2;
 		bom = SIZEOFBOM_UTF_16;
 	} else if (encoding == TYPE_UTF_8) {

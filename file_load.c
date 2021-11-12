@@ -50,10 +50,8 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* format) {
 	if (!ppBuffer || !format) return -1;
 	buflen = GetFileSize(hFile, NULL);
 	if (!options.bNoWarningPrompt && buflen > LARGEFILESIZEWARN && MessageBox(hwnd, GetString(IDS_LARGE_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDCANCEL) {
-		bQuitApp = TRUE;
 		return -1;
 	}
-	FREE(*ppBuffer);
 	*ppBuffer = (LPBYTE)HeapAlloc(globalHeap, 0, buflen+2);
 	if (*ppBuffer == NULL) {
 		ReportLastError();
@@ -87,50 +85,53 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* format) {
 
 BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 	HANDLE hFile = NULL;
-	LPTSTR szBuffer = NULL;
+	LPTSTR szBuffer, lfn = NULL, dfn = NULL, rfn = NULL;
 	TCHAR cPad = _T(' '), buffer[MAXFN + 40];
-	DWORD lChars, nCR, nLF, nStrays, nSub;
+	DWORD lChars, nCR, nLF, nStrays, nSub, cfmt = nFormat;
 	BOOL b;
 	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
-	TCHAR szUncFn[MAXFN+6] = _T("\\\\?\\");
 
 	bLoading = TRUE;
 	lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
 	UpdateStatus(TRUE);
-	lstrcpy(szUncFn+4, szFilename);
 	*szStatusMessage = 0;
-	for (nCR = 0; nCR < 2; ++nCR) {
-		hFile = (HANDLE)CreateFile(szUncFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	FixShortFilename(szFilename, &lfn);
+	GetReadableFilename(lfn, &rfn);
+	SSTRCPY(dfn, lfn);
+	szBuffer = lstrrchr(dfn, _T('\\'));
+	if (szBuffer) *szBuffer = _T('\0');
+	
+	while (1) {
+		hFile = (HANDLE)CreateFile(lfn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hFile == INVALID_HANDLE_VALUE) {
 			DWORD dwError = GetLastError();
 			if (dwError == ERROR_FILE_NOT_FOUND && bCreate) {
-				if (nCR == 0) {
-					if (lstrchr(szFilename, _T('.')) == NULL) {
-						lstrcat(szFilename, _T(".txt"));
-						continue;
-					}
+				if (nCR == 0 && lstrchr(lfn, _T('.')) == NULL) {
+					lstrcat(lfn, _T(".txt"));
+					continue;
 				}
-				wsprintf(buffer, GetString(IDS_CREATE_FILE_MESSAGE), szFilename);
+				wsprintf(buffer, GetString(IDS_CREATE_FILE_MESSAGE), rfn);
 				switch (MessageBox(hwnd, buffer, STR_METAPAD, MB_YESNOCANCEL | MB_ICONEXCLAMATION)) {
 				case IDYES:
-					hFile = (HANDLE)CreateFile(szUncFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+					hFile = (HANDLE)CreateFile(lfn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 					if (hFile == INVALID_HANDLE_VALUE) {
 						ERROROUT(GetString(IDS_FILE_CREATE_ERROR));
 						UpdateStatus(TRUE);
 						bLoading = FALSE;
 						SetCursor(hcur);
-						return;
+						FREE(lfn); FREE(dfn); FREE(rfn);
+						return FALSE;
 					}
 					break;
 				case IDNO:
 					MakeNewFile();
 					SetCursor(hcur);
-					return;
+					FREE(lfn); FREE(dfn); FREE(rfn);
+					return TRUE;
 				case IDCANCEL:
-					if (bLoading)
-						PostQuitMessage(0);
 					SetCursor(hcur);
-					return;
+					FREE(lfn); FREE(dfn); FREE(rfn);
+					return FALSE;
 				}
 				break;
 			} else {
@@ -145,7 +146,8 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 				UpdateStatus(TRUE);
 				bLoading = FALSE;
 				SetCursor(hcur);
-				return;
+				FREE(lfn); FREE(dfn); FREE(rfn);
+				return FALSE;
 			}
 		} else {
 			SwitchReadOnly(GetFileAttributes(szUncFn) & FILE_ATTRIBUTE_READONLY);
@@ -153,69 +155,83 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 		}
 	}
 
-	if (bMRU)
-		SaveMRUInfo(szFilename);
-
-	if ((LONG)(lChars = LoadFileIntoBuffer(hFile, (LPBYTE*)&szBuffer, &nFormat)) < 0) {
+	if ((LONG)(lChars = LoadFileIntoBuffer(hFile, (LPBYTE*)&szBuffer, &cfmt)) < 0) {
 		bDirtyStatus = TRUE;
 		CloseHandle(hFile);
 		bLoading = FALSE;
 		SetCursor(hcur);
-		return;
+		FREE(lfn); FREE(dfn); FREE(rfn);
+		return FALSE;
 	}
 	CloseHandle(hFile);
 
 	if (lChars) {
-		nFormat &= 0xf000ffff;
-		nFormat |= (GetLineFmt(szBuffer, lChars, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
+		cfmt &= 0xf000ffff;
+		cfmt |= (GetLineFmt(szBuffer, lChars, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
 		if (b) {
-			nFormat = ID_ENC_BIN | ((nFormat >> 16) & 0xfff);
+			cfmt = ID_ENC_BIN | ((cfmt >> 16) & 0xfff);
 			SetWindowText(client, szBuffer);
 #ifdef UNICODE
 			if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING_SAFE), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
 #else
 			if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
 #endif
-				bQuitApp = TRUE;
 				SetCursor(hcur);
-				return;
+				FREE(lfn); FREE(dfn); FREE(rfn);
+				return FALSE;
 			}
 			ImportBinary(szBuffer, lChars);
-		} else if (((nFormat >> 16) & 0xfff) == ID_LFMT_MIXED && !options.bNoWarningPrompt)
+		} else if (((cfmt >> 16) & 0xfff) == ID_LFMT_MIXED && !options.bNoWarningPrompt)
 			ERROROUT(GetString(IDS_LFMT_MIXED));
 		b = TRUE;
-		ImportLineFmt(&szBuffer, &lChars, (WORD)((nFormat >> 16) & 0xfff), nCR, nLF, nStrays, nSub, &b);
+		ImportLineFmt(&szBuffer, &lChars, (WORD)((cfmt >> 16) & 0xfff), nCR, nLF, nStrays, nSub, &b);
 	}
-	if (lChars) {
-		SetWindowText(client, szBuffer);
+	if (insert) {
+		if (lChars)
+			SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)(LPTSTR)szBuffer);
+		FREE(lfn); FREE(dfn);
 	} else {
-		SetWindowText(client, _T(""));
-		nFormat = options.nFormat;
-	}
-	SetFileFormat(nFormat, 0);
-	UpdateSavedInfo();
-	SetTabStops();
-	SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
+		if (lChars) {
+			SetWindowText(client, szBuffer);
+			nFormat = cfmt;
+		} else {
+			SetWindowText(client, _T(""));
+			nFormat = options.nFormat;
+		}
+		SetFileFormat(nFormat, 0);
+		UpdateSavedInfo();
+		SetTabStops();
+		SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
+		FREE(szDir);
+		FREE(szFile);
+		FREE(szCaptionFile);
+		szDir = dfn;
+		szFile = lfn;
+		if (szBuffer[0] == _T('.') &&
+			szBuffer[1] == _T('L') &&
+			szBuffer[2] == _T('O') &&
+			szBuffer[3] == _T('G')) {
+			CHARRANGE cr;
+			cr.cpMin = cr.cpMax = lChars;
 
-	if (szBuffer[0] == _T('.') &&
-		szBuffer[1] == _T('L') &&
-		szBuffer[2] == _T('O') &&
-		szBuffer[3] == _T('G')) {
-		CHARRANGE cr;
-		cr.cpMin = cr.cpMax = lChars;
-
-#ifdef USE_RICH_EDIT
-		SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-#else
-		SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-#endif
-		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DATE_TIME_CUSTOM, 0), 0);
-		SendMessage(client, EM_SCROLLCARET, 0, 0);
+	#ifdef USE_RICH_EDIT
+			SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
+	#else
+			SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
+	#endif
+			SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DATE_TIME_CUSTOM, 0), 0);
+			SendMessage(client, EM_SCROLLCARET, 0, 0);
+		}
 	}
+	if (bMRU)
+		SaveMRUInfo(rfn);
+	FREE(rfn);
 	FREE(szBuffer);
 	UpdateStatus(TRUE);
 	InvalidateRect(client, NULL, TRUE);
 	SetCursor(hcur);
+	bLoading = FALSE;
+	return TRUE;
 }
 
 
@@ -225,11 +241,9 @@ BOOL LoadFileFromMenu(WORD wMenu, BOOL bMRU) {
 	HMENU hsub = NULL;
 	MENUITEMINFO mio;
 	TCHAR szBuffer[MAXFN] = _T("\n");
-	LPTSTR sztFile = NULL;
 
 	if (!SaveIfDirty())
 		return;
-
 	if (bMRU) {
 		if (options.bRecentOnOwn) 	hsub = GetSubMenu(hmenu, 1);
 		else 						hsub = GetSubMenu(GetSubMenu(hmenu, 0), MPOS_FILE_RECENT);
@@ -244,18 +258,41 @@ BOOL LoadFileFromMenu(WORD wMenu, BOOL bMRU) {
 	mio.cch = MAXFN;
 	mio.dwTypeData = szBuffer;
 	GetMenuItemInfo(hsub, wMenu, FALSE, &mio);
-
-	FREE(szFile);
-	SSTRCPY(sztFile, (szBuffer+3));
-	if (sztFile[0]) {
+	szBuffer+=3;
+	if (*szBuffer) {
 		if (!bMRU) {
-			GetPrivateProfileString(STR_FAV_APPNAME, sztFile, _T(""), szBuffer, MAXFN, SCNUL(szFav));
-			if (!szBuffer[0]) {
+			GetPrivateProfileString(STR_FAV_APPNAME, szBuffer, _T(""), szBuffer, MAXFN, SCNUL(szFav));
+			if (!*szBuffer) {
 				ERROROUT(GetString(IDS_ERROR_FAVOURITES));
-				MakeNewFile();
+				//MakeNewFile();
 				return;
 			}
 		}
-		return LoadFile(sztFile, FALSE, TRUE, TRUE);
+		return LoadFile(szBuffer, FALSE, TRUE, FALSE);
 	}
+}
+
+BOOL BrowseFile(LPCTSTR defExt, LPCTSTR defDir, LPCTSTR filter, BOOL load, BOOL bMRU, BOOL insert, LPTSTR* fileName){
+	OPENFILENAME ofn;
+	TCHAR fn[MAXFN] = _T("");
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = hwnd;
+	ofn.lpstrFilter = filter;
+	ofn.lpstrCustomFilter = (LPTSTR)NULL;
+	ofn.nMaxCustFilter = 0L;
+	ofn.nFilterIndex = 1L;
+	ofn.lpstrFile = fn;
+	ofn.nMaxFile = MAXFN;
+	ofn.lpstrFileTitle = (LPTSTR)NULL;
+	ofn.nMaxFileTitle = 0L;
+	ofn.lpstrInitialDir = defDir;
+	ofn.lpstrTitle = (LPTSTR)NULL;
+	ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+	ofn.nFileOffset = 0;
+	ofn.nFileExtension = 0;
+	ofn.lpstrDefExt = defExt;
+	if (!GetOpenFileName(&ofn)) return FALSE;
+	if (fileName && *fileName) SSTRCPY(*fileName, fn);
+	if (load) return LoadFile(fn, FALSE, bMRU, insert);
+	return TRUE;
 }

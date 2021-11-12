@@ -43,38 +43,23 @@
 
 
 /**
- * Replace '|' with '\0', and adds a '\0' at the end.
- *
- * @param[in] szIn String to fix.
- */
-void FixFilterString(LPTSTR szIn) {
-	for ( ; *szIn; szIn++) {
-		if (*szIn == _T('|'))
-			*szIn = _T('\0');
-	}
-	*szIn = _T('\0');
-}
-
-/**
  * Save a file.
  *
  * @param[in] szFilename A string containing the target file's name.
  * @return TRUE if successful, FALSE otherwise.
  */
-BOOL SaveFile(LPCTSTR szFilename) {
+BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
 	HANDLE hFile;
 	DWORD written = 0, nChars, nBytes;
 	LPTSTR szBuffer, szEncd = NULL;
 	LPBYTE bom;
 	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 	UINT nonansi = 0, cp = CP_ACP;
-	TCHAR szUncFn[MAXFN+6] = _T("\\\\?\\");
 	BOOL bufDirty = FALSE, fail = FALSE;
 	WORD enc = (nFormat >> 31) ? ID_ENC_CUSTOM : (WORD)nFormat;
 	WORD lfmt = (nFormat >> 16) & 0xfff;
 	DWORD lines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
 
-	lstrcpy(szUncFn+4, szFilename);
 	szBuffer = (LPTSTR)GetShadowBuffer(&nChars);
 	nBytes = nChars;
 	if (nChars) {
@@ -103,7 +88,7 @@ BOOL SaveFile(LPCTSTR szFilename) {
 		}
 	}
 	if (!fail) {
-		hFile = (HANDLE)CreateFile(szUncFn, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		hFile = (HANDLE)CreateFile(szFilename, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hFile == INVALID_HANDLE_VALUE) {
 			SetCursor(hcur);
 			ReportLastError();
@@ -125,7 +110,19 @@ BOOL SaveFile(LPCTSTR szFilename) {
 		}
 	}
 	if (bufDirty) FREE(szBuffer);
-	if (!fail) UpdateSavedInfo();
+	if (!fail){
+		if (szFile != szFilename){
+			SSTRCPY(szFile, szFilename);
+			SSTRCPY(szDir, szFilename);
+			szBuffer = lstrrchr(szDir, _T('\\'));
+			if (szBuffer) *szBuffer = _T('\0');
+		}
+		FREE(szCaptionFile);
+		if (bMRU) SaveMRUInfo(szFile);
+		SwitchReadOnly(FALSE);
+		bLoading = FALSE;
+		UpdateSavedInfo();
+	}
 	UpdateStatus(TRUE);
 	SetCursor(hcur);
 	return !fail;
@@ -137,15 +134,13 @@ BOOL SaveFile(LPCTSTR szFilename) {
  *
  * @return TRUE if successfully saved, FALSE if unable to save or cancelled.
  */
-BOOL SaveCurrentFileAs(void)
-{
+BOOL SaveCurrentFileAs(void) {
 	OPENFILENAME ofn;
-	TCHAR szTmp[MAXFN] = _T("");
+	TCHAR fn[MAXFN] = _T("");
 	TCHAR* pch;
 
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = client;
-
 	if (options.bNoAutoSaveExt) {
 		ofn.lpstrFilter = GetString(IDS_DEFAULT_FILTER_TEXT);
 		FixFilterString((LPTSTR)ofn.lpstrFilter);
@@ -154,22 +149,16 @@ BOOL SaveCurrentFileAs(void)
 		ofn.lpstrFilter = SCNUL(szCustomFilter);
 		ofn.lpstrDefExt = _T("txt");
 	}
-
 	ofn.lpstrCustomFilter = (LPTSTR)NULL;
 	ofn.nMaxCustFilter = 0L;
 	ofn.nFilterIndex = 1L;
-
 	if (szFile){
-		pch = _tcsrchr(szFile, _T('\\'));
-		if (pch == NULL)
-			lstrcpy(szTmp, szFile);
-		else
-			lstrcpy(szTmp, pch+1);
+		pch = lstrrchr(szFile, _T('\\'));
+		if (pch == NULL) 	lstrcpy(fn, szFile);
+		else 				lstrcpy(fn, pch+1);
 	}
-
-	ofn.lpstrFile = szTmp;
+	ofn.lpstrFile = fn;
 	ofn.nMaxFile = MAXFN;
-
 	ofn.lpstrFileTitle = (LPTSTR)NULL;
 	ofn.nMaxFileTitle = 0L;
 	ofn.lpstrInitialDir = SCNUL(szDir);
@@ -177,21 +166,9 @@ BOOL SaveCurrentFileAs(void)
 	ofn.Flags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
 	ofn.nFileOffset = 0;
 	ofn.nFileExtension = 0;
-
-	if (GetSaveFileName(&ofn)) {
-		SSTRCPY(szFile, szTmp);
-		if (!SaveFile(szFile))
-			return FALSE;
-		SaveMRUInfo(szFile);
-
-		SwitchReadOnly(FALSE);
-		bLoading = FALSE;
-		bDirtyFile = FALSE;
-		UpdateStatus(TRUE);
-		return TRUE;
-	}
-	else
-		return FALSE;
+	if (!GetSaveFileName(&ofn)) return FALSE;
+	FixShortFilename(fn, &fn);
+	return SaveFile(fn, TRUE);
 }
 
 /**
@@ -199,13 +176,10 @@ BOOL SaveCurrentFileAs(void)
  *
  * @return TRUE if successful, FALSE otherwise.
  */
-BOOL SaveCurrentFile(void)
-{
-	SetCurrentDirectory(SCNUL(szDir));
-
+BOOL SaveCurrentFile(void) {
+	//SetCurrentDirectory(SCNUL(szDir));
 	if (SCNUL(szFile)[0]) {
 		DWORD dwResult = GetFileAttributes(szFile);
-
 		if (dwResult != 0xffffffff && bReadOnly != (BOOL)(dwResult & FILE_ATTRIBUTE_READONLY)) {
 			bReadOnly = dwResult & FILE_ATTRIBUTE_READONLY;
 			UpdateCaption();
@@ -216,15 +190,8 @@ BOOL SaveCurrentFile(void)
 			}
 			return FALSE;
 		}
-
-		if (!SaveFile(szFile))
-			return FALSE;
-		ExpandFilename(szFile, &szFile);
-		bDirtyFile = FALSE;
-		UpdateCaption();
-		return TRUE;
-	}
-	else
+		return SaveFile(szFile, FALSE);
+	} else
 		return SaveCurrentFileAs();
 }
 
@@ -236,10 +203,9 @@ BOOL SaveCurrentFile(void)
  * and the save is successful or unwanted, TRUE.
  * If the save is unsuccessful or the user chooses CANCEL, return FALSE.
  */
-BOOL SaveIfDirty(void)
-{
+BOOL SaveIfDirty(void) {
+	TCHAR szBuffer[MAXFN+MAXSTRING];
 	if (bDirtyFile) {
-		TCHAR szBuffer[MAXFN+MAXSTRING];
 		if (!SCNUL(szFile)[0]) {
 			if (!GetWindowTextLength(client))
 				return TRUE;
