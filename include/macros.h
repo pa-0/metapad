@@ -43,7 +43,7 @@
 #define SSTRCPYO(tgt, src, ofs) SSTRCPYAO(tgt, src, 1, ofs)
 #define SSTRCPYAO(tgt, src, add, ofs) {\
 	if (tgt) HeapFree(globalHeap, 0, (HGLOBAL)tgt);\
-	if (src && src[0]) {\
+	if (src && *src) {\
 		tgt = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(src)+add+ofs) * sizeof(TCHAR));\
 		lstrcpy(tgt+ofs, src);\
 	} else tgt = NULL; }

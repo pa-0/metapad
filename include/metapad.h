@@ -36,6 +36,13 @@
 extern long _ttol(const TCHAR*);
 extern int _ttoi(const TCHAR*);
 #endif
+#ifdef UNICODE
+#define lstrchr wcschr
+#define lstrrchr wcsrchr
+#else
+#define lstrchr strchr
+#define lstrrchr strrchr
+#endif
 
 #include "consts.h"
 
