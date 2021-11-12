@@ -46,10 +46,10 @@
 
 #define STR_METAPAD _T("metapad")
 #define STR_FAV_FILE _T("metafav.ini")
-#define STR_CAPTION_FILE _T("%s - metapad")
+#define STR_CAPTION_FILE _T(" - metapad ")
 #define STR_URL _T("http://liquidninja.com/metapad")
 #define STR_REGKEY _T("SOFTWARE\\metapad")
 #define STR_FAV_APPNAME _T("Favourites")
-#define STR_COPYRIGHT _T("© 1999-2011 Alexander Davidson")
+#define STR_COPYRIGHT _T("ï¿½ 1999-2011 Alexander Davidson")
 
 #endif

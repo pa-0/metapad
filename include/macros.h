@@ -37,14 +37,17 @@
 	/*if (x) printf("FREE %08X : %.32ls\n", x, x);*/\
 	if (x) HeapFree(globalHeap, 0, (HGLOBAL)x);\
 	x = NULL; }
-#define SSTRCPY(tgt, src) SSTRCPYA(tgt, src, 1)
-#define SSTRCPYA(tgt, src, add) {\
+#define SSTRCPY(tgt, src) SSTRCPYAO(tgt, src, 1, 0)
+#define SSTRCPYA(tgt, src, add) SSTRCPYAO(tgt, src, add, 0)
+#define SSTRCPYO(tgt, src, ofs) SSTRCPYAO(tgt, src, 1, ofs)
+#define SSTRCPYAO(tgt, src, add, ofs) {\
 	if (tgt) HeapFree(globalHeap, 0, (HGLOBAL)tgt);\
 	if (src && src[0]) {\
-		tgt = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(src)+1) * sizeof(TCHAR));\
-		lstrcpy(tgt, src);\
+		tgt = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(src)+add+ofs) * sizeof(TCHAR));\
+		lstrcpy(tgt+ofs, src);\
 	} else tgt = NULL; }
 #define SCNUL(x)		SCNULD(x, _T(""))
+#define SCNUL8(x)		SCNULD(x, _T("        "))
 #define SCNULD(x, def)	(x ? x : def)
 /*#define ALLOCF(x, t, f, sz) {\
 	x = (t)HeapAlloc(globalHeap, f, sz);\
