@@ -194,6 +194,9 @@
       </StackReserveSize>
       <StackCommitSize>
       </StackCommitSize>
+      <Profile>false</Profile>
+      <OptimizeReferences>
+      </OptimizeReferences>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>NO_RICH_EDIT;BUILD_ICON_SMALL;_UNICODE;UNICODE;BUILD_METAPAD_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>

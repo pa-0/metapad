@@ -2243,29 +2243,39 @@ BOOL CALLBACK AddFavDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 }
 
 BOOL CALLBACK CPDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	DWORD i;
-	WORD u;
-	TCHAR buf[48];
+	LONG i;
+	TCHAR buf[64], buf2[128];
 	switch (uMsg) {
-		case WM_INITDIALOG: {
+		case WM_INITDIALOG:
 			CenterWindow(hwndDlg);
-
-
 			for (i=0; i < NUMKNOWNCPS; i++) {
-				PrintCPName(i+100, buf, _T("%d"));
+				PrintCPName((WORD)i+100, buf, _T("%d"));
 				SendDlgItemMessage(hwndDlg, IDC_DATA, CB_ADDSTRING, 0, (LPARAM)buf);
 			}
 			return TRUE;
-		}
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
 				case IDOK:
-					
-				
+					GetDlgItemText(hwndDlg, IDC_DATA, buf, 16);
+					i = _ttol(buf);
+					if ((!i && (*buf < _T('0') || *buf > _T('9'))) || i < 0 || i > 0xffff || !MultiByteToWideChar(i, 0, (LPCSTR)_T(""), 1, NULL, 0)) {
+						ERROROUT(GetString(IDS_ENC_BAD));
+						SetFocus(hwndDlg);
+						break;
+					}
+					if (newFormat) {
+						newFormat = (1<<31) | (newFormat & 0xfff0000) | (WORD)i;
+						PrintCPName((WORD)i, buf, GetString(IDS_ENC_CUSTOM_CAPTION));
+						wsprintf(buf2, GetString(IDS_SETDEF_FORMAT_WARN), buf);
+						MSGOUT(buf2);
+					} else SetFileFormat((WORD)i | (1<<31), 1);
 				case IDCANCEL:
 					EndDialog(hwndDlg, wParam);
 			}
 			return TRUE;
+		case WM_DESTROY:
+			if (!newFormat) SetFocus(client);
+			return FALSE;
 		default:
 			return FALSE;
 	}
@@ -2358,6 +2368,9 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			return TRUE;
 		}
 		return FALSE;
+	case WM_DESTROY:
+		newFormat = 0;
+		return FALSE;
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDC_STICKY_WINDOW:
@@ -2433,8 +2446,8 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			if (enc == ID_ENC_CUSTOM){
 				PrintCPName(cp, szInt, GetString(IDS_ENC_CUSTOM_CAPTION));
 				mio.fType = MFT_STRING;
-				mio.wID = ID_ENC_CUSTOM-1;
 				mio.dwTypeData = szInt;
+				mio.wID = enc = ID_ENC_CUSTOM-1;
 				InsertMenuItem(hsub, v, TRUE, &mio);
 			}
 			CheckMenuRadioItem(hsub, enc/10*10, (enc/10+1)*10, enc, MF_BYCOMMAND);

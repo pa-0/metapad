@@ -42,7 +42,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	HMENU hMenu = GetSubMenu(GetSubMenu(GetMenu(hwnd), 0), MPOS_FILE_FORMAT);
 	MENUITEMINFO mio;
 	LPTSTR buf = NULL;
-	TCHAR mbuf[64];
+	TCHAR mbuf[64], mbuf2[128];
 	WORD enc, lfmt, cp, nenc, nlfmt, ncp;
 	DWORD len, lines, nCR, nLF, nStrays, nSub;
 	BOOL bufDirty = FALSE, b;
@@ -56,14 +56,16 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	nenc = ncp = (WORD)format;
 	lfmt = (nFormat >> 16) & 0xfff;
 	nlfmt = (format >> 16) & 0xfff;
-	if (format >> 31) enc = ID_ENC_CUSTOM;
-	if (nFormat >> 31) nenc = ID_ENC_CUSTOM;
-	if ((enc == ID_ENC_CUSTOM || nenc == ID_ENC_CUSTOM) && cp != ncp && reinterp)
-		buf = (LPTSTR)GetShadowBuffer(&len);
-	else
-		reinterp = 0;
+	if (nFormat >> 31) enc = ID_ENC_CUSTOM;
+	if (format >> 31) nenc = ID_ENC_CUSTOM;
+	if (!((enc == ID_ENC_CUSTOM || nenc == ID_ENC_CUSTOM) && cp != ncp && reinterp)) reinterp = 0;
 	if (reinterp == 1) {
-		switch (MessageBox(hwnd, GetString(IDS_ENC_REINTERPRET), STR_METAPAD, MB_YESNOCANCEL | MB_ICONQUESTION)) {
+		if (nenc == ID_ENC_CUSTOM)
+			PrintCPName(ncp, mbuf, GetString(IDS_ENC_CUSTOM_CAPTION));
+		else
+			lstrcpy(mbuf, GetString(nenc));
+		wsprintf(mbuf2, GetString(IDS_ENC_REINTERPRET), mbuf);
+		switch (MessageBox(hwnd, mbuf2, STR_METAPAD, MB_YESNOCANCEL | MB_ICONQUESTION)) {
 			case IDCANCEL:
 				return;
 			case IDNO:
@@ -72,6 +74,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	}
 	hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 	if (reinterp) {
+		buf = (LPTSTR)GetShadowBuffer(&len);
 		lines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
 		ExportLineFmt(&buf, &len, lfmt, lines, &bufDirty);
 		if (enc == ID_ENC_BIN)
@@ -103,9 +106,8 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 		mio.fMask = MIIM_TYPE | MIIM_ID;
 		mio.fType = MFT_STRING;
 		mio.dwTypeData = mbuf;
-		mio.wID = ID_ENC_CUSTOM-1;
+		mio.wID = nenc = ID_ENC_CUSTOM-1;
 		InsertMenuItem(hMenu, GetMenuItemCount(hMenu), TRUE, &mio);
-		nenc = ID_ENC_CUSTOM-1;
 	}
 	CheckMenuRadioItem(hMenu, nenc/10*10, (nenc/10+1)*10, nenc, MF_BYCOMMAND);
 	CheckMenuRadioItem(hMenu, nlfmt/10*10, (nlfmt/10+1)*10, nlfmt, MF_BYCOMMAND);

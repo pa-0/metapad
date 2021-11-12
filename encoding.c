@@ -290,10 +290,11 @@ LPSTR GetCPName(WORD cp){
 	if (idx >= NUMKNOWNCPS) return NULL;
 	for (i = ofspop; i < idx; i++)
 		ofs[i+1] = ofs[i] + strlen(knownCPT+ofs[i])+1;
+	ofspop = idx;
 	return knownCPT+ofs[idx];
 }
 void PrintCPName(WORD cp, LPTSTR buf, LPCTSTR format) {
-	TCHAR t[48];
+	TCHAR t[40];
 	LPSTR asz = GetCPName(cp);
 	if (cp >= 100 && cp < 300) cp = knownCPN[cp-100];
 	if (asz) {
