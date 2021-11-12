@@ -96,10 +96,10 @@ END
 
 IDD_FAV_NAME DIALOG DISCARDABLE  0, 0, 228, 46
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Add Favourite"
+CAPTION "Add Favorite"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "&Favourite name:",IDC_NAME,7,8,114,8
+    LTEXT           "&Favorite name:",IDC_NAME,7,8,114,8
     EDITTEXT        IDC_DATA,7,21,156,12,ES_AUTOHSCROLL
     DEFPUSHBUTTON   "OK",IDOK,171,7,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,171,24,50,14
@@ -284,7 +284,7 @@ BEGIN
                     WS_TABSTOP,16,143,176,9
 END
 
-#ifdef(USE_RICH_EDIT)
+#ifdef USE_RICH_EDIT
 #if defined(APSTUDIO_INVOKED)
 IDD_PROPPAGE_A1$(USE_RICH_EDIT) DIALOGEX 0, 0, 225, 167
 #else
@@ -302,7 +302,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,32,107,8
     CONTROL         "&Context menu moves cursor",IDC_CONTEXT_CURSOR,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,45,107,8
-    CONTROL         "Disa&ble favourites menu",IDC_NO_FAVES,"Button",
+    CONTROL         "Disa&ble favorites menu",IDC_NO_FAVES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,58,107,8
     CONTROL         "H&yperlinks require doubleclick",IDC_LINK_DC,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,71,107,8
@@ -356,7 +356,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,32,107,8
     CONTROL         "&Context menu moves cursor",IDC_CONTEXT_CURSOR,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,45,107,8
-    CONTROL         "Disa&ble favourites menu",IDC_NO_FAVES,"Button",
+    CONTROL         "Disa&ble favorites menu",IDC_NO_FAVES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,58,107,8
     CONTROL         "&Launch viewer for large files",IDC_ALWAYS_LAUNCH,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,71,107,8
@@ -817,9 +817,9 @@ BEGIN
     END
     POPUP "F&avourites"
     BEGIN
-        MENUITEM "&Add to Favourites...",       ID_FAV_ADD
-        MENUITEM "&Edit Favourites",            ID_FAV_EDIT
-        MENUITEM "&Reload Favourites",          ID_FAV_RELOAD
+        MENUITEM "&Add to Favorites...",       ID_FAV_ADD
+        MENUITEM "&Edit Favorites",            ID_FAV_EDIT
+        MENUITEM "&Reload Favorites",          ID_FAV_RELOAD
         MENUITEM SEPARATOR
     END
     POPUP "&Options"
@@ -1066,7 +1066,7 @@ BEGIN
     IDS_LAUNCH_WARNING      "Warning - you have chosen not to save AND to close metapad on external launch.\n\nThis could cause you to lose data!"
     IDS_READONLY_INDICATOR  "(read only)"
     IDS_READONLY_MENU       "R&ead Only\tCtrl+E"
-    IDS_ERROR_FAVOURITES    "Error in favourites file. It may have been modified and is not synchronized."
+    IDS_ERROR_FAVOURITES    "Error in favorites file. It may have been modified and is not synchronized."
 END
 
 STRINGTABLE DISCARDABLE
@@ -1084,15 +1084,15 @@ BEGIN
     IDS_NO_DEFAULT_VIEWER   "No viewer associated with this file type."
     IDS_REGISTRY_WINDOW_ERROR
                             "Missing window placement registry values - using default settings."
-#ifdef USE_RICH_EDIT
+/*#ifdef USE_RICH_EDIT
     IDS_CARRIAGE_RETURN_WARNING
                             "Some number of solitary carriage returns were detected and removed."
-#endif
+#endif*/
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_MAC_FILE_WARNING    "Lines ending in solitary carriage returns detected. (Possibly a Macintosh text file.) Converting to UNIX format."
+//    IDS_MAC_FILE_WARNING    "Lines ending in solitary carriage returns detected. (Possibly a Macintosh text file.) Converting to UNIX format."
     IDS_CREATE_FILE_MESSAGE """%s"" not found. Create it?"
     IDS_FILE_CREATE_ERROR   "File creation error."
     IDS_FILE_NOT_FOUND      "File not found."
@@ -1179,7 +1179,7 @@ BEGIN
 #ifdef USE_RICH_EDIT
     IDS_RESTART_HIDE_SB     "The change in ""Hide scrollbars when possible"" will be reflected upon restarting the program."
 #endif
-    IDS_RESTART_FAVES       "The change in ""Disable Favourites"" will be reflected upon restarting the program."
+    IDS_RESTART_FAVES       "The change in ""Disable Favorites"" will be reflected upon restarting the program."
 END
 
 STRINGTABLE DISCARDABLE
@@ -1193,9 +1193,9 @@ BEGIN
                             "Your language plugin is for metapad %s, but you are running metapad %s.\n\nSome menu or dialog features may be missing or not work correctly.\n\nRun metapad /v to skip this message."
     IDS_ALLRIGHTS           "All Rights Reserved"
 //	IDS_METAPAD				"metapad"
-	"OK"					"OK"
-	"Cancel"				"Cancel"
-	"Close"				"Close"
+	IDS_OK					"OK"
+//	IDS_CANCEL				"Cancel"
+//	IDS_CLOSE				"Close"
     IDS_DEFAULT_FILTER_TEXT "Text (*.*)|*.*"
     IDS_NEW_FILE            "new file"
     IDS_MACRO_LENGTH_ERROR  "Selection is larger than maximum quick buffer length."
@@ -1234,7 +1234,7 @@ BEGIN
 	ID_LFMT_DOS				"DOS"
 	ID_LFMT_UNIX			"Unix"
 	ID_LFMT_MAC				"Mac"
-	ID_LFMT_MIXED			"MIXED"
+	ID_LFMT_MIXED			"RAW"
 	ID_ENC_ANSI				"ANSI"
 	ID_ENC_UTF8				"UTF-8"
 	ID_ENC_UTF16			"Unicode"

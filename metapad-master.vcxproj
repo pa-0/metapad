@@ -152,7 +152,6 @@
       <PreprocessorDefinitions>USE_RICH_EDIT;BUILD_METAPAD_UNICODE;_DEBUG;WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
-      <AdditionalOptions>/QIfist %(AdditionalOptions)</AdditionalOptions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderFile>
@@ -180,7 +179,6 @@
       <PreprocessorDefinitions>NO_RICH_EDIT;BUILD_METAPAD_UNICODE;_DEBUG;WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
-      <AdditionalOptions>/QIfist %(AdditionalOptions)</AdditionalOptions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderFile>
@@ -211,7 +209,6 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>USE_RICH_EDIT;_DEBUG;WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UndefinePreprocessorDefinitions>UNICODE;_UNICODE;BUILD_METAPAD_UNICODE</UndefinePreprocessorDefinitions>
-      <AdditionalOptions>/QIfist %(AdditionalOptions)</AdditionalOptions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderFile>
@@ -238,7 +235,6 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>NO_RICH_EDIT;_DEBUG;WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UndefinePreprocessorDefinitions>UNICODE;_UNICODE;BUILD_METAPAD_UNICODE</UndefinePreprocessorDefinitions>
-      <AdditionalOptions>/QIfist %(AdditionalOptions)</AdditionalOptions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderFile>
@@ -269,6 +265,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <ExceptionHandling>false</ExceptionHandling>
+      <AdditionalOptions>/QIfist /GF %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -282,6 +279,7 @@
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>USE_RICH_EDIT;BUILD_ICON_SMALL;_UNICODE;UNICODE;BUILD_METAPAD_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/GF %(AdditionalOptions)</AdditionalOptions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_LE|Win32'">
@@ -296,6 +294,7 @@
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <ExceptionHandling>false</ExceptionHandling>
       <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalOptions>/QIfist /GF %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -313,6 +312,7 @@
       <PreprocessorDefinitions>NO_RICH_EDIT;BUILD_ICON_SMALL;_UNICODE;UNICODE;BUILD_METAPAD_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <NullTerminateStrings>
       </NullTerminateStrings>
+      <AdditionalOptions>/GF %(AdditionalOptions)</AdditionalOptions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_ANSI|Win32'">
@@ -327,6 +327,7 @@
       <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <ExceptionHandling>false</ExceptionHandling>
+      <AdditionalOptions>/QIfist /GF %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -340,6 +341,7 @@
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>USE_RICH_EDIT;BUILD_ICON_SMALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/GF %(AdditionalOptions)</AdditionalOptions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_LE_ANSI|Win32'">
@@ -354,6 +356,7 @@
       <UndefinePreprocessorDefinitions>UNICODE;_UNICODE</UndefinePreprocessorDefinitions>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <ExceptionHandling>false</ExceptionHandling>
+      <AdditionalOptions>/QIfist /GF %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -367,6 +370,7 @@
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>NO_RICH_EDIT;BUILD_ICON_SMALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/GF %(AdditionalOptions)</AdditionalOptions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>

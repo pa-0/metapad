@@ -42,7 +42,6 @@
 #include "include/macros.h"
 #include "include/metapad.h"
 #include "include/encoding.h"
-#include "include/settings_load.h"
 
 /**
  * Load a binary option.

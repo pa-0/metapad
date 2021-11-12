@@ -36,8 +36,6 @@
 #include "include/globals.h"
 #include "include/resource.h"
 #include "include/metapad.h"
-#include "include/file_save.h"
-#include "include/external_viewers.h"
 #include "include/strings.h"
 #include "include/macros.h"
 

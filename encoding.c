@@ -32,10 +32,15 @@
 #include <wchar.h>
 #endif
 
+#include "include/resource.h"
 #include "include/strings.h"
 #include "include/macros.h"
 
 extern HWND hwnd;
+extern HANDLE globalHeap;
+
+#define NUMBOMS 3
+static const BYTE bomLut[NUMBOMS][4] = {{0x3,0xEF,0xBB,0xBF}, {0x2,0xFF,0xFE}, {0x2,0xFE,0xFF}};
 
 static const unsigned short decLut[] = {
 	0xfe3f, 0x803f, 0x81ff, 0x817f,  0x80ff, 0x80ff, 0x80ff, 0x80bf,  0x80bf, 0x80bf, 0x80bf, 0x7cbf,  0x80bf, 0x80bf, 0x80bf, 0x7ebf,
@@ -71,7 +76,7 @@ static const unsigned short encLut[] = {
 INT DecodeBase( BYTE base, LPCTSTR code, LPBYTE bin, INT len, BYTE extractMode, BYTE alignMode, BOOL showError, LPCTSTR* end ) {
 	DWORD i, ct;
 	BYTE j, k = 0, v, w, ls = 0, la = 0x3f, vs = 0, mi = 0, mc = 0;
-	unsigned short* lut = decLut - 0x20;
+	unsigned const short* lut = decLut - 0x20;
 	if (base < 2 || base > 64 || (w = ((lut[base+0x20] >> 6) & 7) + 1) < 2) return -3;
 	if (!SCNUL(code)[0]) return 0;
 	if (len < 0) len = 0x7fffffff;
@@ -175,7 +180,7 @@ INT DecodeBase( BYTE base, LPCTSTR code, LPBYTE bin, INT len, BYTE extractMode, 
 INT EncodeBase( BYTE base, LPBYTE bin, LPTSTR code, INT len, LPBYTE* end ) {
 	DWORD i, ct = 0, v;
 	BYTE k, w, vs = 0, ma = base-1;
-	unsigned short *lut = decLut - 0x20, *elut = encLut;
+	unsigned const short *lut = decLut - 0x20, *elut = encLut;
 	if (base < 2 || base > 64 || (w = ((lut[base+0x20] >> 6) & 7) + 1) < 2) return -3;
 	if (!bin) len = 0;
 	if (base <= 32) vs = ((lut[base+0x5f] >> 6) & 7);
@@ -230,3 +235,153 @@ void ReverseBytes(LPBYTE buffer, ULONG len) {
 	}
 }
 
+
+
+
+/**
+ * Check if a buffer starts with a byte order mark.
+ * If it does, the buffer is also advanced past the BOM and the given length value is decremented appropriately.
+ *
+ * @param[in,out] pb Pointer to the starting byte to check.
+ * @param[in,out] pbLen Length of input.
+ * @return One of ID_ENC_* enums if a BOM is found, else ID_ENC_UNKNOWN
+ */
+WORD CheckBOM(LPBYTE *pb, DWORD* pbLen) {
+	DWORD i, j;
+	for (i = 0; i < NUMBOMS; i++){
+		if(pb && pbLen && *pb && *pbLen >= (j = bomLut[i][0]) && !memcmp(*pb, bomLut[i]+1, j)){
+			*pb += j;
+			*pbLen -= j;
+			return ID_ENC_UTF8 + (WORD)i;
+		}
+	}
+	return ID_ENC_UNKNOWN;
+}
+
+BOOL IsTextUTF8(LPBYTE buf){
+	BOOL yes = 0;
+	while (*buf) {
+		if (*buf < 0x80) buf++;
+		else if ((*((PWORD)buf) & 0xc0e0) == 0x80c0){ buf+=2; yes = 1; }
+		else if ((*((PDWORD)buf) & 0xc0c0f0) == 0x8080e0){ buf+=3; yes = 1; }
+		else if ((*((PDWORD)buf) & 0xc0c0c0f8) == 0x808080f0){ buf+=4; yes = 1; }	//valid UTF-8 outside Unicode range - Win32 cannot handle this - show truncation warning!
+		else return 0;
+	}
+	return yes;
+}
+
+WORD GetLineFmt(LPCTSTR sz, DWORD len, DWORD* nCR, DWORD* nLF, DWORD* nStrays, BOOL* binary){
+	DWORD i, crlf = 1, cr = 0, lf = 0;
+	TCHAR cc, cp = _T('\0');
+	if (binary) *binary = FALSE;
+	if (nStrays) *nStrays = 0;
+	for (i = 0; (len && i++ < len) || (!len && *sz); cp = cc) {
+		if ((cc = *sz++) == _T('\r')){
+			cr++;
+			if ((nStrays || crlf) && *sz != _T('\n')) { crlf = 0; (*nStrays)++; }
+		} else if (cc == _T('\n')) {
+			lf++;
+			if ((nStrays || crlf) && cp != _T('\r')) { crlf = 0; (*nStrays)++; }
+		}
+		if (cr && lf && !crlf && !nStrays) return ID_LFMT_MIXED;
+		if (len && binary && cc == '\0') *binary = TRUE;
+	}
+	if (nCR) *nCR = cr;
+	if (nLF) *nLF = lf;
+	if (cr && lf && !crlf) return ID_LFMT_MIXED;
+	else if (crlf) return ID_LFMT_DOS;
+	else if (cr) return ID_LFMT_MAC;
+	else return ID_LFMT_UNIX;
+}
+
+void NormalizeBinary(LPTSTR sz, DWORD len){
+	while (len--){
+		if (*sz == _T('\0'))
+#ifdef UNICODE
+			*sz = _T('\x2400');
+#else
+			*sz = _T(' ');
+#endif
+	}
+}
+void RestoreBinary(LPTSTR sz, DWORD len){
+#ifdef UNICODE
+	if (!len) len = lstrlen(sz);
+	while (len--){
+		if (*sz == _T('\x2400'))
+			*sz = _T('\0');
+	}
+#endif
+}
+
+#ifdef USE_RICH_EDIT
+void NormalizeLineFmt(LPTSTR* sz, DWORD len, WORD lfmt, DWORD nCR, DWORD nLF, DWORD nStrays){
+	LPTSTR odst, dst, osz;
+	if (lfmt != ID_LFMT_MIXED || !sz || !*sz) return;
+	if (!len) len = lstrlen(*sz);
+	osz = *sz;
+	odst = dst = (LPTSTR)HeapAlloc(globalHeap, 0, (len+nLF+1) * sizeof(TCHAR));
+	for ( ; len--; (*sz)++) {
+		if (**sz == _T('\n'))
+			*dst++ = _T(' ');
+		*dst++ = **sz;
+	}
+	*dst = _T('\0');
+	FREE(osz);
+	*sz = odst;
+}
+void RestoreLineFmt(LPTSTR* sz, DWORD len, WORD lfmt, DWORD lines){
+	LPTSTR odst, dst, osz;
+	TCHAR cc, cp = _T('\0');
+	if (lfmt == ID_LFMT_MAC || !sz || !*sz) return;
+	if (!len) len = lstrlen(*sz);
+	dst = osz = *sz;
+	if (lfmt == ID_LFMT_DOS) odst, dst = (LPTSTR)HeapAlloc(globalHeap, 0, (len+lines+1) * sizeof(TCHAR));
+	for ( ; len--; dst++, cp = cc) {
+		cc = *dst = *(*sz)++;
+		if (cc == _T('\r')) {
+			if (lfmt == ID_LFMT_MIXED && cp == _T(' ')) *--dst = _T('\n');
+			else if (lfmt == ID_LFMT_UNIX) *dst = _T('\n');
+			else if (lfmt == ID_LFMT_DOS) *++dst = _T('\n');
+		}
+	}
+	*dst = _T('\0');
+	if (lfmt == ID_LFMT_DOS) {
+		FREE(osz);
+		*sz = odst;
+	}
+}
+#else
+void NormalizeLineFmt(LPTSTR* sz, DWORD len, WORD lfmt, DWORD nCR, DWORD nLF, DWORD nStrays){
+	LPTSTR odst, dst, osz;
+	TCHAR cc, cp = _T('\0');
+	if (lfmt == ID_LFMT_MIXED || !nStrays || !sz || !*sz) return;
+	if (!len) len = lstrlen(*sz);
+	osz = *sz;
+	odst = dst = (LPTSTR)HeapAlloc(globalHeap, 0, (len+nStrays+1) * sizeof(TCHAR));
+	for ( ; len--; cp = cc) {
+		if ((cc = *(*sz)++) == _T('\r') && **sz != _T('\n')) {
+			*dst++ = _T('\r'); *dst++ = _T('\n');
+			continue;
+		} else if (cc == _T('\n') && cp != _T('\r'))
+			*dst++ = _T('\r');
+		*dst++ = cc;
+	}
+	*dst = _T('\0');
+	FREE(osz);
+	*sz = odst;
+}
+void RestoreLineFmt(LPTSTR* sz, DWORD len, WORD lfmt, DWORD lines){
+	LPTSTR dst = *sz;
+	if ((lfmt != ID_LFMT_UNIX && lfmt != ID_LFMT_MAC) || !sz || !*sz) return;
+	if (!len) len = lstrlen(*sz);
+	for ( ; len--; dst++) {
+		*dst = *(*sz)++;
+		if (*dst == _T('\r')) {
+			if (lfmt == ID_LFMT_UNIX) *dst = _T('\n');
+			*sz++;
+		}
+	}
+	*dst = _T('\0');
+}
+#endif

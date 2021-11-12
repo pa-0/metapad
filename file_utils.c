@@ -27,11 +27,6 @@
 #include <windows.h>
 #include <tchar.h>
 
-#ifdef USE_RICH_EDIT
-#include <richedit.h>
-#include <commdlg.h>
-#endif
-
 #include "include/consts.h"
 #include "include/globals.h"
 #include "include/resource.h"
@@ -57,17 +52,13 @@ void MakeNewFile(void) {
 	bLoading = TRUE;
 	SetFileFormat(options.nFormat);
 	SetWindowText(client, _T(""));
-	bDirtyFile = FALSE;
-	bLoading = FALSE;
 	SwitchReadOnly(FALSE);
 	FREE(szFile);
 	SSTRCPYAO(szCaptionFile, GetString(IDS_NEW_FILE), 32, 8);
 	szCaptionFile[0] = _T('\0');
-	bDirtyShadow = bDirtyStatus = TRUE;
-	savedChars = 0;
-	savedFormat = nFormat;
+	UpdateSavedInfo();
+	bDirtyFile = bLoading = FALSE;
 	UpdateStatus(TRUE);
-	bLoading = FALSE;
 	//TODO
 }
 
@@ -228,7 +219,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 			return szShadow;
 		} else {
 			printf("G");
-//#ifdef USE_RICH_EDIT
+#ifdef USE_RICH_EDIT
 			{
 				TEXTRANGE tr;
 				tr.chrg.cpMin = 0;
@@ -236,9 +227,9 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 				tr.lpstrText = szShadow;
 				SendMessage(client, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
 			}
-//#else
+#else
 			GetWindowText(client, szShadow, shadowLen+1);
-//#endif
+#endif
 			bDirtyShadow = FALSE;
 		}
 	}
@@ -371,6 +362,22 @@ DWORD GetTextChars(LPCTSTR szText, BOOL unix){
 	if (!szText) return GetWindowTextLength(client);
 #endif
 	else return lstrlen(szText);
+}
+
+
+
+void UpdateSavedInfo() {
+	DWORD lChars;
+	LPCTSTR buf;
+	bDirtyFile = FALSE;
+	bDirtyShadow = bDirtyStatus = TRUE;
+	buf = GetShadowBuffer(&lChars);
+	savedChars = lChars;
+	savedFormat = nFormat;
+	memset(savedHead, 0, sizeof(savedHead));
+	memset(savedFoot, 0, sizeof(savedFoot));
+	memcpy(savedHead, (LPBYTE)buf, lChars = MIN(lChars/sizeof(TCHAR), sizeof(savedHead)));
+	memcpy(savedFoot, ((LPBYTE)buf) - lChars, lChars);
 }
 
 

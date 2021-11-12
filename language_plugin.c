@@ -37,7 +37,6 @@
 #include "include/strings.h"
 #include "include/macros.h"
 #include "include/metapad.h"
-#include "include/language_plugin.h"
 
 /**
  * Load and verify a language plugin.

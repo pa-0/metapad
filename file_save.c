@@ -31,9 +31,6 @@
 #include <windows.h>
 #include <commdlg.h>
 #include <tchar.h>
-#ifdef USE_RICH_EDIT
-#include <richedit.h>
-#endif
 
 #include "include/consts.h"
 #include "include/globals.h"
@@ -42,7 +39,6 @@
 #include "include/macros.h"
 #include "include/metapad.h"
 #include "include/encoding.h"
-#include "include/file_utils.h"
 
 
 BOOL SaveFile(LPCTSTR szFilename);
