@@ -48,6 +48,277 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU);
 #define NUMBOMS 3
 static const BYTE bomLut[NUMBOMS][4] = {{0x3,0xEF,0xBB,0xBF}, {0x2,0xFF,0xFE}, {0x2,0xFE,0xFF}};
 
+
+DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* plBufLen, DWORD* pnFileEncoding, WORD codepage) {
+	DWORD dwBytes = 0;
+	BOOL bResult;
+	INT unitest = IS_TEXT_UNICODE_UNICODE_MASK | IS_TEXT_UNICODE_REVERSE_MASK | IS_TEXT_UNICODE_NOT_UNICODE_MASK | IS_TEXT_UNICODE_NOT_ASCII_MASK;
+	LPINT lpiResult = &unitest;
+	LPBYTE pNewBuffer = NULL;
+	UINT cp = CP_ACP;
+#ifndef UNICODE
+	BOOL bUsedDefault;
+#endif
+
+	*plBufLen = GetFileSize(hFile, NULL);
+	if (!options.bNoWarningPrompt && *plBufLen > LARGEFILESIZEWARN && MessageBox(hwnd, GetString(IDS_LARGE_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDCANCEL) {
+		bQuitApp = TRUE;
+		return -1;
+	}
+	*ppBuffer = (LPBYTE)HeapAlloc(globalHeap, 0, *plBufLen+2);
+	if (*ppBuffer == NULL) {
+		ReportLastError();
+		return -1;
+	}
+	
+	bResult = ReadFile(hFile, *ppBuffer, *plBufLen, &dwBytes, NULL);
+	if (!bResult || dwBytes != *plBufLen)
+		ReportLastError();
+	*plBufLen = dwBytes;
+	*(ppBuffer+dwBytes) = 0;
+	*pnFileEncoding = CheckBOM(ppBuffer, plBufLen);
+
+	if (!codepage) {
+		// check if UTF-8 even if no bom
+		if (*pnFileEncoding == ID_ENC_UNKNOWN && *plBufLen > 0 && IsTextUTF8(*ppBuffer))
+			*pnFileEncoding = ID_ENC_UTF8;
+		// check if unicode even if no bom
+		if (*pnFileEncoding == ID_ENC_UNKNOWN && *plBufLen > 2 && (IsTextUnicode(*ppBuffer, *plBufLen, lpiResult) || 
+			(!(*lpiResult & IS_TEXT_UNICODE_NOT_UNICODE_MASK) && (*lpiResult & IS_TEXT_UNICODE_NOT_ASCII_MASK))))
+			*pnFileEncoding = ((*lpiResult & IS_TEXT_UNICODE_REVERSE_MASK) ? ID_ENC_UTF16BE : ID_ENC_UTF16);
+	}
+	if (*pnFileEncoding == ID_ENC_UNKNOWN) {
+		if (codepage) {
+			cp = codepage;
+			*pnFileEncoding = cp | (1<<31);
+		} else *pnFileEncoding = ID_ENC_ANSI;
+	}
+
+	dwBytes = *plBufLen;
+	if ((*pnFileEncoding == ID_ENC_UTF16 || *pnFileEncoding == ID_ENC_UTF16BE) && dwBytes) {
+		*plBufLen /= 2;
+		if (*pnFileEncoding == ID_ENC_UTF16BE)
+			ReverseBytes(*ppBuffer, dwBytes);
+#ifndef UNICODE
+		if (sizeof(TCHAR) < 2) {
+			dwBytes = WideCharToMultiByte(cp, 0, (LPCWSTR)*ppBuffer, *plBufLen, NULL, 0, NULL, NULL);
+			if (NULL == (pNewBuffer = (LPBYTE)HeapAlloc(globalHeap, 0, dwBytes+1))) {
+				ReportLastError();
+				return -1;
+			} else if (!WideCharToMultiByte(cp, 0, (LPCWSTR)*ppBuffer, *plBufLen, (LPSTR)pNewBuffer, dwBytes, NULL, &bUsedDefault)) {
+				ReportLastError();
+				ERROROUT(GetString(IDS_UNICODE_CONVERT_ERROR));
+				dwBytes = 0;
+			}
+			if (bUsedDefault)
+				ERROROUT(GetString(IDS_UNICODE_CHARS_WARNING));
+			HeapFree(globalHeap, 0, (HGLOBAL)*ppBuffer);
+			*ppBuffer = pNewBuffer;
+		}
+#endif
+	} else if (sizeof(TCHAR) > 1 && *plBufLen) {
+		if (*pnFileEncoding == ID_ENC_UTF8 && *plBufLen)
+			cp = CP_UTF8;
+		do {
+			FREE(pNewBuffer);
+			dwBytes = MultiByteToWideChar(cp, 0, *ppBuffer, *plBufLen, NULL, 0)*sizeof(TCHAR);
+			if (NULL == (pNewBuffer = (LPBYTE) HeapAlloc(globalHeap, 0, dwBytes+sizeof(TCHAR)))) {
+				ReportLastError();
+				return -1;
+			} else if (!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, *ppBuffer, *plBufLen, (LPWSTR)pNewBuffer, dwBytes)){
+				if (!MultiByteToWideChar(cp, 0, *ppBuffer, *plBufLen, (LPWSTR)pNewBuffer, dwBytes)){
+					if (codepage) {
+						cp = CP_ACP;
+						*pnFileEncoding = ID_ENC_ANSI;
+						continue;
+					}
+					ReportLastError();
+					ERROROUT(GetString(IDS_UNICODE_LOAD_ERROR));
+					dwBytes = 0;
+				} else ERROROUT(GetString(IDS_UNICODE_LOAD_TRUNCATION));
+			}
+			break;
+		} while (1);
+		HeapFree(globalHeap, 0, (HGLOBAL)*ppBuffer);
+		*ppBuffer = pNewBuffer;
+	}
+	((LPTSTR)(*ppBuffer))[dwBytes/=sizeof(TCHAR)] = _T('\0');
+	return dwBytes;
+}
+
+void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
+{
+	HANDLE hFile = NULL;
+	LPBYTE pBuffer = NULL;
+	LPTSTR szBuffer = NULL;
+	TCHAR cPad = _T(' ');
+	DWORD lBytes, lChars;
+	HCURSOR hcur;
+	UINT i;
+	TCHAR szUncFn[MAXFN+6] = _T("\\\\?\\");
+
+	lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
+	UpdateStatus(TRUE);
+
+	hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
+	lstrcpy(szUncFn+4, szFilename);
+
+	*szStatusMessage = 0;
+	for (i = 0; i < 2; ++i) {
+		hFile = (HANDLE)CreateFile(szUncFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (hFile == INVALID_HANDLE_VALUE) {
+			DWORD dwError = GetLastError();
+			if (dwError == ERROR_FILE_NOT_FOUND && bCreate) {
+				TCHAR buffer[MAXFN + 40];
+				if (i == 0) {
+					if (_tcschr(szFilename, _T('.')) == NULL) {
+						lstrcat(szFilename, _T(".txt"));
+						continue;
+					}
+				}
+				wsprintf(buffer, GetString(IDS_CREATE_FILE_MESSAGE), szFilename);
+				switch (MessageBox(hwnd, buffer, STR_METAPAD, MB_YESNOCANCEL | MB_ICONEXCLAMATION)) {
+				case IDYES:
+					hFile = (HANDLE)CreateFile(szUncFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+					if (hFile == INVALID_HANDLE_VALUE) {
+						ERROROUT(GetString(IDS_FILE_CREATE_ERROR));
+						UpdateStatus(TRUE);
+						bLoading = FALSE;
+						SetCursor(hcur);
+						return;
+					}
+					break;
+				case IDNO:
+					MakeNewFile();
+					SetCursor(hcur);
+					return;
+				case IDCANCEL:
+					if (bLoading)
+						PostQuitMessage(0);
+					SetCursor(hcur);
+					return;
+				}
+				break;
+			} else {
+				if (dwError == ERROR_FILE_NOT_FOUND) {
+					ERROROUT(GetString(IDS_FILE_NOT_FOUND));
+				} else if (dwError == ERROR_SHARING_VIOLATION) {
+					ERROROUT(GetString(IDS_FILE_LOCKED_ERROR));
+				} else {
+					SetLastError(dwError);
+					ReportLastError();
+				}
+				UpdateStatus(TRUE);
+				bLoading = FALSE;
+				SetCursor(hcur);
+				return;
+			}
+		} else {
+			SwitchReadOnly(GetFileAttributes(szUncFn) & FILE_ATTRIBUTE_READONLY);
+			break;
+		}
+	}
+
+	if (bMRU)
+		SaveMRUInfo(szFilename);
+
+	if ((lChars = LoadFileIntoBuffer(hFile, &pBuffer, &lBytes, &nFormat, (nFormat&(1<<31) ? (WORD)nFormat : 0))) < 0) {
+		bDirtyStatus = TRUE;
+		CloseHandle(hFile);
+		bLoading = FALSE;
+		return;
+	}
+
+	if (lBytes) {
+		if ((DWORD)lstrlen(pBuffer) < lChars)
+			nFormat = ID_ENC_BIN | (ID_LFMT_MIXED << 16);
+			
+
+#ifdef USE_RICH_EDIT
+		lChars -= FixTextBuffer((LPTSTR)pBuffer);
+#endif
+
+		SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
+		lChars += ConvertAndSetWindowText((LPTSTR)pBuffer, lChars);
+		SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
+		SetFileFormat(nFormat);
+	} else {
+		SetWindowText(client, _T(""));
+		SetFileFormat(options.nFormat);
+	}
+	bDirtyFile = FALSE;
+//TODO	bBinaryFile = FALSE;
+
+	szBuffer = (LPTSTR)pBuffer;
+#ifdef UNICODE
+	cPad = _T('\x2400');
+#endif
+	if (lChars != GetWindowTextLength(client) && bLoading) {
+#ifdef UNICODE
+		if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING_SAFE), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDOK) {
+#else
+		if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDOK) {
+#endif
+			for (i = 0; i < lBytes; i++)
+				if (szBuffer[i] == _T('\0'))
+					szBuffer[i] = cPad;
+			SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
+#ifdef STREAMING
+			{
+				EDITSTREAM es;
+				es.dwCookie = (DWORD)pBuffer;
+				es.dwError = 0;
+				es.pfnCallback = EditStreamIn;
+				SendMessage(client, EM_STREAMIN, (WPARAM)_SF_TEXT, (LPARAM)&es);
+			}
+#else
+			SetWindowText(client, (LPTSTR)pBuffer);
+#endif
+			SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
+//			bBinaryFile = TRUE;
+		} else {
+			bQuitApp = TRUE;
+			return;
+		}
+	}
+
+#ifdef UNICODE
+//	if (bBinaryFile) SetFileFormat(FILE_FORMAT_BINARY);
+#else
+//	if (bBinaryFile) SetFileFormat(FILE_FORMAT_DOS);
+#endif
+	bDirtyShadow = bDirtyStatus = TRUE;
+
+	SetTabStops();
+	SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
+
+	if (szBuffer[0] == _T('.') &&
+		szBuffer[1] == _T('L') &&
+		szBuffer[2] == _T('O') &&
+		szBuffer[3] == _T('G')) {
+		CHARRANGE cr;
+		cr.cpMin = cr.cpMax = lBytes;
+
+#ifdef USE_RICH_EDIT
+		SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
+#else
+		SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
+#endif
+		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DATE_TIME_CUSTOM, 0), 0);
+		SendMessage(client, EM_SCROLLCARET, 0, 0);
+	}
+
+//#ifndef BUILD_METAPAD_UNICODE
+//fini:
+//#endif
+	UpdateStatus(TRUE);
+	CloseHandle(hFile);
+	HeapFree(globalHeap, 0, (HGLOBAL) pBuffer);
+	InvalidateRect(client, NULL, TRUE);
+	SetCursor(hcur);
+}
+
+
 /**
  * Check if a buffer starts with a byte order mark.
  * If it does, the buffer is also advanced past the BOM and the given length value is decremented appropriately.
@@ -319,271 +590,3 @@ BOOL IsTextUTF8(LPBYTE buf){
 	return yes;
 }
 
-DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* plBufLen, DWORD* pnFileEncoding, WORD codepage) {
-	DWORD dwBytes = 0;
-	BOOL bResult;
-	INT unitest = IS_TEXT_UNICODE_UNICODE_MASK | IS_TEXT_UNICODE_REVERSE_MASK | IS_TEXT_UNICODE_NOT_UNICODE_MASK | IS_TEXT_UNICODE_NOT_ASCII_MASK;
-	LPINT lpiResult = &unitest;
-	LPBYTE pNewBuffer = NULL;
-	UINT cp = CP_ACP;
-#ifndef UNICODE
-	BOOL bUsedDefault;
-#endif
-
-	*plBufLen = GetFileSize(hFile, NULL);
-	if (!options.bNoWarningPrompt && *plBufLen > LARGEFILESIZEWARN && MessageBox(hwnd, GetString(IDS_LARGE_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDCANCEL) {
-		bQuitApp = TRUE;
-		return -1;
-	}
-	*ppBuffer = (LPBYTE)HeapAlloc(globalHeap, 0, *plBufLen+2);
-	if (*ppBuffer == NULL) {
-		ReportLastError();
-		return -1;
-	}
-	
-	bResult = ReadFile(hFile, *ppBuffer, *plBufLen, &dwBytes, NULL);
-	if (!bResult || dwBytes != *plBufLen)
-		ReportLastError();
-	*plBufLen = dwBytes;
-	*(ppBuffer+dwBytes) = 0;
-	*pnFileEncoding = CheckBOM(ppBuffer, plBufLen);
-
-	if (!codepage) {
-		// check if UTF-8 even if no bom
-		if (*pnFileEncoding == ID_ENC_UNKNOWN && *plBufLen > 0 && IsTextUTF8(*ppBuffer))
-			*pnFileEncoding = ID_ENC_UTF8;
-		// check if unicode even if no bom
-		if (*pnFileEncoding == ID_ENC_UNKNOWN && *plBufLen > 2 && (IsTextUnicode(*ppBuffer, *plBufLen, lpiResult) || 
-			(!(*lpiResult & IS_TEXT_UNICODE_NOT_UNICODE_MASK) && (*lpiResult & IS_TEXT_UNICODE_NOT_ASCII_MASK))))
-			*pnFileEncoding = ((*lpiResult & IS_TEXT_UNICODE_REVERSE_MASK) ? ID_ENC_UTF16BE : ID_ENC_UTF16);
-	}
-	if (*pnFileEncoding == ID_ENC_UNKNOWN) {
-		if (codepage) {
-			cp = codepage;
-			*pnFileEncoding = cp | (1<<31);
-		} else *pnFileEncoding = ID_ENC_ANSI;
-	}
-
-	dwBytes = *plBufLen;
-	if ((*pnFileEncoding == ID_ENC_UTF16 || *pnFileEncoding == ID_ENC_UTF16BE) && dwBytes) {
-		*plBufLen /= 2;
-		if (*pnFileEncoding == ID_ENC_UTF16BE)
-			ReverseBytes(*ppBuffer, dwBytes);
-#ifndef UNICODE
-		if (sizeof(TCHAR) < 2) {
-			dwBytes = WideCharToMultiByte(cp, 0, (LPCWSTR)*ppBuffer, *plBufLen, NULL, 0, NULL, NULL);
-			if (NULL == (pNewBuffer = (LPBYTE)HeapAlloc(globalHeap, 0, dwBytes+1))) {
-				ReportLastError();
-				return -1;
-			} else if (!WideCharToMultiByte(cp, 0, (LPCWSTR)*ppBuffer, *plBufLen, (LPSTR)pNewBuffer, dwBytes, NULL, &bUsedDefault)) {
-				ReportLastError();
-				ERROROUT(GetString(IDS_UNICODE_CONVERT_ERROR));
-				dwBytes = 0;
-			}
-			if (bUsedDefault)
-				ERROROUT(GetString(IDS_UNICODE_CHARS_WARNING));
-			HeapFree(globalHeap, 0, (HGLOBAL)*ppBuffer);
-			*ppBuffer = pNewBuffer;
-		}
-#endif
-	} else if (sizeof(TCHAR) > 1 && *plBufLen) {
-		if (*pnFileEncoding == ID_ENC_UTF8 && *plBufLen)
-			cp = CP_UTF8;
-		do {
-			FREE(pNewBuffer);
-			dwBytes = MultiByteToWideChar(cp, 0, *ppBuffer, *plBufLen, NULL, 0)*sizeof(TCHAR);
-			if (NULL == (pNewBuffer = (LPBYTE) HeapAlloc(globalHeap, 0, dwBytes+sizeof(TCHAR)))) {
-				ReportLastError();
-				return -1;
-			} else if (!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, *ppBuffer, *plBufLen, (LPWSTR)pNewBuffer, dwBytes)){
-				if (!MultiByteToWideChar(cp, 0, *ppBuffer, *plBufLen, (LPWSTR)pNewBuffer, dwBytes)){
-					if (codepage) {
-						cp = CP_ACP;
-						*pnFileEncoding = ID_ENC_ANSI;
-						continue;
-					}
-					ReportLastError();
-					ERROROUT(GetString(IDS_UNICODE_LOAD_ERROR));
-					dwBytes = 0;
-				} else ERROROUT(GetString(IDS_UNICODE_LOAD_TRUNCATION));
-			}
-			break;
-		} while (1);
-		HeapFree(globalHeap, 0, (HGLOBAL)*ppBuffer);
-		*ppBuffer = pNewBuffer;
-	}
-	((LPTSTR)(*ppBuffer))[dwBytes/=sizeof(TCHAR)] = _T('\0');
-	return dwBytes;
-}
-
-void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
-{
-	HANDLE hFile = NULL;
-	LPBYTE pBuffer = NULL;
-	LPTSTR szBuffer = NULL;
-	TCHAR cPad = _T(' ');
-	DWORD lBytes, lChars;
-	HCURSOR hcur;
-	UINT i;
-	TCHAR szUncFn[MAXFN+6] = _T("\\\\?\\");
-
-	lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
-	UpdateStatus(TRUE);
-
-	hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
-	lstrcpy(szUncFn+4, szFilename);
-
-	*szStatusMessage = 0;
-	for (i = 0; i < 2; ++i) {
-		hFile = (HANDLE)CreateFile(szUncFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		if (hFile == INVALID_HANDLE_VALUE) {
-			DWORD dwError = GetLastError();
-			if (dwError == ERROR_FILE_NOT_FOUND && bCreate) {
-				TCHAR buffer[MAXFN + 40];
-				if (i == 0) {
-					if (_tcschr(szFilename, _T('.')) == NULL) {
-						lstrcat(szFilename, _T(".txt"));
-						continue;
-					}
-				}
-				wsprintf(buffer, GetString(IDS_CREATE_FILE_MESSAGE), szFilename);
-				switch (MessageBox(hwnd, buffer, STR_METAPAD, MB_YESNOCANCEL | MB_ICONEXCLAMATION)) {
-				case IDYES:
-					hFile = (HANDLE)CreateFile(szUncFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-					if (hFile == INVALID_HANDLE_VALUE) {
-						ERROROUT(GetString(IDS_FILE_CREATE_ERROR));
-						UpdateStatus(TRUE);
-						bLoading = FALSE;
-						SetCursor(hcur);
-						return;
-					}
-					break;
-				case IDNO:
-					MakeNewFile();
-					SetCursor(hcur);
-					return;
-				case IDCANCEL:
-					if (bLoading)
-						PostQuitMessage(0);
-					SetCursor(hcur);
-					return;
-				}
-				break;
-			} else {
-				if (dwError == ERROR_FILE_NOT_FOUND) {
-					ERROROUT(GetString(IDS_FILE_NOT_FOUND));
-				} else if (dwError == ERROR_SHARING_VIOLATION) {
-					ERROROUT(GetString(IDS_FILE_LOCKED_ERROR));
-				} else {
-					SetLastError(dwError);
-					ReportLastError();
-				}
-				UpdateStatus(TRUE);
-				bLoading = FALSE;
-				SetCursor(hcur);
-				return;
-			}
-		} else {
-			SwitchReadOnly(GetFileAttributes(szUncFn) & FILE_ATTRIBUTE_READONLY);
-			break;
-		}
-	}
-
-	if (bMRU)
-		SaveMRUInfo(szFilename);
-
-	if ((lChars = LoadFileIntoBuffer(hFile, &pBuffer, &lBytes, &nFormat, (nFormat&(1<<31) ? (WORD)nFormat : 0))) < 0) {
-		bDirtyStatus = TRUE;
-		CloseHandle(hFile);
-		bLoading = FALSE;
-		return;
-	}
-
-	if (lBytes) {
-		if ((DWORD)lstrlen(pBuffer) < lChars)
-			nFormat = ID_ENC_BIN | (ID_LFMT_MIXED << 16);
-			
-
-#ifdef USE_RICH_EDIT
-		lChars -= FixTextBuffer((LPTSTR)pBuffer);
-#endif
-
-		SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
-		lChars += ConvertAndSetWindowText((LPTSTR)pBuffer, lChars);
-		SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
-		SetFileFormat(nFormat);
-	} else {
-		SetWindowText(client, _T(""));
-		SetFileFormat(options.nFormat);
-	}
-	bDirtyFile = FALSE;
-//TODO	bBinaryFile = FALSE;
-
-	szBuffer = (LPTSTR)pBuffer;
-#ifdef UNICODE
-	cPad = _T('\x2400');
-#endif
-	if (lChars != GetWindowTextLength(client) && bLoading) {
-#ifdef UNICODE
-		if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING_SAFE), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDOK) {
-#else
-		if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDOK) {
-#endif
-			for (i = 0; i < lBytes; i++)
-				if (szBuffer[i] == _T('\0'))
-					szBuffer[i] = cPad;
-			SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
-#ifdef STREAMING
-			{
-				EDITSTREAM es;
-				es.dwCookie = (DWORD)pBuffer;
-				es.dwError = 0;
-				es.pfnCallback = EditStreamIn;
-				SendMessage(client, EM_STREAMIN, (WPARAM)_SF_TEXT, (LPARAM)&es);
-			}
-#else
-			SetWindowText(client, (LPTSTR)pBuffer);
-#endif
-			SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
-//			bBinaryFile = TRUE;
-		} else {
-			bQuitApp = TRUE;
-			return;
-		}
-	}
-
-#ifdef UNICODE
-//	if (bBinaryFile) SetFileFormat(FILE_FORMAT_BINARY);
-#else
-//	if (bBinaryFile) SetFileFormat(FILE_FORMAT_DOS);
-#endif
-	bDirtyShadow = bDirtyStatus = TRUE;
-
-	SetTabStops();
-	SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
-
-	if (szBuffer[0] == _T('.') &&
-		szBuffer[1] == _T('L') &&
-		szBuffer[2] == _T('O') &&
-		szBuffer[3] == _T('G')) {
-		CHARRANGE cr;
-		cr.cpMin = cr.cpMax = lBytes;
-
-#ifdef USE_RICH_EDIT
-		SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-#else
-		SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-#endif
-		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DATE_TIME_CUSTOM, 0), 0);
-		SendMessage(client, EM_SCROLLCARET, 0, 0);
-	}
-
-//#ifndef BUILD_METAPAD_UNICODE
-//fini:
-//#endif
-	UpdateStatus(TRUE);
-	CloseHandle(hFile);
-	HeapFree(globalHeap, 0, (HGLOBAL) pBuffer);
-	InvalidateRect(client, NULL, TRUE);
-	SetCursor(hcur);
-}
