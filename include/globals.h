@@ -89,7 +89,7 @@ option_struct options;
 
 DWORD updateThrottle, updateTime;
 WORD savedFormat;
-LONGLONG savedLen;
+DWORD savedChars;
 LPBYTE savedHash[32], savedHead[32], savedFoot[32];
 
 #endif

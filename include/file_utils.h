@@ -31,7 +31,8 @@
 
 void MakeNewFile(void);
 
-DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BOOL inclBOM);
+DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BOOL inclBOM, DWORD* numChars);
+DWORD GetTextChars(LPCTSTR szText, BOOL unix);
 void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut);
 BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE pbFindSpec);
 DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* szRepl, LPBYTE* pbFindSpec, LPBYTE* pbReplSpec, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen, LPCTSTR header, LPCTSTR footer);
