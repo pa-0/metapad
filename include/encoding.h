@@ -39,12 +39,16 @@ INT EncodeBase( BYTE base, LPBYTE bin, LPTSTR code, INT len, LPBYTE* end );
 
 void ReverseBytes(LPBYTE buffer, LONG size);
 WORD CheckBOM(LPBYTE *pb, DWORD* pbLen);
+WORD GetBOM(LPBYTE* bom, WORD enc);
 BOOL IsTextUTF8(LPBYTE buf);
 
-WORD GetLineFmt(LPCTSTR sz, DWORD len, DWORD* nCR, DWORD* nLF, DWORD* nStrays, BOOL* binary);
-void NormalizeLineFmt(LPTSTR* sz, DWORD len, WORD lfmt, DWORD nCR, DWORD nLF, DWORD nStrays);
-void RestoreLineFmt(LPTSTR* sz, DWORD len, WORD lfmt, DWORD lines);
-void NormalizeBinary(LPTSTR sz, DWORD len);
-void RestoreBinary(LPTSTR sz, DWORD len);
+WORD GetLineFmt(LPCTSTR sz, DWORD len, DWORD* nCR, DWORD* nLF, DWORD* nStrays, DWORD* nSub, BOOL* binary);
+void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DWORD nStrays, DWORD nSub, BOOL* bufDirty);
+void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDirty);
+void ImportBinary(LPTSTR sz, DWORD len);
+void ExportBinary(LPTSTR sz, DWORD len);
+
+DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty);
+DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* truncated);
 
 #endif

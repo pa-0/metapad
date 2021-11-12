@@ -145,7 +145,6 @@ void CenterWindow(HWND hwndCenter);
 void SelectWord(LPTSTR* target, BOOL bSmart, BOOL bAutoSelect);
 void SetFont(HFONT* phfnt, BOOL bPrimary);
 void SetTabStops(void);
-//void NextWord(BOOL bRight, BOOL bSelect); // Uninmplemented.
 void UpdateStatus(BOOL refresh);
 BOOL SetClientFont(BOOL bPrimary);
 BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -176,9 +175,9 @@ void LaunchExternalViewer(int);
 
 
 // file_load.c //
-void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU);
-void LoadFileFromMenu(WORD wMenu, BOOL bMRU);
-DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* plBufLen, DWORD* pnFileEncoding, WORD codepage);
+BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert);
+BOOL LoadFileFromMenu(WORD wMenu, BOOL bMRU);
+DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* format);
 
 
 // file_save.c //
@@ -189,25 +188,24 @@ BOOL SaveIfDirty(void);
 
 
 // file_utils.c //
+void SetFileFormat(DWORD format, WORD reinterp);
 void MakeNewFile(void);
-
-DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BOOL inclBOM, DWORD* numChars);
-DWORD GetTextChars(LPCTSTR szText, BOOL unix);
 void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut);
-BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE pbFindSpec);
-DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* szRepl, LPBYTE* pbFindSpec, LPBYTE* pbReplSpec, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen, LPCTSTR header, LPCTSTR footer);
-DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, LPBYTE pbReplSpec, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen);
-void SetFileFormat(int nFormat);
 
 LPCTSTR GetShadowBuffer(DWORD* len);
 LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len);
 LPCTSTR GetShadowSelection(DWORD* len, CHARRANGE* pcr);
 LPCTSTR GetShadowLine(LONG line, LONG cp, DWORD* len, LONG* lineout, CHARRANGE* pcr);
-
 DWORD GetColNum(LONG cp, LONG line, DWORD* lineLen, LONG* lineout, CHARRANGE* pcr);
 DWORD GetCharIndex(DWORD col, LONG line, LONG cp, DWORD* lineLen, LONG* lineout, CHARRANGE* pcr);
 
+DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BOOL inclBOM, DWORD* numChars);
+DWORD GetTextChars(LPCTSTR szText, BOOL unix);
 void UpdateSavedInfo();
+
+BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE pbFindSpec);
+DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, LPBYTE pbReplSpec, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen);
+DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* szRepl, LPBYTE* pbFindSpec, LPBYTE* pbReplSpec, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen, LPCTSTR header, LPCTSTR footer);
 
 
 // settings_load.h //
