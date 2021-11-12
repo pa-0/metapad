@@ -116,7 +116,7 @@ void LoadOptions(void)
 	//options.nStatusFontWidth = 16;
 	options.nSelectionMarginWidth = 10;
 	options.nMaxMRU = 8;
-	options.nFormatIndex = 0;
+	options.nFormat = 0;
 	options.nTransparentPct = 25;
 	options.BackColour = GetSysColor(COLOR_WINDOW);
 	options.FontColour = GetSysColor(COLOR_WINDOWTEXT);
@@ -164,7 +164,7 @@ void LoadOptions(void)
 //		LoadOptionNumeric(key, _T("nStatusFontWidth"), (LPBYTE)&options.nStatusFontWidth, dwBufferSize);
 		LoadOptionNumeric(key, _T("nSelectionMarginWidth"), (LPBYTE)&options.nSelectionMarginWidth, dwBufferSize);
 		LoadOptionNumeric(key, _T("nMaxMRU"), (LPBYTE)&options.nMaxMRU, dwBufferSize);
-		LoadOptionNumeric(key, _T("nFormatIndex"), (LPBYTE)&options.nFormatIndex, dwBufferSize);
+		LoadOptionNumeric(key, _T("nFormat"), (LPBYTE)&options.nFormat, sizeof(DWORD));
 		LoadOptionNumeric(key, _T("nTransparentPct"), (LPBYTE)&options.nTransparentPct, dwBufferSize);
 		LoadOptionNumeric(key, _T("bNoCaptionDir"), (LPBYTE)&options.bNoCaptionDir, dwBufferSize);
 		LoadOptionNumeric(key, _T("bAutoIndent"), (LPBYTE)&options.bAutoIndent, dwBufferSize);
@@ -236,6 +236,8 @@ void LoadOptions(void)
 		options.FontColour2 = GetSysColor(COLOR_WINDOWTEXT);
 	}
 #endif
+	if (options.nFormat < (1<<16))
+		options.nFormat = ID_ENC_ANSI | (ID_LFMT_DOS << 16);
 }
 
 /**

@@ -152,6 +152,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext)
 	LPTSTR op = buf, bout, end, szErr, szErr2, szErr3, dbuf;
 	INT l, m, base = 0, mul = 3, uni = 0, str, expl = 0, dbufalloc = 0, spi = 0;
 	DWORD p = 0;
+	WORD enc = (nFormat >> 31 ? ID_ENC_CUSTOM : (WORD)nFormat);
 #ifdef UNICODE
 	const TCHAR spsub[] = {_T('\x332'), _T('\xFFFD'), _T('\xD7'), _T('\x2014'), _T('\x2026'), _T('\xFFFC')};
 #endif
@@ -189,7 +190,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext)
 				}
 				if (spi == 6){
 #ifdef UNICODE
-					if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE)
+					if (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE)
 						*bout++ = RAND()%0xffe0+0x20;
 					else
 #endif
@@ -244,7 +245,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext)
 					else if (str && uni == 1 && l % sizeof(TCHAR))
 						l = -2;
 #ifdef UNICODE
-					else if (uni == 1 && l >= 2 && nEncodingType != TYPE_UTF_16_BE)
+					else if (uni == 1 && l >= 2 && enc != ID_ENC_UTF16BE)
 						ReverseBytes((LPBYTE)bout, l * 2);
 #endif
 					if (!str) buf--;
@@ -585,10 +586,10 @@ void UpdateStatus(BOOL refresh)
 
 	if (full) {
 		if (bDirtyStatus || bDirtyFile){
-			if (status && bShowStatus){
+			/*if (status && bShowStatus){
 
 
-				wsprintf(szPane, _T(" Bytes: %d "), bytes = CalcTextSize(&szBuf, 0, nEncodingType, bUnix, TRUE, &chars));
+				//TODOwsprintf(szPane, _T(" Bytes: %d "), bytes = CalcTextSize(&szBuf, 0, nFormat, bUnix, TRUE, &chars));
 				nPaneSizes[SBPANE_SIZE] = (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane));
 				SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_SIZE, (LPARAM)(LPTSTR)szPane);
 
@@ -615,7 +616,7 @@ void UpdateStatus(BOOL refresh)
 				chars = GetTextChars(NULL, bUnix);
 
 			bDirtyFile = TRUE;
-			if (chars == savedChars && savedFormat == (nEncodingType | ((bUnix ? 1 : 0) << 8) | ((bBinaryFile ? 1 : 0) << 9))) {
+			if (chars == savedChars && savedFormat == nFormat) {
 				if (!chars) bDirtyFile = FALSE;
 				else {
 					szBuf = 1;
@@ -632,7 +633,7 @@ void UpdateStatus(BOOL refresh)
 						}
 					}
 				}
-			}
+			}*/
 
 			if ((szCaptionFile && !*szCaptionFile) || oldDirty != bDirtyFile)
 				UpdateCaption();
@@ -694,7 +695,7 @@ void UpdateStatus(BOOL refresh)
 			*szPane = 0;
 			if (full) {
 				szBuf = GetShadowSelection(&chars, NULL);
-				wsprintf(szPane, _T("Bytes: %d"), CalcTextSize(&szBuf, chars, nEncodingType, bUnix, FALSE, NULL));
+				//TODOwsprintf(szPane, _T("Bytes: %d"), CalcTextSize(&szBuf, chars, nFormat, bUnix, FALSE, NULL));
 			}
 			i = GetColNum(cr.cpMin, -1, NULL, &lLine, NULL);
 			j = GetColNum(cr.cpMax, -1, NULL, &lLines, NULL);
@@ -2328,7 +2329,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 #endif
 			SendMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_STICKY_WINDOW, 0), 0);
 
-			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("DOS Text"));
+/*			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("DOS Text"));
 			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("UNIX Text"));
 			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("Unicode"));
 			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("Unicode BE"));
@@ -2336,7 +2337,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("UTF-8 UNIX"));
 			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("Binary"));
 
-			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_SETCURSEL, (WPARAM)options.nFormatIndex, 0);
+//TODO			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_SETCURSEL, (WPARAM)options.nFormat, 0);*/
 
 			wsprintf(szInt, _T("%d"), options.nMaxMRU);
 			SetDlgItemText(hwndDlg, IDC_EDIT_MAX_MRU, szInt);
@@ -2390,9 +2391,9 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 				options.bHideScrollbars = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_HIDE_SCROLLBARS, BM_GETCHECK, 0, 0));
 				options.bSuppressUndoBufferPrompt = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_SUPPRESS_UNDO_PROMPT, BM_GETCHECK, 0, 0));
 #endif
-				options.nFormatIndex = SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_GETCURSEL, 0, 0);
-				if (options.nFormatIndex == CB_ERR)
-					options.nFormatIndex = 0;
+/*TODO				options.nFormat = SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_GETCURSEL, 0, 0);
+				if (options.nFormat == CB_ERR)
+					options.nFormat = 0;*/
 
 				return TRUE;
 			}
@@ -3609,6 +3610,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				szTmp = NULL;
 				l = 0;
 				base = 0;
+				enc = (nFormat >> 31 ? ID_ENC_CUSTOM : (WORD)nFormat);
 
 				switch(LOWORD(wParam)){
 					case ID_MYEDIT_CUT:
@@ -3632,7 +3634,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						switch (base){
 							case 16: if (!l) l = sl * 2;
 							case 64: if (!l) l = ((sl + 2) / 3) * 4;
-								if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE)
+								if (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE)
 									l *= 2;
 							default: if (!l) l = sl; break;
 						}
@@ -3641,20 +3643,20 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 							ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
 						else {
 							if (base) {
-								if (sizeof(TCHAR) >= 2 && nEncodingType != TYPE_UTF_16 && nEncodingType != TYPE_UTF_16_BE) {
+								if (sizeof(TCHAR) >= 2 && enc != ID_ENC_UTF16 && enc != ID_ENC_UTF16BE) {
 #ifdef UNICODE
 									l = WideCharToMultiByte(CP_ACP, 0, szOld, sl, NULL, 0, NULL, NULL);
 									szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, l);
 									WideCharToMultiByte(CP_ACP, 0, szOld, sl, (LPSTR)szTmp, l, NULL, NULL);
 									szOld = szTmp;
 #endif
-								} else if (sizeof(TCHAR) < 2 && (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE)) {
+								} else if (sizeof(TCHAR) < 2 && (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE)) {
 									l = 2 * MultiByteToWideChar(CP_ACP, 0, (LPCSTR)szOld, sl, NULL, 0);
 									szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, l);
 									MultiByteToWideChar(CP_ACP, 0, (LPCSTR)szOld, sl, (LPWSTR)szTmp, l);
 									szOld = szTmp;
 								} else l = sl * sizeof(TCHAR);
-								if (nEncodingType == TYPE_UTF_16_BE)
+								if (enc == ID_ENC_UTF16BE)
 									ReverseBytes((LPBYTE)szOld, l);
 								EncodeBase(base, (LPBYTE)szOld, szNew, l, NULL);
 							} else lstrcpy(szNew, szOld);
@@ -3677,6 +3679,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_PASTE_HEX:
 				szTmp2 = NULL;
 				base = 0;
+				enc = (nFormat >> 31 ? ID_ENC_CUSTOM : (WORD)nFormat);
 
 				if (!OpenClipboard(NULL)) {
 					ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
@@ -3686,7 +3689,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					if (!(szTmp = GlobalLock(hMem)))
 						ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
 					else {
-						uni = (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE);
+						uni = (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE);
 						switch(LOWORD(wParam)){
 							case ID_PASTE_B64: if (!base) { base = 64; sz = uni ? _T("\\W") : _T("\\S"); }
 							case ID_PASTE_HEX: if (!base) { base = 16; sz = uni ? _T("\\U") : _T("\\X"); }
@@ -3837,7 +3840,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						goto endinsertfile;
 					}
 
-					lread = LoadFileIntoBuffer(hFile, &pBuf, &len, &enc);
+//TODO					lread = LoadFileIntoBuffer(hFile, &pBuf, &len, &enc);
 					CloseHandle(hFile);
 #ifdef UNICODE
 					*szTmp2 = _T('\x2400');
@@ -3854,13 +3857,13 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 							}
 						}
 						else goto endinsertfile;
-					} else if (enc != TYPE_UTF_16 && enc != TYPE_UTF_16_BE) {
+					} /*else if (enc != TYPE_UTF_16 && enc != TYPE_UTF_16_BE) {
 #ifdef USE_RICH_EDIT
 						FixTextBuffer((LPTSTR)pBuf);
 #else
 						FixTextBufferLE((LPTSTR*)&pBuf);
 #endif
-					}
+					}*/
 					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)(LPTSTR)pBuf);
 #ifdef USE_RICH_EDIT
 					InvalidateRect(client, NULL, TRUE);
@@ -4627,7 +4630,7 @@ endinsertfile:
 			case ID_LAUNCH_ASSOCIATED_VIEWER:
 				LaunchInViewer(FALSE, FALSE);
 				break;
-			case ID_BINARY_FILE:
+/*			case ID_BINARY_FILE:
 			case ID_UTF8_FILE:
 			case ID_UTF8_UNIX_FILE:
 			case ID_UNICODE_FILE:
@@ -4654,7 +4657,7 @@ endinsertfile:
 				else if (LOWORD(wParam) == ID_UNICODE_FILE) 								nEncodingType = TYPE_UTF_16;
 				else if (LOWORD(wParam) == ID_UNICODE_BE_FILE) 								nEncodingType = TYPE_UTF_16_BE;
 				else 																		nEncodingType = TYPE_UNKNOWN;
-
+*/
 				if (!bLoading) {
 					*szStatusMessage = 0;
 					UpdateStatus(TRUE);

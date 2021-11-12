@@ -265,7 +265,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 	TCHAR szUncFn[MAXFN+6] = _T("\\\\?\\");
 	BOOL bufDirty = FALSE;
 
-	szBuffer = GetShadowBuffer(&nChars);
+/*	szBuffer = GetShadowBuffer(&nChars);
 	lstrcpy(szUncFn+4, szFilename);
 	hFile = (HANDLE)CreateFile(szUncFn, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
@@ -393,7 +393,7 @@ BOOL SaveFile(LPCTSTR szFilename)
 	if (dwActualBytesWritten != (DWORD)nBytes) {
 		ERROROUT(GetString(IDS_ERROR_LOCKED));
 		return FALSE;
-	}
+	}*/
 	return TRUE;
 }
 

@@ -58,62 +58,6 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,87,24,35,14
 END
 
-#if defined(APSTUDIO_INVOKED) || defined(NO_RICH_EDIT)
-#if defined(APSTUDIO_INVOKED)
-IDD_PROPPAGE_A1_LE$(NO_RICH_EDIT) DIALOGEX 0, 0, 225, 167
-#else
-IDD_PROPPAGE_A1_LE DIALOGEX 0, 0, 225, 167
-#endif
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Advanced"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
-BEGIN
-    CONTROL         "&Separate recent files menu",IDC_RECENT,"Button",
-                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,7,7,107,8
-    CONTROL         "&Enable read only menu item",IDC_READONLY_MENU,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,19,107,8
-    CONTROL         "F&ind/replace use current font",IDC_CURRENT_FIND_FONT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,32,107,8
-    CONTROL         "&Context menu moves cursor",IDC_CONTEXT_CURSOR,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,45,107,8
-    CONTROL         "Disa&ble favourites menu",IDC_NO_FAVES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,58,107,8
-    CONTROL         "&Launch viewer for large files",IDC_ALWAYS_LAUNCH,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,71,107,8
-    CONTROL         "Use default &printer font",IDC_DEFAULT_PRINT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,84,107,8
-    CONTROL         "Use fi&xed window position:",IDC_STICKY_WINDOW,"Button",
-                    BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,7,112,99,8
-    CONTROL         "Hide &go to offset",IDC_GOTO_OFFSET,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,7,99,8
-    CONTROL         "Disable smart &home",IDC_SMARTHOME,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,19,99,8
-    CONTROL         "Don't a&uto-save extensions",IDC_NO_SAVE_EXTENSIONS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,32,99,8
-    CONTROL         "Skip load &warning prompts",IDC_PROMPT_BINARY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,45,99,8
-    CONTROL         "Don't insert &time with date",IDC_INSERT_TIME,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,58,99,8
-    CONTROL         "Pri&nt using secondary font",IDC_SECONDARY_PRINT_FONT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,71,99,8
-    CONTROL         "Don't s&ave find history",IDC_NO_SAVE_HISTORY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,84,99,8
-    CONTROL         "D&on't auto-select on find",IDC_NO_FIND_SELECT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,97,99,8
-    PUSHBUTTON      "Sa&ve Window Position",IDC_BUTTON_STICK,119,111,99,13
-    PUSHBUTTON      "Clear &Recent Files...",IDC_BUTTON_CLEAR_RECENT,7,127,
-                    83,14
-    PUSHBUTTON      "Clear &Find History...",IDC_BUTTON_CLEAR_FIND,7,146,83,
-                    14
-    LTEXT           "Recent files to re&member:",IDC_STATIC,102,129,82,8
-    EDITTEXT        IDC_EDIT_MAX_MRU,194,127,24,12,ES_CENTER |
-                    ES_AUTOHSCROLL | ES_NUMBER
-    LTEXT           "&Default file format:",IDC_STATIC,102,148,58,8
-    COMBOBOX        IDC_COMBO_FORMAT,163,146,55,63,CBS_DROPDOWNLIST |
-                    WS_VSCROLL | WS_TABSTOP
-END
-#endif
-
 IDD_PAGE_SETUP DIALOG DISCARDABLE  32, 32, 190, 124
 STYLE DS_MODALFRAME | DS_3DLOOK | DS_CONTEXTHELP | WS_POPUP | WS_VISIBLE |
     WS_CAPTION | WS_SYSMENU
@@ -340,7 +284,59 @@ BEGIN
                     WS_TABSTOP,16,143,176,9
 END
 
-#if defined(APSTUDIO_INVOKED) || defined(USE_RICH_EDIT)
+#if defined(USE_RICH_EDIT)
+#if defined(APSTUDIO_INVOKED)
+IDD_PROPPAGE_A1_LE$(NO_RICH_EDIT) DIALOGEX 0, 0, 225, 167
+#else
+IDD_PROPPAGE_A1_LE DIALOGEX 0, 0, 225, 167
+#endif
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Advanced"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    CONTROL         "&Separate recent files menu",IDC_RECENT,"Button",
+                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,7,7,107,8
+    CONTROL         "&Enable read only menu item",IDC_READONLY_MENU,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,19,107,8
+    CONTROL         "F&ind/replace use current font",IDC_CURRENT_FIND_FONT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,32,107,8
+    CONTROL         "&Context menu moves cursor",IDC_CONTEXT_CURSOR,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,45,107,8
+    CONTROL         "Disa&ble favourites menu",IDC_NO_FAVES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,58,107,8
+    CONTROL         "&Launch viewer for large files",IDC_ALWAYS_LAUNCH,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,71,107,8
+    CONTROL         "Use default &printer font",IDC_DEFAULT_PRINT,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,84,107,8
+    CONTROL         "Use fi&xed window position:",IDC_STICKY_WINDOW,"Button",
+                    BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,7,112,99,8
+    CONTROL         "Hide &go to offset",IDC_GOTO_OFFSET,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,119,7,99,8
+    CONTROL         "Disable smart &home",IDC_SMARTHOME,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,119,19,99,8
+    CONTROL         "Don't a&uto-save extensions",IDC_NO_SAVE_EXTENSIONS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,32,99,8
+    CONTROL         "Skip load &warning prompts",IDC_PROMPT_BINARY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,119,45,99,8
+    CONTROL         "Don't insert &time with date",IDC_INSERT_TIME,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,119,58,99,8
+    CONTROL         "Pri&nt using secondary font",IDC_SECONDARY_PRINT_FONT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,71,99,8
+    CONTROL         "Don't s&ave find history",IDC_NO_SAVE_HISTORY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,119,84,99,8
+    CONTROL         "D&on't auto-select on find",IDC_NO_FIND_SELECT,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,119,97,99,8
+    PUSHBUTTON      "Sa&ve Window Position",IDC_BUTTON_STICK,119,111,99,13
+    PUSHBUTTON      "Clear &Recent Files...",IDC_BUTTON_CLEAR_RECENT,7,127,
+                    83,14
+    PUSHBUTTON      "Clear &Find History...",IDC_BUTTON_CLEAR_FIND,7,146,83,
+                    14
+    LTEXT           "Recent files to re&member:",IDC_STATIC,102,129,82,8
+    EDITTEXT        IDC_EDIT_MAX_MRU,194,127,24,12,ES_CENTER |
+                    ES_AUTOHSCROLL | ES_NUMBER
+    PUSHBUTTON      "Set &Default File Format...",IDC_BUTTON_SAVEFORMAT,119,111,99,13
+END
+#else
 #if defined(APSTUDIO_INVOKED)
 IDD_PROPPAGE_A1$(USE_RICH_EDIT) DIALOGEX 0, 0, 225, 167
 #else
@@ -392,7 +388,7 @@ BEGIN
     LTEXT           "Recent files to re&member:",IDC_STATIC,102,129,82,8
     EDITTEXT        IDC_EDIT_MAX_MRU,194,127,24,12,ES_CENTER |
                     ES_AUTOHSCROLL | ES_NUMBER
-    PUSHBUTTON      "Save &Default File Format",IDC_BUTTON_SAVEFORMAT,119,111,99,13
+    PUSHBUTTON      "Set &Default File Format...",IDC_BUTTON_SAVEFORMAT,119,111,99,13
 END
 #endif
 
@@ -723,21 +719,21 @@ BEGIN
         MENUITEM SEPARATOR
 		POPUP "F&ile Format"
         BEGIN
-			MENUITEM "Line Endings:",				ID_LFMT_UNKNOWN, DISABLED
+			MENUITEM "Line Endings:",				ID_LFMT_UNKNOWN, GRAYED
 			MENUITEM "&DOS (CR+LF)\tCtrl+1",		ID_LFMT_DOS, CHECKED
 			MENUITEM "&Unix (LF)\tCtrl+2",			ID_LFMT_UNIX
 			MENUITEM "Old &Mac (CR)",				ID_LFMT_MAC
 			MENUITEM "&Unmanaged\tCtrl+0",			ID_LFMT_MIXED
 			MENUITEM SEPARATOR
-			MENUITEM "Text Encoding:",				ID_ENC_UNKNOWN, DISABLED
+			MENUITEM "Text Encoding:",				ID_ENC_UNKNOWN, GRAYED
 			MENUITEM "&ANSI\tCtrl+7",				ID_ENC_ANSI, CHECKED
             MENUITEM "&UTF-8\tCtrl+8",				ID_ENC_UTF8
-            MENUITEM "Un&icode\tCtrl+3",			ID_ENC_UNICODE
-            MENUITEM "Unicode (&Big Endian)\tCtrl+4",		ID_ENC_UNICODE_BE
+            MENUITEM "Un&icode\tCtrl+3",			ID_ENC_UTF16
+            MENUITEM "Unicode (&Big Endian)\tCtrl+4",		ID_ENC_UTF16BE
 #ifdef UNICODE
-			MENUITEM "&Binary (Preserve NULLs)\tCtrl+5",	ID_ENC_BINARY
+			MENUITEM "&Binary (Preserve NULLs)\tCtrl+5",	ID_ENC_BIN
 #endif
-			MENUITEM "&Other (enter codepage)...\tCtrl+9",	ID_ENC_CUSTOM
+			MENUITEM "&Enter Codepage...\tCtrl+9",	ID_ENC_CUSTOM
         END
         MENUITEM "&Refresh/Revert\tF5",         ID_RELOAD_CURRENT
 /*        MENUITEM "&Calculate Size\tF11",        ID_SHOWFILESIZE */
@@ -940,17 +936,17 @@ BEGIN
     "1",            ID_LFMT_DOS,            VIRTKEY, CONTROL, NOINVERT
     "1",            ID_MACRO_1,             VIRTKEY, ALT, NOINVERT
     "1",            ID_SET_MACRO_1,         VIRTKEY, SHIFT, ALT, NOINVERT
-    "2",            ID_FLMT_UNIX,           VIRTKEY, CONTROL, NOINVERT
+    "2",            ID_LFMT_UNIX,           VIRTKEY, CONTROL, NOINVERT
     "2",            ID_MACRO_2,             VIRTKEY, ALT, NOINVERT
     "2",            ID_SET_MACRO_2,         VIRTKEY, SHIFT, ALT, NOINVERT
-    "3",            ID_ENC_UNICODE,         VIRTKEY, CONTROL, NOINVERT
+    "3",            ID_ENC_UTF16,			VIRTKEY, CONTROL, NOINVERT
     "3",            ID_MACRO_3,             VIRTKEY, ALT, NOINVERT
     "3",            ID_SET_MACRO_3,         VIRTKEY, SHIFT, ALT, NOINVERT
-    "4",            ID_ENC_UNICODE_BE,      VIRTKEY, CONTROL, NOINVERT
+    "4",            ID_ENC_UTF16BE,			VIRTKEY, CONTROL, NOINVERT
     "4",            ID_MACRO_4,             VIRTKEY, ALT, NOINVERT
     "4",            ID_SET_MACRO_4,         VIRTKEY, SHIFT, ALT, NOINVERT
 #ifdef UNICODE
-    "5",            ID_ENC_BINARY,          VIRTKEY, CONTROL, NOINVERT
+    "5",            ID_ENC_BIN,				VIRTKEY, CONTROL, NOINVERT
 #endif
     "5",            ID_MACRO_5,             VIRTKEY, ALT, NOINVERT
     "5",            ID_SET_MACRO_5,         VIRTKEY, SHIFT, ALT, NOINVERT
@@ -962,6 +958,7 @@ BEGIN
     "8",            ID_ENC_UTF8,            VIRTKEY, CONTROL, NOINVERT
     "8",            ID_MACRO_8,             VIRTKEY, ALT, NOINVERT
     "8",            ID_SET_MACRO_8,         VIRTKEY, SHIFT, ALT, NOINVERT
+    "9",            ID_ENC_CUSTOM,			VIRTKEY, CONTROL, NOINVERT
     "9",            ID_MACRO_9,             VIRTKEY, ALT, NOINVERT
     "9",            ID_SET_MACRO_9,         VIRTKEY, SHIFT, ALT, NOINVERT
     "A",            ID_MYEDIT_SELECTALL,    VIRTKEY, CONTROL, NOINVERT
@@ -1108,7 +1105,7 @@ BEGIN
     IDS_UNICODE_STRING_ERROR "Error converting to Unicode string"
 #endif
     IDS_UNICODE_BOM_ERROR   "Error writing BOM"
-    IDS_CHAR_WIDTH_ERROR   "Couldn't get char width."
+    IDS_CHAR_WIDTH_ERROR	"Couldn't get char width."
     IDS_PARA_FORMAT_ERROR   "Couldn't set para format."
     IDS_QUERY_SEARCH_TOP    "Reached end of file. Continue searching from the top?"
     IDS_QUERY_SEARCH_BOTTOM "Reached beginning of file. Continue searching from the bottom?"
@@ -1227,20 +1224,20 @@ BEGIN
 	IDS_ESCAPE_CTX_QUOTE	"Quote string"
 	IDS_LARGE_PASTE_WARNING	"About to insert %I64u characters of text.\nThis may take a very long time!\nContinue?"
 	IDS_ITEMS_REPLACED_ITER "Replaced %d item(s) in %d iteration(s)."
-	IDS_ENC_REINTERPRET		"Reinterpret the current text as codepage %d?"
+	IDS_ENC_REINTERPRET		"Reinterpret the current text as Codepage %d?"
 	IDS_LFMT_MIXED			"This text has mixed line endings.\nYou can normalize the line endings in the File > Format menu."
 	IDS_LFMT_FIXED			"Mixed line endings have been normalized.\nYou can change this function in the File > Format menu."
-	IDS_SETDEF_FORMAT		"The default file format has been set as %s."
+	IDS_SETDEF_FORMAT_WARN	"Note that all files without a Byte-Order Mark will now be interpreted as %s!"
 	ID_LFMT_DOS				"DOS"
 	ID_LFMT_UNIX			"Unix"
 	ID_LFMT_MAC				"Mac"
 	ID_LFMT_MIXED			"MIXED"
 	ID_ENC_ANSI				"ANSI"
 	ID_ENC_UTF8				"UTF-8"
-	ID_ENC_UNICODE			"Unicode"
-	ID_ENC_UNICODE_BE		"Unicode BE"
-	ID_ENC_BINARY			"BIN"
-	ID_ENC_CUSTOM			"CP%d"
+	ID_ENC_UTF16			"Unicode"
+	ID_ENC_UTF16BE			"Unicode BE"
+	ID_ENC_BIN				"Binary"
+	ID_ENC_CUSTOM			"Codepage %d"
 	IDS_ENC_BAD				"This codepage is not available on your system."
 END
 

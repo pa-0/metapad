@@ -42,7 +42,7 @@
 
 
 void SetFileFormat(int nFormat) {
-	switch (nFormat) {
+/*	switch (nFormat) {
 	case FILE_FORMAT_DOS: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DOS_FILE, 0), 0); break;
 	case FILE_FORMAT_UNIX: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNIX_FILE, 0), 0); break;
 	case FILE_FORMAT_UTF8: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UTF8_FILE, 0), 0); break;
@@ -50,15 +50,14 @@ void SetFileFormat(int nFormat) {
 	case FILE_FORMAT_UNICODE: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNICODE_FILE, 0), 0); break;
 	case FILE_FORMAT_UNICODE_BE: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNICODE_BE_FILE, 0), 0); break;
 	case FILE_FORMAT_BINARY: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_BINARY_FILE, 0), 0); break;
-	}
+	}*/
 }
 
 void MakeNewFile(void) {
 	bLoading = TRUE;
-	SetFileFormat(options.nFormatIndex);
+	SetFileFormat(options.nFormat);
 	SetWindowText(client, _T(""));
 	bDirtyFile = FALSE;
-	bBinaryFile = FALSE;
 	bLoading = FALSE;
 	SwitchReadOnly(FALSE);
 	FREE(szFile);
@@ -66,9 +65,10 @@ void MakeNewFile(void) {
 	szCaptionFile[0] = _T('\0');
 	bDirtyShadow = bDirtyStatus = TRUE;
 	savedChars = 0;
-	savedFormat = (nEncodingType | ((bUnix ? 1 : 0) << 8) | ((bBinaryFile ? 1 : 0) << 9));
+	savedFormat = nFormat;
 	UpdateStatus(TRUE);
 	bLoading = FALSE;
+	//TODO
 }
 
 int FixShortFilename(LPCTSTR szSrc, TCHAR *szDest)
@@ -334,7 +334,7 @@ DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BO
 #endif
 	else if (!estBytes) estBytes = lstrlen(szBuffer);
 	chars = estBytes;
-	if (encoding == TYPE_UTF_16 || encoding == TYPE_UTF_16_BE) {
+/*	if (encoding == TYPE_UTF_16 || encoding == TYPE_UTF_16_BE) {
 		mul = 2;
 		bom = SIZEOFBOM_UTF_16;
 	} else if (encoding == TYPE_UTF_8) {
@@ -345,7 +345,7 @@ DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BO
 			estBytes = WideCharToMultiByte(CP_UTF8, 0, szBuffer, estBytes, NULL, 0, NULL, NULL);
 #endif
 		bom = SIZEOFBOM_UTF_8;
-	}
+	}*/
 #ifndef USE_RICH_EDIT
 	if (unix) {
 		if (!szBuffer) szBuffer = GetShadowBuffer(&estBytes);
@@ -493,6 +493,7 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 	//0123456
 	// _?*-+$
 	DWORD k, m = 1, len, alen, ilen, lf, lr, ct = 0, cf = 0, cg = 0, lg = 0, nglob[6] = {0}, cglob[6] = {0}, sglob[6], gu = 0;
+	WORD enc = (nFormat >> 31 ? ID_ENC_CUSTOM : (WORD)nFormat);
 	LPTSTR dst, odst, pd = NULL;
 	LPCTSTR *globs[6], *globe[6];
 	TCHAR gc;
@@ -565,7 +566,7 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 								pd += cg;
 							} else if (pbReplSpec[cf] == 6) {
 #ifdef UNICODE
-								if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE)
+								if (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE)
 									*pd++ = RAND()%0xffe0+0x20;
 								else
 #endif

@@ -129,7 +129,7 @@ void SaveOptions(void)
 //	writeSucceeded &= SaveOption(key, _T("nStatusFontWidth"), REG_DWORD, (LPBYTE)&options.nStatusFontWidth, sizeof(int));
 	writeSucceeded &= SaveOption(key, _T("nSelectionMarginWidth"), REG_DWORD, (LPBYTE)&options.nSelectionMarginWidth, sizeof(int));
 	writeSucceeded &= SaveOption(key, _T("nMaxMRU"), REG_DWORD, (LPBYTE)&options.nMaxMRU, sizeof(int));
-	writeSucceeded &= SaveOption(key, _T("nFormatIndex"), REG_DWORD, (LPBYTE)&options.nFormatIndex, sizeof(int));
+	writeSucceeded &= SaveOption(key, _T("nFormat"), REG_DWORD, (LPBYTE)&options.nFormat, sizeof(DWORD));
 	writeSucceeded &= SaveOption(key, _T("nTransparentPct"), REG_DWORD, (LPBYTE)&options.nTransparentPct, sizeof(int));
 	writeSucceeded &= SaveOption(key, _T("bNoCaptionDir"), REG_DWORD, (LPBYTE)&options.bNoCaptionDir, sizeof(BOOL));
 	writeSucceeded &= SaveOption(key, _T("bAutoIndent"), REG_DWORD, (LPBYTE)&options.bAutoIndent, sizeof(BOOL));
