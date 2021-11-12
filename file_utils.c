@@ -65,7 +65,7 @@ void MakeNewFile(void) {
 	SSTRCPYAO(szCaptionFile, GetString(IDS_NEW_FILE), 32, 8);
 	szCaptionFile[0] = _T('\0');
 	bDirtyShadow = bDirtyStatus = TRUE;
-	savedLen = 0;
+	savedChars = 0;
 	UpdateStatus(TRUE);
 	bLoading = FALSE;
 }
@@ -201,7 +201,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 			return _T("");
 		}
 		if (l + 9 > shadowAlloc || (line < 0 && shadowAlloc / 4 > l)) {
-			//printf("\nA!");
+			printf("\nA!");
 			shadowAlloc = ((l + 9) / 2) * 3;
 			if (szShadow) {
 				szShadow -= 8;
@@ -216,7 +216,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 		}
 		if (line >= 0) {
 			if (bDirtyShadow || shadowRngEnd != line) {
-				//printf("l");
+				printf("l");
 				shadowRngEnd = line;
 				*((LPWORD)szShadow) = (USHORT)(l + 1);
 				SendMessage(client, EM_GETLINE, (WPARAM)line, (LPARAM)(LPCTSTR)szShadow);
@@ -226,7 +226,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 			if (len) *len = l;
 			return szShadow;
 		} else {
-			//printf("G");
+			printf("G");
 #ifdef USE_RICH_EDIT
 			{
 				TEXTRANGE tr;
@@ -241,7 +241,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 			bDirtyShadow = FALSE;
 		}
 	}
-	//printf(".");
+	printf(".");
 	if (min < 0) min = 0;
 	if (max < 0) l = shadowLen;
 	else l = MIN((DWORD)(max-min), shadowLen);
@@ -320,32 +320,54 @@ DWORD GetCharIndex(DWORD col, LONG line, LONG cp, DWORD* lineLen, LONG* lineout,
  * If no text is given, the current file's size is calculated and the full buffer is optionally returned
  * 	if getting it was necessary in the calculation
  */
-DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BOOL inclBOM) {
+DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BOOL inclBOM, DWORD* numChars) {
 	LPCTSTR szBuffer = (szText ? *szText : NULL);
+	DWORD chars, mul = 1, bom = 0;
 #ifdef USE_RICH_EDIT
 	GETTEXTLENGTHEX gtl = {0};
 	if (!unix) gtl.flags = GTL_USECRLF;
+	unix = FALSE;
 	if (!szBuffer) estBytes = SendMessage(client, EM_GETTEXTLENGTHEX, &gtl, 0);
 #else
-	if (!szBuffer) estBytes = GetWindowTextLength(client);
+	if (!szBuffer && !unix) estBytes = GetWindowTextLength(client);
 #endif
 	else if (!estBytes) estBytes = lstrlen(szBuffer);
-	if (encoding == TYPE_UTF_16 || encoding == TYPE_UTF_16_BE)
-		estBytes = estBytes * 2 + (inclBOM ? SIZEOFBOM_UTF_16 : 0);
-	else if (encoding == TYPE_UTF_8) {
+	chars = estBytes;
+	if (encoding == TYPE_UTF_16 || encoding == TYPE_UTF_16_BE) {
+		mul = 2;
+		bom = SIZEOFBOM_UTF_16;
+	} else if (encoding == TYPE_UTF_8) {
 		if (!szBuffer) szBuffer = GetShadowBuffer(&estBytes);
+		chars = estBytes;
 		if (estBytes)
-			estBytes = WideCharToMultiByte(CP_UTF8, 0, szBuffer, estBytes, NULL, 0, NULL, NULL) + (inclBOM ? SIZEOFBOM_UTF_8 : 0);
+			estBytes = WideCharToMultiByte(CP_UTF8, 0, szBuffer, estBytes, NULL, 0, NULL, NULL);
+		bom = SIZEOFBOM_UTF_8;
 	}
 #ifndef USE_RICH_EDIT
 	if (unix) {
+		if (!szBuffer) szBuffer = GetShadowBuffer(&estBytes);
+		chars = estBytes;
 		for ( ; *szBuffer; szBuffer++)
 			if (*szBuffer == _T('\r'))
 				estBytes--;
 	}
 #endif
 	if (szText) *szText = szBuffer;
-	return estBytes;
+	if (numChars) *numChars = chars;
+	return estBytes * mul + (inclBOM ? bom : 0);;
+}
+
+DWORD GetTextChars(LPCTSTR szText, BOOL unix){
+	DWORD chars = 0;
+#ifdef USE_RICH_EDIT
+	GETTEXTLENGTHEX gtl = {0};
+	if (!unix) gtl.flags = GTL_USECRLF;
+	unix = FALSE;
+	if (!szText) return SendMessage(client, EM_GETTEXTLENGTHEX, &gtl, 0);
+#else
+	if (!szText) return GetWindowTextLength(client);
+#endif
+	else return lstrlen(szText);
 }
 
 
@@ -353,7 +375,7 @@ DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BO
 
 CHARRANGE DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWord, BOOL bCase, BOOL bFromTop, LPBYTE pbFindSpec) {
 	LONG lSize;
-	LPCTSTR szBuffer = GetShadowBuffer(NULL);
+	LPCTSTR szBuffer = GetShadowBuffer(&lSize);
 	LPCTSTR lpszStop, lpsz, lpfs = NULL, lpszFound = NULL;
 	DWORD cf = 0, nFindLen = lstrlen(szText), cg = 0, lg = 0, k, m = 1;
 	TCHAR gc;
@@ -361,7 +383,6 @@ CHARRANGE DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWho
 
 	r.cpMin = -1;
 	r.cpMax = -1;
-	lSize = GetWindowTextLength(client);
 	if (!szBuffer) {
 		ReportLastError();
 		return r;

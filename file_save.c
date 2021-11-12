@@ -231,9 +231,8 @@ BOOL SaveIfDirty(void)
 	if (bDirtyFile) {
 		TCHAR szBuffer[MAXFN+MAXSTRING];
 		if (!SCNUL(szFile)[0]) {
-			if (GetWindowTextLength(client) == 0) {
+			if (!GetWindowTextLength(client))
 				return TRUE;
-			}
 		}
 		wsprintf(szBuffer, GetString(IDS_DIRTYFILE), SCNUL8(szCaptionFile)+8);
 		switch (MessageBox(hwnd, szBuffer, STR_METAPAD, MB_ICONEXCLAMATION | MB_YESNOCANCEL)) {

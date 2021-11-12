@@ -577,19 +577,14 @@ void UpdateStatus(BOOL refresh)
 {
 	static TCHAR szPane[32];
 	static int nPaneSizes[NUMSTATPANES] = {0}, lastw = 0;
-	DWORD i, st, fLen;
+	int tpsz[NUMSTATPANES] = {0};
+	DWORD i, j, st, bytes, chars;
 	LONG lLine = -1, lLines, lCol;
-	BOOL full = TRUE;
+	BOOL full = TRUE, oldDirty = bDirtyFile;
 	CHARRANGE cr;
 	RECT rc;
-	LPCTSTR szBuf = NULL;
-	
-	
-	
-	LPTSTR szBuffer;
-
-	
-
+	LPCTSTR szBuf = NULL, szTmp;
+	LPBYTE pbTmp[32];
 
 	bDirtyStatus |= refresh;
 	KillTimer(hwnd, IDT_UPDATE);
@@ -600,124 +595,138 @@ void UpdateStatus(BOOL refresh)
 		full = FALSE;
 	}
 
-	SendMessage(status, WM_SETREDRAW, FALSE, 0);
+	if (status && bShowStatus)
+		SendMessage(status, WM_SETREDRAW, FALSE, 0);
 	if (full) {
 		if (bDirtyStatus || bDirtyFile){
-			fLen = CalcTextSize(&szBuf, 0, nEncodingType, bUnix, TRUE);
+			if (status && bShowStatus){
+				wsprintf(szPane, _T(" Bytes: %d "), bytes = CalcTextSize(&szBuf, 0, nEncodingType, bUnix, TRUE, &chars));
+				nPaneSizes[SBPANE_SIZE] = (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane));
+				SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_SIZE, (LPARAM)(LPTSTR)szPane);
+
+				nPaneSizes[SBPANE_TYPE] = 4 * options.nStatusFontWidth;
+				if (bBinaryFile) {
+					lstrcpy(szPane, _T("  BIN"));
+				} else if (nEncodingType == TYPE_UTF_8) {
+					lstrcpy(szPane, bUnix ? _T(" UTF-8 UNIX") : _T(" UTF-8"));
+					nPaneSizes[SBPANE_TYPE] = (bUnix ? 9 : 5) * options.nStatusFontWidth + 4;
+				} else if (nEncodingType == TYPE_UTF_16) {
+					lstrcpy(szPane, _T(" Unicode"));
+					nPaneSizes[SBPANE_TYPE] = 6 * options.nStatusFontWidth + 4;
+				} else if (nEncodingType == TYPE_UTF_16_BE) {
+					lstrcpy(szPane, _T(" Unicode BE"));
+					nPaneSizes[SBPANE_TYPE] = 8 * options.nStatusFontWidth + 4;
+				} else if (bUnix) {
+					lstrcpy(szPane, _T("UNIX"));
+				} else {
+					lstrcpy(szPane, _T(" DOS"));
+				}
+				SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_TYPE, (LPARAM)(LPTSTR)szPane);
+			} else
+				chars = GetTextChars(NULL, bUnix);
+
+			bDirtyFile = TRUE;
+			if (chars == savedChars && savedFormat == (nEncodingType | ((bUnix ? 1 : 0) << 8) | ((bBinaryFile ? 1 : 0) << 9))) {
+				if (!chars) bDirtyFile = FALSE;
+				else {
+					szBuf = 1;
+					j = 32 / sizeof(TCHAR);
+					memset(pbTmp, 0, sizeof(pbTmp));
+					szTmp = GetShadowRange(0, j, -1, &i);
+					if (!memcmp(szTmp, savedHead, i * sizeof(TCHAR))) {
+						memset(pbTmp, 0, sizeof(pbTmp));
+						szTmp = GetShadowRange(chars < j ? 0 : chars-j, chars, -1, &i);
+						if (!memcmp(szTmp, savedFoot, i * sizeof(TCHAR))) {
+							bDirtyFile = FALSE;
 
 
-			nPaneSizes[SBPANE_TYPE] = 4 * options.nStatusFontWidth;
-			if (bBinaryFile) {
-				lstrcpy(szPane, _T("  BIN"));
-			} else if (nEncodingType == TYPE_UTF_8) {
-				lstrcpy(szPane, bUnix ? _T(" UTF-8 UNIX") : _T(" UTF-8"));
-				nPaneSizes[SBPANE_TYPE] = (bUnix ? 9 : 5) * options.nStatusFontWidth + 4;
-			} else if (nEncodingType == TYPE_UTF_16) {
-				lstrcpy(szPane, _T(" Unicode"));
-				nPaneSizes[SBPANE_TYPE] = 6 * options.nStatusFontWidth + 4;
-			} else if (nEncodingType == TYPE_UTF_16_BE) {
-				lstrcpy(szPane, _T(" Unicode BE"));
-				nPaneSizes[SBPANE_TYPE] = 8 * options.nStatusFontWidth + 4;
-			} else if (bUnix) {
-				lstrcpy(szPane, _T("UNIX"));
-			} else {
-				lstrcpy(szPane, _T(" DOS"));
+						}
+					}
+				}
 			}
-			SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_TYPE, (LPARAM)(LPTSTR)szPane);
 
+			if ((szCaptionFile && !*szCaptionFile) || oldDirty != bDirtyFile)
+				UpdateCaption();
 
-		}
-
-		if (szCaptionFile && !*szCaptionFile)
-			UpdateCaption();
-		if (toolbar && bShowToolbar) {
-
-
-	#ifdef USE_RICH_EDIT
-			SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-	#else
-			SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-	#endif
-
-
-			SendMessage(toolbar, TB_CHECKBUTTON, (WPARAM)ID_EDIT_WORDWRAP, MAKELONG(bWordWrap, 0));
-			SendMessage(toolbar, TB_CHECKBUTTON, (WPARAM)ID_FONT_PRIMARY, MAKELONG(bPrimaryFont, 0));
-			SendMessage(toolbar, TB_CHECKBUTTON, (WPARAM)ID_ALWAYSONTOP, MAKELONG(bAlwaysOnTop, 0));
-			SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_RELOAD_CURRENT, MAKELONG(SCNUL(szFile)[0] != _T('\0'), 0));
-			SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_CUT, MAKELONG((cr.cpMin != cr.cpMax), 0));
-			SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_COPY, MAKELONG((cr.cpMin != cr.cpMax), 0));
-			SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_UNDO, MAKELONG(SendMessage(client, EM_CANUNDO, 0, 0), 0));
-			SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_PASTE, MAKELONG(IsClipboardFormatAvailable(_CF_TEXT), 0));
-	#ifdef USE_RICH_EDIT
-			SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_REDO, MAKELONG(SendMessage(client, EM_CANREDO, 0, 0), 0));
-	#endif
+			if (toolbar && bShowToolbar) {
+				SendMessage(toolbar, TB_CHECKBUTTON, (WPARAM)ID_EDIT_WORDWRAP, MAKELONG(bWordWrap, 0));
+				SendMessage(toolbar, TB_CHECKBUTTON, (WPARAM)ID_FONT_PRIMARY, MAKELONG(bPrimaryFont, 0));
+				SendMessage(toolbar, TB_CHECKBUTTON, (WPARAM)ID_ALWAYSONTOP, MAKELONG(bAlwaysOnTop, 0));
+				SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_RELOAD_CURRENT, MAKELONG(SCNUL(szFile)[0] != _T('\0'), 0));
+				SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_UNDO, MAKELONG(SendMessage(client, EM_CANUNDO, 0, 0), 0));
+#ifdef USE_RICH_EDIT
+				SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_REDO, MAKELONG(SendMessage(client, EM_CANREDO, 0, 0), 0));
+#endif
+			}
 		}
 	}
-
 	if (bDirtyStatus) {
 #ifdef USE_RICH_EDIT
 		if (bInsertMode) 	lstrcpy(szPane, _T(" INS"));
 		else 				lstrcpy(szPane, _T("OVR"));
-		nPaneSizes[SBPANE_INS] = nPaneSizes[SBPANE_INS - 1] + 4 * options.nStatusFontWidth - 3;
+		nPaneSizes[SBPANE_INS] = 4 * options.nStatusFontWidth - 3;
 		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_INS, (LPARAM)(LPTSTR)szPane);
 #else
-		nPaneSizes[SBPANE_INS] = nPaneSizes[SBPANE_INS - 1];
+		nPaneSizes[SBPANE_INS] = 0;
 #endif
 	}
 
-
-
-
-
-	if (status == NULL || !bShowStatus)
-		return;
-
-
-
-	lLines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
-
-
-	wsprintf(szPane, _T(" Bytes: %d "), CalculateFileSize());
-	nPaneSizes[SBPANE_INS] = nPaneSizes[SBPANE_INS - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane));
-	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_INS, (LPARAM)(LPTSTR)szPane);
-	nPaneSizes[SBPANE_SIZE] = nPaneSizes[SBPANE_SIZE - 1];
-
-
+	if ((status && bShowStatus) || (toolbar && bShowToolbar)){
 #ifdef USE_RICH_EDIT
-	SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-	lLine = SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)cr.cpMax);
+		SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
 #else
-	SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-	lLine = SendMessage(client, EM_LINEFROMCHAR, (WPARAM)cr.cpMax, 0);
+		SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
 #endif
-	wsprintf(szPane, _T(" Line: %d/%d"), lLine+1, lLines);
-	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_LINE, (LPARAM)(LPTSTR)szPane);
+	}
+	if (full) {
+		if (toolbar && bShowToolbar) {
+			SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_CUT, MAKELONG((cr.cpMin != cr.cpMax), 0));
+			SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_COPY, MAKELONG((cr.cpMin != cr.cpMax), 0));
+		}
+	}
+	if (toolbar && bShowToolbar) {
+		SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_PASTE, MAKELONG(IsClipboardFormatAvailable(_CF_TEXT), 0));
+	}
+	if (status && bShowStatus) {
+		lLines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
+		lCol = GetColNum(-1, -1, NULL, &lLine, NULL);
+		wsprintf(szPane, _T(" Line: %d/%d"), lLine+1, lLines);
+		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_LINE, (LPARAM)(LPTSTR)szPane);
+		nPaneSizes[SBPANE_LINE] = (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
+		wsprintf(szPane, _T(" Col: %d"), lCol);
+		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_COL, (LPARAM)(LPTSTR)szPane);
+		nPaneSizes[SBPANE_COL] = (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
 
-	nPaneSizes[SBPANE_LINE] = nPaneSizes[SBPANE_LINE - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
+		if (cr.cpMax > cr.cpMin) {
+			*szPane = 0;
+			if (full) {
+				szBuf = GetShadowSelection(&chars, NULL);
+				wsprintf(szPane, _T("Bytes: %d"), CalcTextSize(&szBuf, chars, nEncodingType, bUnix, FALSE, NULL));
+			}
+			i = GetColNum(cr.cpMin, -1, NULL, &lLine, NULL);
+			j = GetColNum(cr.cpMax, -1, NULL, &lLines, NULL);
+			wsprintf(szStatusMessage, _T(" Selected %d:%d  ->  %d:%d   %s"), lLine+1, i, lLines+1, j, szPane);
+		}
+		nPaneSizes[SBPANE_MESSAGE] = (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szStatusMessage) + 5);
+		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_MESSAGE | SBT_NOBORDERS, (LPARAM)szStatusMessage);
 
-	wsprintf(szPane, _T(" Col: %d"), GetColNum(cr.cpMax, lLine, NULL, NULL, NULL));
-	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_COL, (LPARAM)(LPTSTR)szPane);
-	nPaneSizes[SBPANE_COL] = nPaneSizes[SBPANE_COL - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szPane) + 2);
-	
-	szBuffer = szStatusMessage;
-	nPaneSizes[SBPANE_MESSAGE] = nPaneSizes[SBPANE_MESSAGE - 1] + (int)((options.nStatusFontWidth/STATUS_FONT_CONST) * lstrlen(szBuffer) + 5);
-	SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_MESSAGE | SBT_NOBORDERS, (LPARAM)szBuffer);
-
-	SendMessage(status, SB_SETPARTS, NUMSTATPANES, (DWORD_PTR)(LPINT)nPaneSizes);
-	SendMessage(status, WM_SETREDRAW, TRUE, 0);
-	rc.top = 0; rc.left = 0; rc.bottom = 32; rc.right = MAX(nPaneSizes[SBPANE_MESSAGE], lastw);
-	if (lastw > nPaneSizes[SBPANE_MESSAGE]) lastw-=2;
-	else lastw = nPaneSizes[SBPANE_MESSAGE];
-	InvalidateRect(status, &rc, TRUE);
-
-
+		for (i = 0; i < NUMSTATPANES; i++)
+			tpsz[i] = (i ? tpsz[i-1] : 0) + nPaneSizes[i];
+		rc.top = 0; rc.left = 0; rc.bottom = 32; rc.right = MAX(tpsz[NUMSTATPANES - 1], lastw);
+		if (lastw > tpsz[NUMSTATPANES - 1]) lastw-=2;
+		else lastw = tpsz[NUMSTATPANES - 1];
+		SendMessage(status, SB_SETPARTS, NUMSTATPANES, (DWORD_PTR)(LPINT)tpsz);
+		SendMessage(status, WM_SETREDRAW, TRUE, 0);
+		InvalidateRect(status, &rc, TRUE);
+	}
 
 	if (full){
+		bDirtyStatus = FALSE;
 		updateTime = (i = GetTickCount()) - st;
 		updateThrottle = i + updateTime / 2;
 		//printf("\n%d", (int)(updateTime / 2));
 	} else
-		SetTimer(hwnd, IDT_UPDATE, 64, NULL);*/
+		SetTimer(hwnd, IDT_UPDATE, 64, NULL);
 }
 
 LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1491,6 +1500,7 @@ void PrintContents(void)
 	LONG lTextPrinted;
 	int i;
 	CHARRANGE cr;
+	GETTEXTLENGTHEX gtl = {0};
 
 	ZeroMemory(&pd, sizeof(PRINTDLG));
 	pd.lStructSize = sizeof(PRINTDLG);
@@ -1563,8 +1573,7 @@ void PrintContents(void)
 	di.lpszDocName = SCNUL8(szCaptionFile)+8;
 	di.lpszOutput = NULL;
 
-	lTextLength = GetWindowTextLength(client) - (SendMessage(client, EM_GETLINECOUNT, 0, 0) - 1);
-
+	lTextLength = SendMessage(client, EM_GETTEXTLENGTHEX, &gtl, 0);
 	for (i = 0; i < pd.nCopies; ++i) {
 
 		if (!(pd.Flags & PD_SELECTION)) {
@@ -3895,8 +3904,6 @@ endinsertfile:
 					break;
 				}
 
-				GetWindowText(hwndMain, szTmp, GetWindowTextLength(hwndMain) + 1);
-
 				SwitchReadOnly(bReadOnly);
 				UpdateStatus(FALSE);
 				UpdateCaption();
@@ -4954,7 +4961,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	g_bIniMode = FALSE;
 	updateThrottle = updateTime = 0;
 	savedFormat = 0;
-	savedLen = 0;
+	savedChars = 0;
 	fontmainHt = -3;
 	ZeroMemory(FindArray, sizeof(FindArray));
 	ZeroMemory(ReplaceArray, sizeof(ReplaceArray));
