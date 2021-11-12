@@ -86,8 +86,7 @@ CAPTION "metapad"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,53,56,44,15
-    EDITTEXT        IDC_EDIT_URL,43,17,102,10,ES_CENTER | ES_NOHIDESEL |
-                    ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        IDC_EDIT_URL,43,17,102,10,ES_CENTER | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
     RTEXT           "",IDC_STATICX,41,7,103,8
     ICON            IDI_PAD,IDC_DLGICON,7,7,20,20,SS_NOTIFY
     CTEXT           "",IDC_STATIC_COPYRIGHT,7,34,137,8
@@ -110,9 +109,9 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Enter codepage number:"
 FONT 8, "MS Sans Serif"
 BEGIN
-    EDITTEXT        IDC_DATA,7,21,156,12,ES_AUTOHSCROLL | ES_NUMBER
-    DEFPUSHBUTTON   "OK",IDOK,87,7,35,14
-    PUSHBUTTON      "Cancel",IDCANCEL,87,24,35,14
+    COMBOBOX        IDC_DATA,7,21,156,12,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,171,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,171,24,50,14
 END
 
 IDD_REPLACE DIALOG DISCARDABLE  30, 18, 236, 96
@@ -121,24 +120,17 @@ CAPTION "Replace"
 FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Fi&nd what:",IDC_STATIC,7,9,45,8
-    COMBOBOX        ID_DROP_FIND,54,7,105,112,CBS_DROPDOWN | CBS_AUTOHSCROLL |
-                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        ID_DROP_FIND,54,7,105,112,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Re&place with:",IDC_STATIC,7,26,45,8
-    COMBOBOX        ID_DROP_REPLACE,54,24,105,111,CBS_DROPDOWN |
-                    CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        ID_DROP_REPLACE,54,24,105,111,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      ">",IDC_ESCAPE,162,7,11,12,BS_BITMAP | BS_NOTIFY
     PUSHBUTTON      ">",IDC_ESCAPE2,162,24,11,12,BS_BITMAP | BS_NOTIFY
-    CONTROL         "Match &whole word only",1040,"Button",BS_AUTOCHECKBOX |
-                    WS_GROUP | WS_TABSTOP,7,46,87,12
-    CONTROL         "Match &case",1041,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    7,62,59,12
-    CONTROL         "C&lose after replace all",IDC_CLOSE_AFTER_REPLACE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,80,92,8
+    CONTROL         "Match &whole word only",1040,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,7,46,87,12
+    CONTROL         "Match &case",1041,"Button",BS_AUTOCHECKBOX | WS_TABSTOP, 7,62,59,12
+    CONTROL         "C&lose after replace all",IDC_CLOSE_AFTER_REPLACE,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,7,80,92,8
     GROUPBOX        "Replace all in",IDC_STATIC,108,47,65,36
-    CONTROL         "&Selection",IDC_RADIO_SELECTION,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,117,58,44,9
-    CONTROL         "Wh&ole file",IDC_RADIO_WHOLE,"Button",
-                    BS_AUTORADIOBUTTON,117,69,44,9
+    CONTROL         "&Selection",IDC_RADIO_SELECTION,"Button", BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,117,58,44,9
+    CONTROL         "Wh&ole file",IDC_RADIO_WHOLE,"Button", BS_AUTORADIOBUTTON,117,69,44,9
     DEFPUSHBUTTON   "&Find Next",IDOK,179,6,50,14,WS_GROUP | WS_DISABLED
     PUSHBUTTON      "&Replace",1024,179,24,50,14,WS_DISABLED
     PUSHBUTTON      "Replace &All",1025,179,42,50,14,WS_DISABLED
@@ -153,18 +145,13 @@ CAPTION "Find"
 FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Fi&nd what:",-1,7,9,37,8
-    COMBOBOX        ID_DROP_FIND,47,7,113,117,CBS_DROPDOWN | CBS_AUTOHSCROLL |
-                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        ID_DROP_FIND,47,7,113,117,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      ">",IDC_ESCAPE,163,7,11,12,BS_BITMAP | BS_NOTIFY
-    CONTROL         "Match &whole word only",1040,"Button",BS_AUTOCHECKBOX |
-                    WS_GROUP | WS_TABSTOP,7,26,92,8
-    CONTROL         "Match &case",1041,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    7,38,92,8
-    CONTROL         "C&lose dialog after find",IDC_CLOSE_AFTER_FIND,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,50,92,8
+    CONTROL         "Match &whole word only",1040,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,7,26,92,8
+    CONTROL         "Match &case",1041,"Button",BS_AUTOCHECKBOX | WS_TABSTOP, 7,38,92,8
+    CONTROL         "C&lose dialog after find",IDC_CLOSE_AFTER_FIND,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,7,50,92,8
     GROUPBOX        "Direction",1072,102,24,71,28,WS_GROUP
-    CONTROL         "&Up",1056,"Button",BS_AUTORADIOBUTTON | WS_GROUP,108,35,
-                    25,12
+    CONTROL         "&Up",1056,"Button",BS_AUTORADIOBUTTON | WS_GROUP,108,35,25,12
     CONTROL         "&Down",1057,"Button",BS_AUTORADIOBUTTON,136,35,35,12
     DEFPUSHBUTTON   "&Find Next",IDOK,179,7,50,14,WS_GROUP | WS_DISABLED
     PUSHBUTTON      "Close",IDCANCEL,179,26,50,14
@@ -177,14 +164,12 @@ CAPTION "Insert"
 FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "&Text:",IDC_STATIC,7,9,32,8
-    COMBOBOX        ID_DROP_INSERT,37,7,123,117,CBS_DROPDOWN | CBS_AUTOHSCROLL |
-                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        ID_DROP_INSERT,37,7,123,117,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      ">",IDC_ESCAPE,163,7,11,12,BS_BITMAP | BS_NOTIFY
     LTEXT           "&Repeat:",IDC_STATIC,7,26,45,8
     EDITTEXT        IDC_NUM,37,24,32,12,ES_AUTOHSCROLL | ES_NUMBER
 	LTEXT           "time(s)",IDC_STATIC,72,26,32,8
-    CONTROL         "C&lose dialog after insert",IDC_CLOSE_AFTER_INSERT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,44,92,8
+    CONTROL         "C&lose dialog after insert",IDC_CLOSE_AFTER_INSERT,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,7,44,92,8
     DEFPUSHBUTTON   "&Insert",IDOK,179,7,50,14,WS_GROUP | WS_DISABLED
     PUSHBUTTON      "Close",IDCANCEL,179,26,50,14
 END
@@ -194,26 +179,16 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "General"
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         "Save &window placement",IDC_CHECK_SAVEWINDOWPLACEMENT,
-                    "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,7,7,103,
-                    8
-    CONTROL         "Save options &menu states",IDC_CHECK_SAVEMENUSETTINGS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,19,104,8
-    CONTROL         "&Hide directory in caption",IDC_NO_CAPTION_DIR,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,32,104,8
-    CONTROL         "&Enable quick exit (Esc key)",IDC_CHECK_QUICKEXIT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,45,104,8
-    CONTROL         "Aut&o-search at end of file ",IDC_FIND_AUTO_WRAP,"Button",
-                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,58,98,8
-    CONTROL         "Remem&ber last folder",IDC_CHECK_SAVEDIRECTORY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,7,98,8
-    CONTROL         "A&uto-indent text",IDC_AUTO_INDENT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,19,98,8
-    CONTROL         "&Insert tabs as spaces",IDC_INSERT_SPACES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,31,98,8
+    CONTROL         "Save &window placement",IDC_CHECK_SAVEWINDOWPLACEMENT, "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,7,7,103, 8
+    CONTROL         "Save options &menu states",IDC_CHECK_SAVEMENUSETTINGS, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,19,104,8
+    CONTROL         "&Hide directory in caption",IDC_NO_CAPTION_DIR,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,7,32,104,8
+    CONTROL         "&Enable quick exit (Esc key)",IDC_CHECK_QUICKEXIT, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,45,104,8
+    CONTROL         "Aut&o-search at end of file ",IDC_FIND_AUTO_WRAP,"Button", BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,58,98,8
+    CONTROL         "Remem&ber last folder",IDC_CHECK_SAVEDIRECTORY,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,7,98,8
+    CONTROL         "A&uto-indent text",IDC_AUTO_INDENT,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,19,98,8
+    CONTROL         "&Insert tabs as spaces",IDC_INSERT_SPACES,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,31,98,8
     LTEXT           "&Tab size:",IDC_STATIC,119,45,33,8
-    EDITTEXT        IDC_TAB_STOP,160,43,18,12,ES_CENTER | ES_AUTOHSCROLL |
-                    ES_NUMBER
+    EDITTEXT        IDC_TAB_STOP,160,43,18,12,ES_CENTER | ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "&Quote with:",IDC_STATIC,119,58,41,8
     EDITTEXT        IDC_EDIT_QUOTE,160,57,18,12,ES_AUTOHSCROLL
     LTEXT           "&Primary external viewer:",IDC_STATIC,7,72,78,8
@@ -227,15 +202,10 @@ BEGIN
     LTEXT           "A&rgs:",IDC_STATIC,168,113,16,8
     EDITTEXT        IDC_EDIT_ARGS2,189,111,29,12,ES_AUTOHSCROLL
     LTEXT           "When launching viewers:",IDC_STATIC,7,128,104,9
-    CONTROL         "Prompt to sa&ve",IDC_LAUNCH_SAVE0,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,15,139,61,10
-    CONTROL         "Automatica&lly save",IDC_LAUNCH_SAVE1,"Button",
-                    BS_AUTORADIOBUTTON,83,139,73,10
-    CONTROL         "Do&n't save",IDC_LAUNCH_SAVE2,"Button",
-                    BS_AUTORADIOBUTTON,161,139,51,10
-    CONTROL         "E&xit metapad after viewer is launched",
-                    IDC_CHECK_LAUNCH_CLOSE,"Button",BS_AUTOCHECKBOX |
-                    WS_GROUP | WS_TABSTOP,15,151,138,9
+    CONTROL         "Prompt to sa&ve",IDC_LAUNCH_SAVE0,"Button", BS_AUTORADIOBUTTON | WS_GROUP,15,139,61,10
+    CONTROL         "Automatica&lly save",IDC_LAUNCH_SAVE1,"Button", BS_AUTORADIOBUTTON,83,139,73,10
+    CONTROL         "Do&n't save",IDC_LAUNCH_SAVE2,"Button", BS_AUTORADIOBUTTON,161,139,51,10
+    CONTROL         "E&xit metapad after viewer is launched", IDC_CHECK_LAUNCH_CLOSE,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,15,151,138,9
 END
 
 IDD_PROPPAGE_VIEW DIALOGEX 0, 0, 225, 167
@@ -244,44 +214,29 @@ CAPTION "View"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Primary font",IDC_STATIC,7,7,101,102,WS_GROUP
-    CONTROL         "S&ystem fixed width",IDC_FONT_PRIMARY,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,16,19,77,10
-    CONTROL         "&Custom:",IDC_FONT_PRIMARY_2,"Button",
-                    BS_AUTORADIOBUTTON,16,30,77,10
+    CONTROL         "S&ystem fixed width",IDC_FONT_PRIMARY,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,19,77,10
+    CONTROL         "&Custom:",IDC_FONT_PRIMARY_2,"Button", BS_AUTORADIOBUTTON,16,30,77,10
     PUSHBUTTON      "Font &1",IDC_BTN_FONT1,16,42,83,14
-    CONTROL         "&Use system colours",IDC_SYSTEM_COLOURS,"Button",
-                    BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,16,62,76,9
+    CONTROL         "&Use system colours",IDC_SYSTEM_COLOURS,"Button", BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,16,62,76,9
     LTEXT           "Window colour:",IDC_STAT_WIND,16,76,50,9
-    CONTROL         "window",IDC_COLOUR_BACK,"Button",BS_OWNERDRAW,74,75,26,
-                    11,WS_EX_STATICEDGE
+    CONTROL         "window",IDC_COLOUR_BACK,"Button",BS_OWNERDRAW,74,75,26,11,WS_EX_STATICEDGE
     LTEXT           "Font colour:",IDC_STAT_FONT,16,92,45,9
-    CONTROL         "font",IDC_COLOUR_FONT,"Button",BS_OWNERDRAW,74,91,26,
-                    11,WS_EX_STATICEDGE
+    CONTROL         "font",IDC_COLOUR_FONT,"Button",BS_OWNERDRAW,74,91,26,11,WS_EX_STATICEDGE
     GROUPBOX        "Secondary font",IDC_STATIC,117,7,101,102,WS_GROUP
-    CONTROL         "ANSI fi&xed width",IDC_FONT_SECONDARY,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,126,19,75,10
-    CONTROL         "Cust&om:",IDC_FONT_SECONDARY_2,"Button",
-                    BS_AUTORADIOBUTTON,126,30,75,10
+    CONTROL         "ANSI fi&xed width",IDC_FONT_SECONDARY,"Button", BS_AUTORADIOBUTTON | WS_GROUP,126,19,75,10
+    CONTROL         "Cust&om:",IDC_FONT_SECONDARY_2,"Button", BS_AUTORADIOBUTTON,126,30,75,10
     PUSHBUTTON      "Font &2",IDC_BTN_FONT2,126,42,83,14
-    CONTROL         "Us&e system colours",IDC_SYSTEM_COLOURS2,"Button",
-                    BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,126,62,76,9
+    CONTROL         "Us&e system colours",IDC_SYSTEM_COLOURS2,"Button", BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,126,62,76,9
     LTEXT           "Window colour:",IDC_STAT_WIND2,126,76,50,9
-    CONTROL         "window",IDC_COLOUR_BACK2,"Button",BS_OWNERDRAW,183,75,
-                    26,11,WS_EX_STATICEDGE
+    CONTROL         "window",IDC_COLOUR_BACK2,"Button",BS_OWNERDRAW,183,75,26,11,WS_EX_STATICEDGE
     LTEXT           "Font colour:",IDC_STAT_FONT2,126,92,45,9
-    CONTROL         "font",IDC_COLOUR_FONT2,"Button",BS_OWNERDRAW,183,91,26,
-                    11,WS_EX_STATICEDGE
+    CONTROL         "font",IDC_COLOUR_FONT2,"Button",BS_OWNERDRAW,183,91,26,11,WS_EX_STATICEDGE
     GROUPBOX        "Window",IDC_STATIC,7,113,211,47
     LTEXT           "&Selection margin width:",IDC_STATIC,15,128,82,16
-    EDITTEXT        IDC_EDIT_SM_WIDTH,94,127,24,12,ES_CENTER |
-                    ES_AUTOHSCROLL
-    LTEXT           "&Transparency %:",IDC_STAT_TRANS,129,
-                    128,58,16
-    EDITTEXT        IDC_EDIT_TRANSPARENT,185,127,24,12,ES_CENTER |
-                    ES_AUTOHSCROLL
-    CONTROL         "Use def&ault toolbar style",
-                    IDC_FLAT_TOOLBAR,"Button",BS_AUTOCHECKBOX | BS_MULTILINE |
-                    WS_TABSTOP,16,143,176,9
+    EDITTEXT        IDC_EDIT_SM_WIDTH,94,127,24,12,ES_CENTER | ES_AUTOHSCROLL
+    LTEXT           "&Transparency %:",IDC_STAT_TRANS,129, 128,58,16
+    EDITTEXT        IDC_EDIT_TRANSPARENT,185,127,24,12,ES_CENTER | ES_AUTOHSCROLL
+    CONTROL         "Use def&ault toolbar style", IDC_FLAT_TOOLBAR,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,16,143,176,9
 END
 
 #ifdef USE_RICH_EDIT
@@ -294,49 +249,29 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Advanced"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    CONTROL         "&Separate recent files menu",IDC_RECENT,"Button",
-                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,7,7,107,8
-    CONTROL         "&Enable read only menu item",IDC_READONLY_MENU,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,19,107,8
-    CONTROL         "F&ind/replace use current font",IDC_CURRENT_FIND_FONT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,32,107,8
-    CONTROL         "&Context menu moves cursor",IDC_CONTEXT_CURSOR,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,45,107,8
-    CONTROL         "Disa&ble favorites menu",IDC_NO_FAVES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,58,107,8
-    CONTROL         "H&yperlinks require doubleclick",IDC_LINK_DC,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,71,107,8
-    CONTROL         "Su&ppress undo buffer prompt",IDC_SUPPRESS_UNDO_PROMPT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,84,107,8
-    CONTROL         "Hide scro&llbars when possible",IDC_HIDE_SCROLLBARS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,97,107,8
-    CONTROL         "Use fi&xed window position:",IDC_STICKY_WINDOW,"Button",
-                    BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,7,112,107,8
-    CONTROL         "Hide &go to offset",IDC_GOTO_OFFSET,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,7,99,8
-    CONTROL         "Disable smart &home",IDC_SMARTHOME,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,19,99,8
-    CONTROL         "Don't a&uto-save extensions",IDC_NO_SAVE_EXTENSIONS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,32,99,8
-    CONTROL         "Skip load &warning prompts",IDC_PROMPT_BINARY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,45,99,8
-    CONTROL         "Don't insert &time with date",IDC_INSERT_TIME,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,58,99,8
-    CONTROL         "Pri&nt using secondary font",IDC_SECONDARY_PRINT_FONT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,71,99,8
-    CONTROL         "Don't s&ave find history",IDC_NO_SAVE_HISTORY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,84,99,8
-    CONTROL         "D&on't auto-select on find",IDC_NO_FIND_SELECT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,97,99,8
+    CONTROL         "&Separate recent files menu",IDC_RECENT,"Button", BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,7,7,107,8
+    CONTROL         "&Enable read only menu item",IDC_READONLY_MENU,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,7,19,107,8
+    CONTROL         "F&ind/replace use current font",IDC_CURRENT_FIND_FONT, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,32,107,8
+    CONTROL         "&Context menu moves cursor",IDC_CONTEXT_CURSOR,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,7,45,107,8
+    CONTROL         "Disa&ble favorites menu",IDC_NO_FAVES,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,7,58,107,8
+    CONTROL         "H&yperlinks require doubleclick",IDC_LINK_DC,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,7,71,107,8
+    CONTROL         "Su&ppress undo buffer prompt",IDC_SUPPRESS_UNDO_PROMPT, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,84,107,8
+    CONTROL         "Hide scro&llbars when possible",IDC_HIDE_SCROLLBARS, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,97,107,8
+    CONTROL         "Use fi&xed window position:",IDC_STICKY_WINDOW,"Button", BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,7,112,107,8
+    CONTROL         "Hide &go to offset",IDC_GOTO_OFFSET,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,7,99,8
+    CONTROL         "Disable smart &home",IDC_SMARTHOME,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,19,99,8
+    CONTROL         "Don't a&uto-save extensions",IDC_NO_SAVE_EXTENSIONS, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,32,99,8
+    CONTROL         "Skip load &warning prompts",IDC_PROMPT_BINARY,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,45,99,8
+    CONTROL         "Don't insert &time with date",IDC_INSERT_TIME,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,58,99,8
+    CONTROL         "Pri&nt using secondary font",IDC_SECONDARY_PRINT_FONT, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,71,99,8
+    CONTROL         "Don't s&ave find history",IDC_NO_SAVE_HISTORY,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,84,99,8
+    CONTROL         "D&on't auto-select on find",IDC_NO_FIND_SELECT,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,97,99,8
     PUSHBUTTON      "Sa&ve Window Position",IDC_BUTTON_STICK,119,111,99,13
-    PUSHBUTTON      "Clear &Recent Files...",IDC_BUTTON_CLEAR_RECENT,7,127,
-                    83,14
-    PUSHBUTTON      "Clear &Find History...",IDC_BUTTON_CLEAR_FIND,7,146,83,
-                    14
+    PUSHBUTTON      "Clear &Recent Files...",IDC_BUTTON_CLEAR_RECENT,7,127,83,14
+    PUSHBUTTON      "Clear &Find History...",IDC_BUTTON_CLEAR_FIND,7,146,83,14
     LTEXT           "Recent files to re&member:",IDC_STATIC,102,129,82,8
-    EDITTEXT        IDC_EDIT_MAX_MRU,194,127,24,12,ES_CENTER |
-                    ES_AUTOHSCROLL | ES_NUMBER
-    PUSHBUTTON      "Set &Default File Format...",IDC_BUTTON_SAVEFORMAT,119,111,99,13
+    EDITTEXT        IDC_EDIT_MAX_MRU,194,127,24,12,ES_CENTER | ES_AUTOHSCROLL | ES_NUMBER
+	PUSHBUTTON      "Set &Default File Format...  ",IDC_BUTTON_FORMAT,119,146,99,14,BS_NOTIFY|BS_RIGHT|BS_FLAT
 END
 #else
 #if defined(APSTUDIO_INVOKED)
@@ -344,51 +279,32 @@ IDD_PROPPAGE_A1_LE$(NO_RICH_EDIT) DIALOGEX 0, 0, 225, 167
 #else
 IDD_PROPPAGE_A1_LE DIALOGEX 0, 0, 225, 167
 #endif
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+//STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Advanced"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    CONTROL         "&Separate recent files menu",IDC_RECENT,"Button",
-                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,7,7,107,8
-    CONTROL         "&Enable read only menu item",IDC_READONLY_MENU,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,19,107,8
-    CONTROL         "F&ind/replace use current font",IDC_CURRENT_FIND_FONT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,32,107,8
-    CONTROL         "&Context menu moves cursor",IDC_CONTEXT_CURSOR,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,45,107,8
-    CONTROL         "Disa&ble favorites menu",IDC_NO_FAVES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,58,107,8
-    CONTROL         "&Launch viewer for large files",IDC_ALWAYS_LAUNCH,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,71,107,8
-    CONTROL         "Use default &printer font",IDC_DEFAULT_PRINT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,84,107,8
-    CONTROL         "Use fi&xed window position:",IDC_STICKY_WINDOW,"Button",
-                    BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,7,112,99,8
-    CONTROL         "Hide &go to offset",IDC_GOTO_OFFSET,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,7,99,8
-    CONTROL         "Disable smart &home",IDC_SMARTHOME,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,19,99,8
-    CONTROL         "Don't a&uto-save extensions",IDC_NO_SAVE_EXTENSIONS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,32,99,8
-    CONTROL         "Skip load &warning prompts",IDC_PROMPT_BINARY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,45,99,8
-    CONTROL         "Don't insert &time with date",IDC_INSERT_TIME,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,58,99,8
-    CONTROL         "Pri&nt using secondary font",IDC_SECONDARY_PRINT_FONT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,71,99,8
-    CONTROL         "Don't s&ave find history",IDC_NO_SAVE_HISTORY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,84,99,8
-    CONTROL         "D&on't auto-select on find",IDC_NO_FIND_SELECT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,97,99,8
+    CONTROL         "&Separate recent files menu",IDC_RECENT,"Button", BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,7,7,107,8
+    CONTROL         "&Enable read only menu item",IDC_READONLY_MENU,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,7,19,107,8
+    CONTROL         "F&ind/replace use current font",IDC_CURRENT_FIND_FONT, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,32,107,8
+    CONTROL         "&Context menu moves cursor",IDC_CONTEXT_CURSOR,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,7,45,107,8
+    CONTROL         "Disa&ble favorites menu",IDC_NO_FAVES,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,7,58,107,8
+    CONTROL         "&Launch viewer for large files",IDC_ALWAYS_LAUNCH, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,71,107,8
+    CONTROL         "Use default &printer font",IDC_DEFAULT_PRINT,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,7,84,107,8
+    CONTROL         "Use fi&xed window position:",IDC_STICKY_WINDOW,"Button", BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,7,112,99,8
+    CONTROL         "Hide &go to offset",IDC_GOTO_OFFSET,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,7,99,8
+    CONTROL         "Disable smart &home",IDC_SMARTHOME,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,19,99,8
+    CONTROL         "Don't a&uto-save extensions",IDC_NO_SAVE_EXTENSIONS, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,32,99,8
+    CONTROL         "Skip load &warning prompts",IDC_PROMPT_BINARY,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,45,99,8
+    CONTROL         "Don't insert &time with date",IDC_INSERT_TIME,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,58,99,8
+    CONTROL         "Pri&nt using secondary font",IDC_SECONDARY_PRINT_FONT, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,71,99,8
+    CONTROL         "Don't s&ave find history",IDC_NO_SAVE_HISTORY,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,84,99,8
+    CONTROL         "D&on't auto-select on find",IDC_NO_FIND_SELECT,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,119,97,99,8
     PUSHBUTTON      "Sa&ve Window Position",IDC_BUTTON_STICK,119,111,99,13
-    PUSHBUTTON      "Clear &Recent Files...",IDC_BUTTON_CLEAR_RECENT,7,127,
-                    83,14
-    PUSHBUTTON      "Clear &Find History...",IDC_BUTTON_CLEAR_FIND,7,146,83,
-                    14
+    PUSHBUTTON      "Clear &Recent Files...",IDC_BUTTON_CLEAR_RECENT,7,127,83,14
+    PUSHBUTTON      "Clear &Find History...",IDC_BUTTON_CLEAR_FIND,7,146,83,14
     LTEXT           "Recent files to re&member:",IDC_STATIC,102,129,82,8
-    EDITTEXT        IDC_EDIT_MAX_MRU,194,127,24,12,ES_CENTER |
-                    ES_AUTOHSCROLL | ES_NUMBER
-    PUSHBUTTON      "Set &Default File Format...",IDC_BUTTON_SAVEFORMAT,119,111,99,13
+    EDITTEXT        IDC_EDIT_MAX_MRU,194,127,24,12,ES_CENTER | ES_AUTOHSCROLL | ES_NUMBER
+	PUSHBUTTON      "Set &Default File Format...  ",IDC_BUTTON_FORMAT,119,146,99,14,BS_NOTIFY|BS_RIGHT
 END
 #endif
 
@@ -397,8 +313,7 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Buffers && Language"
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Quick buffers (select text and set with Alt + Shift + number)",
-                    IDC_STATIC,7,3,211,88
+    GROUPBOX        "Quick buffers (select text and set with Alt + Shift + number)", IDC_STATIC,7,3,211,88
     LTEXT           "Alt + &1:",IDC_STATIC,17,18,25,8
     EDITTEXT        IDC_MACRO_1,48,16,59,12,ES_AUTOHSCROLL
     LTEXT           "Alt + &2:",IDC_STATIC,17,33,25,8
@@ -425,12 +340,9 @@ BEGIN
     LTEXT           "&Ctrl+F12:",IDC_STATIC,118,106,32,8
     EDITTEXT        IDC_CUSTOMDATE2,150,104,59,12,ES_AUTOHSCROLL
     GROUPBOX        "Language for menus, dialogs and messages",IDC_STATIC,7,121,211,40	//103
-    CONTROL         "&Default (English)",IDC_RADIO_LANG_DEFAULT,"Button",
-                    BS_AUTORADIOBUTTON | BS_NOTIFY | WS_GROUP,17,132,72,10
-    CONTROL         "&Language plugin:",IDC_RADIO_LANG_PLUGIN,"Button",
-                    BS_AUTORADIOBUTTON | BS_NOTIFY,17,146,72,10
-    EDITTEXT        IDC_EDIT_LANG_PLUGIN,95,145,96,12,ES_AUTOHSCROLL |
-                    WS_GROUP
+    CONTROL         "&Default (English)",IDC_RADIO_LANG_DEFAULT,"Button", BS_AUTORADIOBUTTON | BS_NOTIFY | WS_GROUP,17,132,72,10
+    CONTROL         "&Language plugin:",IDC_RADIO_LANG_PLUGIN,"Button", BS_AUTORADIOBUTTON | BS_NOTIFY,17,146,72,10
+    EDITTEXT        IDC_EDIT_LANG_PLUGIN,95,145,96,12,ES_AUTOHSCROLL | WS_GROUP
     PUSHBUTTON      "...",IDC_BUTTON_BROWSE,194,145,14,12
 END
 
@@ -446,17 +358,13 @@ FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,72,75,44,15
     LTEXT           "Language:",IDC_STATIC,7,7,41,8
-    EDITTEXT        IDC_EDIT_PLUGIN_LANG,52,7,130,9,ES_CENTER | ES_READONLY |
-                    NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        IDC_EDIT_PLUGIN_LANG,52,7,130,9,ES_CENTER | ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
     LTEXT           "Release:",IDC_STATIC,7,23,41,8
-    EDITTEXT        IDC_EDIT_PLUGIN_RELEASE,52,23,130,9,ES_CENTER |
-                    ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        IDC_EDIT_PLUGIN_RELEASE,52,23,130,9,ES_CENTER | ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
     LTEXT           "Translator:",IDC_STATIC,7,39,41,8
-    EDITTEXT        IDC_EDIT_PLUGIN_TRANSLATOR,52,39,130,9,ES_CENTER |
-                    ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        IDC_EDIT_PLUGIN_TRANSLATOR,52,39,130,9,ES_CENTER | ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
     LTEXT           "Contact:",IDC_STATIC,7,55,41,9
-    EDITTEXT        IDC_EDIT_PLUGIN_EMAIL,52,55,130,9,ES_CENTER |
-                    ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        IDC_EDIT_PLUGIN_EMAIL,52,55,130,9,ES_CENTER | ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
 END
 #endif
 
@@ -664,7 +572,7 @@ END
 
 IDR_ESCAPE_SEQUENCES MENU DISCARDABLE
 BEGIN
-    POPUP "Escape"
+    POPUP ""
     BEGIN
         MENUITEM "Newline",                     ID_ESCAPE_NEWLINE
         MENUITEM "Tab",                         ID_ESCAPE_TAB
@@ -1121,11 +1029,9 @@ BEGIN
     IDS_STICKY_MESSAGE      "Main window will now always start up with its current size and position."
     IDS_CLEAR_FIND_WARNING  "This action will clear find, replace, and insert histories."
     IDS_CLEAR_RECENT_WARNING "This action will clear the recent files history"
-    IDS_SELECT_PLUGIN_WARNING
-                            "Select a language plugin or choose Default (English)."
+    IDS_SELECT_PLUGIN_WARNING "Select a language plugin or choose Default (English)."
     IDS_MARGIN_WIDTH_WARNING "Enter a margin width between 0 and 300"
-    IDS_TRANSPARENCY_WARNING
-                            "Enter a transparency mode percent between 1 and 99"
+    IDS_TRANSPARENCY_WARNING "Enter a transparency mode percent between 1 and 99"
     IDS_TAB_SIZE_WARNING    "Enter a tab size between 1 and 100"
     IDS_TB_NEWFILE          "New File"
     IDS_TB_OPENFILE         "Open File"
@@ -1153,10 +1059,8 @@ BEGIN
     IDS_CANT_UNDO_WARNING   "Can't undo this action!"
     IDS_MEMORY_LIMIT        "Reached memory limit at %d bytes!"
     IDS_FONT_UNDO_WARNING   "Applying new font settings. This action will empty the undo buffer."
-    IDS_UNDO_HYPERLINKS_WARNING
-                            "Updating hyperlinks. This action will empty the undo buffer."
-    IDS_RICHED_MISSING_ERROR
-                            "metapad requires RICHED20.DLL to be installed on your system.\n\nSee the FAQ on the website for further information."
+    IDS_UNDO_HYPERLINKS_WARNING "Updating hyperlinks. This action will empty the undo buffer."
+    IDS_RICHED_MISSING_ERROR "metapad requires RICHED20.DLL to be installed on your system.\n\nSee the FAQ on the website for further information."
 #else
     IDS_QUERY_LAUNCH_VIEWER "This version of Windows does not support loading files this large into an Edit window.\nLaunch in external viewer?"
 	IDS_LE_MEMORY_LIMIT     "Reached memory limit!\nSave file now and use another editor (metapad full not LE)!"
@@ -1175,8 +1079,7 @@ BEGIN
     IDS_COMMAND_LINE_OPTIONS
 	"Usage:  metapad [/i | /m | /v | /s] [/p | /g row:col | /e] [filename]\n\nOption descriptions:\n\n\t/i - force INI mode for settings\n\t/m - migrate all registry settings to INI file\n\t/g row:col - goto position at row and column\n\t/e - goto end of file\n\t/p - print file\n\t/v - disable plugin version checking\n\t/s - skip loading language plugin"
     IDS_GLOBALLOCK_ERROR    "GlobalLock failed"
-    IDS_CLIPBOARD_UNLOCK_ERROR
-                            "There was an error unlocking the clipboard memory."
+    IDS_CLIPBOARD_UNLOCK_ERROR "There was an error unlocking the clipboard memory."
     IDS_FILE_READ_ERROR     "Error reading file."
 #ifdef USE_RICH_EDIT
     IDS_RESTART_HIDE_SB     "The change in ""Hide scrollbars when possible"" will be reflected upon restarting the program."
@@ -1187,12 +1090,9 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_RESTART_LANG        "Language changes will be reflected upon restarting the program."
-    IDS_INVALID_PLUGIN_ERROR
-                            "Error loading language plugin DLL. It is probably not a valid metapad language plugin."
-    IDS_BAD_STRING_PLUGIN_ERROR
-                            "Error fetching version string resource from plugin DLL. It is probably not a valid metapad language plugin."
-    IDS_PLUGIN_MISMATCH_ERROR
-                            "Your language plugin is for metapad %s, but you are running metapad %s.\n\nSome menu or dialog features may be missing or not work correctly.\n\nRun metapad /v to skip this message."
+    IDS_INVALID_PLUGIN_ERROR "Error loading language plugin DLL. It is probably not a valid metapad language plugin."
+    IDS_BAD_STRING_PLUGIN_ERROR "Error fetching version string resource from plugin DLL. It is probably not a valid metapad language plugin."
+    IDS_PLUGIN_MISMATCH_ERROR "Your language plugin is for metapad %s, but you are running metapad %s.\n\nSome menu or dialog features may be missing or not work correctly.\n\nRun metapad /v to skip this message."
     IDS_ALLRIGHTS           "All Rights Reserved"
 //	IDS_METAPAD				"metapad"
 	IDS_OK					"OK"
@@ -1208,17 +1108,14 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_ERROR				"Error"
     IDS_ERROR_MSG           "\nError 0x%08X"
-    IDS_UNICODE_SAVE_TRUNCATION 
-							"Some characters in this text cannot be saved in the selected encoding!\n\nWould you like to save this file as UTF-8?"
-    IDS_UNICODE_LOAD_ERROR  "Error converting file to Unicode"
-    IDS_UNICODE_LOAD_TRUNCATION 
-							"Detected unsupported or invalid code points.\n\nData will be lost if this file is saved!"
-    IDS_BINARY_FILE_WARNING_SAFE
-							"This is a binary file. Load anyway?\nNull terminators will be preserved unless the File Format is changed."
-    IDS_LARGE_FILE_WARNING  "This file is very large ( >16 MB). Loading it may take a long time.\nLoad anyway?"
-	IDS_UNICODE_CONV_ERROR  "Error converting string to Unicode"
+    IDS_UNICODE_SAVE_TRUNCATION		"Some characters in this text cannot be saved in the selected encoding!\n\nWould you like to save this file as UTF-8?"
+    IDS_UNICODE_LOAD_ERROR			"Error converting file to Unicode"
+    IDS_UNICODE_LOAD_TRUNCATION		"Detected unsupported or invalid code points.\n\nData will be lost if this file is saved!"
+    IDS_BINARY_FILE_WARNING_SAFE	"This is a binary file. Load anyway?\nNull terminators will be preserved unless the File Format is changed."
+    IDS_LARGE_FILE_WARNING	"This file is very large ( >16 MB). Loading it may take a long time.\nLoad anyway?"
+	IDS_UNICODE_CONV_ERROR	"Error converting string to Unicode"
 	IDS_ESCAPE_ERROR		"%s in '%s' near:\n"
-	IDS_ESCAPE_BADCHARS     "Invalid characters in base-%d string"
+	IDS_ESCAPE_BADCHARS		"Invalid characters in base-%d string"
 	IDS_ESCAPE_BADALIGN		"The base-%d string is not a multiple of %d characters"
 	IDS_ESCAPE_EXPECTED		"Expected base-%d string"
 	IDS_ESCAPE_CTX_FIND		"Find what"
@@ -1243,6 +1140,7 @@ BEGIN
 	ID_ENC_UTF16BE			"Unicode BE"
 	ID_ENC_BIN				"Binary"
 	ID_ENC_CUSTOM			"CP%d"
+	IDS_ENC_CUSTOM_CAPTION	"Codepage %d"
 	IDS_ENC_BAD				"This codepage is not available on your system."
 	IDS_ENC_FAILED			"Error converting to the selected codepage!\nThe data was instead saved as ANSI."
 END

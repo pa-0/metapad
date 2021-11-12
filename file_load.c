@@ -280,11 +280,11 @@ BOOL LoadFileFromMenu(WORD wMenu, BOOL bMRU) {
 	return FALSE;
 }
 
-BOOL BrowseFile(LPCTSTR defExt, LPCTSTR defDir, LPCTSTR filter, BOOL load, BOOL bMRU, BOOL insert, LPTSTR* fileName){
+BOOL BrowseFile(HWND owner, LPCTSTR defExt, LPCTSTR defDir, LPCTSTR filter, BOOL load, BOOL bMRU, BOOL insert, LPTSTR* fileName){
 	OPENFILENAME ofn;
 	TCHAR fn[MAXFN] = _T("");
 	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = hwnd;
+	ofn.hwndOwner = owner;
 	ofn.lpstrFilter = filter;
 	ofn.lpstrCustomFilter = (LPTSTR)NULL;
 	ofn.nMaxCustFilter = 0L;

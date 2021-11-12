@@ -725,7 +725,6 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 		switch(LOWORD(wParam)){
 		case IDC_ESCAPE:
 		case IDC_ESCAPE2: {
-			RECT rect;
 			TCHAR* szText = gTmpBuf;
 			DWORD i, j = 0;
 			if (HIWORD(wParam) != BN_CLICKED) break;
@@ -735,11 +734,11 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			SendMessage(hwnd, WM_INITMENUPOPUP, (WPARAM)hsub, MAKELPARAM(1, FALSE));
 			switch(LOWORD(wParam)){
 				case IDC_ESCAPE:
-					GetWindowRect(GetDlgItem(hwndFind, IDC_ESCAPE), &rect);
+					GetWindowRect(GetDlgItem(hwndFind, IDC_ESCAPE), &rc);
 					SendDlgItemMessage(hwndFind, (frDlgId == ID_FIND || frDlgId == ID_REPLACE? ID_DROP_FIND : ID_DROP_INSERT), WM_GETTEXT, (WPARAM)MAXFIND, (LPARAM)szText);
 					break;
 				case IDC_ESCAPE2:
-					GetWindowRect(GetDlgItem(hwndFind, IDC_ESCAPE2), &rect);
+					GetWindowRect(GetDlgItem(hwndFind, IDC_ESCAPE2), &rc);
 					SendDlgItemMessage(hwndFind, ID_DROP_REPLACE, WM_GETTEXT, (WPARAM)MAXFIND, (LPARAM)szText);
 					break;
 			}
@@ -772,7 +771,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 #endif
 			}
 
-			switch (TrackPopupMenuEx(hsub, TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rect.left, rect.bottom, hwnd, NULL)) {
+			switch (TrackPopupMenuEx(hsub, TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rc.left, rc.bottom, hwnd, NULL)) {
 				case ID_ESCAPE_NEWLINE:		lstrcat(szText, _T("\\n")); break;
 				case ID_ESCAPE_TAB:			lstrcat(szText, _T("\\t")); break;
 				case ID_ESCAPE_BACKSLASH:	lstrcat(szText, _T("\\\\")); break;
@@ -2118,11 +2117,10 @@ void GotoLine(LONG lLine, LONG lOffset) {
 	UpdateStatus(FALSE);
 }
 
-BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
+BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	static BOOL bIcon = FALSE;
 	switch (uMsg) {
-		case WM_INITDIALOG: {
+		case WM_INITDIALOG:
 			if (bIcon)
 				SendDlgItemMessage(hwndDlg, IDC_DLGICON, STM_SETICON, (WPARAM)LoadIcon(hinstThis, MAKEINTRESOURCE(IDI_EYE)), 0);
 			CenterWindow(hwndDlg);
@@ -2132,7 +2130,6 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT, STR_COPYRIGHT);
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT2, GetString(IDS_ALLRIGHTS));
 			break;
-		}
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
 				case IDOK:
@@ -2161,17 +2158,15 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 	return TRUE;
 }
 
-BOOL CALLBACK AboutPluginDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
+BOOL CALLBACK AboutPluginDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
-		case WM_INITDIALOG: {
+		case WM_INITDIALOG:
 			SetDlgItemText(hwndDlg, IDC_EDIT_PLUGIN_LANG, GetString(IDS_PLUGIN_LANGUAGE));
 			SetDlgItemText(hwndDlg, IDC_EDIT_PLUGIN_RELEASE, GetString(IDS_PLUGIN_RELEASE));
 			SetDlgItemText(hwndDlg, IDC_EDIT_PLUGIN_TRANSLATOR, GetString(IDS_PLUGIN_TRANSLATOR));
 			SetDlgItemText(hwndDlg, IDC_EDIT_PLUGIN_EMAIL, GetString(IDS_PLUGIN_EMAIL));
 			CenterWindow(hwndDlg);
 			return TRUE;
-		}
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
 				case IDOK:
@@ -2189,7 +2184,7 @@ BOOL CALLBACK GotoDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 	TCHAR szLine[12];
 	LONG lLine, lCol = 0;
 	switch (uMsg) {
-		case WM_INITDIALOG: {
+		case WM_INITDIALOG:
 			CenterWindow(hwndDlg);
 			lCol = GetColNum(-1, -1, NULL, &lLine, NULL);
 			wsprintf(szLine, _T("%d"), lLine+1);
@@ -2206,10 +2201,8 @@ BOOL CALLBACK GotoDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 				SendDlgItemMessage(hwndDlg, IDC_LINE, EM_SETSEL, 0, (LPARAM)-1);
 			}
 			return TRUE;
-		}
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
-				case IDOK: {
 					GetDlgItemText(hwndDlg, IDC_LINE, szLine, 12);
 					lLine = _ttol(szLine);
 					if (!options.bHideGotoOffset) {
@@ -2217,7 +2210,6 @@ BOOL CALLBACK GotoDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 						lCol = _ttol(szLine);
 					}
 					GotoLine(lLine, lCol);
-				}
 				case IDCANCEL:
 					EndDialog(hwndDlg, wParam);
 			}
@@ -2227,8 +2219,8 @@ BOOL CALLBACK GotoDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 	}
 }
 
-BOOL CALLBACK AddFavDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
+BOOL CALLBACK AddFavDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	TCHAR* szName = gTmpBuf;
 	switch (uMsg) {
 		case WM_INITDIALOG: {
 			SetDlgItemText(hwndDlg, IDC_DATA, SCNUL8(szCaptionFile)+8);
@@ -2237,12 +2229,10 @@ BOOL CALLBACK AddFavDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		}
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
-				case IDOK: {
-					TCHAR* szName = gTmpBuf;
+				case IDOK:
 					GetDlgItemText(hwndDlg, IDC_DATA, szName, MAXFN);
 					WritePrivateProfileString(STR_FAV_APPNAME, szName, SCNUL(szFile), SCNUL(szFav));
 					PopulateFavourites();
-				}
 				case IDCANCEL:
 					EndDialog(hwndDlg, wParam);
 			}
@@ -2252,107 +2242,120 @@ BOOL CALLBACK AddFavDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 	}
 }
 
-BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	int i;
+BOOL CALLBACK CPDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	DWORD i;
+	WORD u;
+	TCHAR buf[48];
 	switch (uMsg) {
-	case WM_INITDIALOG:
-		{
-			TCHAR szInt[5];
+		case WM_INITDIALOG: {
+			CenterWindow(hwndDlg);
 
-			SendDlgItemMessage(hwndDlg, IDC_GOTO_OFFSET, BM_SETCHECK, (WPARAM) options.bHideGotoOffset, 0);
-			SendDlgItemMessage(hwndDlg, IDC_RECENT, BM_SETCHECK, (WPARAM) options.bRecentOnOwn, 0);
-			SendDlgItemMessage(hwndDlg, IDC_SMARTHOME, BM_SETCHECK, (WPARAM) options.bNoSmartHome, 0);
-			SendDlgItemMessage(hwndDlg, IDC_NO_SAVE_EXTENSIONS, BM_SETCHECK, (WPARAM) options.bNoAutoSaveExt, 0);
-			SendDlgItemMessage(hwndDlg, IDC_CONTEXT_CURSOR, BM_SETCHECK, (WPARAM) options.bContextCursor, 0);
-			SendDlgItemMessage(hwndDlg, IDC_CURRENT_FIND_FONT, BM_SETCHECK, (WPARAM) options.bCurrentFindFont, 0);
-			SendDlgItemMessage(hwndDlg, IDC_SECONDARY_PRINT_FONT, BM_SETCHECK, (WPARAM) options.bPrintWithSecondaryFont, 0);
-			SendDlgItemMessage(hwndDlg, IDC_NO_SAVE_HISTORY, BM_SETCHECK, (WPARAM) options.bNoSaveHistory, 0);
-			SendDlgItemMessage(hwndDlg, IDC_NO_FIND_SELECT, BM_SETCHECK, (WPARAM) options.bNoFindAutoSelect, 0);
-			SendDlgItemMessage(hwndDlg, IDC_NO_FAVES, BM_SETCHECK, (WPARAM) options.bNoFaves, 0);
-			SendDlgItemMessage(hwndDlg, IDC_INSERT_TIME, BM_SETCHECK, (WPARAM) options.bDontInsertTime, 0);
-			SendDlgItemMessage(hwndDlg, IDC_PROMPT_BINARY, BM_SETCHECK, (WPARAM) options.bNoWarningPrompt, 0);
-			SendDlgItemMessage(hwndDlg, IDC_STICKY_WINDOW, BM_SETCHECK, (WPARAM) options.bStickyWindow, 0);
-			SendDlgItemMessage(hwndDlg, IDC_READONLY_MENU, BM_SETCHECK, (WPARAM) options.bReadOnlyMenu, 0);
-#ifdef USE_RICH_EDIT
-			SendDlgItemMessage(hwndDlg, IDC_LINK_DC, BM_SETCHECK, (WPARAM) options.bLinkDoubleClick, 0);
-			SendDlgItemMessage(hwndDlg, IDC_HIDE_SCROLLBARS, BM_SETCHECK, (WPARAM) options.bHideScrollbars, 0);
-			SendDlgItemMessage(hwndDlg, IDC_SUPPRESS_UNDO_PROMPT, BM_SETCHECK, (WPARAM) options.bSuppressUndoBufferPrompt, 0);
-#else
-			SendDlgItemMessage(hwndDlg, IDC_DEFAULT_PRINT, BM_SETCHECK, (WPARAM) options.bDefaultPrintFont, 0);
-			SendDlgItemMessage(hwndDlg, IDC_ALWAYS_LAUNCH, BM_SETCHECK, (WPARAM) options.bAlwaysLaunch, 0);
-			SendMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_DEFAULT_PRINT, 0), 0);
-#endif
-			SendMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_STICKY_WINDOW, 0), 0);
 
-/*			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("DOS Text"));
-			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("UNIX Text"));
-			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("Unicode"));
-			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("Unicode BE"));
-			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("UTF-8 DOS"));
-			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("UTF-8 UNIX"));
-			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_ADDSTRING, 0, (LPARAM)_T("Binary"));
-
-//TODO			SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_SETCURSEL, (WPARAM)options.nFormat, 0);*/
-
-			wsprintf(szInt, _T("%d"), options.nMaxMRU);
-			SetDlgItemText(hwndDlg, IDC_EDIT_MAX_MRU, szInt);
-
+			for (i=0; i < NUMKNOWNCPS; i++) {
+				PrintCPName(i+100, buf, _T("%d"));
+				SendDlgItemMessage(hwndDlg, IDC_DATA, CB_ADDSTRING, 0, (LPARAM)buf);
+			}
 			return TRUE;
 		}
+		case WM_COMMAND:
+			switch (LOWORD(wParam)) {
+				case IDOK:
+					
+				
+				case IDCANCEL:
+					EndDialog(hwndDlg, wParam);
+			}
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
+BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	HKEY key;
+	HMENU hmenu, hsub;
+	MENUITEMINFO mio;
+	RECT rc;
+	TCHAR szInt[64];
+	LPTSTR sz;
+	INT i, nTmp;
+	DWORD u, v;
+	WORD enc, lfmt, cp;
+	switch (uMsg) {
+	case WM_INITDIALOG:
+		SendDlgItemMessage(hwndDlg, IDC_GOTO_OFFSET, BM_SETCHECK, (WPARAM) options.bHideGotoOffset, 0);
+		SendDlgItemMessage(hwndDlg, IDC_RECENT, BM_SETCHECK, (WPARAM) options.bRecentOnOwn, 0);
+		SendDlgItemMessage(hwndDlg, IDC_SMARTHOME, BM_SETCHECK, (WPARAM) options.bNoSmartHome, 0);
+		SendDlgItemMessage(hwndDlg, IDC_NO_SAVE_EXTENSIONS, BM_SETCHECK, (WPARAM) options.bNoAutoSaveExt, 0);
+		SendDlgItemMessage(hwndDlg, IDC_CONTEXT_CURSOR, BM_SETCHECK, (WPARAM) options.bContextCursor, 0);
+		SendDlgItemMessage(hwndDlg, IDC_CURRENT_FIND_FONT, BM_SETCHECK, (WPARAM) options.bCurrentFindFont, 0);
+		SendDlgItemMessage(hwndDlg, IDC_SECONDARY_PRINT_FONT, BM_SETCHECK, (WPARAM) options.bPrintWithSecondaryFont, 0);
+		SendDlgItemMessage(hwndDlg, IDC_NO_SAVE_HISTORY, BM_SETCHECK, (WPARAM) options.bNoSaveHistory, 0);
+		SendDlgItemMessage(hwndDlg, IDC_NO_FIND_SELECT, BM_SETCHECK, (WPARAM) options.bNoFindAutoSelect, 0);
+		SendDlgItemMessage(hwndDlg, IDC_NO_FAVES, BM_SETCHECK, (WPARAM) options.bNoFaves, 0);
+		SendDlgItemMessage(hwndDlg, IDC_INSERT_TIME, BM_SETCHECK, (WPARAM) options.bDontInsertTime, 0);
+		SendDlgItemMessage(hwndDlg, IDC_PROMPT_BINARY, BM_SETCHECK, (WPARAM) options.bNoWarningPrompt, 0);
+		SendDlgItemMessage(hwndDlg, IDC_STICKY_WINDOW, BM_SETCHECK, (WPARAM) options.bStickyWindow, 0);
+		SendDlgItemMessage(hwndDlg, IDC_READONLY_MENU, BM_SETCHECK, (WPARAM) options.bReadOnlyMenu, 0);
+#ifdef USE_RICH_EDIT
+		SendDlgItemMessage(hwndDlg, IDC_LINK_DC, BM_SETCHECK, (WPARAM) options.bLinkDoubleClick, 0);
+		SendDlgItemMessage(hwndDlg, IDC_HIDE_SCROLLBARS, BM_SETCHECK, (WPARAM) options.bHideScrollbars, 0);
+		SendDlgItemMessage(hwndDlg, IDC_SUPPRESS_UNDO_PROMPT, BM_SETCHECK, (WPARAM) options.bSuppressUndoBufferPrompt, 0);
+#else
+		SendDlgItemMessage(hwndDlg, IDC_DEFAULT_PRINT, BM_SETCHECK, (WPARAM) options.bDefaultPrintFont, 0);
+		SendDlgItemMessage(hwndDlg, IDC_ALWAYS_LAUNCH, BM_SETCHECK, (WPARAM) options.bAlwaysLaunch, 0);
+		SendMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_DEFAULT_PRINT, 0), 0);
+#endif
+		SendMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_STICKY_WINDOW, 0), 0);
+
+		wsprintf(szInt, _T("%d"), options.nMaxMRU);
+		SetDlgItemText(hwndDlg, IDC_EDIT_MAX_MRU, szInt);
+
+		if (SetWindowTheme) SetWindowTheme(GetDlgItem(hwndDlg, IDC_BUTTON_FORMAT),_T(""),_T(""));
+		SendDlgItemMessage(hwndDlg, IDC_BUTTON_FORMAT, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)CreateMappedBitmap(hinstThis, IDB_DROP_ARROW, 0, NULL, 0));
+		newFormat = options.nFormat;
+
+		return TRUE;
 	case WM_NOTIFY:
 		switch (((NMHDR FAR *)lParam)->code) {
 		case PSN_KILLACTIVE:
-			{
-				TCHAR szInt[10];
-				INT nTmp;
-
-				GetDlgItemText(hwndDlg, IDC_EDIT_MAX_MRU, szInt, 10);
-				nTmp = _ttoi(szInt);
-				if (nTmp < 0 || nTmp > 16) {
-					ERROROUT(GetString(IDS_MAX_RECENT_WARNING));
-					SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_MAX_MRU));
-					SetWindowLong (hwndDlg, DWLP_MSGRESULT, TRUE);
-				}
-				return TRUE;
+			GetDlgItemText(hwndDlg, IDC_EDIT_MAX_MRU, szInt, 10);
+			nTmp = _ttoi(szInt);
+			if (nTmp < 0 || nTmp > 16) {
+				ERROROUT(GetString(IDS_MAX_RECENT_WARNING));
+				SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_MAX_MRU));
+				SetWindowLong (hwndDlg, DWLP_MSGRESULT, TRUE);
 			}
+			return TRUE;
 		case PSN_APPLY:
-			{
-				TCHAR szInt[5];
-				INT nTmp;
+			GetDlgItemText(hwndDlg, IDC_EDIT_MAX_MRU, szInt, 3);
+			nTmp = _ttoi(szInt);
+			options.nMaxMRU = nTmp;
 
-				GetDlgItemText(hwndDlg, IDC_EDIT_MAX_MRU, szInt, 3);
-				nTmp = _ttoi(szInt);
-				options.nMaxMRU = nTmp;
-
-				options.bHideGotoOffset = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_GOTO_OFFSET, BM_GETCHECK, 0, 0));
-				options.bRecentOnOwn = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RECENT, BM_GETCHECK, 0, 0));
-				options.bNoSmartHome = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_SMARTHOME, BM_GETCHECK, 0, 0));
-				options.bNoAutoSaveExt = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_NO_SAVE_EXTENSIONS, BM_GETCHECK, 0, 0));
-				options.bContextCursor = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_CONTEXT_CURSOR, BM_GETCHECK, 0, 0));
-				options.bCurrentFindFont = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_CURRENT_FIND_FONT, BM_GETCHECK, 0, 0));
-				options.bPrintWithSecondaryFont = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_SECONDARY_PRINT_FONT, BM_GETCHECK, 0, 0));
-				options.bNoSaveHistory = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_NO_SAVE_HISTORY, BM_GETCHECK, 0, 0));
-				options.bNoFindAutoSelect = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_NO_FIND_SELECT, BM_GETCHECK, 0, 0));
-				options.bNoFaves = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_NO_FAVES, BM_GETCHECK, 0, 0));
-				options.bDontInsertTime = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_INSERT_TIME, BM_GETCHECK, 0, 0));
-				options.bNoWarningPrompt = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_PROMPT_BINARY, BM_GETCHECK, 0, 0));
-				options.bStickyWindow = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_STICKY_WINDOW, BM_GETCHECK, 0, 0));
-				options.bReadOnlyMenu = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_READONLY_MENU, BM_GETCHECK, 0, 0));
+			options.bHideGotoOffset = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_GOTO_OFFSET, BM_GETCHECK, 0, 0));
+			options.bRecentOnOwn = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RECENT, BM_GETCHECK, 0, 0));
+			options.bNoSmartHome = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_SMARTHOME, BM_GETCHECK, 0, 0));
+			options.bNoAutoSaveExt = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_NO_SAVE_EXTENSIONS, BM_GETCHECK, 0, 0));
+			options.bContextCursor = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_CONTEXT_CURSOR, BM_GETCHECK, 0, 0));
+			options.bCurrentFindFont = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_CURRENT_FIND_FONT, BM_GETCHECK, 0, 0));
+			options.bPrintWithSecondaryFont = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_SECONDARY_PRINT_FONT, BM_GETCHECK, 0, 0));
+			options.bNoSaveHistory = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_NO_SAVE_HISTORY, BM_GETCHECK, 0, 0));
+			options.bNoFindAutoSelect = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_NO_FIND_SELECT, BM_GETCHECK, 0, 0));
+			options.bNoFaves = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_NO_FAVES, BM_GETCHECK, 0, 0));
+			options.bDontInsertTime = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_INSERT_TIME, BM_GETCHECK, 0, 0));
+			options.bNoWarningPrompt = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_PROMPT_BINARY, BM_GETCHECK, 0, 0));
+			options.bStickyWindow = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_STICKY_WINDOW, BM_GETCHECK, 0, 0));
+			options.bReadOnlyMenu = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_READONLY_MENU, BM_GETCHECK, 0, 0));
 #ifndef USE_RICH_EDIT
-				options.bDefaultPrintFont = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_DEFAULT_PRINT, BM_GETCHECK, 0, 0));
-				options.bAlwaysLaunch = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_ALWAYS_LAUNCH, BM_GETCHECK, 0, 0));
+			options.bDefaultPrintFont = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_DEFAULT_PRINT, BM_GETCHECK, 0, 0));
+			options.bAlwaysLaunch = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_ALWAYS_LAUNCH, BM_GETCHECK, 0, 0));
 #else
-				options.bLinkDoubleClick = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_LINK_DC, BM_GETCHECK, 0, 0));
-				options.bHideScrollbars = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_HIDE_SCROLLBARS, BM_GETCHECK, 0, 0));
-				options.bSuppressUndoBufferPrompt = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_SUPPRESS_UNDO_PROMPT, BM_GETCHECK, 0, 0));
+			options.bLinkDoubleClick = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_LINK_DC, BM_GETCHECK, 0, 0));
+			options.bHideScrollbars = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_HIDE_SCROLLBARS, BM_GETCHECK, 0, 0));
+			options.bSuppressUndoBufferPrompt = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_SUPPRESS_UNDO_PROMPT, BM_GETCHECK, 0, 0));
 #endif
-/*TODO				options.nFormat = SendDlgItemMessage(hwndDlg, IDC_COMBO_FORMAT, CB_GETCURSEL, 0, 0);
-				if (options.nFormat == CB_ERR)
-					options.nFormat = 0;*/
-
-				return TRUE;
-			}
+			options.nFormat = newFormat;
+			return TRUE;
 		}
 		return FALSE;
 	case WM_COMMAND:
@@ -2390,26 +2393,64 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			break;
 		case IDC_BUTTON_CLEAR_RECENT:
 			if (MessageBox(hwndDlg, GetString(IDS_CLEAR_RECENT_WARNING), STR_METAPAD, MB_ICONEXCLAMATION | MB_OKCANCEL) == IDOK) {
-				HKEY key = NULL;
-				TCHAR szKey[6];
-				UINT i;
-
+				key = NULL;
 				if (!g_bIniMode && RegCreateKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
 					ReportLastError();
 					break;
 				}
-
-				for (i = 1; i <= options.nMaxMRU; ++i) {
-					wsprintf(szKey, _T("mru_%d"), i);
-					SaveOption(key, szKey, REG_SZ, NULL, 1);
+				for (v = 1; v <= options.nMaxMRU; ++v) {
+					wsprintf(szInt, _T("mru_%d"), v);
+					SaveOption(key, szInt, REG_SZ, NULL, 1);
 				}
-
-				if (key != NULL) {
+				if (key != NULL)
 					RegCloseKey(key);
-				}
-
 				PopulateMRUList();
 			}
+			break;
+		case IDC_BUTTON_FORMAT:
+			if (HIWORD(wParam) != BN_CLICKED) break;
+			hmenu = LoadMenu(hinstLang, (LPCTSTR)IDR_MENU);
+			hsub = GetSubMenu(hmenu, 0);
+			hsub = GetSubMenu(hsub, MPOS_FILE_FORMAT);
+			SendMessage(hwnd, WM_INITMENUPOPUP, (WPARAM)hsub, MAKELPARAM(1, FALSE));
+			GetWindowRect(GetDlgItem(hwndDlg, IDC_BUTTON_FORMAT), &rc);
+			enc = cp = (WORD)newFormat;
+			lfmt = (newFormat >> 16) & 0xfff;
+			if (newFormat >> 31) enc = ID_ENC_CUSTOM;
+
+			mio.cbSize = sizeof(MENUITEMINFO);
+			mio.fMask = MIIM_TYPE | MIIM_ID;
+			for (u = 0, v = GetMenuItemCount(hsub); u < v; u++){
+				mio.fType = MFT_STRING;
+				mio.cch = sizeof(szInt)/sizeof(TCHAR);
+				mio.dwTypeData = szInt;
+				GetMenuItemInfo(hsub, u, TRUE, &mio);
+				if (*szInt && (sz = lstrchr(szInt, _T('\t')))) {
+					*sz = _T('\0');
+					SetMenuItemInfo(hsub, u, TRUE, &mio);
+				}
+			}
+			if (enc == ID_ENC_CUSTOM){
+				PrintCPName(cp, szInt, GetString(IDS_ENC_CUSTOM_CAPTION));
+				mio.fType = MFT_STRING;
+				mio.wID = ID_ENC_CUSTOM-1;
+				mio.dwTypeData = szInt;
+				InsertMenuItem(hsub, v, TRUE, &mio);
+			}
+			CheckMenuRadioItem(hsub, enc/10*10, (enc/10+1)*10, enc, MF_BYCOMMAND);
+			CheckMenuRadioItem(hsub, lfmt/10*10, (lfmt/10+1)*10, lfmt, MF_BYCOMMAND);
+			switch (v = TrackPopupMenuEx(hsub, TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rc.left, rc.bottom, hwnd, NULL)) {
+				case ID_ENC_CUSTOM-1: break;
+				case ID_ENC_CUSTOM:
+					DialogBox(hinstLang, MAKEINTRESOURCE(IDD_CP), hwndDlg, (DLGPROC)CPDialogProc);
+					break;
+				default:
+					if (v > ID_LFMT_UNKNOWN && v <= ID_LFMT_MIXED) v <<= 16;
+					if (!(v & 0x8000ffff)) v |= newFormat & 0x8000ffff;
+					if (!(v & 0xfff0000)) v |= newFormat & 0xfff0000;
+					newFormat = v;
+			}
+			DestroyMenu(hmenu);
 			break;
 		}
 		return FALSE;
@@ -2505,7 +2546,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BUTTON_BROWSE), TRUE);
 			break;
 		case IDC_BUTTON_BROWSE:
-			if (BrowseFile(_T("dll"), NULL, _T("metapad language plugins (*.dll)\0*.dll\0All Files (*.*)\0*.*\0"), FALSE, FALSE, FALSE, &sz)){
+			if (BrowseFile(hwndDlg, _T("dll"), NULL, _T("metapad language plugins (*.dll)\0*.dll\0All Files (*.*)\0*.*\0"), FALSE, FALSE, FALSE, &sz)){
 				if (g_bDisablePluginVersionChecking) {
 					SetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, sz);
 				}
@@ -2949,7 +2990,7 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		switch (LOWORD(wParam)) {
 		case IDC_BUTTON_BROWSE:
 		case IDC_BUTTON_BROWSE2:
-			if (BrowseFile(_T("exe"), NULL, _T("Executable Files (*.exe)\0*.exe\0All Files (*.*)\0*.*\0"), FALSE, FALSE, FALSE, &sz))
+			if (BrowseFile(hwndDlg, _T("exe"), NULL, _T("Executable Files (*.exe)\0*.exe\0All Files (*.*)\0*.*\0"), FALSE, FALSE, FALSE, &sz))
 				SetDlgItemText(hwndDlg, LOWORD(wParam) == IDC_BUTTON_BROWSE ? IDC_EDIT_BROWSER : IDC_EDIT_BROWSER2, sz);
 		}
 		break;
@@ -3366,6 +3407,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					case ID_REPLACE:
 						gfr.lpTemplateName = MAKEINTRESOURCE(IDD_REPLACE);
 						hdlgFind = ReplaceText(&gfr);
+						if (SetWindowTheme) SetWindowTheme(GetDlgItem(hdlgFind, IDC_ESCAPE2),_T(""),_T(""));
 						SendDlgItemMessage(hdlgFind, IDC_ESCAPE2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
 						SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_LIMITTEXT, (WPARAM)MAXFIND, 0);
 						for (i = 0; i < NUMFINDS; ++i)
@@ -3393,6 +3435,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						break;
 				}
 				
+				if (SetWindowTheme) SetWindowTheme(GetDlgItem(hdlgFind, IDC_ESCAPE),_T(""),_T(""));
 				SendDlgItemMessage(hdlgFind, IDC_ESCAPE, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
 				switch (LOWORD(wParam)) {
 					case ID_REPLACE:
@@ -3865,7 +3908,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				LoadOptions();
 				b = TRUE;
 			case ID_INSERT_FILE:
-				BrowseFile(_T("txt"), SCNUL(szDir), SCNUL(szCustomFilter), TRUE, b, !b, NULL);
+				BrowseFile(client, _T("txt"), SCNUL(szDir), SCNUL(szCustomFilter), TRUE, b, !b, NULL);
 				break;
 			case ID_MYFILE_NEW:
 				if (!SaveIfDirty())
@@ -4372,7 +4415,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				LaunchInViewer(FALSE, FALSE);
 				break;
 			case ID_ENC_CUSTOM:
-				//TODO DialogBox(hinstLang, MAKEINTRESOURCE(IDD_CP), hwndMain, (DLGPROC)CPDialogProc);
+				DialogBox(hinstLang, MAKEINTRESOURCE(IDD_CP), hwndMain, (DLGPROC)CPDialogProc);
 				break;
 			case ID_LFMT_DOS:
 			case ID_LFMT_UNIX:
@@ -4674,10 +4717,11 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
 #if defined(UNICODE) && ( !defined(__MINGW32__) || defined(__MINGW64_VERSION_MAJOR) )
 	szCmdLine = GetCommandLine();
-	szCmdLine = lstrchr(szCmdLine, _T(' ')) + 1;
+	szCmdLine = lstrchr(szCmdLine, _T(' '));
 #else
 	szCmdLine = lpCmdLine;
 #endif
+	while (szCmdLine && *szCmdLine == _T(' ')) szCmdLine++;
 
 	{
 		TCHAR* pch;
@@ -4690,7 +4734,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		lstrcat(szMetapadIni, _T("metapad.ini"));
 	}
 	
-	if (szCmdLine[0]) {
+	if (szCmdLine && *szCmdLine) {
 		nCmdLen = lstrlen(szCmdLine);
 		while(szCmdLine[0] == _T(' ')) { szCmdLine++; nCmdLen--; }
 		while(szCmdLine[nCmdLen - 1] == _T(' ')) nCmdLen--;
@@ -4817,6 +4861,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 			HMENU hsub = GetSubMenu(GetMenu(hwnd), 3);
 			DeleteMenu(hsub, 4, MF_BYPOSITION);
 		}
+		hm = GetModuleHandle(_T("uxtheme.dll"));
+		SetWindowTheme = (SWT)(GetProcAddress(hm, "SetWindowTheme"));
 	}
 
 	accel = LoadAccelerators(hinstLang, MAKEINTRESOURCE(IDR_ACCELERATOR));
@@ -4916,7 +4962,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	}
 
 	MakeNewFile();
-	if (szCmdLine[0]) {
+	if (szCmdLine && *szCmdLine) {
 		FREE(szFile);
 		szFile = (LPTSTR)HeapAlloc(globalHeap, 0, (nCmdLen+1) * sizeof(TCHAR));
 		while(szCmdLine[0] == _T(' ')) { szCmdLine++; nCmdLen--; }

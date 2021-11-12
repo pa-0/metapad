@@ -42,7 +42,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	HMENU hMenu = GetSubMenu(GetSubMenu(GetMenu(hwnd), 0), MPOS_FILE_FORMAT);
 	MENUITEMINFO mio;
 	LPTSTR buf = NULL;
-	TCHAR mbuf[32];
+	TCHAR mbuf[64];
 	WORD enc, lfmt, cp, nenc, nlfmt, ncp;
 	DWORD len, lines, nCR, nLF, nStrays, nSub;
 	BOOL bufDirty = FALSE, b;
@@ -98,7 +98,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	nFormat = format;
 	DeleteMenu(hMenu, ID_ENC_CUSTOM-1, MF_BYCOMMAND);
 	if (nenc == ID_ENC_CUSTOM){
-		wsprintf(mbuf, GetString(IDS_LFMT_MIXED), ncp);
+		PrintCPName(ncp, mbuf, GetString(IDS_ENC_CUSTOM_CAPTION));
 		mio.cbSize = sizeof(MENUITEMINFO);
 		mio.fMask = MIIM_TYPE | MIIM_ID;
 		mio.fType = MFT_STRING;
@@ -214,7 +214,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 		return _T("");
 	}
 	if (bDirtyShadow || !szShadow || !shadowLen) {
-		if (line < 0) {
+		if (line < 0 && min <= max && max >= 0) {
 #ifdef USE_RICH_EDIT
 			line = SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)min);
 			if (line != SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)max)) line = -1;
