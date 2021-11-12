@@ -210,7 +210,6 @@ BOOL SaveCurrentFile(void)
 	SetCurrentDirectory(SCNUL(szDir));
 
 	if (SCNUL(szFile)[0]) {
-		TCHAR szTmp[MAXFN + MAXSTRING];
 		DWORD dwResult = GetFileAttributes(szFile);
 
 		if (dwResult != 0xffffffff && bReadOnly != (BOOL)(dwResult & FILE_ATTRIBUTE_READONLY)) {
@@ -227,9 +226,8 @@ BOOL SaveCurrentFile(void)
 		if (!SaveFile(szFile))
 			return FALSE;
 		ExpandFilename(szFile, &szFile);
-		wsprintf(szTmp, STR_CAPTION_FILE, SCNUL(szCaptionFile));
-		SetWindowText(hwnd, szTmp);
 		bDirtyFile = FALSE;
+		UpdateCaption();
 		return TRUE;
 	}
 	else
@@ -253,7 +251,7 @@ BOOL SaveIfDirty(void)
 				return TRUE;
 			}
 		}
-		wsprintf(szBuffer, GetString(IDS_DIRTYFILE), SCNUL(szCaptionFile));
+		wsprintf(szBuffer, GetString(IDS_DIRTYFILE), SCNUL8(szCaptionFile)+8);
 		switch (MessageBox(hwnd, szBuffer, STR_METAPAD, MB_ICONEXCLAMATION | MB_YESNOCANCEL)) {
 			case IDYES:
 				if (!SaveCurrentFile())

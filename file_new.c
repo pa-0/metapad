@@ -55,16 +55,10 @@ void MakeNewFile(void)
 	bDirtyFile = FALSE;
 	bBinaryFile = FALSE;
 	bLoading = FALSE;
-
-	{
-		TCHAR szBuffer[100];
-		wsprintf(szBuffer, STR_CAPTION_FILE, GetString(IDS_NEW_FILE));
-		SetWindowText(hwnd, szBuffer);
-	}
-
 	SwitchReadOnly(FALSE);
 	FREE(szFile);
-	SSTRCPY(szCaptionFile, GetString(IDS_NEW_FILE));
+	SSTRCPYAO(szCaptionFile, GetString(IDS_NEW_FILE), 32, 8);
+	szCaptionFile[0] = _T('\0');
 	shadowLen = 0;
 	UpdateStatus();
 	bLoading = FALSE;

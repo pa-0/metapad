@@ -135,16 +135,14 @@ void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 		int res = IDYES;
 		if (options.nLaunchSave == 0) {
 			TCHAR szBuffer[MAXFN + MAXSTRING];
-			wsprintf(szBuffer, GetString(IDS_DIRTYFILE), SCNUL(szCaptionFile));
+			wsprintf(szBuffer, GetString(IDS_DIRTYFILE), SCNUL8(szCaptionFile)+8);
 			res = MessageBox(hwnd, szBuffer, STR_METAPAD, MB_ICONEXCLAMATION | MB_YESNOCANCEL);
 		}
-		if (res == IDCANCEL) {
+		if (res == IDCANCEL)
 			return;
-		}
 		else if (res == IDYES) {
-			if (!SaveCurrentFile()) {
+			if (!SaveCurrentFile())
 				return;
-			}
 		}
 	}
 	if (SCNUL(szFile)[0] != _T('\0')) {
@@ -164,7 +162,6 @@ void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 		}
 	}
 
-	if (options.bLaunchClose) {
+	if (options.bLaunchClose)
 		DestroyWindow(hwnd);
-	}
 }

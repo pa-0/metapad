@@ -338,25 +338,26 @@ void ReverseBytes(LPBYTE buffer, LONG size)
  */
 void UpdateCaption(void)
 {
-	TCHAR* szBuffer = gTmpBuf2;
-
-	ExpandFilename(szFile, &szFile);
-
-	if (bDirtyFile) {
-		szBuffer[0] = _T(' ');
-		szBuffer[1] = _T('*');
-		szBuffer[2] = _T(' ');
-		wsprintf(szBuffer+3, STR_CAPTION_FILE, SCNUL(szCaptionFile));
+	USHORT u;
+	if (!szCaptionFile) return;
+	if (!*szCaptionFile) {
+		ExpandFilename(szFile, &szFile);
+		szCaptionFile[5] = szCaptionFile[7] = _T(' ');
+		szCaptionFile[6] = _T('*');
+		u = (USHORT)lstrlen(szCaptionFile+8);
+		*((LPWORD)szCaptionFile+2) = u;
+		lstrcat(szCaptionFile+8, STR_CAPTION_FILE);
+		*((LPWORD)szCaptionFile) = (USHORT)lstrlen(szCaptionFile+8) - u - 1;
+		lstrcat(szCaptionFile+8, GetString(IDS_READONLY_INDICATOR));
+		szCaptionFile[u + 8 + *((LPWORD)szCaptionFile)] = _T('\0');
 	}
-	else
-		wsprintf(szBuffer, STR_CAPTION_FILE, SCNUL(szCaptionFile));
-
-	if (bReadOnly) {
-		lstrcat(szBuffer, _T(" "));
-		lstrcat(szBuffer, GetString(IDS_READONLY_INDICATOR));
-	}
-
-	SetWindowText(hwnd, szBuffer);
+	u = *((LPWORD)szCaptionFile+2) + 8;
+	szCaptionFile[u] = _T(' ');
+	if (bReadOnly) 
+		szCaptionFile[u + *((LPWORD)szCaptionFile)] = _T(' ');
+	SetWindowText(hwnd, szCaptionFile + (bDirtyFile ? 5 : 8));
+	szCaptionFile[u] = _T('\0');
+	szCaptionFile[u + *((LPWORD)szCaptionFile)] = _T('\0');
 }
 
 /**
@@ -602,6 +603,9 @@ void UpdateStatus(void)
 	LPTSTR szBuffer;
 	CHARRANGE cr;
 	RECT rc;
+
+	if (szCaptionFile && !*szCaptionFile)
+		UpdateCaption();
 
 	if (toolbar && bShowToolbar) {
 
@@ -1554,7 +1558,7 @@ void PrintContents(void)
 
 	ZeroMemory(&di, sizeof(di));
 	di.cbSize = sizeof(di);
-	di.lpszDocName = SCNUL(szCaptionFile);
+	di.lpszDocName = SCNUL8(szCaptionFile)+8;
 	di.lpszOutput = NULL;
 
 	lTextLength = GetWindowTextLength(client) - (SendMessage(client, EM_GETLINECOUNT, 0, 0) - 1);
@@ -3377,13 +3381,8 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 #endif
 					case EN_CHANGE:
 						if (!bDirtyFile && !bLoading) {
-							nPos = GetWindowTextLength(hwndMain);
-							szTmp2[0] = _T(' ');
-							szTmp2[1] = _T('*');
-							szTmp2[2] = _T(' ');
-							GetWindowText(hwndMain, szTmp2 + 3, nPos + 1);
-							SetWindowText(hwndMain, szTmp2);
 							bDirtyFile = TRUE;
+							UpdateCaption();
 						}
 						FREE(szStatusMessage);
 						break;
@@ -3620,22 +3619,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 #endif
 			case ID_MYEDIT_UNDO:
-				/*
-				BOOL bOldDirty = FALSE;
-				if (bDirtyFile)
-					bOldDirty = TRUE;
-				*/
 				SendMessage(client, EM_UNDO, 0, 0);
-				/*
-				if (bOldDirty && bDirtyFile && !SendMessage(client, EM_CANUNDO, 0, 0)) {
-					TCHAR* szBuffer = gTmpBuf;
-
-					bDirtyFile = FALSE;
-					GetWindowText(hwndMain, szBuffer, GetWindowTextLength(hwndMain) + 1);
-					SetWindowText(hwndMain, szBuffer + 3);
-					bLoading = FALSE;
-				}
-				*/
 				UpdateStatus();
 				break;
 			case ID_CLEAR_CLIPBRD:
@@ -3944,7 +3928,7 @@ endinsertfile:
 				else
 					ena = SetFileAttributes(szTmp, ((GetFileAttributes(szTmp) & ~FILE_ATTRIBUTE_READONLY) == 0 ? FILE_ATTRIBUTE_NORMAL : GetFileAttributes(szTmp) & ~FILE_ATTRIBUTE_READONLY));
 
-				if (ena) {
+				if (!ena) {
 					err = GetLastError();
 					if (err == ERROR_ACCESS_DENIED)
 						ERROROUT(GetString(IDS_CHANGE_READONLY_ERROR));
@@ -3956,18 +3940,9 @@ endinsertfile:
 
 				GetWindowText(hwndMain, szTmp, GetWindowTextLength(hwndMain) + 1);
 
-				if (bReadOnly) {
-					lstrcat(szTmp, _T(" "));
-					lstrcat(szTmp, GetString(IDS_READONLY_INDICATOR));
-					SetWindowText(hwndMain, szTmp);
-				}
-				else
-					//szTmp[GetWindowTextLength(hwndMain) - 12] = _T('\0');
-					UpdateCaption();
-
 				SwitchReadOnly(bReadOnly);
-
 				UpdateStatus();
+				UpdateCaption();
 				break;
 			case ID_FONT_PRIMARY:
 				bPrimaryFont = !GetCheckedState(GetMenu(hwndMain), ID_FONT_PRIMARY, TRUE);
@@ -4104,8 +4079,10 @@ endinsertfile:
 							}
 						}
 
-					if (SCNUL(szFile)[0] != _T('\0'))
+					if (SCNUL(szFile)[0] != _T('\0') && szCaptionFile) {
+						*szCaptionFile = 0;
 						UpdateCaption();
+					}
 
 					SendMessage(client, EM_SETMARGINS, (WPARAM)EC_LEFTMARGIN, MAKELPARAM(options.nSelectionMarginWidth, 0));
 
@@ -4171,13 +4148,6 @@ endinsertfile:
 					SSTRCPY(szFile, szTmp);
 					LoadFile(szFile, FALSE, TRUE);
 					if (bLoading) {
-						/*
-						bLoading = FALSE;
-						ExpandFilename(szFile);
-						wsprintf(szTmp, STR_CAPTION_FILE, SCNUL(szCaptionFile));
-						SetWindowText(hwndMain, szTmp);
-						bDirtyFile = FALSE;
-						*/
 						bLoading = FALSE;
 						bDirtyFile = FALSE;
 						UpdateCaption();
@@ -4736,19 +4706,9 @@ endinsertfile:
 
 				CheckMenuRadioItem(hMenu, ID_DOS_FILE, ID_BINARY_FILE, LOWORD(wParam), MF_BYCOMMAND);
 
-				if (!bDirtyFile && !bLoading) {
-					TCHAR* szTmp = gTmpBuf2;
-					szTmp[0] = _T(' ');
-					szTmp[1] = _T('*');
-					szTmp[2] = _T(' ');
-					GetWindowText(hwndMain, szTmp + 3, GetWindowTextLength(hwndMain) + 1);
-					SetWindowText(hwndMain, szTmp);
-					bDirtyFile = TRUE;
-				}
-				if (!bLoading) {
+				if (!bLoading)
 					FREE(szStatusMessage);
-					UpdateStatus();
-				}
+				UpdateStatus();
 				break;
 			case ID_RELOAD_CURRENT:
 				if (SCNUL(szFile)[0]) {
@@ -4773,13 +4733,6 @@ endinsertfile:
 
 					UpdateStatus();
 					if (bLoading) {
-						/*
-						TCHAR* szBuffer = gTmpBuf;
-						wsprintf(szBuffer, STR_CAPTION_FILE, szCaptionFile);
-						SetWindowText(hwndMain, szBuffer);
-						bLoading = FALSE;
-						bDirtyFile = FALSE;
-						*/
 						bLoading = FALSE;
 						bDirtyFile = FALSE;
 						UpdateCaption();
@@ -5145,21 +5098,16 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		nCmdShow = SW_SHOWNORMAL;
 	}
 	
-	{
-		TCHAR szBuffer[100];
-		wsprintf(szBuffer, STR_CAPTION_FILE, GetString(IDS_NEW_FILE));
-
-		hwnd = CreateWindowEx(
-			WS_EX_ACCEPTFILES,
-			STR_METAPAD,
-			szBuffer,
-			WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
-			left, top, width, height,
-			NULL,
-			NULL,
-			hInstance,
-			NULL);
-	}
+	hwnd = CreateWindowEx(
+		WS_EX_ACCEPTFILES,
+		STR_METAPAD,
+		STR_CAPTION_FILE,
+		WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
+		left, top, width, height,
+		NULL,
+		NULL,
+		hInstance,
+		NULL);
 
 	if (!hwnd) {
 		ReportLastError();
@@ -5348,7 +5296,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 				else
 					lstrcpyn(szFile, szCmdLine, nCmdLen + 1);
 				LoadFile(szFile, FALSE, FALSE);
-				SSTRCPY(szCaptionFile, szFile);
+				SSTRCPYAO(szCaptionFile, szFile, 32, 8);
+				szCaptionFile[0] = _T('\0');
 				PrintContents();
 				CleanUp();
 				return TRUE;
@@ -5407,10 +5356,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 #ifdef USE_RICH_EDIT
 		{
 			DWORD dwID;
-			TCHAR* szBuffer = gTmpBuf;
 
-			wsprintf(szBuffer, STR_CAPTION_FILE, SCNUL(szCaptionFile));
-			SetWindowText(hwnd, szBuffer);
+			UpdateCaption();
 			SendMessage(client, EM_SETREADONLY, (WPARAM)TRUE, 0);
 			ShowWindow(hwnd, nCmdShow);
 

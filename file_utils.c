@@ -146,13 +146,11 @@ void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut)
 	LPTSTR szTmpFn = szTmp+4;
 	LPTSTR szTmpDir;
 
-	if (szBuffer){
-		lstrcpy(szTmpFn, szBuffer);
-		FixShortFilename(szBuffer, szTmpFn);
-		szBuffer = szTmpFn;
-		if (szOut) SSTRCPY(*szOut, szBuffer);
-	}
-
+	if (!szBuffer) return;
+	lstrcpy(szTmpFn, szBuffer);
+	FixShortFilename(szBuffer, szTmpFn);
+	szBuffer = szTmpFn;
+	if (szOut) SSTRCPY(*szOut, szBuffer);
 	if (SCNUL(szDir)[0] != _T('\0'))
 		SetCurrentDirectory(szDir);
 
@@ -170,21 +168,21 @@ void ExpandFilename(LPCTSTR szBuffer, LPTSTR* szOut)
 		}
 		if (szTmpDir[lstrlen(szTmpDir) - 1] != _T('\\'))
 			lstrcat(szTmpDir, _T("\\"));
-		szCaptionFile = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(szTmpDir)+lstrlen(FileData.cFileName)+1) * sizeof(TCHAR));
-		szCaptionFile[0] = _T('\0');
+		szCaptionFile = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(szTmpDir)+lstrlen(FileData.cFileName)+40) * sizeof(TCHAR));
+		szCaptionFile[0] = szCaptionFile[8] = _T('\0');
 		if (!options.bNoCaptionDir)
-			lstrcat(szCaptionFile, szTmpDir);
-		lstrcat(szCaptionFile, FileData.cFileName);
+			lstrcat(szCaptionFile+8, szTmpDir);
+		lstrcat(szCaptionFile+8, FileData.cFileName);
 		FindClose(hSearch);
 		if (szDir) HeapFree(globalHeap, 0, (HGLOBAL)szDir);
 		szDir = szTmpDir;
 	} else {
 		int i = (lstrlen(SCNUL(szDir))+lstrlen(SCNUL(szFile))+1) * sizeof(TCHAR);
-		szCaptionFile = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(SCNUL(szDir))+lstrlen(SCNUL(szFile))+1) * sizeof(TCHAR));
-		szCaptionFile[0] = _T('\0');
+		szCaptionFile = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(SCNUL(szDir))+lstrlen(SCNUL(szFile))+40) * sizeof(TCHAR));
+		szCaptionFile[0] = szCaptionFile[8] = _T('\0');
 		if (!options.bNoCaptionDir)
-			lstrcat(szCaptionFile, SCNUL(szDir));
-		lstrcat(szCaptionFile, SCNUL(szFile));
+			lstrcat(szCaptionFile+8, SCNUL(szDir));
+		lstrcat(szCaptionFile+8, SCNUL(szFile));
 	}
 }
 
