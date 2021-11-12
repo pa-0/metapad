@@ -718,7 +718,7 @@ BEGIN
 #endif
         END
         MENUITEM "&Refresh/Revert\tF5",         ID_RELOAD_CURRENT
-        MENUITEM "&Calculate Size\tF11",        ID_SHOWFILESIZE
+/*        MENUITEM "&Calculate Size\tF11",        ID_SHOWFILESIZE */
         MENUITEM SEPARATOR
         MENUITEM "Page Se&tup...",              ID_PAGESETUP
         MENUITEM "&Print...\tCtrl+P",           ID_PRINT
@@ -814,7 +814,9 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Show &Toolbar\tCtrl+T",       ID_SHOWTOOLBAR
         MENUITEM "Show Status &Bar\tCtrl+B",    ID_SHOWSTATUS
+#ifdef USE_RICH_EDIT
         MENUITEM "Show Hyperlin&ks\tCtrl+K",    ID_SHOWHYPERLINKS, CHECKED
+#endif
         MENUITEM SEPARATOR
         MENUITEM "&Settings...\tAlt+Enter",     ID_VIEW_OPTIONS
     END
@@ -829,7 +831,9 @@ BEGIN
     POPUP "Popup"
     BEGIN
         MENUITEM "&Undo",                       ID_MYEDIT_UNDO
+#ifdef USE_RICH_EDIT
         MENUITEM "&Redo",                       ID_MYEDIT_REDO
+#endif
         MENUITEM SEPARATOR
         MENUITEM "Cu&t",                        ID_MYEDIT_CUT
         MENUITEM "&Copy",                       ID_MYEDIT_COPY

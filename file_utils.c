@@ -66,7 +66,7 @@ void MakeNewFile(void) {
 	szCaptionFile[0] = _T('\0');
 	bDirtyShadow = bDirtyStatus = TRUE;
 	savedLen = 0;
-	UpdateStatus();
+	UpdateStatus(TRUE);
 	bLoading = FALSE;
 }
 
@@ -188,7 +188,12 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 		if (line >= 0 && (l = max - min + 1) > 0)
 			shadowLen = 0;
 		else {
+#ifdef USE_RICH_EDIT
+			GETTEXTLENGTHEX gtl = {0};
+			l = shadowLen = SendMessage(client, EM_GETTEXTLENGTHEX, &gtl, 0);
+#else
 			l = shadowLen = GetWindowTextLength(client);
+#endif
 			shadowRngEnd = 0; 
 		}
 		if (l < 1) {
@@ -285,11 +290,11 @@ LPCTSTR GetShadowBuffer(DWORD* len) {
 
 
 
-DWORD GetColNum(LONG cp, LONG line, DWORD* lineLen, CHARRANGE* pcr){
+DWORD GetColNum(LONG cp, LONG line, DWORD* lineLen, LONG* lineout, CHARRANGE* pcr){
 	LPCTSTR ts;
 	CHARRANGE cr;
 	DWORD c = 1, i, l;
-	ts = GetShadowLine(line, cp, lineLen, NULL, &cr);
+	ts = GetShadowLine(line, cp, lineLen, lineout, &cr);
 	for (i = 0, l = cp - cr.cpMin; i < l && ts[i]; i++, c++) {
 		if (ts[i] == _T('\t'))
 			c += (options.nTabStops - (c-1) % options.nTabStops)-1;
@@ -297,10 +302,10 @@ DWORD GetColNum(LONG cp, LONG line, DWORD* lineLen, CHARRANGE* pcr){
 	if (pcr) *pcr = cr;
 	return c;
 }
-DWORD GetCharIndex(DWORD col, LONG line, LONG cp, DWORD* lineLen, CHARRANGE* pcr){
+DWORD GetCharIndex(DWORD col, LONG line, LONG cp, DWORD* lineLen, LONG* lineout, CHARRANGE* pcr){
 	LPCTSTR ts;
 	DWORD c = 1, i;
-	ts = GetShadowLine(line, cp, lineLen, NULL, pcr);
+	ts = GetShadowLine(line, cp, lineLen, lineout, pcr);
 	for (i = 0; ts[i] && ts[i] != _T('\r') && c < col; i++, c++) {
 		if (ts[i] == _T('\t'))
 			c += (options.nTabStops - (c-1) % options.nTabStops)-1;
@@ -311,43 +316,36 @@ DWORD GetCharIndex(DWORD col, LONG line, LONG cp, DWORD* lineLen, CHARRANGE* pcr
 
 
 /**
- * Calculate the size of the current file.
- *
- * @return Current file's size.
+ * Calculate the size of the given text.
+ * If no text is given, the current file's size is calculated and the full buffer is optionally returned
+ * 	if getting it was necessary in the calculation
  */
-DWORD CalculateFileSize(void)
-{
-	DWORD nBytes;
-	if (nEncodingType == TYPE_UTF_16 || nEncodingType == TYPE_UTF_16_BE) {
-		nBytes = GetWindowTextLength(client) * 2 + SIZEOFBOM_UTF_16;
-	}
-	else if (nEncodingType == TYPE_UTF_8) {
-		nBytes = GetWindowTextLength(client);
-#ifdef UNICODE
-		if (sizeof(TCHAR) > 1) {
-			/* TODO		This can get quite expensive for very large files. Future alternatives:
-				- Count chars instead
-				- Ability to disable this in options
-				- Do this in the background with ratelimiting
-				- Keep a local copy of the text buffer
-			*/
-			LPCTSTR szBuffer = GetShadowBuffer(&nBytes);
-			if (nBytes > 0) {
-				nBytes = WideCharToMultiByte(CP_UTF8, 0, szBuffer, nBytes, NULL, 0, NULL, NULL);
-				if (bUnix)
-					for ( ; *szBuffer; szBuffer++)
-						if (*szBuffer == _T('\r'))
-							nBytes--;
-			}
-		}
+DWORD CalcTextSize(LPCTSTR* szText, DWORD estBytes, WORD encoding, BOOL unix, BOOL inclBOM) {
+	LPCTSTR szBuffer = (szText ? *szText : NULL);
+#ifdef USE_RICH_EDIT
+	GETTEXTLENGTHEX gtl = {0};
+	if (!unix) gtl.flags = GTL_USECRLF;
+	if (!szBuffer) estBytes = SendMessage(client, EM_GETTEXTLENGTHEX, &gtl, 0);
+#else
+	if (!szBuffer) estBytes = GetWindowTextLength(client);
 #endif
-		nBytes += SIZEOFBOM_UTF_8;
+	else if (!estBytes) estBytes = lstrlen(szBuffer);
+	if (encoding == TYPE_UTF_16 || encoding == TYPE_UTF_16_BE)
+		estBytes = estBytes * 2 + (inclBOM ? SIZEOFBOM_UTF_16 : 0);
+	else if (encoding == TYPE_UTF_8) {
+		if (!szBuffer) szBuffer = GetShadowBuffer(&estBytes);
+		if (estBytes)
+			estBytes = WideCharToMultiByte(CP_UTF8, 0, szBuffer, estBytes, NULL, 0, NULL, NULL) + (inclBOM ? SIZEOFBOM_UTF_8 : 0);
 	}
-	else {
-		nBytes = GetWindowTextLength(client) - (bUnix ? (SendMessage(client, EM_GETLINECOUNT, 0, 0)) - 1 : 0);
-		//BUG! Wrapped lines erroneously decrease byte count (LE build, ANSI UNIX format)!
+#ifndef USE_RICH_EDIT
+	if (unix) {
+		for ( ; *szBuffer; szBuffer++)
+			if (*szBuffer == _T('\r'))
+				estBytes--;
 	}
-	return nBytes;
+#endif
+	if (szText) *szText = szBuffer;
+	return estBytes;
 }
 
 
@@ -369,8 +367,7 @@ CHARRANGE DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWho
 		return r;
 	}
 	if (bDown) {
-		if (nReplaceMax > -1)	lpszStop = szBuffer + nReplaceMax;
-		else					lpszStop = szBuffer + lSize;
+		lpszStop = szBuffer + lSize;
 		lpsz = szBuffer + (bFromTop ? 0 : lStart + (lStart == lEnd ? 0 : 1));
 	} else {
 		lpszStop = szBuffer + (bFromTop ? lSize : lStart);
@@ -457,7 +454,7 @@ BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE 
 	SetCursor(hcur);
 	if (f1.cpMin >= 0) {
 		SendMessage(client, EM_SETSEL, (WPARAM)f1.cpMin, (LPARAM)f1.cpMax);
-		UpdateStatus();
+		UpdateStatus(FALSE);
 		return TRUE;
 	}
 	MessageBox(hdlgFind ? hdlgFind : client, GetString(IDS_ERROR_SEARCH), STR_METAPAD, MB_OK|MB_ICONINFORMATION);

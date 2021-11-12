@@ -271,17 +271,12 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 		return;
 
 	if (bMRU) {
-		if (options.bRecentOnOwn)
-			hsub = GetSubMenu(hmenu, 1);
-		else
-			hsub = GetSubMenu(GetSubMenu(hmenu, 0), RECENTPOS);
-	}
-	else if (!options.bNoFaves) {
-		hsub = GetSubMenu(hmenu, FAVEPOS);
-	}
-	else {
+		if (options.bRecentOnOwn) 	hsub = GetSubMenu(hmenu, 1);
+		else 						hsub = GetSubMenu(GetSubMenu(hmenu, 0), MPOS_FILE_RECENT);
+	} else if (!options.bNoFaves) {
+		hsub = GetSubMenu(hmenu, MPOS_FAVE);
+	} else
 		return;
-	}
 
 	mio.cbSize = sizeof(MENUITEMINFO);
 	mio.fMask = MIIM_TYPE;
@@ -305,7 +300,7 @@ void LoadFileFromMenu(WORD wMenu, BOOL bMRU)
 		bLoading = TRUE;
 		ExpandFilename(sztFile, &sztFile);
 		lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
-		UpdateStatus();
+		UpdateStatus(TRUE);
 		LoadFile(sztFile, FALSE, TRUE);
 		if (bLoading) {
 			bLoading = FALSE;
@@ -343,7 +338,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, ULONG* plBufferLength, 
 
 	*plBufferLength = GetFileSize(hFile, NULL);
 	if (!options.bNoWarningPrompt && *plBufferLength > LARGEFILESIZEWARN && MessageBox(hwnd, GetString(IDS_LARGE_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDCANCEL) {
-		SendMessage(hwnd, WM_CLOSE, 0, 0L);
+		bQuitApp = TRUE;
 		return -1;
 	}
 
@@ -468,77 +463,62 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 	TCHAR szUncFn[MAXFN+6] = _T("\\\\?\\");
 
 	lstrcpy(szStatusMessage, GetString(IDS_FILE_LOADING));
-	UpdateStatus();
+	UpdateStatus(TRUE);
 
 	hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 	lstrcpy(szUncFn+4, szFilename);
 
+	*szStatusMessage = 0;
 	for (i = 0; i < 2; ++i) {
 		hFile = (HANDLE)CreateFile(szUncFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hFile == INVALID_HANDLE_VALUE) {
 			DWORD dwError = GetLastError();
 			if (dwError == ERROR_FILE_NOT_FOUND && bCreate) {
 				TCHAR buffer[MAXFN + 40];
-
 				if (i == 0) {
 					if (_tcschr(szFilename, _T('.')) == NULL) {
 						lstrcat(szFilename, _T(".txt"));
 						continue;
 					}
 				}
-
 				wsprintf(buffer, GetString(IDS_CREATE_FILE_MESSAGE), szFilename);
 				switch (MessageBox(hwnd, buffer, STR_METAPAD, MB_YESNOCANCEL | MB_ICONEXCLAMATION)) {
 				case IDYES:
-					{
-						hFile = (HANDLE)CreateFile(szUncFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-						if (hFile == INVALID_HANDLE_VALUE) {
-							ERROROUT(GetString(IDS_FILE_CREATE_ERROR));
-							*szStatusMessage = 0;
-							UpdateStatus();
-							bLoading = FALSE;
-							SetCursor(hcur);
-							return;
-						}
-						break;
+					hFile = (HANDLE)CreateFile(szUncFn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+					if (hFile == INVALID_HANDLE_VALUE) {
+						ERROROUT(GetString(IDS_FILE_CREATE_ERROR));
+						UpdateStatus(TRUE);
+						bLoading = FALSE;
+						SetCursor(hcur);
+						return;
 					}
+					break;
 				case IDNO:
-					{
-						*szStatusMessage = 0;
-						MakeNewFile();
-						SetCursor(hcur);
-						return;
-					}
+					MakeNewFile();
+					SetCursor(hcur);
+					return;
 				case IDCANCEL:
-					{
-						if (bLoading)
-							PostQuitMessage(0);
-						*szStatusMessage = 0;
-						SetCursor(hcur);
-						return;
-					}
+					if (bLoading)
+						PostQuitMessage(0);
+					SetCursor(hcur);
+					return;
 				}
 				break;
-			}
-			else {
+			} else {
 				if (dwError == ERROR_FILE_NOT_FOUND) {
 					ERROROUT(GetString(IDS_FILE_NOT_FOUND));
-				}
-				else if (dwError == ERROR_SHARING_VIOLATION) {
+				} else if (dwError == ERROR_SHARING_VIOLATION) {
 					ERROROUT(GetString(IDS_FILE_LOCKED_ERROR));
-				}
-				else {
+				} else {
 					SetLastError(dwError);
 					ReportLastError();
 				}
-				*szStatusMessage = 0;
-				UpdateStatus();
+				UpdateStatus(TRUE);
 				bLoading = FALSE;
 				SetCursor(hcur);
 				return;
 			}
-		}
-		else {
+		} else {
 			SwitchReadOnly(GetFileAttributes(szUncFn) & FILE_ATTRIBUTE_READONLY);
 			break;
 		}
@@ -547,15 +527,12 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 	if (bMRU)
 		SaveMRUInfo(szFilename);
 
-
 	if ((lActualCharsRead = LoadFileIntoBuffer(hFile, &pBuffer, &lBufferLength, &nEncodingType)) < 0) {
+		bDirtyStatus = TRUE;
 		CloseHandle(hFile);
-		*szStatusMessage = 0;
 		bLoading = FALSE;
 		return;
 	}
-
-//	if (dwActualBytesRead < 0) goto fini;
 
 	if (lBufferLength) {
 #ifdef USE_RICH_EDIT
@@ -612,7 +589,8 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 			bBinaryFile = TRUE;
 		}
 		else {
-			SendMessage(hwnd, WM_CLOSE, 0, 0L);
+			bQuitApp = TRUE;
+			return;
 		}
 	}
 
@@ -645,8 +623,7 @@ void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU)
 //#ifndef BUILD_METAPAD_UNICODE
 //fini:
 //#endif
-	*szStatusMessage = 0;
-	UpdateStatus();
+	UpdateStatus(TRUE);
 	CloseHandle(hFile);
 	HeapFree(globalHeap, 0, (HGLOBAL) pBuffer);
 	InvalidateRect(client, NULL, TRUE);

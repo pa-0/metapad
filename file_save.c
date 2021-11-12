@@ -177,8 +177,7 @@ BOOL SaveCurrentFileAs(void)
 		SwitchReadOnly(FALSE);
 		bLoading = FALSE;
 		bDirtyFile = FALSE;
-		UpdateStatus();
-		UpdateCaption();
+		UpdateStatus(TRUE);
 		return TRUE;
 	}
 	else
