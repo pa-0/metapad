@@ -228,7 +228,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 			return szShadow;
 		} else {
 			printf("G");
-#ifdef USE_RICH_EDIT
+//#ifdef USE_RICH_EDIT
 			{
 				TEXTRANGE tr;
 				tr.chrg.cpMin = 0;
@@ -236,9 +236,9 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 				tr.lpstrText = szShadow;
 				SendMessage(client, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
 			}
-#else
+//#else
 			GetWindowText(client, szShadow, shadowLen+1);
-#endif
+//#endif
 			bDirtyShadow = FALSE;
 		}
 	}

@@ -88,10 +88,10 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,53,56,44,15
     EDITTEXT        IDC_EDIT_URL,43,17,102,10,ES_CENTER | ES_NOHIDESEL |
                     ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
-    RTEXT           "metapad X.X",IDC_STATICX,41,7,103,8
+    RTEXT           "",IDC_STATICX,41,7,103,8
     ICON            IDI_PAD,IDC_DLGICON,7,7,20,20,SS_NOTIFY
-    CTEXT           "Static",IDC_STATIC_COPYRIGHT,7,34,137,8
-    CTEXT           "Static",IDC_STATIC_COPYRIGHT2,7,44,137,8
+    CTEXT           "",IDC_STATIC_COPYRIGHT,7,34,137,8
+    CTEXT           "",IDC_STATIC_COPYRIGHT2,7,44,137,8
 END
 
 IDD_FAV_NAME DIALOG DISCARDABLE  0, 0, 228, 46
@@ -284,11 +284,11 @@ BEGIN
                     WS_TABSTOP,16,143,176,9
 END
 
-#if defined(USE_RICH_EDIT)
+#ifdef(USE_RICH_EDIT)
 #if defined(APSTUDIO_INVOKED)
-IDD_PROPPAGE_A1_LE$(NO_RICH_EDIT) DIALOGEX 0, 0, 225, 167
+IDD_PROPPAGE_A1$(USE_RICH_EDIT) DIALOGEX 0, 0, 225, 167
 #else
-IDD_PROPPAGE_A1_LE DIALOGEX 0, 0, 225, 167
+IDD_PROPPAGE_A1 DIALOGEX 0, 0, 225, 167
 #endif
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Advanced"
@@ -304,12 +304,14 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,45,107,8
     CONTROL         "Disa&ble favourites menu",IDC_NO_FAVES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,58,107,8
-    CONTROL         "&Launch viewer for large files",IDC_ALWAYS_LAUNCH,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,71,107,8
-    CONTROL         "Use default &printer font",IDC_DEFAULT_PRINT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,84,107,8
+    CONTROL         "H&yperlinks require doubleclick",IDC_LINK_DC,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,71,107,8
+    CONTROL         "Su&ppress undo buffer prompt",IDC_SUPPRESS_UNDO_PROMPT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,84,107,8
+    CONTROL         "Hide scro&llbars when possible",IDC_HIDE_SCROLLBARS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,97,107,8
     CONTROL         "Use fi&xed window position:",IDC_STICKY_WINDOW,"Button",
-                    BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,7,112,99,8
+                    BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,7,112,107,8
     CONTROL         "Hide &go to offset",IDC_GOTO_OFFSET,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,119,7,99,8
     CONTROL         "Disable smart &home",IDC_SMARTHOME,"Button",
@@ -338,9 +340,9 @@ BEGIN
 END
 #else
 #if defined(APSTUDIO_INVOKED)
-IDD_PROPPAGE_A1$(USE_RICH_EDIT) DIALOGEX 0, 0, 225, 167
+IDD_PROPPAGE_A1_LE$(NO_RICH_EDIT) DIALOGEX 0, 0, 225, 167
 #else
-IDD_PROPPAGE_A1 DIALOGEX 0, 0, 225, 167
+IDD_PROPPAGE_A1_LE DIALOGEX 0, 0, 225, 167
 #endif
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Advanced"
@@ -356,14 +358,12 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,45,107,8
     CONTROL         "Disa&ble favourites menu",IDC_NO_FAVES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,58,107,8
-    CONTROL         "H&yperlinks require doubleclick",IDC_LINK_DC,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,71,107,8
-    CONTROL         "Su&ppress undo buffer prompt",IDC_SUPPRESS_UNDO_PROMPT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,84,107,8
-    CONTROL         "Hide scro&llbars when possible",IDC_HIDE_SCROLLBARS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,97,107,8
+    CONTROL         "&Launch viewer for large files",IDC_ALWAYS_LAUNCH,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,71,107,8
+    CONTROL         "Use default &printer font",IDC_DEFAULT_PRINT,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,84,107,8
     CONTROL         "Use fi&xed window position:",IDC_STICKY_WINDOW,"Button",
-                    BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,7,112,107,8
+                    BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,7,112,99,8
     CONTROL         "Hide &go to offset",IDC_GOTO_OFFSET,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,119,7,99,8
     CONTROL         "Disable smart &home",IDC_SMARTHOME,"Button",
@@ -1192,7 +1192,10 @@ BEGIN
     IDS_PLUGIN_MISMATCH_ERROR
                             "Your language plugin is for metapad %s, but you are running metapad %s.\n\nSome menu or dialog features may be missing or not work correctly.\n\nRun metapad /v to skip this message."
     IDS_ALLRIGHTS           "All Rights Reserved"
-    IDS_OK_BUTTON           "OK"
+//	IDS_METAPAD				"metapad"
+	"OK"					"OK"
+	"Cancel"				"Cancel"
+	"Close"				"Close"
     IDS_DEFAULT_FILTER_TEXT "Text (*.*)|*.*"
     IDS_NEW_FILE            "new file"
     IDS_MACRO_LENGTH_ERROR  "Selection is larger than maximum quick buffer length."
@@ -1207,7 +1210,7 @@ BEGIN
                             "Detected non-ANSI characters in this Unicode file.\n\nThis data was lost during save!\n\nTo keep the Unicode information, resave this file in Unicode or UTF-8 format."
     IDS_UNICODE_LOAD_ERROR  "Error converting file to Unicode"
     IDS_UNICODE_LOAD_TRUNCATION 
-                            "Detected unsupported or invalid code points in this Unicode file.\n\nData will be lost if this file is saved!"
+                            "Detected unsupported or invalid code points.\n\nData will be lost if this file is saved!"
     IDS_BINARY_FILE_WARNING_SAFE
                             "This is a binary file. Load anyway?\nNull terminators will be preserved unless the File Format is changed."
     IDS_LARGE_FILE_WARNING  "This file is very large ( >16 MB). Loading it may take a long time.\nLoad anyway?"
