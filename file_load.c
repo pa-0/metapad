@@ -32,28 +32,15 @@
 #endif
 
 #include "include/consts.h"
-#include "include/file_new.h"
+#include "include/globals.h"
+#include "include/resource.h"
+#include "include/strings.h"
+#include "include/macros.h"
+#include "include/metapad.h"
 #include "include/file_save.h"
 #include "include/file_utils.h"
-#include "include/macros.h"
-#include "include/resource.h"
-#include "include/tmp_protos.h"
-#include "include/typedefs.h"
-#include "include/strings.h"
 
-extern BOOL bBinaryFile;
-extern BOOL bDirtyFile, bDirtyShadow, bDirtyStatus;
-extern BOOL bLoading;
-extern BOOL bUnix;
-extern HANDLE globalHeap;
-extern HWND client;
-extern HWND hwnd;
-extern int nEncodingType;
-extern LPTSTR szFav;
-extern LPTSTR szFile;
-extern TCHAR szStatusMessage[MAXSTRING];
 
-extern option_struct options;
 
 void LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU);
 

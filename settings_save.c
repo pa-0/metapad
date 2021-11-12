@@ -36,36 +36,12 @@
 #include <wchar.h>
 #endif
 
-#include "include/encoding.h"
-#include "include/tmp_protos.h"
 #include "include/consts.h"
+#include "include/globals.h"
 #include "include/strings.h"
-#include "include/typedefs.h"
 #include "include/macros.h"
-
-extern HANDLE globalHeap;
-extern LPTSTR szMetapadIni;
-extern option_struct options;
-extern BOOL bWordWrap;
-extern BOOL bPrimaryFont;
-extern BOOL bSmartSelect;
-extern BOOL bShowStatus;
-extern BOOL bShowToolbar;
-extern BOOL bAlwaysOnTop;
-extern BOOL bTransparent;
-extern BOOL bCloseAfterFind;
-extern BOOL bCloseAfterReplace;
-extern BOOL bCloseAfterInsert;
-extern BOOL bNoFindHidden;
-extern BOOL g_bIniMode;
-extern LPTSTR FindArray[NUMFINDS];
-extern LPTSTR ReplaceArray[NUMFINDS];
-extern LPTSTR InsertArray[NUMINSERTS];
-extern LPTSTR szDir;
-
-#ifdef USE_RICH_EDIT
-extern BOOL bHyperlinks;
-#endif
+#include "include/metapad.h"
+#include "include/encoding.h"
 
 /**
  * Save an option.

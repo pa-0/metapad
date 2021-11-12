@@ -35,44 +35,14 @@
 #include <wchar.h>
 #endif
 
-#include "include/encoding.h"
-#include "include/tmp_protos.h"
 #include "include/consts.h"
-#include "include/strings.h"
-#include "include/typedefs.h"
-#include "include/settings_load.h"
-#include "include/macros.h"
+#include "include/globals.h"
 #include "include/resource.h"
-
-#ifdef USE_RICH_EDIT
-extern BOOL bHyperlinks;
-#endif
-
-#ifndef __MINGW64_VERSION_MAJOR
-//extern int _ttoi(const TCHAR*);
-#endif
-
-extern HANDLE globalHeap;
-extern LPTSTR szCustomFilter;
-extern LPTSTR szDir;
-extern LPTSTR szReplaceText;
-extern LPTSTR szMetapadIni;
-extern LPTSTR FindArray[NUMFINDS];
-extern LPTSTR ReplaceArray[NUMFINDS];
-extern LPTSTR InsertArray[NUMINSERTS];
-extern BOOL g_bIniMode;
-extern BOOL bWordWrap;
-extern BOOL bPrimaryFont;
-extern BOOL bSmartSelect;
-extern BOOL bShowStatus;
-extern BOOL bShowToolbar;
-extern BOOL bAlwaysOnTop;
-extern BOOL bTransparent;
-extern BOOL bCloseAfterFind;
-extern BOOL bCloseAfterReplace;
-extern BOOL bCloseAfterInsert;
-extern BOOL bNoFindHidden;
-extern option_struct options;
+#include "include/strings.h"
+#include "include/macros.h"
+#include "include/metapad.h"
+#include "include/encoding.h"
+#include "include/settings_load.h"
 
 /**
  * Load a binary option.

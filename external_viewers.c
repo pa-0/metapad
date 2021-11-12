@@ -33,22 +33,13 @@
 #include <tchar.h>
 #include <shellapi.h>
 
+#include "include/globals.h"
+#include "include/resource.h"
+#include "include/metapad.h"
 #include "include/file_save.h"
-#include "include/typedefs.h"
-#include "include/tmp_protos.h"
 #include "include/external_viewers.h"
 #include "include/strings.h"
 #include "include/macros.h"
-#include "include/resource.h"
-
-extern HANDLE globalHeap;
-extern HWND hwnd;
-extern LPTSTR szCaptionFile;
-extern LPTSTR szFile;
-extern LPTSTR szDir;
-extern BOOL bDirtyFile;
-
-extern option_struct options;
 
 /**
  * Try to execute a third party program.

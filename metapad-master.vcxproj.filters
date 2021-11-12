@@ -38,9 +38,6 @@
     <ClCompile Include="file_load.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="file_new.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="file_save.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -81,9 +78,6 @@
     <ClInclude Include="include\file_load.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\file_new.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\file_save.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -105,12 +99,6 @@
     <ClInclude Include="include\strings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\tmp_protos.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\typedefs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\w32crt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -121,6 +109,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\encoding.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\metapad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

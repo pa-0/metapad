@@ -32,19 +32,12 @@
 #include <windows.h>
 #include <tchar.h>
 
-#include "include/typedefs.h"
+#include "include/globals.h"
 #include "include/resource.h"
-#include "include/macros.h"
 #include "include/strings.h"
+#include "include/macros.h"
+#include "include/metapad.h"
 #include "include/language_plugin.h"
-#include "include/tmp_protos.h"
-
-extern HWND hwnd;
-extern BOOL g_bDisablePluginVersionChecking;
-extern HINSTANCE hinstThis;
-extern HINSTANCE hinstLang;
-
-extern option_struct options;
 
 /**
  * Load and verify a language plugin.

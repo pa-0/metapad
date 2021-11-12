@@ -35,29 +35,14 @@
 #include <richedit.h>
 #endif
 
-#include "include/macros.h"
 #include "include/consts.h"
-#include "include/file_utils.h"
-#include "include/strings.h"
+#include "include/globals.h"
 #include "include/resource.h"
-#include "include/typedefs.h"
-#include "include/tmp_protos.h"
+#include "include/strings.h"
+#include "include/macros.h"
+#include "include/metapad.h"
+#include "include/file_utils.h"
 
-extern HANDLE globalHeap;
-extern HWND hwnd;
-extern HWND client;
-extern BOOL bBinaryFile;
-extern BOOL bDirtyFile;
-extern BOOL bLoading;
-extern BOOL bReadOnly;
-extern BOOL bUnix;
-extern LPTSTR szDir;
-extern LPTSTR szFile;
-extern LPTSTR szCaptionFile;
-extern LPTSTR szCustomFilter;
-extern int nEncodingType;
-
-extern option_struct options;
 
 BOOL SaveFile(LPCTSTR szFilename);
 

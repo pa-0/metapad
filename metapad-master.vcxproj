@@ -363,7 +363,6 @@
     <ClCompile Include="encoding.c" />
     <ClCompile Include="external_viewers.c" />
     <ClCompile Include="file_load.c" />
-    <ClCompile Include="file_new.c" />
     <ClCompile Include="file_save.c" />
     <ClCompile Include="file_utils.c" />
     <ClCompile Include="language_plugin.c" />
@@ -380,18 +379,16 @@
     <ClInclude Include="include\encoding.h" />
     <ClInclude Include="include\external_viewers.h" />
     <ClInclude Include="include\file_load.h" />
-    <ClInclude Include="include\file_new.h" />
     <ClInclude Include="include\file_save.h" />
     <ClInclude Include="include\file_utils.h" />
     <ClInclude Include="include\globals.h" />
     <ClInclude Include="include\language_plugin.h" />
     <ClInclude Include="include\macros.h" />
+    <ClInclude Include="include\metapad.h" />
     <ClInclude Include="include\resource.h" />
     <ClInclude Include="include\settings_load.h" />
     <ClInclude Include="include\settings_save.h" />
     <ClInclude Include="include\strings.h" />
-    <ClInclude Include="include\tmp_protos.h" />
-    <ClInclude Include="include\typedefs.h" />
     <ClInclude Include="include\w32crt.h" />
   </ItemGroup>
   <ItemGroup>

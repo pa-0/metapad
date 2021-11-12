@@ -70,23 +70,21 @@
 //#pragma comment(linker, "/OPT:NOWIN98" )
 
 #include "include/consts.h"
+#include "include/globals.h"
 #include "include/strings.h"
 #include "include/macros.h"
-#include "include/typedefs.h"
+#include "include/metapad.h"
 #include "include/language_plugin.h"
 #include "include/external_viewers.h"
 #include "include/settings_save.h"
 #include "include/settings_load.h"
 #include "include/file_load.h"
-#include "include/file_new.h"
 #include "include/file_save.h"
 #include "include/file_utils.h"
 #include "include/encoding.h"
 
 ///// Globals /////
 
-#include "include/globals.h"
-#include "include/tmp_protos.h"
 SLWA SetLWA = NULL;
 HANDLE globalHeap = NULL;
 HINSTANCE hinstThis = NULL;
@@ -102,19 +100,16 @@ HMENU hrecentmenu = NULL;
 HFONT hfontmain = NULL;
 HFONT hfontfind = NULL;
 BOOL g_bIniMode = FALSE;
-LPTSTR szInsert = NULL;
-TCHAR gTmpBuf[MAX(MAX(MAXFN,MAXMACRO),MAX(MAXFIND,MAXINSERT))+MAXSTRING], gTmpBuf2[MAX(MAXFN,MAXMACRO)];
-TCHAR gDummyBuf[1], gDummyBuf2[1];
-#ifdef USE_RICH_EDIT
-	TCHAR gTmpBuf3[MAXFIND], gTmpBuf4[MAXFIND];
-#endif
-int fontmainHt;
 int _fltused = 0x9875; // see CMISCDAT.C for more info on this
 
 option_struct options;
-WORD perfUpdateTop = 0;
-WORD perfUpdateC[PERFBUCKETS] = {0};
-DWORD perfUpdateT[PERFBUCKETS] = {0};
+
+TCHAR gTmpBuf[MAX(MAX(MAXFN,MAXMACRO),MAX(MAXFIND,MAXINSERT))+MAXSTRING], gTmpBuf2[MAX(MAXFN,MAXMACRO)+MAXSTRING];
+TCHAR gDummyBuf[1], gDummyBuf2[1];
+int fontmainHt;
+DWORD updateThrottle = 0, updateTime = 0;
+WORD savedFormat = 0;
+LONGLONG savedLen = 0;
 
 
 #ifdef _DEBUG
@@ -600,26 +595,20 @@ void UpdateStatus(void)
 	static TCHAR szPane[50];
 	static int lastw = 0;
 	LONG lLine, lLines;
-	DWORD i, s, pt, pb;
+	DWORD i, s, st, pb;
 	int nPaneSizes[NUMSTATPANES];
 	LPTSTR szBuffer;
 	CHARRANGE cr;
 	RECT rc;
-	static float DIVV = 2;
 
 	KillTimer(hwnd, IDT_UPDATE);
-	pb = (pt = GetTickCount()) / PERFRES;
-	for (i = s = 0; i < PERFBUCKETS; i++) {
-		if (pb >= perfUpdateT[i] && pb-perfUpdateT[i] < PERFBUCKETS)
-			s += perfUpdateC[i];
-	}
-	printf("\n%d / %d", s, PERFRES*PERFBUCKETS);
-	if (s > PERFRES*PERFBUCKETS / DIVV) {
-		printf(".");
+	st = GetTickCount();
+	if (st < updateThrottle && (i = updateThrottle - st) < THROTTLEMAX*4) {
+		//printf("\n....%d", (updateThrottle - st));
+		if (i < THROTTLEMAX) updateThrottle += updateTime/2;
 		SetTimer(hwnd, IDT_UPDATE, 64, NULL);
 		return;
 	}
-
 
 	
 
@@ -649,10 +638,10 @@ void UpdateStatus(void)
 	if (status == NULL || !bShowStatus)
 		return;
 
-#ifdef USE_RICH_EDIT
+/*#ifdef USE_RICH_EDIT
 	if (!bUpdated)
 		return;
-#endif
+#endif*/
 
 	nPaneSizes[SBPANE_TYPE] = 4 * options.nStatusFontWidth;
 
@@ -736,14 +725,11 @@ void UpdateStatus(void)
 	InvalidateRect(status, &rc, TRUE);
 
 
-	if ((i = GetTickCount()) >= pt) {
-		if (perfUpdateT[perfUpdateTop] != pb) {
-			perfUpdateTop = (++perfUpdateTop)%PERFBUCKETS;
-			perfUpdateC[perfUpdateTop] = 0;
-		}
-		perfUpdateT[perfUpdateTop] = pb;
-		perfUpdateC[perfUpdateTop] += (WORD)(i - pt);
-	}
+
+
+	updateTime = (i = GetTickCount()) - st;
+	updateThrottle = i + updateTime / 2;
+	//printf("\n%d", (int)(updateTime / 2));
 }
 
 LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -3402,14 +3388,14 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 		switch (LOWORD(wParam)) {
 			case ID_CLIENT:
 				switch (HIWORD(wParam)) {
-#ifdef USE_RICH_EDIT
+/*#ifdef USE_RICH_EDIT
 					case EN_UPDATE:
 						if (!bUpdated) {
 							bUpdated = TRUE;
 							UpdateStatus();
 						}
 						break;
-#endif
+#endif*/
 					case EN_CHANGE:
 						bDirtyShadow = bDirtyStatus = TRUE;
 						if (!bDirtyFile && !bLoading) {
@@ -4938,6 +4924,7 @@ endinsertfile:
 	case WM_TIMER:
 		switch (LOWORD(wParam)) {
 			case IDT_UPDATE:
+				if ((l = GetTickCount()) < updateThrottle && updateThrottle - l < THROTTLEMAX*4) break;
 				UpdateStatus();
 				break;
 		}
@@ -5034,6 +5021,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	szMetapadIni = NULL;
 	szFindText = NULL;
 	szReplaceText = NULL;
+	szInsert = NULL;
 	szCustomFilter = NULL;
 	pbFindTextSpec = NULL;
 	pbReplaceTextSpec = NULL;

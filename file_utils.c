@@ -32,55 +32,42 @@
 #include <commdlg.h>
 #endif
 
-#include "include/globals.h"
 #include "include/consts.h"
+#include "include/globals.h"
 #include "include/resource.h"
-#include "include/tmp_protos.h"
-#include "include/typedefs.h"
 #include "include/strings.h"
 #include "include/macros.h"
-
-extern HANDLE globalHeap;
-extern BOOL bUnix;
-extern int nEncodingType;
-extern HWND client;
-extern HWND hdlgFind;
-extern HWND hwnd;
-extern LPTSTR szCaptionFile;
-extern LPTSTR szDir;
-extern LPTSTR szFile;
-extern LPTSTR szShadow;
-extern TCHAR shadowHold;
-extern DWORD shadowLen, shadowAlloc, shadowRngEnd;
-
-extern option_struct options;
+#include "include/metapad.h"
 
 
-void SetFileFormat(int nFormat)
-{
+
+void SetFileFormat(int nFormat) {
 	switch (nFormat) {
-	case FILE_FORMAT_DOS:
-		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DOS_FILE, 0), 0);
-		break;
-	case FILE_FORMAT_UNIX:
-		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNIX_FILE, 0), 0);
-		break;
-	case FILE_FORMAT_UTF8:
-		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UTF8_FILE, 0), 0);
-		break;
-	case FILE_FORMAT_UTF8_UNIX:
-		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UTF8_UNIX_FILE, 0), 0);
-		break;
-	case FILE_FORMAT_UNICODE:
-		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNICODE_FILE, 0), 0);
-		break;
-	case FILE_FORMAT_UNICODE_BE:
-		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNICODE_BE_FILE, 0), 0);
-		break;
-	case FILE_FORMAT_BINARY:
-		SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_BINARY_FILE, 0), 0);
-		break;
+	case FILE_FORMAT_DOS: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DOS_FILE, 0), 0); break;
+	case FILE_FORMAT_UNIX: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNIX_FILE, 0), 0); break;
+	case FILE_FORMAT_UTF8: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UTF8_FILE, 0), 0); break;
+	case FILE_FORMAT_UTF8_UNIX: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UTF8_UNIX_FILE, 0), 0); break;
+	case FILE_FORMAT_UNICODE: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNICODE_FILE, 0), 0); break;
+	case FILE_FORMAT_UNICODE_BE: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_UNICODE_BE_FILE, 0), 0); break;
+	case FILE_FORMAT_BINARY: SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_BINARY_FILE, 0), 0); break;
 	}
+}
+
+void MakeNewFile(void) {
+	bLoading = TRUE;
+	SetFileFormat(options.nFormatIndex);
+	SetWindowText(client, _T(""));
+	bDirtyFile = FALSE;
+	bBinaryFile = FALSE;
+	bLoading = FALSE;
+	SwitchReadOnly(FALSE);
+	FREE(szFile);
+	SSTRCPYAO(szCaptionFile, GetString(IDS_NEW_FILE), 32, 8);
+	szCaptionFile[0] = _T('\0');
+	bDirtyShadow = bDirtyStatus = TRUE;
+	savedLen = 0;
+	UpdateStatus();
+	bLoading = FALSE;
 }
 
 int FixShortFilename(LPCTSTR szSrc, TCHAR *szDest)
