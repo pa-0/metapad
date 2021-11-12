@@ -72,8 +72,8 @@ HWND hwndSheet;
 LPTSTR FindArray[NUMFINDS];
 LPTSTR ReplaceArray[NUMFINDS];
 LPTSTR InsertArray[NUMINSERTS];
-int nEncodingType, frDlgId, fontmainHt;
-DWORD randVal;
+int frDlgId, fontmainHt;
+DWORD nFormat, randVal;
 BOOL g_bDisablePluginVersionChecking;
 BOOL g_bIniMode;
 
