@@ -925,9 +925,9 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			SSTRCPY(szReplaceText, szRepl);
 			switch (LOWORD(wParam)){
 				case 0x400:
-					if (!ReplaceAll(hdlgFind, 1, 0, &szFindText, &szReplaceText, &pbFindTextSpec, &pbReplaceTextSpec, NULL, TRUE, bMatchCase, bWholeWord, 1, 0, FALSE, NULL, NULL)) {
+					if (!ReplaceAll(NULL, 1, 0, &szFindText, &szReplaceText, &pbFindTextSpec, &pbReplaceTextSpec, NULL, TRUE, bMatchCase, bWholeWord, 1, 0, FALSE, NULL, NULL)) {
 						if (!SearchFile(szBuf, bMatchCase, TRUE, bWholeWord, pbFindTextSpec)) break;
-						if (!ReplaceAll(hdlgFind, 1, 0, &szFindText, &szReplaceText, &pbFindTextSpec, &pbReplaceTextSpec, NULL, TRUE, bMatchCase, bWholeWord, 1, 0, FALSE, NULL, NULL)) break;
+						if (!ReplaceAll(NULL, 1, 0, &szFindText, &szReplaceText, &pbFindTextSpec, &pbReplaceTextSpec, NULL, TRUE, bMatchCase, bWholeWord, 1, 0, FALSE, NULL, NULL)) break;
 					}				
 				case IDOK:
 					SearchFile(szBuf, bMatchCase, bDown || frDlgId != ID_FIND, bWholeWord, pbFindTextSpec);
@@ -1016,6 +1016,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			case 'Y': SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_MYEDIT_REDO, 0); return TRUE;
 #endif
 			case SC_KEYMENU:
+			case VK_F3: SendMessage(hwnd, WM_COMMAND, (WPARAM)(GetKeyState(VK_SHIFT) & 0x8000 ? ID_FIND_PREV : ID_FIND_NEXT), 0); return TRUE;
 			case VK_F10: SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_INSERT_TEXT, 0); return TRUE;
 			case VK_F12: SendMessage(hdlgFind, WM_COMMAND, MAKEWPARAM(IDC_ESCAPE, BN_CLICKED), 0); return TRUE;
 			case VK_F1:
@@ -3212,7 +3213,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 	LPTOOLTIPTEXT lpttt;
 	LPBYTE pBuf;
 	LPCTSTR szOld;
-	LPTSTR sz, szNew, szBuf, szFind, szRepl;
+	LPTSTR sz, szNew, szBuf;
 	LPTSTR szTmp = gTmpBuf, szFileName = gTmpBuf;
 	LPTSTR szTmp2 = gTmpBuf2;
 	BOOL b, abort, uni;
@@ -4356,6 +4357,7 @@ endinsertfile:
 			case ID_UNINDENT:
 			case ID_STRIPCHAR:
 			case ID_STRIP_TRAILING_WS:
+			case ID_QUOTE:
 #ifdef USE_RICH_EDIT
 				SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
 				i = SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)cr.cpMin);
@@ -4389,44 +4391,92 @@ endinsertfile:
 #else
 				sz = _T("\r\n");
 #endif
+			case ID_UNTABIFY:
+			case ID_TABIFY:
 				switch (LOWORD(wParam)){
+					case ID_QUOTE:
 					case ID_INDENT:
-						lstrcpy(szTmp, _T("\r\n"));
-						if (options.bInsertSpaces) {
+					case ID_UNTABIFY:
+					case ID_TABIFY:
+						lstrcpy(szTmp, _T("\t \r\n"));
+						szTmp[1] = _T('\0');
+						if (options.bInsertSpaces || LOWORD(wParam) == ID_UNTABIFY || LOWORD(wParam) == ID_TABIFY) {
 #if UNICODE
-							wmemset(szTmp+2, _T(' '), options.nTabStops);
+							wmemset(szTmp+4, _T(' '), options.nTabStops);
 #else
-							memset(szTmp+2, _T(' '), options.nTabStops);
+							memset(szTmp+4, _T(' '), options.nTabStops);
 #endif
-							if (i >= j)
-								szTmp[2 + options.nTabStops - (GetColNum(cr.cpMin, szOld, l, i)-1) % options.nTabStops] = _T('\0');
+							if (i >= j && LOWORD(wParam) == ID_INDENT)
+								szTmp[4 + options.nTabStops - (GetColNum(cr.cpMin, szOld, l, i)-1) % options.nTabStops] = _T('\0');
 							else
-								szTmp[2 + options.nTabStops] = _T('\0');
+								szTmp[4 + options.nTabStops] = _T('\0');
 						}
 						else
-							lstrcpy(szTmp+2, _T("\t"));
-						if (i >= j)
-							SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)(szTmp+2));
-						else {
-#ifdef USE_RICH_EDIT
-							(szTmp++)[1] = _T('\r');
-#endif
-							ReplaceAll(hwnd, 1, 0, &sz, &szTmp, NULL, NULL, NULL, TRUE, TRUE, FALSE, 0, 0, FALSE, sz, NULL);
+							lstrcpy(szTmp+4, _T("\t"));
+						break;
+				}
+				switch (LOWORD(wParam)){
+					case ID_INDENT:
+						if (i >= j) {
+							SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)(szTmp+4));
+							return FALSE;
 						}
 						break;
-					case ID_UNINDENT: {
+					case ID_QUOTE:
+						lstrcpy(szTmp+4, SCNUL(options.szQuote));
+						break;
+				}
+				switch (LOWORD(wParam)){
+					case ID_INDENT:
+					case ID_QUOTE:
+						szTmp += 2;
 #ifdef USE_RICH_EDIT
-						static LPCTSTR usf[] = {_T("\r  \t"), _T("\r   "), _T("\r\t")};
-						static LPCTSTR usr[] = {_T("\r   \t"), _T("\r "), _T("\r")};
-						static LPBYTE usfs[] = {"\0\0\4\0", "\0\0\4\1", NULL};
-						static LPBYTE usrs[] = {"\0\0\0\4\0", "\0\1", NULL};
-						ReplaceAll(hwnd, 3, 0, usf, usr, usfs, usrs, NULL, TRUE, TRUE, FALSE, 0, options.nTabStops+1, TRUE, sz, NULL);
+						*(++szTmp) = _T('\r');
+#endif
+						break;
+					case ID_UNTABIFY:
+					case ID_TABIFY:
+						sz = szTmp+4;
+						break;
+				}
+				switch (LOWORD(wParam)){
+					case ID_INDENT:
+						ReplaceAll(hwnd, 1, 0, &sz, &szTmp, NULL, NULL, NULL, TRUE, TRUE, FALSE, 0, 0, FALSE, sz, NULL);
+						break;
+					case ID_QUOTE:
+						if (!ParseForEscapeSeqs(szTmp, &pbReplaceTextSpec, GetString(IDS_ESCAPE_CTX_QUOTE))) break;
+						ReplaceAll(hwnd, 1, 0, &sz, &szTmp, NULL, &pbReplaceTextSpec, NULL, TRUE, TRUE, FALSE, 0, 0, FALSE, sz, NULL);
+						break;
+					case ID_UNTABIFY:
+						ReplaceAll(hwnd, 1, 0, &szTmp, &sz, NULL, NULL, NULL, TRUE, TRUE, FALSE, 0, 0, FALSE, NULL, NULL);
+						break;
+					case ID_TABIFY:
+						ReplaceAll(hwnd, 1, 0, &sz, &szTmp, NULL, NULL, NULL, TRUE, TRUE, FALSE, 0, 0, FALSE, NULL, NULL);
+						break;
+					case ID_UNINDENT:
+						if (options.nTabStops < 2) {
+#ifdef USE_RICH_EDIT
+							static LPCTSTR usf[] = {_T("\r\t"), _T("\r ")};
+							static LPCTSTR usr[] = {_T("\r "), _T("\r")};
+							ReplaceAll(hwnd, 2, 0, usf, usr, NULL, NULL, NULL, TRUE, TRUE, FALSE, 0, 0, FALSE, sz, NULL);
 #else
-						static LPCTSTR usf[] = {_T("\r\n  \t"), _T("\r\n   "), _T("\r\n\t")};
-						static LPCTSTR usr[] = {_T("\r\n   \t"), _T("\r\n "), _T("\r\n")};
-						static LPBYTE usfs[] = {"\0\0\0\4\0", "\0\0\0\4\1", NULL};
-						static LPBYTE usrs[] = {"\0\0\0\0\4\0", "\0\0\1", NULL};
-						ReplaceAll(hwnd, 3, 0, usf, usr, usfs, usrs, NULL, TRUE, TRUE, FALSE, 0, options.nTabStops+2, TRUE, sz, NULL);
+							static LPCTSTR usf[] = {_T("\r\n\t"), _T("\r\n ")};
+							static LPCTSTR usr[] = {_T("\r\n "), _T("\r\n")};
+							ReplaceAll(hwnd, 2, 0, usf, usr, NULL, NULL, NULL, TRUE, TRUE, FALSE, 0, 0, FALSE, sz, NULL);
+#endif
+						} else {
+#ifdef USE_RICH_EDIT
+							static LPCTSTR usf[] = {_T("\r  \t"), _T("\r   "), _T("\r\t")};
+							static LPCTSTR usr[] = {_T("\r   \t"), _T("\r "), _T("\r")};
+							static LPBYTE usfs[] = {"\0\0\4\0", "\0\0\4\1", NULL};
+							static LPBYTE usrs[] = {"\0\0\0\4\0", "\0\1", NULL};
+							ReplaceAll(hwnd, 3, 0, usf, usr, usfs, usrs, NULL, TRUE, TRUE, FALSE, 0, options.nTabStops+1, TRUE, sz, NULL);
+#else
+							static LPCTSTR usf[] = {_T("\r\n  \t"), _T("\r\n   "), _T("\r\n\t")};
+							static LPCTSTR usr[] = {_T("\r\n   \t"), _T("\r\n "), _T("\r\n")};
+							static LPBYTE usfs[] = {"\0\0\0\4\0", "\0\0\0\4\1", NULL};
+							static LPBYTE usrs[] = {"\0\0\0\0\4\0", "\0\0\1", NULL};
+							ReplaceAll(hwnd, 3, 0, usf, usr, usfs, usrs, NULL, TRUE, TRUE, FALSE, 0, options.nTabStops+2, TRUE, sz, NULL);
 #endif
 						}
 						break;
@@ -4435,7 +4485,7 @@ endinsertfile:
 						static LPCTSTR usf[] = {_T("\r\r"), _T("\r\r"), _T("\r ")};
 						static LPCTSTR usr[] = {_T("\r \r"), _T("\r \r"), _T("\r")};
 						static LPBYTE usfs[] = {NULL, NULL, "\0\1"};
-						ReplaceAll(hwnd, 3, 0, usf, usr, usfs, usrs, NULL, TRUE, TRUE, FALSE, 0, 0, FALSE, sz, NULL);
+						ReplaceAll(hwnd, 3, 0, usf, usr, usfs, NULL, NULL, TRUE, TRUE, FALSE, 0, 0, FALSE, sz, NULL);
 #else
 						static LPCTSTR usf[] = {_T("\r\n\r"), _T("\r\n\r"), _T("\r\n ")};
 						static LPCTSTR usr[] = {_T("\r\n \r"), _T("\r\n \r"), _T("\r\n")};
@@ -4541,9 +4591,6 @@ endinsertfile:
 					SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_FONT_PRIMARY, 0), 0);
 				break;
 			case ID_HACKER:
-			case ID_TABIFY:
-			case ID_UNTABIFY:
-			case ID_QUOTE:
 			case ID_STRIP_CR:
 			case ID_STRIP_CR_SPACE:
 			case ID_MAKE_LOWER:
@@ -4561,80 +4608,7 @@ endinsertfile:
 				}
 				k = (LONG)l + 1;
 				szNew = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, k * sizeof(TCHAR));
-
 				switch (LOWORD(wParam)) {
-				case ID_UNTABIFY:
-				case ID_TABIFY:
-					cr2 = cr;
-					szFind = szTmp;
-					szRepl = szTmp + MAXSTRING;
-
-					if (LOWORD(wParam) == ID_UNTABIFY) {
-						lstrcpy(szFind, _T("\t"));
-						memset(szRepl, _T(' '), options.nTabStops);
-						szRepl[options.nTabStops] = _T('\0');
-					}
-					else {
-						lstrcpy(szRepl, _T("\t"));
-						memset(szFind, _T(' '), options.nTabStops);
-						szFind[options.nTabStops] = _T('\0');
-					}
-
-					nReplaceMax = cr.cpMax;
-					cr2.cpMax = cr2.cpMin;
-
-#ifdef USE_RICH_EDIT
-					SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr2);
-#else
-					SendMessage(client, EM_SETSEL, (WPARAM)cr2.cpMin, (LPARAM)cr2.cpMax);
-#endif
-					SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
-					//bReplacingAll = TRUE;
-					while (SearchFile(szFind, FALSE, TRUE, TRUE, FALSE, NULL)) {
-						SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szRepl);
-						nReplaceMax -= lstrlen(szFind) - lstrlen(szRepl);
-					}
-					//bReplacingAll = FALSE;
-					cr.cpMax = nReplaceMax;
-					nReplaceMax = -1;
-					SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
-					InvalidateRect(hwnd, NULL, TRUE);
-					break;
-				case ID_QUOTE:
-					nPos = 1;
-					sl = lstrlen(SCNUL(options.szQuote));
-					if (!sl) break;
-
-					for (i = 0; i < k-1; ++i) {
-#ifdef USE_RICH_EDIT
-						if (szOld[i] == _T('\r')) ++nPos;
-#else
-						if (szOld[i] == _T('\n')) ++nPos;
-#endif
-					}
-
-					HeapFree(globalHeap, 0, (HGLOBAL)szNew);
-					szNew = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, k * sizeof(TCHAR) + nPos * sl);
-
-					lstrcpy(szNew, options.szQuote);
-					for (i = 0, j = sl; i < k-1; ++i) {
-						szNew[j++] = szOld[i];
-#ifdef USE_RICH_EDIT
-						if (szOld[i] == _T('\r')) {
-#else
-						if (szOld[i] == _T('\n')) {
-#endif
-							if (i == k - 2) {
-								--nPos;
-								break;
-							}
-							lstrcat(szNew, options.szQuote);
-							j += sl;
-						}
-					}
-
-					cr.cpMax += nPos * sl;
-					break;
 				case ID_STRIP_CR_SPACE:
 				case ID_STRIP_CR:
 					for (i = 0, j = 0; i < k; ++i) {
@@ -4668,7 +4642,6 @@ endinsertfile:
 					break;
 				case ID_HACKER:
 					lstrcpy(szNew, szOld);
-
 					for (i = 0; i < k; i++) {
 						if (_istascii(szNew[i])) {
 							switch (szNew[i]) {
@@ -4786,12 +4759,8 @@ endinsertfile:
 #endif
 					break;
 				}
-
-				if (LOWORD(wParam) != ID_UNTABIFY && LOWORD(wParam) != ID_TABIFY) {
-					if (lstrcmp(szOld, szNew) != 0) {
-						SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szNew);
-					}
-				}
+				if (lstrcmp(szOld, szNew) != 0)
+					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szNew);
 #ifdef USE_RICH_EDIT
 				SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 				InvalidateRect(client, NULL, TRUE);
@@ -5569,7 +5538,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	SetFocus(client);
 
 	while (GetMessage(&msg, NULL, 0,0)) {
-		if (hdlgFind && (msg.message == WM_KEYDOWN || msg.message == WM_SYSCOMMAND) && FindProc(hdlgFind, msg.message, msg.wParam, msg.lParam)) continue;
+		if (hdlgFind && (msg.message == WM_KEYDOWN || msg.message == WM_SYSCOMMAND) && GetActiveWindow() == hdlgFind && FindProc(hdlgFind, msg.message, msg.wParam, msg.lParam)) continue;
 		if (!(hdlgFind && IsDialogMessage(hdlgFind, &msg)) && !TranslateAccelerator(hwnd, accel, &msg)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);

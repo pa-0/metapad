@@ -1190,6 +1190,7 @@ BEGIN
 	IDS_ESCAPE_CTX_INSERT	"Insert Text"
 	IDS_ESCAPE_CTX_CLIPBRD	"Clipboard"
 	IDS_ESCAPE_CTX_MACRO	"Macro"
+	IDS_ESCAPE_CTX_QUOTE	"Quote string"
 	IDS_LARGE_PASTE_WARNING	"About to insert %I64u characters of text.\nThis may take a very long time!\nContinue?"
 	IDS_ITEMS_REPLACED_ITER "Replaced %d item(s) in %d iteration(s)."
 END

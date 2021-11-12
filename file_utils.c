@@ -471,8 +471,8 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 		for (k = 0; ++k < 6; ) {
 			globs[k] = globe[k] = NULL;
 			if (nglob[k] = MIN(nglob[k], cglob[k])) {
-				globs[k] = (LPTSTR*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nglob[k] * sizeof(LPCTSTR*));
-				globe[k] = (LPTSTR*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nglob[k] * sizeof(LPCTSTR*));
+				globs[k] = (LPCTSTR*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nglob[k] * sizeof(LPCTSTR*));
+				globe[k] = (LPCTSTR*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nglob[k] * sizeof(LPCTSTR*));
 				gu = 1;
 			}
 		}
@@ -550,8 +550,8 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 				if (gu) { 
 					memset(cglob, 0, sizeof(cglob));		
 					for (k = 0; ++k < 6; ) {
-						memset(globs[k], 0, nglob[k] * sizeof(LPCTSTR*));
-						memset(globe[k], 0, nglob[k] * sizeof(LPCTSTR*));
+						memset((LPTSTR*)globs[k], 0, nglob[k] * sizeof(LPCTSTR*));
+						memset((LPTSTR*)globe[k], 0, nglob[k] * sizeof(LPCTSTR*));
 					}
 				}
 				szIn++;
@@ -586,8 +586,8 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 				if (gu) { 
 					memset(cglob, 0, sizeof(cglob));		
 					for (k = 0; ++k < 6; ) {
-						memset(globs[k], 0, nglob[k] * sizeof(LPCTSTR*));
-						memset(globe[k], 0, nglob[k] * sizeof(LPCTSTR*));
+						memset((LPTSTR*)globs[k], 0, nglob[k] * sizeof(LPCTSTR*));
+						memset((LPTSTR*)globe[k], 0, nglob[k] * sizeof(LPCTSTR*));
 					}
 				}
 			}
@@ -634,7 +634,7 @@ DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* 
 	if (selection){
 		szIn = GetShadowSelection(&l, &cr);
 		if (!l) {
-			if (szMsgBuf) MessageBox(owner, GetString(IDS_NO_SELECTED_TEXT), STR_METAPAD, MB_OK|MB_ICONINFORMATION);
+			if (owner) MessageBox(owner, GetString(IDS_NO_SELECTED_TEXT), STR_METAPAD, MB_OK|MB_ICONINFORMATION);
 			return 0;
 		}
 	} else
@@ -685,9 +685,9 @@ DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* 
 	SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
 	InvalidateRect(client, NULL, TRUE);
 	SetCursor(hCur);
-	if (szMsgBuf) {
+	if (owner && szMsgBuf) {
 		wsprintf(szMsgBuf, GetString(recur ? IDS_ITEMS_REPLACED_ITER : IDS_ITEMS_REPLACED), r, ict-1);
-		MessageBox(hdlgFind, szMsgBuf, STR_METAPAD, MB_OK|MB_ICONINFORMATION);
+		MessageBox(owner, szMsgBuf, STR_METAPAD, MB_OK|MB_ICONINFORMATION);
 	}
 	return r;
 }
