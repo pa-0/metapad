@@ -83,4 +83,17 @@
 
 #define RAND() ((randVal = randVal * 214013L + 2531011L) >> 16)
 
+
+#ifdef _DEBUG
+
+#define DUMP(o, l, f) {\
+	DWORD d;\
+	HANDLE hFile = (HANDLE)CreateFile((f)?(f):(_T("__DUMP")), GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);\
+	WriteFile(hFile, o, l, &d, NULL);\
+	SetEndOfFile(hFile);\
+	CloseHandle(hFile);\
+	}
+
+#endif
+
 #endif

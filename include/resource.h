@@ -115,7 +115,7 @@ Nonlocalized:
 #define IDS_ERROR_SEARCH				11
 #define IDS_LAUNCH_WARNING				12
 #define IDS_READONLY_INDICATOR			13
-#define IDS_READONLY_MENU				14
+//#define IDS_READONLY_MENU				14
 #define IDS_ERROR_FAVOURITES			15
 #define IDS_FILE_LOADING				16
 #define IDS_READONLY_WARNING			17
@@ -149,7 +149,7 @@ Nonlocalized:
 #define IDS_QUERY_SEARCH_TOP			45
 #define IDS_QUERY_SEARCH_BOTTOM			46
 #define IDS_RECENT_MENU					47
-#define IDS_RECENT_FILES_MENU			48
+//#define IDS_RECENT_FILES_MENU			48
 #define IDS_MAX_RECENT_WARNING			49
 #define IDS_STICKY_MESSAGE				50
 #define IDS_CLEAR_FIND_WARNING			51
@@ -200,7 +200,7 @@ Nonlocalized:
 #define IDS_BAD_STRING_PLUGIN_ERROR		98
 #define IDS_PLUGIN_MISMATCH_ERROR		99
 #define IDS_ALLRIGHTS					100
-#define IDD_ABOUT						101		/* not associated with a string */
+#define IDD_ABOUT						101		//not associated with a string
 #define IDS_DEFAULT_FILTER_TEXT			102
 #define IDS_NEW_FILE					103
 #define IDS_MACRO_LENGTH_ERROR			104
@@ -208,13 +208,13 @@ Nonlocalized:
 
 /* IDD_ dialog titles */
 #define IDD_PROPPAGE_GENERAL			112
-#define IDD_ABORT_PRINT					113		/* not associated with a string */
+#define IDD_ABORT_PRINT					113		//not associated with a string
 #define IDD_GOTO						114
 #define IDD_PROPPAGE_VIEW				124
 #define IDD_FAV_NAME					128
 
 /* IDR_ menus (NOT associated with a string but must still match up to language plugin rsrc IDs) */
-#define IDR_BASE						129		/* (range) */
+#define IDR_BASE						129		//(range)
 #define IDR_ESCAPE_SEQUENCES			129
 #define IDR_MENU						130
 #define IDR_POPUP						131
@@ -258,8 +258,8 @@ Nonlocalized:
 #define IDS_STATFMT_OVR					496
 
 /* IDS_/STR_ nonlocalized strings */
-#define NONLOCALIZED_BASE				500		/* (range) */
-#define NONLOCALIZED_END				699		/* (range) */
+#define NONLOCALIZED_BASE				500		//(range)
+#define NONLOCALIZED_END				699		//(range)
 #define STR_METAPAD						500
 #define STR_CAPTION_FILE				501
 #define STR_ABOUT						502
@@ -361,99 +361,100 @@ Nonlocalized:
 #define IDSD_QUOTE						756
 #define IDSD_CUSTOMDATE					757
 
-/* IDC_ common dialog by-command text (fallback if both IDDC_ and IDDP_ matching failed) Contains conflicts. */
-#define IDC_BASE						1000	/* (range) */
-#define IDC_OK							1001	/* IDOK = 1 */
-#define IDC_CANCEL						1002	/* IDCANCEL = 2 */
-//#define IDC_CLOSE						1008	/* IDCLOSE = 8 */
-#define IDC_CHECK_QUICKEXIT				1010
-#define IDC_CHECK_SAVEWINDOWPLACEMENT   1011
+/* IDC_ common dialog by-command text (strings common to more than one dialog, assigned directly to IDC_ ids). */
+#define IDC_BASE						1000	//(range)
+#define IDC_OK							1001	//IDOK = 1
+#define IDC_CANCEL						1002	//IDCANCEL = 2
+//#define IDC_CLOSE						1008	//IDCLOSE = 8
 #define IDC_BUTTON_BROWSE				1013
 #define IDC_BUTTON_BROWSE2				1015
-#define IDC_CHECK_LAUNCH_CLOSE			1016
-#define IDC_FONT_PRIMARY				1018
-#define IDC_FONT_SECONDARY				1019
-#define IDC_FONT_PRIMARY_2				1020
-#define IDC_FONT_SECONDARY_2			1021
-#define IDC_BTN_FONT1					1023
-#define IDC_BTN_FONT2					1024
-#define IDC_LAUNCH_SAVE0				1030
-#define IDC_LAUNCH_SAVE1				1031
-#define IDC_LAUNCH_SAVE2				1032
-#define IDC_FIND_AUTO_WRAP				1033
-#define IDC_AUTO_INDENT					1034
-#define IDC_INSERT_SPACES				1035
-#define IDC_NO_CAPTION_DIR				1036	//IDDC
-#define IDC_GOTO_HIDE_OFFSET			1036
-#define ID_SMARTSELECT					1037	/* ID_ menu command (40xxx)! Not moveable due to legacy */
-#define IDC_CHECK_SAVEMENUSETTINGS		1038
-#define IDC_FIND_MATCH_WORD				1040	/* Win32 constants for IDD_FIND */
-#define IDC_FIND_MATCH_CASE				1041	/* Win32 constants for IDD_FIND */
-#define IDC_CHECK_SAVEDIRECTORY			1041	//IDDC
-#define IDC_NUM_MRU						1041	//IDDC
-#define IDC_RECENT						1042
-#define IDC_INSERT_TIME					1043	//IDDC
+#define ID_SMARTSELECT					1037	//ID_ menu command (40xxx)! Not moveable due to legacy
+#define IDC_FIND_MATCH_WORD				1040	//Win32 constants for std find dialog
+#define IDC_FIND_MATCH_CASE				1041	//Win32 constants for std find dialog
 #define IDC_OFFSET_TEXT					1043
-#define IDC_PROMPT_BINARY				1044
 #define IDC_RADIO_SELECTION				1045
-#define IDC_DEFAULT_PRINT				1045	//IDDC
 #define IDC_RADIO_WHOLE					1046
-#define IDC_CURRENT_FIND_FONT			1046	//IDDC
-#define IDC_STICKY_WINDOW				1047
-#define IDC_BUTTON_STICK				1048
-#define IDC_SECONDARY_PRINT_FONT		1049
-#define IDC_SYSTEM_COLOURS				1050
-#define IDC_SYSTEM_COLOURS2				1053
-#define IDC_STAT_WIND					1056
-#define IDC_STAT_FONT					1057
-#define IDC_STAT_WIND2					1058
-#define IDC_SMARTHOME					1059	//IDDC
-#define IDC_STAT_FONT2					1059
-#define IDC_READONLY_MENU				1060
-#define IDC_FLAT_TOOLBAR				1066
-#define IDC_ALWAYS_LAUNCH				1067
-#define IDC_LINK_DC						1068
-#define IDC_NO_SAVE_EXTENSIONS			1069
-#define IDC_CONTEXT_CURSOR				1070
-#define IDC_SUPPRESS_UNDO_PROMPT		1071
-#define IDC_BUTTON_CLEAR_FIND			1072
-#define IDC_BUTTON_CLEAR_RECENT			1073
-#define IDC_BUTTON_FORMAT				1074
-#define IDC_HIDE_SCROLLBARS				1075
 #define IDC_CLOSE_AFTER_FIND			1076
-#define IDC_NO_SAVE_HISTORY				1076	//IDDC
-#define IDC_NO_FAVES					1077
 #define IDC_NAME						1078
-#define IDC_NO_FIND_SELECT				1078	//IDDC
-#define IDC_STAT_TRANS					1081
-#define IDC_RADIO_LANG_DEFAULT			1086	/* 3.7 remapped - was conflicting and doesn't need to be localized */
-#define IDC_RADIO_LANG_PLUGIN			1087	/* 3.7 remapped - was conflicting and doesn't need to be localized */
+#define IDC_RADIO_LANG_DEFAULT			1086	//3.7 remapped - was conflicting and doesn't need to be localized
+#define IDC_RADIO_LANG_PLUGIN			1087	//3.7 remapped - was conflicting and doesn't need to be localized
 #define IDC_TEXT_MACRO					1088
 #define IDC_CLOSE_AFTER_INSERT			1089
 #define IDC_CLOSE_AFTER_REPLACE			1090
 #define IDC_TEXT_FIND					1091
 #define IDC_TEXT_REPLACE				1092
-#define IDC_TEXT_INSERT					1093
+
+/* IDC_ unique dialog by-command text (strings for these are assigned to respective IDDC_ ranges, rather than directly to the IDC_ ids, to avoid any conflicts) */
+#define IDC_CHECK_QUICKEXIT				1010	//IDDC_PROPPAGE_GENERAL_BASE
+#define IDC_CHECK_SAVEWINDOWPLACEMENT   1011	//IDDC_PROPPAGE_GENERAL_BASE
+#define IDC_CHECK_LAUNCH_CLOSE			1016	//IDDC_PROPPAGE_GENERAL_BASE
+#define IDC_LAUNCH_SAVE0				1030	//IDDC_PROPPAGE_GENERAL_BASE
+#define IDC_LAUNCH_SAVE1				1031	//IDDC_PROPPAGE_GENERAL_BASE
+#define IDC_LAUNCH_SAVE2				1032	//IDDC_PROPPAGE_GENERAL_BASE
+#define IDC_FIND_AUTO_WRAP				1033	//IDDC_PROPPAGE_GENERAL_BASE
+#define IDC_AUTO_INDENT					1034	//IDDC_PROPPAGE_GENERAL_BASE
+#define IDC_INSERT_SPACES				1035	//IDDC_PROPPAGE_GENERAL_BASE
+#define IDC_NO_CAPTION_DIR				1036	//IDDC_PROPPAGE_GENERAL_BASE
+#define IDC_CHECK_SAVEMENUSETTINGS		1038	//IDDC_PROPPAGE_GENERAL_BASE
+#define IDC_CHECK_SAVEDIRECTORY			1041	//IDDC_PROPPAGE_GENERAL_BASE
+#define IDC_FONT_PRIMARY				1018	//IDDC_PROPPAGE_VIEW_BASE
+#define IDC_FONT_SECONDARY				1019	//IDDC_PROPPAGE_VIEW_BASE
+#define IDC_FONT_PRIMARY_2				1020	//IDDC_PROPPAGE_VIEW_BASE
+#define IDC_FONT_SECONDARY_2			1021	//IDDC_PROPPAGE_VIEW_BASE
+#define IDC_BTN_FONT1					1023	//IDDC_PROPPAGE_VIEW_BASE
+#define IDC_BTN_FONT2					1024	//IDDC_PROPPAGE_VIEW_BASE
+#define IDC_SYSTEM_COLOURS				1050	//IDDC_PROPPAGE_VIEW_BASE
+#define IDC_SYSTEM_COLOURS2				1053	//IDDC_PROPPAGE_VIEW_BASE
+#define IDC_STAT_WIND					1056	//IDDC_PROPPAGE_VIEW_BASE
+#define IDC_STAT_FONT					1057	//IDDC_PROPPAGE_VIEW_BASE
+#define IDC_STAT_WIND2					1058	//IDDC_PROPPAGE_VIEW_BASE
+#define IDC_STAT_FONT2					1059	//IDDC_PROPPAGE_VIEW_BASE
+#define IDC_FLAT_TOOLBAR				1066	//IDDC_PROPPAGE_VIEW_BASE
+#define IDC_STAT_TRANS					1081	//IDDC_PROPPAGE_VIEW_BASE
+#define IDC_GOTO_HIDE_OFFSET			1036	//IDDC_PROPPAGE_A1_BASE
+#define IDC_NUM_MRU						1041	//IDDC_PROPPAGE_A1_BASE
+#define IDC_RECENT						1042	//IDDC_PROPPAGE_A1_BASE
+#define IDC_INSERT_TIME					1043	//IDDC_PROPPAGE_A1_BASE
+#define IDC_DEFAULT_PRINT				1045	//IDDC_PROPPAGE_A1_BASE
+#define IDC_PROMPT_BINARY				1044	//IDDC_PROPPAGE_A1_BASE
+#define IDC_CURRENT_FIND_FONT			1046	//IDDC_PROPPAGE_A1_BASE
+#define IDC_STICKY_WINDOW				1047	//IDDC_PROPPAGE_A1_BASE
+#define IDC_BUTTON_STICK				1048	//IDDC_PROPPAGE_A1_BASE
+#define IDC_SECONDARY_PRINT_FONT		1049	//IDDC_PROPPAGE_A1_BASE
+#define IDC_SMARTHOME					1059	//IDDC_PROPPAGE_A1_BASE
+#define IDC_READONLY_MENU				1060	//IDDC_PROPPAGE_A1_BASE
+#define IDC_ALWAYS_LAUNCH				1067	//IDDC_PROPPAGE_A1_BASE
+#define IDC_LINK_DC						1068	//IDDC_PROPPAGE_A1_BASE
+#define IDC_NO_SAVE_EXTENSIONS			1069	//IDDC_PROPPAGE_A1_BASE
+#define IDC_CONTEXT_CURSOR				1070	//IDDC_PROPPAGE_A1_BASE
+#define IDC_SUPPRESS_UNDO_PROMPT		1071	//IDDC_PROPPAGE_A1_BASE
+#define IDC_BUTTON_CLEAR_FIND			1072	//IDDC_PROPPAGE_A1_BASE
+#define IDC_BUTTON_CLEAR_RECENT			1073	//IDDC_PROPPAGE_A1_BASE
+#define IDC_BUTTON_FORMAT				1074	//IDDC_PROPPAGE_A1_BASE
+#define IDC_HIDE_SCROLLBARS				1075	//IDDC_PROPPAGE_A1_BASE
+#define IDC_NO_SAVE_HISTORY				1076	//IDDC_PROPPAGE_A1_BASE
+#define IDC_NO_FAVES					1077	//IDDC_PROPPAGE_A1_BASE
+#define IDC_NO_FIND_SELECT				1078	//IDDC_PROPPAGE_A1_BASE
 
 /* IDC_ non-textual or unintialized dialog controls (remapped in 3.7) */
-#define IDC_DLGICON						1400	/* 3.7: moved from 1009. non-textual */
-#define IDC_NUM							1401	/* 3.7: moved from 1088. unintialized */
-#define IDC_DATA						1402	/* 3.7: moved from 1077. unintialized */
-#define IDC_STATICX						1405	/* 3.7: moved from 1005. unintialized */
-#define IDC_EDIT_URL					1407	/* 3.7: moved from 1007. unintialized */
-#define IDC_EDIT_PLUGIN_RELEASE			1408	/* 3.7: moved from 1008. unintialized */
-#define IDC_EDIT_PLUGIN_EMAIL			1409	/* 3.7: moved from 1009. unintialized */
-#define IDC_EDIT_PLUGIN_TRANSLATOR		1410	/* 3.7: moved from 1010. unintialized */
-#define IDC_EDIT_PLUGIN_LANG			1411	/* 3.7: moved from 1083. unintialized */
-#define IDC_EDIT_BROWSER				1412	/* 3.7: moved from 1012. unintialized */
-#define IDC_EDIT_BROWSER2				1414	/* 3.7: moved from 1014. unintialized */
-#define IDC_TAB_STOP					1425	/* 3.7: moved from 1025. unintialized */
-#define IDC_LINE						1435	/* 3.7: moved from 1035. unintialized */
-#define IDC_EDIT_ARGS					1439	/* 3.7: moved from 1039. unintialized */
-#define IDC_EDIT_ARGS2					1440	/* 3.7: moved from 1040. unintialized */
-#define IDC_OFFSET						1444	/* 3.7: moved from 1044. unintialized */
-#define IDC_EDIT_MAX_MRU				1450	/* 3.7: moved from 1050. unintialized */
-#define IDC_MACRO_1						1461	/* 3.7: moved from 1070. unintialized */
+#define IDC_DLGICON						1400	//3.7: moved from 1009. non-textual
+#define IDC_NUM							1401	//3.7: moved from 1088. unintialized
+#define IDC_DATA						1402	//3.7: moved from 1077. unintialized
+#define IDC_STATICX						1405	//3.7: moved from 1005. unintialized
+#define IDC_EDIT_URL					1407	//3.7: moved from 1007. unintialized
+#define IDC_EDIT_PLUGIN_RELEASE			1408	//3.7: moved from 1008. unintialized
+#define IDC_EDIT_PLUGIN_EMAIL			1409	//3.7: moved from 1009. unintialized
+#define IDC_EDIT_PLUGIN_TRANSLATOR		1410	//3.7: moved from 1010. unintialized
+#define IDC_EDIT_PLUGIN_LANG			1411	//3.7: moved from 1083. unintialized
+#define IDC_EDIT_BROWSER				1412	//3.7: moved from 1012. unintialized
+#define IDC_EDIT_BROWSER2				1414	//3.7: moved from 1014. unintialized
+#define IDC_TAB_STOP					1425	//3.7: moved from 1025. unintialized
+#define IDC_LINE						1435	//3.7: moved from 1035. unintialized
+#define IDC_EDIT_ARGS					1439	//3.7: moved from 1039. unintialized
+#define IDC_EDIT_ARGS2					1440	//3.7: moved from 1040. unintialized
+#define IDC_OFFSET						1444	//3.7: moved from 1044. unintialized
+#define IDC_EDIT_MAX_MRU				1450	//3.7: moved from 1050. unintialized
+#define IDC_MACRO_1						1461	//3.7: moved from 1070. unintialized
 #define IDC_MACRO_2						1462	
 #define IDC_MACRO_3						1463
 #define IDC_MACRO_4						1464
@@ -463,23 +464,23 @@ Nonlocalized:
 #define IDC_MACRO_8						1468
 #define IDC_MACRO_9						1469
 #define IDC_MACRO_10					1470
-#define IDC_EDIT_SM_WIDTH				1471	/* 3.7: moved from 1071. unintialized */
-#define IDC_EDIT_TRANSPARENT			1472	/* 3.7: moved from 1072. unintialized */
-#define IDC_EDIT_QUOTE					1479	/* 3.7: moved from 1079. unintialized */
-#define IDC_ESCAPE						1080	/* 3.7: moved from 1080. non-textual */
-#define IDC_ESCAPE2						1081	/* 3.7: moved from 1081. non-textual */
-#define IDC_EDIT_LANG_PLUGIN			1482	/* 3.7: moved from 1082. unintialized */
-#define IDC_STATIC_COPYRIGHT			1484	/* 3.7: moved from 1084. unintialized */
-#define IDC_STATIC_COPYRIGHT2			1485	/* 3.7: moved from 1085. unintialized */
-#define IDC_CUSTOMDATE					1486	/* 3.7: moved from 1086. unintialized */
-#define IDC_CUSTOMDATE2					1487	/* 3.7: moved from 1087. unintialized */
-#define IDC_DROP_FIND					1491	/* 3.7: moved from 1154. unintialized */
-#define IDC_DROP_REPLACE				1492	/* 3.7: moved from 1153. unintialized */
+#define IDC_EDIT_SM_WIDTH				1471	//3.7: moved from 1071. unintialized
+#define IDC_EDIT_TRANSPARENT			1472	//3.7: moved from 1072. unintialized
+#define IDC_EDIT_QUOTE					1479	//3.7: moved from 1079. unintialized
+#define IDC_ESCAPE						1080	//3.7: moved from 1080. non-textual
+#define IDC_ESCAPE2						1081	//3.7: moved from 1081. non-textual
+#define IDC_EDIT_LANG_PLUGIN			1482	//3.7: moved from 1082. unintialized
+#define IDC_STATIC_COPYRIGHT			1484	//3.7: moved from 1084. unintialized
+#define IDC_STATIC_COPYRIGHT2			1485	//3.7: moved from 1085. unintialized
+#define IDC_CUSTOMDATE					1486	//3.7: moved from 1086. unintialized
+#define IDC_CUSTOMDATE2					1487	//3.7: moved from 1087. unintialized
+#define IDC_DROP_FIND					1491	//3.7: moved from 1154. unintialized
+#define IDC_DROP_REPLACE				1492	//3.7: moved from 1153. unintialized
 #define IDC_DROP_INSERT					1493
-#define IDC_COLOUR_BACK					1496	/* 3.7: moved from 1048. non-textual */
-#define IDC_COLOUR_FONT					1497	/* 3.7: moved from 1049. non-textual */	
-#define IDC_COLOUR_BACK2				1498	/* 3.7: moved from 1051. non-textual */
-#define IDC_COLOUR_FONT2				1499	/* 3.7: moved from 1052. non-textual */
+#define IDC_COLOUR_BACK					1496	//3.7: moved from 1048. non-textual
+#define IDC_COLOUR_FONT					1497	//3.7: moved from 1049. non-textual
+#define IDC_COLOUR_BACK2				1498	//3.7: moved from 1051. non-textual
+#define IDC_COLOUR_FONT2				1499	//3.7: moved from 1052. non-textual
 
 /* IDD_ dialog titles */
 #define IDD_FIND						1540
@@ -493,47 +494,48 @@ Nonlocalized:
 #define IDD_CP							1552
 
 /* FC_ constants for various operational flags which are also associated with a string */
-#define FC_BASE							2000	/* (range) */
-#define FC_LFMT_BASE					2039	/* (range) */
-#define FC_LFMT_END						2051	/* (range) */
-#define FC_ENC_BASE						2052	/* (range) */
-#define FC_ENC_END						2119	/* (range) */
-#define FC_ENC_UNKNOWN					2052	/* corresponds to ID_ENC_UNKNOWN	(40052) */
-#define FC_ENC_ANSI						2110	/* corresponds to ID_ENC_ANSI		(40110) */
-#define FC_ENC_UTF8						2109	/* corresponds to ID_ENC_UTF8		(40109), grandfathered in from 3.6- */
-#define FC_ENC_UTF16					2089	/* corresponds to ID_ENC_UTF16		(40089), grandfathered in from 3.6- */
-#define FC_ENC_UTF16BE					2090	/* corresponds to ID_ENC_UTF16BE	(40090), grandfathered in from 3.6- */
-#define FC_ENC_BIN						2111	/* corresponds to ID_ENC_BIN		(40111) */
-#define FC_ENC_CODEPAGE					2118	/* corresponds to ID_ENC_CODEPAGE	(40118) */
-//#define FC_ENC_CUSTOM					2119	/* corresponds to ID_ENC_CUSTOM		(40119) */
-#define FC_LFMT_UNKNOWN					2051	/* corresponds to ID_LFMT_UNKNOWN	(40051) */
-#define FC_LFMT_DOS						2039	/* corresponds to ID_LFMT_DOS		(40039), grandfathered in from 3.6- */
-#define FC_LFMT_UNIX					2040	/* corresponds to ID_LFMT_UNIX		(40040), grandfathered in from 3.6- */
-#define FC_LFMT_MAC						2048	/* corresponds to ID_LFMT_MAC		(40048) */
-#define FC_LFMT_MIXED					2049	/* corresponds to ID_LFMT_MIXED		(40049) */
+#define FC_BASE							2000	//(range)
+#define FC_LFMT_BASE					2039	//(range)
+#define FC_LFMT_END						2051	//(range)
+#define FC_ENC_BASE						2052	//(range)
+#define FC_ENC_END						2119	//(range)
+#define FC_ENC_UNKNOWN					2052	//corresponds to ID_ENC_UNKNOWN	(40052)
+#define FC_ENC_ANSI						2110	//corresponds to ID_ENC_ANSI	(40110)
+#define FC_ENC_UTF8						2109	//corresponds to ID_ENC_UTF8	(40109), grandfathered in from 3.6-
+#define FC_ENC_UTF16					2089	//corresponds to ID_ENC_UTF16	(40089), grandfathered in from 3.6-
+#define FC_ENC_UTF16BE					2090	//corresponds to ID_ENC_UTF16BE	(40090), grandfathered in from 3.6-
+#define FC_ENC_BIN						2111	//corresponds to ID_ENC_BIN		(40111)
+#define FC_ENC_CODEPAGE					2118	//corresponds to ID_ENC_CODEPAGE(40118)
+//#define FC_ENC_CUSTOM					2119	//corresponds to ID_ENC_CUSTOM	(40119)
+#define FC_LFMT_UNKNOWN					2051	//corresponds to ID_LFMT_UNKNOWN(40051)
+#define FC_LFMT_DOS						2039	//corresponds to ID_LFMT_DOS	(40039), grandfathered in from 3.6-
+#define FC_LFMT_UNIX					2040	//corresponds to ID_LFMT_UNIX	(40040), grandfathered in from 3.6-
+#define FC_LFMT_MAC						2048	//corresponds to ID_LFMT_MAC	(40048)
+#define FC_LFMT_MIXED					2049	//corresponds to ID_LFMT_MIXED	(40049)
 
 /* IDDC_ per-dialog by-command text (preferred, unless the text has already been manually assigned by program code) */
-#define IDDC_BASE						20000	/* (range) */
-#define IDDC_PROPPAGE_GENERAL_BASE		21200	/* (range) */
-#define IDDC_FIND_BASE					24000	/* (range) */
-#define IDDC_REPLACE_BASE				24100	/* (range) */
-#define IDDC_PAGE_SETUP_BASE			24600	/* (range) */
-#define IDDC_PROPPAGE_A1_BASE			24700	/* (range) */
-#define IDDC_INSERT_BASE				25100	/* (range) */
+#define IDDC_BASE						20000	//(range)
+#define IDDC_PROPPAGE_GENERAL_BASE		21200	//(range)
+#define IDDC_PROPPAGE_VIEW_BASE			22400	//(range)
+#define IDDC_FIND_BASE					24000	//(range)
+#define IDDC_REPLACE_BASE				24100	//(range)
+#define IDDC_PAGE_SETUP_BASE			24600	//(range)
+#define IDDC_PROPPAGE_A1_BASE			24700	//(range)
+#define IDDC_INSERT_BASE				25100	//(range)
 
 /* IDDP_ per-dialog by-position text (fallback if IDDC_ matching failed) */
-#define IDDP_BASE						30000	/* (range) */
-#define IDDP_PROPPAGE_GENERAL_BASE		31200	/* (range) */
-#define IDDP_ABORT_PRINT_BASE			31300	/* (range) */
-#define IDDP_GOTO_BASE					31400	/* (range) */
-#define IDDP_PROPPAGE_VIEW_BASE			32400	/* (range) */
-#define IDDP_REPLACE_BASE				34100	/* (range) */
-#define IDDP_PROPPAGE_A2_BASE			34900	/* (range) */
-#define IDDP_ABOUT_PLUGIN_BASE			35000	/* (range) */
-#define IDDP_INSERT_BASE				35100	/* (range) */
+#define IDDP_BASE						30000	//(range)
+#define IDDP_PROPPAGE_GENERAL_BASE		31200	//(range)
+#define IDDP_ABORT_PRINT_BASE			31300	//(range)
+#define IDDP_GOTO_BASE					31400	//(range)
+#define IDDP_PROPPAGE_VIEW_BASE			32400	//(range)
+#define IDDP_REPLACE_BASE				34100	//(range)
+#define IDDP_PROPPAGE_A2_BASE			34900	//(range)
+#define IDDP_ABOUT_PLUGIN_BASE			35000	//(range)
+#define IDDP_INSERT_BASE				35100	//(range)
 
 /* ID_ menu commands */
-#define ID_MENUCMD_BASE					40000	/* (range) */
+#define ID_MENUCMD_BASE					40000	//(range)
 #define ID_HELP_ABOUT					40002
 #define ID_MYFILE_OPEN					40003
 #define ID_MYFILE_EXIT					40004
@@ -561,21 +563,21 @@ Nonlocalized:
 #define ID_LFMT_UNIX					40040
 #define ID_INDENT						40041
 #define ID_UNINDENT						40043
-#define ID_LFMT_MAC						40048	/* 3.7+ */
-#define ID_LFMT_MIXED					40049	/* 3.7+ */
-#define ID_LFMT_UNKNOWN					40051	/* 3.7+ */
-#define ID_ENC_UNKNOWN					40052	/* 3.7+ */
-#define ID_LFMT_BASE					40039	/* (range) */
-#define ID_LFMT_END						40051	/* (range) */
-#define ID_ENC_BASE						40052	/* (range) */
-#define ID_ENC_END						40119	/* (range) */
+#define ID_LFMT_MAC						40048	//3.7+
+#define ID_LFMT_MIXED					40049	//3.7+
+#define ID_LFMT_UNKNOWN					40051	//3.7+
+#define ID_ENC_UNKNOWN					40052	//3.7+
+#define ID_LFMT_BASE					40039	//(range)
+#define ID_LFMT_END						40051	//(range)
+#define ID_ENC_BASE						40052	//(range)
+#define ID_ENC_END						40119	//(range)
 #define ID_RELOAD_CURRENT				40053
 #define ID_MYEDIT_REDO					40054
 #define ID_READONLY						40055
 #define ID_SHOWSTATUS					40057
 #define ID_DATE_TIME_LONG				40058
 #define ID_FIND_NEXT_WORD				40059
-#define ID_FIND_PREV_WORD				44060	/* 3.7: moved from 102. not associated with a string. used by accelerator only */
+#define ID_FIND_PREV_WORD				44060	//3.7: moved from 102. not associated with a string. used by accelerator only
 #define ID_STRIPCHAR					40062
 #define ID_MAKE_OEM						40063
 #define ID_MAKE_ANSI					40064
@@ -590,7 +592,7 @@ Nonlocalized:
 #define ID_SHOWTOOLBAR					40075
 #define ID_TABIFY						40078
 #define ID_UNTABIFY						40079
-#define ID_HACKER						40080	/* not associated with a string. used by accelerator only */
+#define ID_HACKER						40080	//not associated with a string. used by accelerator only
 #define ID_NEW_INSTANCE					40081
 #define ID_ALWAYSONTOP					40082
 #define ID_STRIP_CR_SPACE				40084
@@ -607,16 +609,16 @@ Nonlocalized:
 #define ID_MAKE_SENTENCE				40097
 #define ID_MAKE_TITLE					40098
 #define ID_ESCAPE_NEWLINE				40099
-#define ID_ESCAPE_TAB					40100
 #define ID_INSERT_FILE					40100
 #define ID_ESCAPE_BACKSLASH				40101
 #define ID_ESCAPE_DISABLE				40102
 #define ID_LAUNCH_SECONDARY_VIEWER		40105
 #define ID_ENC_UTF8						40109
-#define ID_ENC_ANSI						40110	/* 3.7+ */
-#define ID_ENC_BIN						40111	/* 3.7+ */
-#define ID_ENC_CODEPAGE					40118	/* 3.7+ */
-#define ID_ENC_CUSTOM					40119	/* 3.7+ */
+#define ID_ESCAPE_TAB					40110	//3.7 moved from 40100 due to conflict
+#define ID_ENC_ANSI						40111	//3.7+
+#define ID_ENC_BIN						40112	//3.7+
+#define ID_ENC_CODEPAGE					40118	//3.7+
+#define ID_ENC_CUSTOM					40119	//3.7+
 
 #define ID_DATE_TIME_CUSTOM				40204
 #define ID_DATE_TIME_CUSTOM2			40205
@@ -645,9 +647,9 @@ Nonlocalized:
 #define ID_ESCAPE_REP1					40228
 
 /* IDM_ menu by-position text. Currently used for menu items which do not / cannot have IDs assigned. */
-#define IDM_BASE						41000	/* (range) */
-#define IDM_MENU_BASE					41100	/* (range) */
-#define IDM_POPUP_BASE					41200	/* (range) */
+#define IDM_BASE						41000	//(range)
+#define IDM_MENU_BASE					41100	//(range)
+#define IDM_POPUP_BASE					41200	//(range)
 
 /* ID_ non-menu / accel / manually-inserted commands */
 #define ID_MRU_BASE						44000
@@ -669,7 +671,7 @@ Nonlocalized:
 #define ID_MRU_16						44016
 #define ID_FAV_RANGE_BASE				44100
 #define ID_FAV_RANGE_MAX				44199
-#define ID_TRANSPARENT					44200	/* ID_ menu command (40xxx)! Not moveable due to legacy */
+#define ID_TRANSPARENT					44200	//ID_ menu command (40xxx)! Not moveable due to legacy
 #define ID_MACRO_1						44301
 #define ID_MACRO_2						44302
 #define ID_MACRO_3						44303
@@ -690,26 +692,26 @@ Nonlocalized:
 #define ID_SET_MACRO_8					44407
 #define ID_SET_MACRO_9					44408
 #define ID_SET_MACRO_10					44409
-#define ID_SHIFT_ENTER					44904	/* 3.7: moved from 40104. not associated with a string. used by accelerator only */
-#define ID_SCROLLLEFT					44906	/* 3.7: moved from 40106. not associated with a string. used by accelerator only */
-#define ID_SCROLLRIGHT					44907	/* 3.7: moved from 40107. not associated with a string. used by accelerator only */
-#define ID_SAVE_AND_QUIT				44908	/* 3.7: moved from 40108. not associated with a string. used by accelerator only */
-#define ID_CONTROL_SHIFT_ENTER			44910	/* 3.7: moved from 40110. not associated with a string. used by accelerator only */
-#define ID_MYFILE_QUICK_EXIT			44914	/* 3.7: moved from 40014. not associated with a string. used by accelerator only */
-#define ID_ABOUT_PLUGIN					44954	/* 3.7: moved from 104. not associated with a string. used as ID for function inserted into main menu dynamically */
-#define ID_INSERT_MODE					44961	/* 3.7: moved from 40061. not associated with a string. used as ID for function inserted into main menu dynamically */
-#define ID_HOME							44970	/* 3.7: moved from 40070. not associated with a string. used as ID for function inserted into main menu dynamically */
-#define ID_CONTEXTMENU					44983	/* 3.7: moved from 40083. not associated with a string. used as ID for function inserted into main menu dynamically */
-#define ID_SCROLLUP						44985	/* 3.7: moved from 40085. not associated with a string. used as ID for function inserted into main menu dynamically */
-#define ID_SCROLLDOWN					44986	/* 3.7: moved from 40086. not associated with a string. used as ID for function inserted into main menu dynamically */
+#define ID_SHIFT_ENTER					44904	//3.7: moved from 40104. not associated with a string. used by accelerator only
+#define ID_SCROLLLEFT					44906	//3.7: moved from 40106. not associated with a string. used by accelerator only
+#define ID_SCROLLRIGHT					44907	//3.7: moved from 40107. not associated with a string. used by accelerator only
+#define ID_SAVE_AND_QUIT				44908	//3.7: moved from 40108. not associated with a string. used by accelerator only
+#define ID_CONTROL_SHIFT_ENTER			44910	//3.7: moved from 40110. not associated with a string. used by accelerator only
+#define ID_MYFILE_QUICK_EXIT			44914	//3.7: moved from 40014. not associated with a string. used by accelerator only
+#define ID_ABOUT_PLUGIN					44954	//3.7: moved from 104. not associated with a string. used as ID for function inserted into main menu dynamically
+#define ID_INSERT_MODE					44961	//3.7: moved from 40061. not associated with a string. used as ID for function inserted into main menu dynamically
+#define ID_HOME							44970	//3.7: moved from 40070. not associated with a string. used as ID for function inserted into main menu dynamically
+#define ID_CONTEXTMENU					44983	//3.7: moved from 40083. not associated with a string. used as ID for function inserted into main menu dynamically
+#define ID_SCROLLUP						44985	//3.7: moved from 40085. not associated with a string. used as ID for function inserted into main menu dynamically
+#define ID_SCROLLDOWN					44986	//3.7: moved from 40086. not associated with a string. used as ID for function inserted into main menu dynamically
 
 /* nonlocalized object IDs */
-#define IDR_ACCELERATOR					60000	/* 3.7: moved from 104. Starting 3.7+ accelerators are not localized! */
-#define IDI_PAD							61109	/* 3.7: moved from 109. Graphics are not localized */
-#define IDI_EYE							61110	/* 3.7: moved from 110. Graphics are not localized */
-#define IDC_MYHAND						61122	/* 3.7: moved from 122. Graphics are not localized */
-#define IDB_TOOLBAR						61126	/* 3.7: moved from 126. Graphics are not localized */
-#define IDB_DROP_ARROW					61131	/* 3.7: moved from 131. Graphics are not localized */
+#define IDR_ACCELERATOR					60000	//3.7: moved from 104. Starting 3.7+ accelerators are not localized!
+#define IDI_PAD							61109	//3.7: moved from 109. Graphics are not localized
+#define IDI_EYE							61110	//3.7: moved from 110. Graphics are not localized
+#define IDC_MYHAND						61122	//3.7: moved from 122. Graphics are not localized
+#define IDB_TOOLBAR						61126	//3.7: moved from 126. Graphics are not localized
+#define IDB_DROP_ARROW					61131	//3.7: moved from 131. Graphics are not localized
 
 
 
