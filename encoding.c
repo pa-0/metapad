@@ -116,7 +116,7 @@ INT DecodeBase( BYTE base, LPCTSTR code, LPBYTE bin, INT len, BYTE extractMode, 
 	}
 	if (len < 0) {
 		if (showError)
-			ERROROUT(len == -1 ? _T("Invalid code string length!") : _T("Invalid code characters!"));
+			ERROROUT(GetString(len == -1 ? IDS_DECODEBASE_BADLEN : IDS_DECODEBASE_BADCHAR));
 		return len;
 	}
 	switch (base){
@@ -319,7 +319,7 @@ BOOL IsTextUTF8(LPBYTE buf){
 		if (*buf < 0x80) buf++;
 		else if ((*((PWORD)buf) & 0xc0e0) == 0x80c0){ buf+=2; yes = 1; }
 		else if ((*((PDWORD)buf) & 0xc0c0f0) == 0x8080e0){ buf+=3; yes = 1; }
-		else if ((*((PDWORD)buf) & 0xc0c0c0f8) == 0x808080f0){ buf+=4; yes = 1; }	//valid UTF-8 outside Unicode range - Win32 cannot handle this - show truncation warning!
+		else if ((*((PDWORD)buf) & 0xc0c0c0f8) == 0x808080f0){ buf+=4; yes = 1; }
 		else return 0;
 	}
 	return yes;

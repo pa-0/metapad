@@ -97,12 +97,6 @@ TCHAR gDummyBuf[1], gDummyBuf2[1];
 
 ///// Implementation /////
 
-LPTSTR GetString(UINT uID)
-{
-	LoadString(hinstLang, uID, _szString, MAXSTRING);
-	return _szString;
-}
-
 BOOL EncodeWithEscapeSeqs(TCHAR* szText)
 {                     
 	TCHAR* szStore = gTmpBuf2;
@@ -540,7 +534,7 @@ void UpdateCaption(void) {
 		szCaptionFile[6] = _T('*');
 		u = (USHORT)lstrlen(szCaptionFile+8);
 		*((LPWORD)szCaptionFile+1) = u;
-		lstrcat(szCaptionFile+8, STR_CAPTION_FILE);
+		lstrcat(szCaptionFile+8, GetString(STR_CAPTION_FILE));
 		*((LPWORD)szCaptionFile) = (USHORT)lstrlen(szCaptionFile+8) - u - 1;
 		lstrcat(szCaptionFile+8, GetString(IDS_READONLY_INDICATOR));
 		szCaptionFile[u + 8 + *((LPWORD)szCaptionFile)] = _T('\0');
@@ -606,7 +600,7 @@ void UpdateStatus(BOOL refresh) {
 					SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_TYPE, (LPARAM)(LPTSTR)szPane);
 					nFormat |= (1<<30);
 				}
-				wsprintf(szPane, _T(" Bytes: %d "), bytes = CalcTextSize(NULL, NULL, 0, nFormat, TRUE, &chars));
+				wsprintf(szPane, GetString(IDS_STATFMT_BYTES), bytes = CalcTextSize(NULL, NULL, 0, nFormat, TRUE, &chars));
 				nPaneSizes[SBPANE_SIZE] = txtScale * (lstrlen(szPane) - 1);
 				SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_SIZE, (LPARAM)(LPTSTR)szPane);
 				statup = TRUE;
@@ -650,8 +644,8 @@ void UpdateStatus(BOOL refresh) {
 	if (bDirtyStatus) {
 		printf("D");
 #ifdef USE_RICH_EDIT
-		if (bInsertMode) 	lstrcpy(szPane, _T(" INS"));
-		else 				lstrcpy(szPane, _T("OVR"));
+		if (bInsertMode) 	lstrcpy(szPane, GetString(IDS_STATFMT_INS));
+		else 				lstrcpy(szPane, GetString(IDS_STATFMT_OVR));
 		nPaneSizes[SBPANE_INS] = 4 * txtScale - 3;
 		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_INS, (LPARAM)(LPTSTR)szPane);
 #else
@@ -672,20 +666,20 @@ void UpdateStatus(BOOL refresh) {
 		printf("s");
 		oldcr = full ? cr : ecr;
 		lLines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
-		wsprintf(szPane, _T(" Line: %d/%d"), lLine+1, lLines);
+		wsprintf(szPane, GetString(IDS_STATFMT_LINE), lLine+1, lLines);
 		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_LINE, (LPARAM)(LPTSTR)szPane);
 		nPaneSizes[SBPANE_LINE] = txtScale * lstrlen(szPane);
-		wsprintf(szPane, _T(" Col: %d"), lCol);
+		wsprintf(szPane, GetString(IDS_STATFMT_COL), lCol);
 		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_COL, (LPARAM)(LPTSTR)szPane);
 		nPaneSizes[SBPANE_COL] = txtScale * lstrlen(szPane) + 2;
 
 		if (cr.cpMax > cr.cpMin) {
 			*szPane = 0;
 			if (full)
-				wsprintf(szPane, _T("Bytes: %d"), CalcTextSize(NULL, &cr, 0, nFormat, FALSE, NULL));
+				wsprintf(szPane, GetString(IDS_STATFMT_BYTES), CalcTextSize(NULL, &cr, 0, nFormat, FALSE, NULL));
 			i = GetColNum(cr.cpMin, -1, NULL, &lLine, NULL);
 			j = GetColNum(cr.cpMax, -1, NULL, &lLines, NULL);
-			wsprintf(szStatusMessage, _T(" Selected %d:%d  ->  %d:%d   %s"), lLine+1, i, lLines+1, j, szPane);
+			wsprintf(szStatusMessage, GetString(IDS_STATFMT_SEL), lLine+1, i, lLines+1, j, szPane);
 		} else if (!bLoading)
 			*szStatusMessage = 0;
 		nPaneSizes[SBPANE_MESSAGE] = txtScale * (lstrlen(szStatusMessage) + 5);
@@ -893,7 +887,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 						return FALSE;
 					if (!options.bNoWarningPrompt && (LONGLONG)l1 * l2 > LARGEPASTEWARN) {
 						wsprintf(szTmp2, GetString(IDS_LARGE_PASTE_WARNING), (LONGLONG)l1 * l2);
-						nPos = MessageBox(hdlgFind, szTmp2, STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL);
+						nPos = MessageBox(hdlgFind, szTmp2, GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL);
 						if (nPos == IDCANCEL)
 							return FALSE;
 					}
@@ -1624,7 +1618,7 @@ void ReportError(UINT err) {
 
 	i = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), msgBuf, MAXSTRING-lstrlen(errMsg)-12, NULL);
 	wsprintf(&msgBuf[i], errMsg, err);
-	MessageBox(NULL, msgBuf, STR_METAPAD, MB_OK | MB_ICONSTOP);
+	MessageBox(NULL, msgBuf, GetString(STR_METAPAD), MB_OK | MB_ICONSTOP);
 /*
 #ifndef	_DEBUG
 	PostQuitMessage(0);
@@ -1645,24 +1639,24 @@ void SaveMRUInfo(LPCTSTR szFullPath)
 
 	if (options.nMaxMRU == 0)
 		return;
-	if (!g_bIniMode && RegCreateKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
+	if (!g_bIniMode && RegCreateKeyEx(HKEY_CURRENT_USER, GetString(STR_REGKEY), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
 		ReportLastError();
 		return;
 	}
-	wsprintf(szKey, _T("mru_%d"), nMRUTop);
+	wsprintf(szKey, GetString(IDSS_MRU), nMRUTop);
 	LoadOptionString(key, szKey, &szBuffer, MAXFN);
 
 	if (lstrcmp(SCNUL(szFullPath), SCNUL(szBuffer)) != 0) {
 		if (++nMRUTop > options.nMaxMRU) {
 			nMRUTop = 1;
 		}
-		SaveOption(key, _T("mru_Top"), REG_DWORD, (LPBYTE)&nMRUTop, sizeof(int));
-		wsprintf(szKey, _T("mru_%d"), nMRUTop);
+		SaveOption(key, GetString(IDSS_MRUTOP), REG_DWORD, (LPBYTE)&nMRUTop, sizeof(int));
+		wsprintf(szKey, GetString(IDSS_MRU), nMRUTop);
 		LoadOptionString(key, szKey, &szTopVal, MAXFN);
 		SaveOption(key, szKey, REG_SZ, (LPBYTE)szFullPath, MAXFN);
 		for (i = 1; i <= options.nMaxMRU; ++i) {
 			if (i == nMRUTop) continue;
-			wsprintf(szKey, _T("mru_%d"), i);
+			wsprintf(szKey,GetString(IDSS_MRU), i);
 			LoadOptionString(key, szKey, &szBuffer, MAXFN);
 			if (lstrcmpi(szBuffer, szFullPath) == 0) {
 				SaveOption(key, szKey, REG_SZ, (LPBYTE)szTopVal, MAXFN);
@@ -1693,7 +1687,7 @@ void PopulateFavourites(void) {
 	mio.fMask = MIIM_TYPE | MIIM_ID;
 	szBuffer = (LPTSTR)HeapAlloc(globalHeap, 0, 0xffff*sizeof(TCHAR));
 
-	if (GetPrivateProfileString(STR_FAV_APPNAME, NULL, NULL, szBuffer, 0xffff, SCNUL(szFav))) {
+	if (GetPrivateProfileString(GetString(STR_FAV_APPNAME), NULL, NULL, szBuffer, 0xffff, SCNUL(szFav))) {
 		bHasFaves = TRUE;
 		for (i = 0, j = 0, cnt = accel = 1; /*cnt <= MAXFAVES*/; ++j, ++i) {
 			szName[j] = szBuffer[i];
@@ -1752,7 +1746,7 @@ void PopulateMRUList(void)
 			EnableMenuItem(GetSubMenu(hmenu, 0), MPOS_FILE_RECENT, MF_BYPOSITION | MF_ENABLED);
 	}
 
-	if (!g_bIniMode && RegCreateKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, &nPrevSave) != ERROR_SUCCESS)
+	if (!g_bIniMode && RegCreateKeyEx(HKEY_CURRENT_USER, GetString(STR_REGKEY), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, &nPrevSave) != ERROR_SUCCESS)
 		ReportLastError();
 
 	if (g_bIniMode || nPrevSave == REG_OPENED_EXISTING_KEY) {
@@ -1762,14 +1756,14 @@ void PopulateMRUList(void)
 			DeleteMenu(hsub, 0, MF_BYPOSITION);
 		}
 
-		LoadOptionNumeric(key, _T("mru_Top"), (LPBYTE)&nMRUTop, sizeof(int));
+		LoadOptionNumeric(key, GetString(IDSS_MRUTOP), (LPBYTE)&nMRUTop, sizeof(int));
 		mio.cbSize = sizeof(MENUITEMINFO);
 		mio.fMask = MIIM_TYPE | MIIM_ID;
 		mio.fType = MFT_STRING;
 
 		i = nMRUTop;
 		while (cnt < options.nMaxMRU) {
-			wsprintf(szKey, _T("mru_%d"), i);
+			wsprintf(szKey, GetString(IDSS_MRU), i);
 			wsprintf(szBuffer, (num < 10 ? _T("&%d ") : _T("%d ")), num);
 			LoadOptionString(key, szKey, &szBuff2, MAXFN);
 
@@ -1932,7 +1926,7 @@ BOOL SetClientFont(BOOL bPrimary) {
 	//if (!bPrimary && options.bSecondarySystemColour) bUseSystem = TRUE;
 
 	if (SendMessage(client, EM_CANUNDO, 0, 0)) {
-		if (!options.bSuppressUndoBufferPrompt && MessageBox(hwnd, GetString(IDS_FONT_UNDO_WARNING), STR_METAPAD, MB_ICONEXCLAMATION | MB_OKCANCEL) == IDCANCEL)
+		if (!options.bSuppressUndoBufferPrompt && MessageBox(hwnd, GetString(IDS_FONT_UNDO_WARNING), GetString(STR_METAPAD), MB_ICONEXCLAMATION | MB_OKCANCEL) == IDCANCEL)
 			return FALSE;
 	}
 
@@ -2131,9 +2125,10 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 				SendDlgItemMessage(hwndDlg, IDC_DLGICON, STM_SETICON, (WPARAM)LoadIcon(hinstThis, MAKEINTRESOURCE(IDI_EYE)), 0);
 			CenterWindow(hwndDlg);
 			SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED); // hack for icon jitter
-			SetDlgItemText(hwndDlg, IDC_EDIT_URL, STR_URL);
+			SetDlgItemText(hwndDlg, IDC_STATICX, GetString(STR_ABOUT));
+			SetDlgItemText(hwndDlg, IDC_EDIT_URL, GetString(STR_URL));
 			SetDlgItemText(hwndDlg, IDOK, GetString(IDS_OK));
-			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT, STR_COPYRIGHT);
+			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT, GetString(STR_COPYRIGHT));
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT2, GetString(IDS_ALLRIGHTS));
 			break;
 		case WM_COMMAND:
@@ -2238,7 +2233,7 @@ BOOL CALLBACK AddFavDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			switch (LOWORD(wParam)) {
 				case IDOK:
 					GetDlgItemText(hwndDlg, IDC_DATA, szName, MAXFN);
-					WritePrivateProfileString(STR_FAV_APPNAME, szName, SCNUL(szFile), SCNUL(szFav));
+					WritePrivateProfileString(GetString(STR_FAV_APPNAME), szName, SCNUL(szFile), SCNUL(szFav));
 					PopulateFavourites();
 				case IDCANCEL:
 					EndDialog(hwndDlg, wParam);
@@ -2396,10 +2391,10 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 #endif
 		case IDC_BUTTON_STICK:
 			SaveWindowPlacement(hwnd);
-			MessageBox(hwndDlg, GetString(IDS_STICKY_MESSAGE), STR_METAPAD, MB_ICONINFORMATION);
+			MessageBox(hwndDlg, GetString(IDS_STICKY_MESSAGE), GetString(STR_METAPAD), MB_ICONINFORMATION);
 			break;
 		case IDC_BUTTON_CLEAR_FIND:
-			if (MessageBox(hwndDlg, GetString(IDS_CLEAR_FIND_WARNING), STR_METAPAD, MB_ICONEXCLAMATION | MB_OKCANCEL) == IDOK) {
+			if (MessageBox(hwndDlg, GetString(IDS_CLEAR_FIND_WARNING), GetString(STR_METAPAD), MB_ICONEXCLAMATION | MB_OKCANCEL) == IDOK) {
 				for (i = 0; i < NUMFINDS; i++)
 					FREE(FindArray[i]);
 				for (i = 0; i < NUMFINDS; i++)
@@ -2412,14 +2407,14 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			}
 			break;
 		case IDC_BUTTON_CLEAR_RECENT:
-			if (MessageBox(hwndDlg, GetString(IDS_CLEAR_RECENT_WARNING), STR_METAPAD, MB_ICONEXCLAMATION | MB_OKCANCEL) == IDOK) {
+			if (MessageBox(hwndDlg, GetString(IDS_CLEAR_RECENT_WARNING), GetString(STR_METAPAD), MB_ICONEXCLAMATION | MB_OKCANCEL) == IDOK) {
 				key = NULL;
-				if (!g_bIniMode && RegCreateKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
+				if (!g_bIniMode && RegCreateKeyEx(HKEY_CURRENT_USER, GetString(STR_REGKEY), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
 					ReportLastError();
 					break;
 				}
 				for (v = 1; v <= options.nMaxMRU; ++v) {
-					wsprintf(szInt, _T("mru_%d"), v);
+					wsprintf(szInt, GetString(IDSS_MRU), v);
 					SaveOption(key, szInt, REG_SZ, NULL, 1);
 				}
 				if (key != NULL)
@@ -2566,7 +2561,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BUTTON_BROWSE), TRUE);
 			break;
 		case IDC_BUTTON_BROWSE:
-			if (BrowseFile(hwndDlg, _T("dll"), NULL, _T("metapad language plugins (*.dll)\0*.dll\0All Files (*.*)\0*.*\0"), FALSE, FALSE, FALSE, &sz)){
+			if (BrowseFile(hwndDlg, _T("dll"), NULL, FixFilterString(GetString(IDS_FILTER_PLUGIN)), FALSE, FALSE, FALSE, &sz)){
 				if (g_bDisablePluginVersionChecking) {
 					SetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, sz);
 				}
@@ -3010,7 +3005,7 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		switch (LOWORD(wParam)) {
 		case IDC_BUTTON_BROWSE:
 		case IDC_BUTTON_BROWSE2:
-			if (BrowseFile(hwndDlg, _T("exe"), NULL, _T("Executable Files (*.exe)\0*.exe\0All Files (*.*)\0*.*\0"), FALSE, FALSE, FALSE, &sz))
+			if (BrowseFile(hwndDlg, _T("exe"), NULL, FixFilterString(GetString(IDS_FILTER_EXEC)), FALSE, FALSE, FALSE, &sz))
 				SetDlgItemText(hwndDlg, LOWORD(wParam) == IDC_BUTTON_BROWSE ? IDC_EDIT_BROWSER : IDC_EDIT_BROWSER2, sz);
 		}
 		break;
@@ -3281,9 +3276,9 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						ERROROUT(szTmp);
 #else
 						if (bLoading) {
-							if (options.bAlwaysLaunch || MessageBox(hwnd, GetString(IDS_QUERY_LAUNCH_VIEWER), STR_METAPAD, MB_ICONQUESTION | MB_YESNO) == IDYES) {
+							if (options.bAlwaysLaunch || MessageBox(hwnd, GetString(IDS_QUERY_LAUNCH_VIEWER), GetString(STR_METAPAD), MB_ICONQUESTION | MB_YESNO) == IDYES) {
 								if (!SCNUL(options.szBrowser)[0]) {
-									MessageBox(hwnd, GetString(IDS_VIEWER_MISSING), STR_METAPAD, MB_OK|MB_ICONEXCLAMATION);
+									MessageBox(hwnd, GetString(IDS_VIEWER_MISSING), GetString(STR_METAPAD), MB_OK|MB_ICONEXCLAMATION);
 									SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_VIEW_OPTIONS, 0), 0);
 									FREE(szFile);
 									break;
@@ -3294,7 +3289,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 							if (!IsWindowVisible(hwnd))
 								bQuit = TRUE;
 						} else {
-							MessageBox(hwnd, GetString(IDS_LE_MEMORY_LIMIT), STR_METAPAD, MB_ICONEXCLAMATION | MB_OK);
+							MessageBox(hwnd, GetString(IDS_LE_MEMORY_LIMIT), GetString(STR_METAPAD), MB_ICONEXCLAMATION | MB_OK);
 						}
 #endif
 				}
@@ -3672,7 +3667,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 #ifdef USE_RICH_EDIT
 			case ID_SHOWHYPERLINKS:
 				if (SendMessage(client, EM_CANUNDO, 0, 0)) {
-					if (!options.bSuppressUndoBufferPrompt && MessageBox(hwnd, GetString(IDS_UNDO_HYPERLINKS_WARNING), STR_METAPAD, MB_ICONEXCLAMATION | MB_OKCANCEL) == IDCANCEL)
+					if (!options.bSuppressUndoBufferPrompt && MessageBox(hwnd, GetString(IDS_UNDO_HYPERLINKS_WARNING), GetString(STR_METAPAD), MB_ICONEXCLAMATION | MB_OKCANCEL) == IDCANCEL)
 						break;
 				}
 				hCur = SetCursor(LoadCursor(NULL, IDC_WAIT));
@@ -3853,7 +3848,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					SaveOptions();
 
 					if (options.bLaunchClose && options.nLaunchSave == 2) {
-						MessageBox(hwndMain, GetString(IDS_LAUNCH_WARNING), STR_METAPAD, MB_ICONEXCLAMATION);
+						MessageBox(hwndMain, GetString(IDS_LAUNCH_WARNING), GetString(STR_METAPAD), MB_ICONEXCLAMATION);
 					}
 
 					if (options.bReadOnlyMenu != tmpOptions.bReadOnlyMenu)
@@ -4516,9 +4511,9 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					break;
 				}
 				SSTRCPY(options.MacroArray[i], szTmp);
-				wsprintf(szTmp2, _T("szMacroArray%d"), i);
+				wsprintf(szTmp2, GetString(IDSS_MACROARRAY), i);
 				if (!g_bIniMode)
-					RegCreateKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL);
+					RegCreateKeyEx(HKEY_CURRENT_USER, GetString(STR_REGKEY), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL);
 				if (!SaveOption(key, szTmp2, REG_SZ, (LPBYTE)options.MacroArray[i], MAXMACRO))
 					ReportLastError();
 				if (!g_bIniMode)
@@ -4702,7 +4697,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_PAD));
 		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 		wc.lpszMenuName = /*MAKEINTRESOURCE(IDR_MENU)*/0;
-		wc.lpszClassName = STR_METAPAD;
+		wc.lpszClassName = GetString(STR_METAPAD);
 		if (!RegisterClass(&wc)) {
 			ReportLastError();
 			return FALSE;
@@ -4751,7 +4746,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		pch = lstrrchr(szMetapadIni, _T('\\'));
 		++pch;
 		*pch = _T('\0');
-		lstrcat(szMetapadIni, _T("metapad.ini"));
+		lstrcat(szMetapadIni, GetString(STR_INI_FILE));
 	}
 	
 	if (szCmdLine && *szCmdLine) {
@@ -4776,15 +4771,15 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 				if( options.bSaveWindowPlacement || options.bStickyWindow ) {
 					int left, top, width, height, nShow;
 					LoadWindowPlacement(&left, &top, &width, &height, &nShow);
-					SaveOption(NULL, _T("w_WindowState"), REG_DWORD, (LPBYTE)&nShow, sizeof(int));
-					SaveOption(NULL, _T("w_Left"), REG_DWORD, (LPBYTE)&left, sizeof(int));
-					SaveOption(NULL, _T("w_Top"), REG_DWORD, (LPBYTE)&top, sizeof(int));
-					SaveOption(NULL, _T("w_Width"), REG_DWORD, (LPBYTE)&width, sizeof(int));
-					SaveOption(NULL, _T("w_Height"), REG_DWORD, (LPBYTE)&height, sizeof(int));
+					SaveOption(NULL, GetString(IDSS_WSTATE), REG_DWORD, (LPBYTE)&nShow, sizeof(int));
+					SaveOption(NULL, GetString(IDSS_WLEFT), REG_DWORD, (LPBYTE)&left, sizeof(int));
+					SaveOption(NULL, GetString(IDSS_WTOP), REG_DWORD, (LPBYTE)&top, sizeof(int));
+					SaveOption(NULL, GetString(IDSS_WWIDTH), REG_DWORD, (LPBYTE)&width, sizeof(int));
+					SaveOption(NULL, GetString(IDSS_WHEIGHT), REG_DWORD, (LPBYTE)&height, sizeof(int));
 				}
 				g_bIniMode = TRUE;
 				SaveOptions();
-				MSGOUT(_T("Migration to INI completed."));
+				MSGOUT(GetString(IDS_MIGRATED));
 				return FALSE;
 			default:
 				szCmdLine -= 2; nCmdLen += 2;
@@ -4835,8 +4830,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	
 	hwnd = CreateWindowEx(
 		WS_EX_ACCEPTFILES,
-		STR_METAPAD,
-		STR_CAPTION_FILE,
+		GetString(STR_METAPAD),
+		GetString(STR_CAPTION_FILE),
 		WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
 		left, top, width, height,
 		NULL,
@@ -4873,7 +4868,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
 	{
 		HMODULE hm;
-		hm = GetModuleHandle(_T("user32.dll"));
+		hm = GetModuleHandleA("user32.dll");
 		SetLWA = (SLWA)(GetProcAddress(hm, "SetLayeredWindowAttributes"));
 		if (SetLWA) {
 			SetLWA(hwnd, 0, 255, LWA_ALPHA);
@@ -4881,7 +4876,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 			HMENU hsub = GetSubMenu(GetMenu(hwnd), 3);
 			DeleteMenu(hsub, 4, MF_BYPOSITION);
 		}
-		hm = GetModuleHandle(_T("uxtheme.dll"));
+		hm = GetModuleHandleA("uxtheme.dll");
 		SetWindowTheme = (SWT)(GetProcAddress(hm, "SetWindowTheme"));
 	}
 
@@ -4892,7 +4887,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	}
 
 #ifdef USE_RICH_EDIT
-	if (LoadLibrary(STR_RICHDLL) == NULL) {
+	if (LoadLibraryA(STR_RICHDLL) == NULL) {
 		ReportLastError();
 		ERROROUT(GetString(IDS_RICHED_MISSING_ERROR));
 		return FALSE;
@@ -4967,17 +4962,17 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		if (SCNUL(options.szFavDir)[0] == _T('\0') || (handle = FindFirstFile(options.szFavDir, &FindFileData)) == INVALID_HANDLE_VALUE) {
 			TCHAR* pch;
 			GetModuleFileName(hInstance, bufFn, MAXFN);
-			SSTRCPYA(szFav, bufFn, lstrlen(STR_FAV_FILE)+4);
+			SSTRCPYA(szFav, bufFn, lstrlen(GetString(STR_FAV_FILE))+4);
 
 			pch = lstrrchr(szFav, _T('\\'));
 			++pch;
 			*pch = _T('\0');
 		} else {
 			FindClose(handle);
-			SSTRCPYA(szFav, options.szFavDir, lstrlen(STR_FAV_FILE)+4);
+			SSTRCPYA(szFav, options.szFavDir, lstrlen(GetString(STR_FAV_FILE))+4);
 			lstrcat(szFav, _T("\\"));
 		}
-		lstrcat(szFav, STR_FAV_FILE);
+		lstrcat(szFav, GetString(STR_FAV_FILE));
 		PopulateFavourites();
 	}
 

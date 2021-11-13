@@ -198,7 +198,8 @@
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>NO_RICH_EDIT;BUILD_ICON_SMALL;_UNICODE;UNICODE;BUILD_METAPAD_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <UndefinePreprocessorDefinitions>_UNICODE,UNICODE</UndefinePreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>
+      </UndefinePreprocessorDefinitions>
     </ResourceCompile>
     <ProjectReference>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
@@ -392,6 +393,7 @@
     <ClCompile Include="metapad.c" />
     <ClCompile Include="settings_load.c" />
     <ClCompile Include="settings_save.c" />
+    <ClCompile Include="strings.c" />
     <ClCompile Include="w32crt.c" />
   </ItemGroup>
   <ItemGroup>

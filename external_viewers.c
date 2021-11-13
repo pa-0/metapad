@@ -115,7 +115,7 @@ void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 	LPTSTR prg = bSecondary ? options.szBrowser2 : options.szBrowser;
 	if (bCustom)
 		if (!SCNUL(prg)[0]) {
-			MessageBox(hwnd, GetString(IDS_VIEWER_MISSING), STR_METAPAD, MB_OK|MB_ICONEXCLAMATION);
+			MessageBox(hwnd, GetString(IDS_VIEWER_MISSING), GetString(STR_METAPAD), MB_OK|MB_ICONEXCLAMATION);
 			SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_VIEW_OPTIONS, 0), 0);
 			return;
 		}
@@ -125,7 +125,7 @@ void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 		if (options.nLaunchSave == 0) {
 			TCHAR szBuffer[MAXFN + MAXSTRING];
 			wsprintf(szBuffer, GetString(IDS_DIRTYFILE), SCNUL8(szCaptionFile)+8);
-			res = MessageBox(hwnd, szBuffer, STR_METAPAD, MB_ICONEXCLAMATION | MB_YESNOCANCEL);
+			res = MessageBox(hwnd, szBuffer, GetString(STR_METAPAD), MB_ICONEXCLAMATION | MB_YESNOCANCEL);
 		}
 		if (res == IDCANCEL)
 			return;

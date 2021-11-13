@@ -62,6 +62,9 @@
     <ClCompile Include="encoding.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="strings.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="metapad.rc">

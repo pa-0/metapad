@@ -47,7 +47,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, LPBYTE* origBuffer, DWO
 
 	if (!ppBuffer || !origBuffer || !format) return -1;
 	buflen = GetFileSize(hFile, NULL);
-	if (!options.bNoWarningPrompt && buflen > LARGEFILESIZEWARN && MessageBox(hwnd, GetString(IDS_LARGE_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDCANCEL) {
+	if (!options.bNoWarningPrompt && buflen > LARGEFILESIZEWARN && MessageBox(hwnd, GetString(IDS_LARGE_FILE_WARNING), GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL) == IDCANCEL) {
 		return -1;
 	}
 	*origBuffer = *ppBuffer = (LPBYTE)HeapAlloc(globalHeap, 0, buflen+sizeof(TCHAR));
@@ -111,7 +111,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 					continue;
 				}
 				wsprintf(buffer, GetString(IDS_CREATE_FILE_MESSAGE), rfn);
-				switch (MessageBox(hwnd, buffer, STR_METAPAD, MB_YESNOCANCEL | MB_ICONEXCLAMATION)) {
+				switch (MessageBox(hwnd, buffer, GetString(STR_METAPAD), MB_YESNOCANCEL | MB_ICONEXCLAMATION)) {
 				case IDYES:
 					hFile = (HANDLE)CreateFile(lfn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 					if (hFile == INVALID_HANDLE_VALUE) {
@@ -175,9 +175,9 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 			tbuf = GetShadowBuffer(NULL);
 			SetWindowText(client, szBuffer);
 #ifdef UNICODE
-			if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING_SAFE), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
+			if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING_SAFE), GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
 #else
-			if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
+			if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
 #endif
 				SetWindowText(client, tbuf);
 				bLoading = FALSE;
@@ -267,7 +267,7 @@ BOOL LoadFileFromMenu(WORD wMenu, BOOL bMRU) {
 	GetMenuItemInfo(hsub, wMenu, FALSE, &mio);
 	if (*pbuf) {
 		if (!bMRU) {
-			GetPrivateProfileString(STR_FAV_APPNAME, pbuf, _T(""), pbuf, MAXFN, SCNUL(szFav));
+			GetPrivateProfileString(GetString(STR_FAV_APPNAME), pbuf, _T(""), pbuf, MAXFN, SCNUL(szFav));
 			if (!*szBuffer) {
 				ERROROUT(GetString(IDS_ERROR_FAVOURITES));
 				return FALSE;

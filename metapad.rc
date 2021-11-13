@@ -85,7 +85,7 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "metapad"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,53,56,44,15
+    DEFPUSHBUTTON   "",IDOK,53,56,44,15
     EDITTEXT        IDC_EDIT_URL,43,17,102,10,ES_CENTER | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
     RTEXT           "",IDC_STATICX,41,7,103,8
     ICON            IDI_PAD,IDC_DLGICON,7,7,20,20,SS_NOTIFY
@@ -217,20 +217,20 @@ BEGIN
     CONTROL         "S&ystem fixed width",IDC_FONT_PRIMARY,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,19,77,10
     CONTROL         "&Custom:",IDC_FONT_PRIMARY_2,"Button", BS_AUTORADIOBUTTON,16,30,77,10
     PUSHBUTTON      "Font &1",IDC_BTN_FONT1,16,42,83,14
-    CONTROL         "&Use system colours",IDC_SYSTEM_COLOURS,"Button", BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,16,62,76,9
-    LTEXT           "Window colour:",IDC_STAT_WIND,16,76,50,9
-    CONTROL         "window",IDC_COLOUR_BACK,"Button",BS_OWNERDRAW,74,75,26,11,WS_EX_STATICEDGE
-    LTEXT           "Font colour:",IDC_STAT_FONT,16,92,45,9
-    CONTROL         "font",IDC_COLOUR_FONT,"Button",BS_OWNERDRAW,74,91,26,11,WS_EX_STATICEDGE
+    CONTROL         "&Use system colors",IDC_SYSTEM_COLOURS,"Button", BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,16,62,76,9
+    LTEXT           "Window color:",IDC_STAT_WIND,16,76,50,9
+    CONTROL         "",IDC_COLOUR_BACK,"Button",BS_OWNERDRAW,74,75,26,11,WS_EX_STATICEDGE
+    LTEXT           "Font color:",IDC_STAT_FONT,16,92,45,9
+    CONTROL         "",IDC_COLOUR_FONT,"Button",BS_OWNERDRAW,74,91,26,11,WS_EX_STATICEDGE
     GROUPBOX        "Secondary font",IDC_STATIC,117,7,101,102,WS_GROUP
     CONTROL         "ANSI fi&xed width",IDC_FONT_SECONDARY,"Button", BS_AUTORADIOBUTTON | WS_GROUP,126,19,75,10
     CONTROL         "Cust&om:",IDC_FONT_SECONDARY_2,"Button", BS_AUTORADIOBUTTON,126,30,75,10
     PUSHBUTTON      "Font &2",IDC_BTN_FONT2,126,42,83,14
-    CONTROL         "Us&e system colours",IDC_SYSTEM_COLOURS2,"Button", BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,126,62,76,9
-    LTEXT           "Window colour:",IDC_STAT_WIND2,126,76,50,9
-    CONTROL         "window",IDC_COLOUR_BACK2,"Button",BS_OWNERDRAW,183,75,26,11,WS_EX_STATICEDGE
-    LTEXT           "Font colour:",IDC_STAT_FONT2,126,92,45,9
-    CONTROL         "font",IDC_COLOUR_FONT2,"Button",BS_OWNERDRAW,183,91,26,11,WS_EX_STATICEDGE
+    CONTROL         "Us&e system colors",IDC_SYSTEM_COLOURS2,"Button", BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,126,62,76,9
+    LTEXT           "Window color:",IDC_STAT_WIND2,126,76,50,9
+    CONTROL         "",IDC_COLOUR_BACK2,"Button",BS_OWNERDRAW,183,75,26,11,WS_EX_STATICEDGE
+    LTEXT           "Font color:",IDC_STAT_FONT2,126,92,45,9
+    CONTROL         "",IDC_COLOUR_FONT2,"Button",BS_OWNERDRAW,183,91,26,11,WS_EX_STATICEDGE
     GROUPBOX        "Window",IDC_STATIC,7,113,211,47
     LTEXT           "&Selection margin width:",IDC_STATIC,15,128,82,16
     EDITTEXT        IDC_EDIT_SM_WIDTH,94,127,24,12,ES_CENTER | ES_AUTOHSCROLL
@@ -960,190 +960,7 @@ END
 // String Table
 //
 
-STRINGTABLE DISCARDABLE
-BEGIN
-    IDS_VERSION_SYNCH       "3.6"
-    IDS_PLUGIN_LANGUAGE     "English (Plugin Template)"
-    IDS_PLUGIN_RELEASE      "1"
-    IDS_PLUGIN_TRANSLATOR   "Alex Davidson"
-    IDS_PLUGIN_EMAIL        "metapad-feedback@liquidninja.com"
-//    IDS_RESERVED2           "-"
-//    IDS_RESERVED3           "-"
-    IDS_DEFAULT_FILTER      "All Textual File Types|*.txt;*.htm;*.html;*.c;*.cpp;*.h;*.java|Text Files (*.txt)|*.txt|HTML (*.html; *.htm)|*.html;*.htm|Source Code (*.c; *.cpp; *.h; *.java)|*.c;*.cpp;*.h;*.java|All Files (*.*)|*.*"
-    IDS_DIRTYFILE           "Save changes to %s?"
-    IDS_ERROR_LOCKED        "Error writing to file - it may be locked or read only."
-    IDS_ERROR_SEARCH        "Search string not found."
-    IDS_LAUNCH_WARNING      "Warning - you have chosen not to save AND to close metapad on external launch.\n\nThis could cause you to lose data!"
-    IDS_READONLY_INDICATOR  "(read only)"
-    IDS_READONLY_MENU       "R&ead Only\tCtrl+E"
-    IDS_ERROR_FAVOURITES    "Error in favorites file. It may have been modified and is not synchronized."
-END
 
-STRINGTABLE DISCARDABLE
-BEGIN
-    IDS_FILE_LOADING        "Loading file..."
-    IDS_READONLY_WARNING    "This file is read only. You must save to a different file."
-    IDS_PRINTER_NOT_FOUND   "Printer not found!\n(Perhaps try reinstalling the printer.)"
-    IDS_PRINT_INIT_ERROR    "Error initializing printing. (CommDlgExtendedError: %#04x)"""
-    IDS_PRINT_ABORT_ERROR   "Error aborting printing"
-    IDS_PRINT_START_ERROR   "StartDoc printing error. Printing canceled."
-    IDS_DRAWTEXT_ERROR      "Error calling DrawText."
-    IDS_PRINT_ERROR         "There was an error during printing. Print canceled."
-    IDS_VIEWER_ERROR		"Error launching external viewer"
-    IDS_VIEWER_MISSING		"External viewer is not configured."
-    IDS_NO_DEFAULT_VIEWER   "No viewer associated with this file type."
-    IDS_REGISTRY_WINDOW_ERROR
-                            "Missing window placement registry values - using default settings."
-/*#ifdef USE_RICH_EDIT
-    IDS_CARRIAGE_RETURN_WARNING
-                            "Some number of solitary carriage returns were detected and removed."
-#endif*/
-END
-
-STRINGTABLE DISCARDABLE
-BEGIN
-//    IDS_MAC_FILE_WARNING    "Lines ending in solitary carriage returns detected. (Possibly a Macintosh text file.) Converting to UNIX format."
-    IDS_CREATE_FILE_MESSAGE """%s"" not found. Create it?"
-    IDS_FILE_CREATE_ERROR   "File creation error."
-    IDS_FILE_NOT_FOUND      "File not found."
-    IDS_FILE_LOCKED_ERROR   "File is locked by another process."
-#ifndef UNICODE
-    IDS_UNICODE_CONVERT_ERROR "Error converting from Unicode file"
-    IDS_UNICODE_CHARS_WARNING
-                            "Detected non-ANSI characters in this Unicode file.\n\nData will be lost if this file is saved!"
-    IDS_BINARY_FILE_WARNING "This is a binary file.\nConvert any NULL terminators to spaces and load anyway?"
-    IDS_UNICODE_STRING_ERROR "Error converting to Unicode string"
-#endif
-	IDS_WRITE_BOM_ERROR		"Error writing BOM"
-    IDS_CHAR_WIDTH_ERROR	"Couldn't get char width."
-    IDS_PARA_FORMAT_ERROR   "Couldn't set para format."
-    IDS_QUERY_SEARCH_TOP    "Reached end of file. Continue searching from the top?"
-    IDS_QUERY_SEARCH_BOTTOM "Reached beginning of file. Continue searching from the bottom?"
-    IDS_RECENT_MENU         "&Recent"
-END
-
-STRINGTABLE DISCARDABLE
-BEGIN
-    IDS_RECENT_FILES_MENU   "Recent &Files"
-    IDS_MAX_RECENT_WARNING  "Enter a maximum Recent File size between 0 and 16"
-    IDS_STICKY_MESSAGE      "Main window will now always start up with its current size and position."
-    IDS_CLEAR_FIND_WARNING  "This action will clear find, replace, and insert histories."
-    IDS_CLEAR_RECENT_WARNING "This action will clear the recent files history"
-    IDS_SELECT_PLUGIN_WARNING "Select a language plugin or choose Default (English)."
-    IDS_MARGIN_WIDTH_WARNING "Enter a margin width between 0 and 300"
-    IDS_TRANSPARENCY_WARNING "Enter a transparency mode percent between 1 and 99"
-    IDS_TAB_SIZE_WARNING    "Enter a tab size between 1 and 100"
-    IDS_TB_NEWFILE          "New File"
-    IDS_TB_OPENFILE         "Open File"
-    IDS_TB_SAVEFILE         "Save File"
-    IDS_TB_PRINT            "Print"
-    IDS_TB_FIND             "Find"
-END
-
-STRINGTABLE DISCARDABLE
-BEGIN
-    IDS_TB_REPLACE          "Replace"
-    IDS_TB_CUT              "Cut"
-    IDS_TB_COPY             "Copy"
-    IDS_TB_PASTE            "Paste"
-    IDS_TB_UNDO             "Undo"
-    IDS_TB_SETTINGS         "Settings"
-    IDS_TB_REFRESH          "Refresh/Revert"
-    IDS_TB_WORDWRAP         "Word Wrap"
-    IDS_TB_PRIMARYFONT      "Primary Font"
-    IDS_TB_ONTOP            "Always On Top"
-    IDS_TB_PRIMARYVIEWER    "Launch Primary Viewer"
-    IDS_TB_SECONDARYVIEWER  "Launch Secondary Viewer"
-#ifdef USE_RICH_EDIT
-    IDS_TB_REDO             "Redo"
-    IDS_CANT_UNDO_WARNING   "Can't undo this action!"
-    IDS_MEMORY_LIMIT        "Reached memory limit at %d bytes!"
-    IDS_FONT_UNDO_WARNING   "Applying new font settings. This action will empty the undo buffer."
-    IDS_UNDO_HYPERLINKS_WARNING "Updating hyperlinks. This action will empty the undo buffer."
-    IDS_RICHED_MISSING_ERROR "metapad requires RICHED20.DLL to be installed on your system.\n\nSee the FAQ on the website for further information."
-#else
-    IDS_QUERY_LAUNCH_VIEWER "This version of Windows does not support loading files this large into an Edit window.\nLaunch in external viewer?"
-	IDS_LE_MEMORY_LIMIT     "Reached memory limit!\nSave file now and use another editor (metapad full not LE)!"
-#endif
-END
-
-STRINGTABLE DISCARDABLE
-BEGIN
-    IDS_CHANGE_READONLY_ERROR
-                            "Unable to change the readonly attribute for this file."
-    IDS_SETTINGS_TITLE      "Settings"
-    IDS_NO_SELECTED_TEXT    "No selected text."
-//    IDS_BYTE_LENGTH         "...text is %d bytes long."
-    IDS_ITEMS_REPLACED      "Replaced %d item(s)."
-    IDS_MENU_LANGUAGE_PLUGIN "&Language Plugin..."
-    IDS_COMMAND_LINE_OPTIONS
-	"Usage:  metapad [/i | /m | /v | /s] [/p | /g row:col | /e] [filename]\n\nOption descriptions:\n\n\t/i - force INI mode for settings\n\t/m - migrate all registry settings to INI file\n\t/g row:col - goto position at row and column\n\t/e - goto end of file\n\t/p - print file\n\t/v - disable plugin version checking\n\t/s - skip loading language plugin"
-    IDS_GLOBALLOCK_ERROR    "GlobalLock failed"
-    IDS_CLIPBOARD_UNLOCK_ERROR "There was an error unlocking the clipboard memory."
-    IDS_FILE_READ_ERROR     "Error reading file."
-#ifdef USE_RICH_EDIT
-    IDS_RESTART_HIDE_SB     "The change in ""Hide scrollbars when possible"" will be reflected upon restarting the program."
-#endif
-    IDS_RESTART_FAVES       "The change in ""Disable Favorites"" will be reflected upon restarting the program."
-END
-
-STRINGTABLE DISCARDABLE
-BEGIN
-    IDS_RESTART_LANG        "Language changes will be reflected upon restarting the program."
-    IDS_INVALID_PLUGIN_ERROR "Error loading language plugin DLL. It is probably not a valid metapad language plugin."
-    IDS_BAD_STRING_PLUGIN_ERROR "Error fetching version string resource from plugin DLL. It is probably not a valid metapad language plugin."
-    IDS_PLUGIN_MISMATCH_ERROR "Your language plugin is for metapad %s, but you are running metapad %s.\n\nSome menu or dialog features may be missing or not work correctly.\n\nRun metapad /v to skip this message."
-    IDS_ALLRIGHTS           "All Rights Reserved"
-//	IDS_METAPAD				"metapad"
-	IDS_OK					"OK"
-//	IDS_CANCEL				"Cancel"
-//	IDS_CLOSE				"Close"
-    IDS_DEFAULT_FILTER_TEXT "Text (*.*)|*.*"
-    IDS_NEW_FILE            "new file"
-    IDS_MACRO_LENGTH_ERROR  "Selection is larger than maximum quick buffer length."
-//    IDS_NEW_INSTANCE        "New Window"
-END
-
-STRINGTABLE DISCARDABLE
-BEGIN
-    IDS_ERROR				"Error"
-    IDS_ERROR_MSG           "\nError 0x%08X"
-    IDS_UNICODE_SAVE_TRUNCATION		"Some characters in this text cannot be saved in the selected encoding!\n\nWould you like to save this file as UTF-8?"
-    IDS_UNICODE_LOAD_ERROR			"Error converting file to Unicode"
-    IDS_UNICODE_LOAD_TRUNCATION		"Detected unsupported or invalid code points.\n\nData will be lost if this file is saved!"
-    IDS_BINARY_FILE_WARNING_SAFE	"This is a binary file. Load anyway?\nNull terminators will be preserved unless the File Format is changed."
-    IDS_LARGE_FILE_WARNING	"This file is very large ( >16 MB). Loading it may take a long time.\nLoad anyway?"
-	IDS_UNICODE_CONV_ERROR	"Error converting string to Unicode"
-	IDS_ESCAPE_ERROR		"%s in '%s' near:\n"
-	IDS_ESCAPE_BADCHARS		"Invalid characters in base-%d string"
-	IDS_ESCAPE_BADALIGN		"The base-%d string is not a multiple of %d characters"
-	IDS_ESCAPE_EXPECTED		"Expected base-%d string"
-	IDS_ESCAPE_CTX_FIND		"Find what"
-	IDS_ESCAPE_CTX_REPLACE	"Replace with"
-	IDS_ESCAPE_CTX_INSERT	"Insert Text"
-	IDS_ESCAPE_CTX_CLIPBRD	"Clipboard"
-	IDS_ESCAPE_CTX_MACRO	"Macro"
-	IDS_ESCAPE_CTX_QUOTE	"Quote string"
-	IDS_LARGE_PASTE_WARNING	"About to insert %I64u characters of text.\nThis may take a very long time!\nContinue?"
-	IDS_ITEMS_REPLACED_ITER "Replaced %d item(s) in %d iteration(s)."
-	IDS_ENC_REINTERPRET		"Reinterpret the current text as %s?"
-	IDS_LFMT_MIXED			"This text has mixed line endings.\nYou can normalize the line endings in the File > Format menu."
-	IDS_LFMT_FIXED			"Mixed line endings have been normalized.\nYou can change this function in the File > Format menu."
-	IDS_SETDEF_FORMAT_WARN	"Note that all files without a Byte-Order Mark will now be interpreted as %s!"
-	ID_LFMT_DOS				"DOS"
-	ID_LFMT_UNIX			"Unix"
-	ID_LFMT_MAC				"Mac"
-	ID_LFMT_MIXED			"RAW"
-	ID_ENC_ANSI				"ANSI"
-	ID_ENC_UTF8				"UTF-8"
-	ID_ENC_UTF16			"Unicode"
-	ID_ENC_UTF16BE			"Unicode BE"
-	ID_ENC_BIN				"Binary"
-	ID_ENC_CUSTOM			"CP%d"
-	IDS_ENC_CUSTOM_CAPTION	"Codepage %d"
-	IDS_ENC_BAD				"This codepage is not available on your system."
-	IDS_ENC_FAILED			"Error converting to the selected codepage!\nThe data was instead saved as ANSI."
-END
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////

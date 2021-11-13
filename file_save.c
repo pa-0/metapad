@@ -71,7 +71,7 @@ BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
 			szEncd = szBuffer;
 			nBytes = EncodeText((LPBYTE*)&szEncd, nChars, nFormat, NULL, &fail);
 			if (enc != ID_ENC_UTF8 && fail) {
-				switch (MessageBox(hwnd, GetString(IDS_UNICODE_SAVE_TRUNCATION), STR_METAPAD, MB_YESNOCANCEL | MB_ICONEXCLAMATION)) {
+				switch (MessageBox(hwnd, GetString(IDS_UNICODE_SAVE_TRUNCATION), GetString(STR_METAPAD), MB_YESNOCANCEL | MB_ICONEXCLAMATION)) {
 					case IDYES:
 						SetFileFormat(enc = ID_ENC_UTF8, 0);
 						continue;
@@ -185,7 +185,7 @@ BOOL SaveCurrentFile(void) {
 			UpdateCaption();
 		}
 		if (bReadOnly) {
-			if (MessageBox(hwnd, GetString(IDS_READONLY_WARNING), STR_METAPAD, MB_ICONEXCLAMATION | MB_OKCANCEL) == IDOK) {
+			if (MessageBox(hwnd, GetString(IDS_READONLY_WARNING), GetString(STR_METAPAD), MB_ICONEXCLAMATION | MB_OKCANCEL) == IDOK) {
 				return SaveCurrentFileAs();
 			}
 			return FALSE;
@@ -211,7 +211,7 @@ BOOL SaveIfDirty(void) {
 				return TRUE;
 		}
 		wsprintf(szBuffer, GetString(IDS_DIRTYFILE), SCNUL8(szCaptionFile)+8);
-		switch (MessageBox(hwnd, szBuffer, STR_METAPAD, MB_ICONEXCLAMATION | MB_YESNOCANCEL)) {
+		switch (MessageBox(hwnd, szBuffer, GetString(STR_METAPAD), MB_ICONEXCLAMATION | MB_YESNOCANCEL)) {
 			case IDYES:
 				if (!SaveCurrentFile())
 					return FALSE;

@@ -95,7 +95,7 @@ void FindAndLoadLanguagePlugin(void)
 
 		hSearch = FindFirstFile(options.szLangPlugin, &FileData);
 		if (hSearch == INVALID_HANDLE_VALUE) {
-			ERROROUT(_T("Could not find the language plugin DLL."));
+			ERROROUT(GetString(IDS_PLUGIN_ERRFIND));
 			goto badplugin;
 		}
 		else {
@@ -110,5 +110,5 @@ void FindAndLoadLanguagePlugin(void)
 	}
 
 badplugin:
-	ERROROUT(_T("Temporarily reverting language to Default (English)\n\nCheck the language plugin setting."));
+	ERROROUT(GetString(IDS_PLUGIN_ERR));
 }

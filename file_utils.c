@@ -65,7 +65,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 		else
 			lstrcpy(mbuf, GetString(nenc));
 		wsprintf(mbuf2, GetString(IDS_ENC_REINTERPRET), mbuf);
-		switch (MessageBox(hwnd, mbuf2, STR_METAPAD, MB_YESNOCANCEL | MB_ICONQUESTION)) {
+		switch (MessageBox(hwnd, mbuf2, GetString(STR_METAPAD), MB_YESNOCANCEL | MB_ICONQUESTION)) {
 			case IDCANCEL:
 				return;
 			case IDNO:
@@ -133,12 +133,14 @@ void MakeNewFile(void) {
  *
  * @param[in] szIn String to fix.
  */
-void FixFilterString(LPTSTR szIn) {
-	while (*++szIn) {
-		if (*szIn == _T('|'))
-			*szIn = _T('\0');
+LPTSTR FixFilterString(LPTSTR szIn) {
+	LPTSTR sz = szIn;
+	while (*++sz) {
+		if (*sz == _T('|'))
+			*sz = _T('\0');
 	}
-	*++szIn = _T('\0');
+	*++sz = _T('\0');
+	return szIn;
 }
 
 BOOL FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt) {
@@ -538,7 +540,7 @@ BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE 
 	if (f1.cpMin < 0) {
 		f2 = DoSearch(szText, cr.cpMin, cr.cpMax, bDown, bWholeWord, bCase, TRUE, pbFindSpec);
 		if (f2.cpMin >= 0) {
-			if (!options.bFindAutoWrap && MessageBox(hdlgFind ? hdlgFind : client, bDown ? GetString(IDS_QUERY_SEARCH_TOP) : GetString(IDS_QUERY_SEARCH_BOTTOM), STR_METAPAD, MB_OKCANCEL|MB_ICONQUESTION) == IDCANCEL) {
+			if (!options.bFindAutoWrap && MessageBox(hdlgFind ? hdlgFind : client, bDown ? GetString(IDS_QUERY_SEARCH_TOP) : GetString(IDS_QUERY_SEARCH_BOTTOM), GetString(STR_METAPAD), MB_OKCANCEL|MB_ICONQUESTION) == IDCANCEL) {
 				SetCursor(hcur);
 				return FALSE;
 			}
@@ -552,7 +554,7 @@ BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE 
 		QueueUpdateStatus();
 		return TRUE;
 	}
-	MessageBox(hdlgFind ? hdlgFind : client, GetString(IDS_ERROR_SEARCH), STR_METAPAD, MB_OK|MB_ICONINFORMATION);
+	MessageBox(hdlgFind ? hdlgFind : client, GetString(IDS_ERROR_SEARCH), GetString(STR_METAPAD), MB_OK|MB_ICONINFORMATION);
 	return FALSE;
 }
 
@@ -744,7 +746,7 @@ DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* 
 	if (selection){
 		szIn = GetShadowSelection(&l, &cr);
 		if (!l) {
-			if (owner) MessageBox(owner, GetString(IDS_NO_SELECTED_TEXT), STR_METAPAD, MB_OK|MB_ICONINFORMATION);
+			if (owner) MessageBox(owner, GetString(IDS_NO_SELECTED_TEXT), GetString(STR_METAPAD), MB_OK|MB_ICONINFORMATION);
 			return 0;
 		}
 	} else
@@ -797,7 +799,7 @@ DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* 
 	SetCursor(hCur);
 	if (owner && szMsgBuf) {
 		wsprintf(szMsgBuf, GetString(recur ? IDS_ITEMS_REPLACED_ITER : IDS_ITEMS_REPLACED), r, ict-1);
-		MessageBox(owner, szMsgBuf, STR_METAPAD, MB_OK|MB_ICONINFORMATION);
+		MessageBox(owner, szMsgBuf, GetString(STR_METAPAD), MB_OK|MB_ICONINFORMATION);
 	}
 	return r;
 }

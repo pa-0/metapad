@@ -75,16 +75,16 @@ BOOL SaveOption(HKEY hKey, LPCTSTR name, DWORD dwType, CONST LPBYTE lpData, DWOR
 				int32 = (int32 << 8) + lpData[1];
 				int32 = (int32 << 8) + lpData[0];
 				wsprintf(val, _T("%d"), int32);
-				writeSucceeded = WritePrivateProfileString(_T("Options"), name, val, SCNUL(szMetapadIni));
+				writeSucceeded = WritePrivateProfileString(GetString(STR_OPTIONS), name, val, SCNUL(szMetapadIni));
 				break;
 			}
 			case REG_SZ:
-				writeSucceeded = WritePrivateProfileString(_T("Options"), name, (LPTSTR)szData, SCNUL(szMetapadIni));
+				writeSucceeded = WritePrivateProfileString(GetString(STR_OPTIONS), name, (LPTSTR)szData, SCNUL(szMetapadIni));
 				break;
 			case REG_BINARY: {
 				TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, 0, 2 * (cbData + 1) * sizeof(TCHAR));
 				EncodeBase(64, lpData, szBuffer, cbData, NULL );
-				writeSucceeded = WritePrivateProfileString(_T("Options"), name, (TCHAR*)szBuffer, SCNUL(szMetapadIni));
+				writeSucceeded = WritePrivateProfileString(GetString(STR_OPTIONS), name, (TCHAR*)szBuffer, SCNUL(szMetapadIni));
 				HeapFree(globalHeap, 0, szBuffer);
 				break;
 			}
@@ -104,81 +104,80 @@ void SaveOptions(void)
 	int i;
 
 	if (!g_bIniMode) {
-		if (RegCreateKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, GetString(STR_REGKEY), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
 			ReportLastError();
 			return;
 		}
 	}
 
-	writeSucceeded &= SaveOption(key, _T("bSystemColours"), REG_DWORD, (LPBYTE)&options.bSystemColours, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bSystemColours2"), REG_DWORD, (LPBYTE)&options.bSystemColours2, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bNoSmartHome"), REG_DWORD, (LPBYTE)&options.bNoSmartHome, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bNoAutoSaveExt"), REG_DWORD, (LPBYTE)&options.bNoAutoSaveExt, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bContextCursor"), REG_DWORD, (LPBYTE)&options.bContextCursor, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bCurrentFindFont"), REG_DWORD, (LPBYTE)&options.bCurrentFindFont, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bPrintWithSecondaryFont"), REG_DWORD, (LPBYTE)&options.bPrintWithSecondaryFont, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bNoSaveHistory"), REG_DWORD, (LPBYTE)&options.bNoSaveHistory, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bNoFindAutoSelect"), REG_DWORD, (LPBYTE)&options.bNoFindAutoSelect, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bHideGotoOffset"), REG_DWORD, (LPBYTE)&options.bHideGotoOffset, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bRecentOnOwn"), REG_DWORD, (LPBYTE)&options.bRecentOnOwn, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bDontInsertTime"), REG_DWORD, (LPBYTE)&options.bDontInsertTime, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bNoWarningPrompt"), REG_DWORD, (LPBYTE)&options.bNoWarningPrompt, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bUnFlatToolbar"), REG_DWORD, (LPBYTE)&options.bUnFlatToolbar, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bReadOnlyMenu"), REG_DWORD, (LPBYTE)&options.bReadOnlyMenu, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bStickyWindow"), REG_DWORD, (LPBYTE)&options.bStickyWindow, sizeof(BOOL));
-//	writeSucceeded &= SaveOption(key, _T("nStatusFontWidth"), REG_DWORD, (LPBYTE)&options.nStatusFontWidth, sizeof(int));
-	writeSucceeded &= SaveOption(key, _T("nSelectionMarginWidth"), REG_DWORD, (LPBYTE)&options.nSelectionMarginWidth, sizeof(int));
-	writeSucceeded &= SaveOption(key, _T("nMaxMRU"), REG_DWORD, (LPBYTE)&options.nMaxMRU, sizeof(int));
-	writeSucceeded &= SaveOption(key, _T("nFormat"), REG_DWORD, (LPBYTE)&options.nFormat, sizeof(DWORD));
-	writeSucceeded &= SaveOption(key, _T("nTransparentPct"), REG_DWORD, (LPBYTE)&options.nTransparentPct, sizeof(int));
-	writeSucceeded &= SaveOption(key, _T("bNoCaptionDir"), REG_DWORD, (LPBYTE)&options.bNoCaptionDir, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bAutoIndent"), REG_DWORD, (LPBYTE)&options.bAutoIndent, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bInsertSpaces"), REG_DWORD, (LPBYTE)&options.bInsertSpaces, sizeof(BOOL));
- 	writeSucceeded &= SaveOption(key, _T("bFindAutoWrap"), REG_DWORD, (LPBYTE)&options.bFindAutoWrap, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bQuickExit"), REG_DWORD, (LPBYTE)&options.bQuickExit, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bSaveWindowPlacement"), REG_DWORD, (LPBYTE)&options.bSaveWindowPlacement, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bSaveMenuSettings"), REG_DWORD, (LPBYTE)&options.bSaveMenuSettings, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bSaveDirectory"), REG_DWORD, (LPBYTE)&options.bSaveDirectory, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bLaunchClose"), REG_DWORD, (LPBYTE)&options.bLaunchClose, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bNoFaves"), REG_DWORD, (LPBYTE)&options.bNoFaves, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_HIDEGOTOOFFSET), REG_DWORD, (LPBYTE)&options.bHideGotoOffset, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_SYSTEMCOLOURS), REG_DWORD, (LPBYTE)&options.bSystemColours, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_SYSTEMCOLOURS2), REG_DWORD, (LPBYTE)&options.bSystemColours2, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_NOSMARTHOME), REG_DWORD, (LPBYTE)&options.bNoSmartHome, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_NOAUTOSAVEEXT), REG_DWORD, (LPBYTE)&options.bNoAutoSaveExt, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_CONTEXTCURSOR), REG_DWORD, (LPBYTE)&options.bContextCursor, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_CURRENTFINDFONT), REG_DWORD, (LPBYTE)&options.bCurrentFindFont, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_PRINTWITHSECONDARYFONT), REG_DWORD, (LPBYTE)&options.bPrintWithSecondaryFont, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_NOSAVEHISTORY), REG_DWORD, (LPBYTE)&options.bNoSaveHistory, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_NOFINDAUTOSELECT), REG_DWORD, (LPBYTE)&options.bNoFindAutoSelect, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_RECENTONOWN), REG_DWORD, (LPBYTE)&options.bRecentOnOwn, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_DONTINSERTTIME), REG_DWORD, (LPBYTE)&options.bDontInsertTime, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_NOWARNINGPROMPT), REG_DWORD, (LPBYTE)&options.bNoWarningPrompt, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_UNFLATTOOLBAR), REG_DWORD, (LPBYTE)&options.bUnFlatToolbar, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_STICKYWINDOW), REG_DWORD, (LPBYTE)&options.bStickyWindow, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_READONLYMENU), REG_DWORD, (LPBYTE)&options.bReadOnlyMenu, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_SELECTIONMARGINWIDTH), REG_DWORD, (LPBYTE)&options.nSelectionMarginWidth, sizeof(int));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_MAXMRU), REG_DWORD, (LPBYTE)&options.nMaxMRU, sizeof(int));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_FORMAT), REG_DWORD, (LPBYTE)&options.nFormat, sizeof(DWORD));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_TRANSPARENTPCT), REG_DWORD, (LPBYTE)&options.nTransparentPct, sizeof(int));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_NOCAPTIONDIR), REG_DWORD, (LPBYTE)&options.bNoCaptionDir, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_AUTOINDENT), REG_DWORD, (LPBYTE)&options.bAutoIndent, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_INSERTSPACES), REG_DWORD, (LPBYTE)&options.bInsertSpaces, sizeof(BOOL));
+ 	writeSucceeded &= SaveOption(key, GetString(IDSS_FINDAUTOWRAP), REG_DWORD, (LPBYTE)&options.bFindAutoWrap, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_QUICKEXIT), REG_DWORD, (LPBYTE)&options.bQuickExit, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_SAVEWINDOWPLACEMENT), REG_DWORD, (LPBYTE)&options.bSaveWindowPlacement, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_SAVEMENUSETTINGS), REG_DWORD, (LPBYTE)&options.bSaveMenuSettings, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_SAVEDIRECTORY), REG_DWORD, (LPBYTE)&options.bSaveDirectory, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_LAUNCHCLOSE), REG_DWORD, (LPBYTE)&options.bLaunchClose, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_NOFAVES), REG_DWORD, (LPBYTE)&options.bNoFaves, sizeof(BOOL));
 #ifndef USE_RICH_EDIT
-	writeSucceeded &= SaveOption(key, _T("bDefaultPrintFont"), REG_DWORD, (LPBYTE)&options.bDefaultPrintFont, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bAlwaysLaunch"), REG_DWORD, (LPBYTE)&options.bAlwaysLaunch, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_DEFAULTPRINTFONT), REG_DWORD, (LPBYTE)&options.bDefaultPrintFont, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_ALWAYSLAUNCH), REG_DWORD, (LPBYTE)&options.bAlwaysLaunch, sizeof(BOOL));
 #else
-	writeSucceeded &= SaveOption(key, _T("bLinkDoubleClick"), REG_DWORD, (LPBYTE)&options.bLinkDoubleClick, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bHideScrollbars"), REG_DWORD, (LPBYTE)&options.bHideScrollbars, sizeof(BOOL));
-	writeSucceeded &= SaveOption(key, _T("bSuppressUndoBufferPrompt"), REG_DWORD, (LPBYTE)&options.bSuppressUndoBufferPrompt, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_LINKDOUBLECLICK), REG_DWORD, (LPBYTE)&options.bLinkDoubleClick, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_HIDESCROLLBARS), REG_DWORD, (LPBYTE)&options.bHideScrollbars, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_SUPPRESSUNDOBUFFERPROMPT), REG_DWORD, (LPBYTE)&options.bSuppressUndoBufferPrompt, sizeof(BOOL));
 #endif
-	writeSucceeded &= SaveOption(key, _T("nLaunchSave"), REG_DWORD, (LPBYTE)&options.nLaunchSave, sizeof(int));
-	writeSucceeded &= SaveOption(key, _T("nTabStops"), REG_DWORD, (LPBYTE)&options.nTabStops, sizeof(int));
-	writeSucceeded &= SaveOption(key, _T("nPrimaryFont"), REG_DWORD, (LPBYTE)&options.nPrimaryFont, sizeof(int));
-	writeSucceeded &= SaveOption(key, _T("nSecondaryFont"), REG_DWORD, (LPBYTE)&options.nSecondaryFont, sizeof(int));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_LAUNCHSAVE), REG_DWORD, (LPBYTE)&options.nLaunchSave, sizeof(int));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_TABSTOPS), REG_DWORD, (LPBYTE)&options.nTabStops, sizeof(int));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_NPRIMARYFONT), REG_DWORD, (LPBYTE)&options.nPrimaryFont, sizeof(int));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_NSECONDARYFONT), REG_DWORD, (LPBYTE)&options.nSecondaryFont, sizeof(int));
 #ifdef UNICODE
-	writeSucceeded &= SaveOption(key, _T("PrimaryFontU"), REG_BINARY, (LPBYTE)&options.PrimaryFont, sizeof(LOGFONT));
-	writeSucceeded &= SaveOption(key, _T("SecondaryFontU"), REG_BINARY, (LPBYTE)&options.SecondaryFont, sizeof(LOGFONT));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_PRIMARYFONT), REG_BINARY, (LPBYTE)&options.PrimaryFont, sizeof(LOGFONT));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_SECONDARYFONT), REG_BINARY, (LPBYTE)&options.SecondaryFont, sizeof(LOGFONT));
 #else
-	writeSucceeded &= SaveOption(key, _T("PrimaryFont"), REG_BINARY, (LPBYTE)&options.PrimaryFont, sizeof(LOGFONT));
-	writeSucceeded &= SaveOption(key, _T("SecondaryFont"), REG_BINARY, (LPBYTE)&options.SecondaryFont, sizeof(LOGFONT));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_PRIMARYFONT), REG_BINARY, (LPBYTE)&options.PrimaryFont, sizeof(LOGFONT));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_SECONDARYFONT), REG_BINARY, (LPBYTE)&options.SecondaryFont, sizeof(LOGFONT));
 #endif
-	writeSucceeded &= SaveOption(key, _T("szBrowser"), REG_SZ, (LPBYTE)options.szBrowser, MAXFN);
-	writeSucceeded &= SaveOption(key, _T("szArgs"), REG_SZ, (LPBYTE)options.szArgs, MAXARGS);
-	writeSucceeded &= SaveOption(key, _T("szBrowser2"), REG_SZ, (LPBYTE)options.szBrowser2, MAXFN);
-	writeSucceeded &= SaveOption(key, _T("szArgs2"), REG_SZ, (LPBYTE)options.szArgs2, MAXARGS);
-	writeSucceeded &= SaveOption(key, _T("szQuote"), REG_SZ, (LPBYTE)options.szQuote, MAXQUOTE);
-	writeSucceeded &= SaveOption(key, _T("szLangPlugin"), REG_SZ, (LPBYTE)options.szLangPlugin, MAXFN);
-	writeSucceeded &= SaveOption(key, _T("szFavDir"), REG_SZ, (LPBYTE)options.szFavDir, MAXFN);
-	writeSucceeded &= SaveOption(key, _T("szCustomDate"), REG_SZ, (LPBYTE)options.szCustomDate, MAXDATEFORMAT);
-	writeSucceeded &= SaveOption(key, _T("szCustomDate2"), REG_SZ, (LPBYTE)options.szCustomDate2, MAXDATEFORMAT);
+	writeSucceeded &= SaveOption(key, GetString(IDSS_BROWSER), REG_SZ, (LPBYTE)options.szBrowser, MAXFN);
+	writeSucceeded &= SaveOption(key, GetString(IDSS_BROWSER2), REG_SZ, (LPBYTE)options.szBrowser2, MAXFN);
+	writeSucceeded &= SaveOption(key, GetString(IDSS_LANGPLUGIN), REG_SZ, (LPBYTE)options.szLangPlugin, MAXFN);
+	writeSucceeded &= SaveOption(key, GetString(IDSS_FAVDIR), REG_SZ, (LPBYTE)options.szFavDir, MAXFN);
+	writeSucceeded &= SaveOption(key, GetString(IDSS_ARGS), REG_SZ, (LPBYTE)options.szArgs, MAXARGS);
+	writeSucceeded &= SaveOption(key, GetString(IDSS_ARGS2), REG_SZ, (LPBYTE)options.szArgs2, MAXARGS);
+	writeSucceeded &= SaveOption(key, GetString(IDSS_QUOTE), REG_SZ, (LPBYTE)options.szQuote, MAXQUOTE);
+	writeSucceeded &= SaveOption(key, GetString(IDSS_CUSTOMDATE), REG_SZ, (LPBYTE)options.szCustomDate, MAXDATEFORMAT);
+	writeSucceeded &= SaveOption(key, GetString(IDSS_CUSTOMDATE2), REG_SZ, (LPBYTE)options.szCustomDate2, MAXDATEFORMAT);
 	for (i = 0; i < 10; ++i) {
-		wsprintf(keyname, _T("szMacroArray%d"), i);
+		wsprintf(keyname, GetString(IDSS_MACROARRAY), i);
 		writeSucceeded &= SaveOption(key, keyname, REG_SZ, (LPBYTE)options.MacroArray[i], MAXMACRO);
 	}
 
-	writeSucceeded &= SaveOption(key, _T("BackColour"), REG_BINARY, (LPBYTE)&options.BackColour, sizeof(COLORREF));
-	writeSucceeded &= SaveOption(key, _T("FontColour"), REG_BINARY, (LPBYTE)&options.FontColour, sizeof(COLORREF));
-	writeSucceeded &= SaveOption(key, _T("BackColour2"), REG_BINARY, (LPBYTE)&options.BackColour2, sizeof(COLORREF));
-	writeSucceeded &= SaveOption(key, _T("FontColour2"), REG_BINARY, (LPBYTE)&options.FontColour2, sizeof(COLORREF));
-	writeSucceeded &= SaveOption(key, _T("rMargins"), REG_BINARY, (LPBYTE)&options.rMargins, sizeof(RECT));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_BACKCOLOUR), REG_BINARY, (LPBYTE)&options.BackColour, sizeof(COLORREF));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_FONTCOLOUR), REG_BINARY, (LPBYTE)&options.FontColour, sizeof(COLORREF));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_BACKCOLOUR2), REG_BINARY, (LPBYTE)&options.BackColour2, sizeof(COLORREF));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_FONTCOLOUR2), REG_BINARY, (LPBYTE)&options.FontColour2, sizeof(COLORREF));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_MARGINS), REG_BINARY, (LPBYTE)&options.rMargins, sizeof(RECT));
 
 	if (!writeSucceeded) {
 		ReportLastError();
@@ -223,17 +222,17 @@ void SaveWindowPlacement(HWND hWndSave)
 	height = rect.bottom - top;
 
 	if (!g_bIniMode) {
-		if (RegCreateKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, GetString(STR_REGKEY), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
 			ReportLastError();
 			return;
 		}
 	}
 
-	writeSucceeded &= SaveOption(key, _T("w_WindowState"), REG_DWORD, (LPBYTE)&max, sizeof(int));
-	writeSucceeded &= SaveOption(key, _T("w_Left"), REG_DWORD, (LPBYTE)&left, sizeof(int));
-	writeSucceeded &= SaveOption(key, _T("w_Top"), REG_DWORD, (LPBYTE)&top, sizeof(int));
-	writeSucceeded &= SaveOption(key, _T("w_Width"), REG_DWORD, (LPBYTE)&width, sizeof(int));
-	writeSucceeded &= SaveOption(key, _T("w_Height"), REG_DWORD, (LPBYTE)&height, sizeof(int));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_WSTATE), REG_DWORD, (LPBYTE)&max, sizeof(int));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_WLEFT), REG_DWORD, (LPBYTE)&left, sizeof(int));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_WTOP), REG_DWORD, (LPBYTE)&top, sizeof(int));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_WWIDTH), REG_DWORD, (LPBYTE)&width, sizeof(int));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_WHEIGHT), REG_DWORD, (LPBYTE)&height, sizeof(int));
 
 	if (!writeSucceeded) {
 		ReportLastError();
@@ -254,48 +253,48 @@ void SaveMenusAndData(void)
 	int i;
 
 	if (!g_bIniMode) {
-		if (RegCreateKeyEx(HKEY_CURRENT_USER, STR_REGKEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, GetString(STR_REGKEY), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL) != ERROR_SUCCESS) {
 			ReportLastError();
 			return;
 		}
 	}
 	if (options.bSaveMenuSettings) {
-		SaveOption(key, _T("m_WordWrap"), REG_DWORD, (LPBYTE)&bWordWrap, sizeof(BOOL));
-		SaveOption(key, _T("m_PrimaryFont"), REG_DWORD, (LPBYTE)&bPrimaryFont, sizeof(BOOL));
-		SaveOption(key, _T("m_SmartSelect"), REG_DWORD, (LPBYTE)&bSmartSelect, sizeof(BOOL));
+		SaveOption(key, GetString(IDSS_WORDWRAP), REG_DWORD, (LPBYTE)&bWordWrap, sizeof(BOOL));
+		SaveOption(key, GetString(IDSS_FONTIDX), REG_DWORD, (LPBYTE)&bPrimaryFont, sizeof(BOOL));
+		SaveOption(key, GetString(IDSS_SMARTSELECT), REG_DWORD, (LPBYTE)&bSmartSelect, sizeof(BOOL));
 #ifdef USE_RICH_EDIT
-		SaveOption(key, _T("m_Hyperlinks"), REG_DWORD, (LPBYTE)&bHyperlinks, sizeof(BOOL));
+		SaveOption(key, GetString(IDSS_HYPERLINKS), REG_DWORD, (LPBYTE)&bHyperlinks, sizeof(BOOL));
 #endif
-		SaveOption(key, _T("m_ShowStatus"), REG_DWORD, (LPBYTE)&bShowStatus, sizeof(BOOL));
-		SaveOption(key, _T("m_ShowToolbar"), REG_DWORD, (LPBYTE)&bShowToolbar, sizeof(BOOL));
-		SaveOption(key, _T("m_AlwaysOnTop"), REG_DWORD, (LPBYTE)&bAlwaysOnTop, sizeof(BOOL));
-		SaveOption(key, _T("m_Transparent"), REG_DWORD, (LPBYTE)&bTransparent, sizeof(BOOL));
-		SaveOption(key, _T("bCloseAfterFind"), REG_DWORD, (LPBYTE)&bCloseAfterFind, sizeof(BOOL));
-		SaveOption(key, _T("bCloseAfterReplace"), REG_DWORD, (LPBYTE)&bCloseAfterReplace, sizeof(BOOL));
-		SaveOption(key, _T("bCloseAfterInsert"), REG_DWORD, (LPBYTE)&bCloseAfterInsert, sizeof(BOOL));
-		SaveOption(key, _T("bNoFindHidden"), REG_DWORD, (LPBYTE)&bNoFindHidden, sizeof(BOOL));
+		SaveOption(key, GetString(IDSS_SHOWSTATUS), REG_DWORD, (LPBYTE)&bShowStatus, sizeof(BOOL));
+		SaveOption(key, GetString(IDSS_SHOWTOOLBAR), REG_DWORD, (LPBYTE)&bShowToolbar, sizeof(BOOL));
+		SaveOption(key, GetString(IDSS_ALWAYSONTOP), REG_DWORD, (LPBYTE)&bAlwaysOnTop, sizeof(BOOL));
+		SaveOption(key, GetString(IDSS_TRANSPARENT), REG_DWORD, (LPBYTE)&bTransparent, sizeof(BOOL));
+		SaveOption(key, GetString(IDSS_CLOSEAFTERFIND), REG_DWORD, (LPBYTE)&bCloseAfterFind, sizeof(BOOL));
+		SaveOption(key, GetString(IDSS_CLOSEAFTERREPLACE), REG_DWORD, (LPBYTE)&bCloseAfterReplace, sizeof(BOOL));
+		SaveOption(key, GetString(IDSS_CLOSEAFTERINSERT), REG_DWORD, (LPBYTE)&bCloseAfterInsert, sizeof(BOOL));
+		SaveOption(key, GetString(IDSS_NOFINDHIDDEN), REG_DWORD, (LPBYTE)&bNoFindHidden, sizeof(BOOL));
 	}
 
 	if (!options.bNoSaveHistory) {
 		for (i = 0; i < NUMFINDS; ++i) {
 			if (!FindArray[i]) continue;
-			wsprintf(keyname, _T("szFindArray%d"), i);
+			wsprintf(keyname, GetString(IDSS_FINDARRAY), i);
 			SaveOption(key, keyname, REG_SZ, (LPBYTE)FindArray[i], MAXFIND);
 		}
 		for (i = 0; i < NUMFINDS; ++i) {
 			if (!ReplaceArray[i]) continue;
-			wsprintf(keyname, _T("szReplaceArray%d"), i);
+			wsprintf(keyname, GetString(IDSS_REPLACEARRAY), i);
 			SaveOption(key, keyname, REG_SZ, (LPBYTE)ReplaceArray[i], MAXFIND);
 		}
 		for (i = 0; i < NUMINSERTS; ++i) {
 			if (!InsertArray[i]) continue;
-			wsprintf(keyname, _T("szInsertArray%d"), i);
+			wsprintf(keyname, GetString(IDSS_INSERTARRAY), i);
 			SaveOption(key, keyname, REG_SZ, (LPBYTE)InsertArray[i], MAXINSERT);
 		}
 	}
 
 	if (options.bSaveDirectory)
-		SaveOption(key, _T("szLastDirectory"), REG_SZ, (LPBYTE)szDir, MAXFN);
+		SaveOption(key, GetString(IDSS_LASTDIRECTORY), REG_SZ, (LPBYTE)szDir, MAXFN);
 
 	if (key != NULL)
 		RegCloseKey(key);
