@@ -172,7 +172,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
 
 // language_plugin.c //
-HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin);
+HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin, BOOL checkver);
 void FindAndLoadLanguagePlugin(void);
 
 

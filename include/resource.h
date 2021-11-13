@@ -500,11 +500,11 @@ Nonlocalized:
 #define FC_ENC_BASE						2052	//(range)
 #define FC_ENC_END						2119	//(range)
 #define FC_ENC_UNKNOWN					2052	//corresponds to ID_ENC_UNKNOWN	(40052)
-#define FC_ENC_ANSI						2110	//corresponds to ID_ENC_ANSI	(40110)
+#define FC_ENC_ANSI						2111	//corresponds to ID_ENC_ANSI	(40111)
 #define FC_ENC_UTF8						2109	//corresponds to ID_ENC_UTF8	(40109), grandfathered in from 3.6-
 #define FC_ENC_UTF16					2089	//corresponds to ID_ENC_UTF16	(40089), grandfathered in from 3.6-
 #define FC_ENC_UTF16BE					2090	//corresponds to ID_ENC_UTF16BE	(40090), grandfathered in from 3.6-
-#define FC_ENC_BIN						2111	//corresponds to ID_ENC_BIN		(40111)
+#define FC_ENC_BIN						2112	//corresponds to ID_ENC_BIN		(40112)
 #define FC_ENC_CODEPAGE					2118	//corresponds to ID_ENC_CODEPAGE(40118)
 //#define FC_ENC_CUSTOM					2119	//corresponds to ID_ENC_CUSTOM	(40119)
 #define FC_LFMT_UNKNOWN					2051	//corresponds to ID_LFMT_UNKNOWN(40051)
