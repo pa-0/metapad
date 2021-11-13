@@ -38,7 +38,7 @@ INT DecodeBase( BYTE base, LPCTSTR code, LPBYTE bin, INT len, BYTE extractMode, 
 INT EncodeBase( BYTE base, LPBYTE bin, LPTSTR code, INT len, LPBYTE* end );
 
 void ReverseBytes(LPBYTE buffer, ULONG len);
-WORD CheckBOM(LPBYTE *pb, DWORD* pbLen);
+WORD CheckBOM(LPBYTE pb, DWORD* len);
 WORD GetBOM(LPBYTE* bom, WORD enc);
 WORD GetNumKnownCPs();
 WORD GetKnownCP(INT idx);
@@ -53,7 +53,7 @@ LONG ExportLineFmtDelta(LPCTSTR sz, DWORD* chars, WORD lfmt);
 void ImportBinary(LPTSTR sz, DWORD len);
 void ExportBinary(LPTSTR sz, DWORD len);
 
-DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty, LPBYTE* origBuf);
+DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty);
 DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* truncated);
 
 void ExpandDifMap(LPVOID map, WORD width, DWORD len);

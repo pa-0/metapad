@@ -230,16 +230,18 @@ ID mapping:
 #define IDS_SETDEF_FORMAT_WARN			222
 #define IDS_ENC_BAD						223
 #define IDS_ENC_FAILED					224
+#define IDS_FILE_SAVING					225
 
 #define IDS_DECODEBASE_BADLEN			441
 #define IDS_DECODEBASE_BADCHAR			442
 #define IDS_MIGRATED					490
 #define IDS_STATFMT_BYTES				491
-#define IDS_STATFMT_SEL					492
-#define IDS_STATFMT_LINE				493
-#define IDS_STATFMT_COL					494
-#define IDS_STATFMT_INS					495
-#define IDS_STATFMT_OVR					496
+#define IDS_STATFMT_LINES				492
+#define IDS_STATFMT_SEL					493
+#define IDS_STATFMT_LINE				494
+#define IDS_STATFMT_COL					495
+#define IDS_STATFMT_INS					498
+#define IDS_STATFMT_OVR					499
 
 /* IDS_/STR_ nonlocalized strings */
 #define NONLOCALIZED_BASE				500		//(range)
