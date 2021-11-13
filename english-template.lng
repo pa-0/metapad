@@ -1,0 +1,373 @@
+#Sample translation file for metapad 3.7.
+#Please take care not to modify or reorder the ID numbers to the left of the texts.
+#Deleting unwanted lines is OK.
+1		3.7
+2		English (Plugin Template)
+3		1
+4		(Translator Name)
+5		(Translator Contact Info)
+8		All Textual File Types|*.txt;*.htm;*.html;*.c;*.cpp;*.h;*.java|Text Files (*.txt)|*.txt|HTML (*.html; *.htm)|*.html;*.htm|Source Code (*.c; *.cpp; *.h; *.java)|*.c;*.cpp;*.h;*.java|All Files (*.*)|*.*|
+9		Save changes to %s?
+10		Error writing to file - it may be locked or read only.
+11		Search string not found.
+12		Warning - you have chosen not to save AND to close metapad on external launch.\n\nThis could cause you to lose data!
+13		(read only)
+15		Error in favorites file. It may have been modified and is not synchronized.
+16		Loading file...
+17		This file is read only. You must save to a different file.
+18		Printer not found!\n(Perhaps try reinstalling the printer.)
+19		Error initializing printing. (CommDlgExtendedError: %#04x)
+20		Error aborting printing
+21		StartDoc printing error. Printing canceled.
+22		Error calling DrawText.
+23		There was an error during printing. Print canceled.
+24		Error launching external viewer
+26		External viewer is not configured.
+28		No viewer associated with this file type.
+30		Missing window placement registry values - using default settings.
+33		\"%s\" not found. Create it?
+34		File creation error.
+35		File not found.
+36		File is locked by another process.
+37		Error converting from Unicode file
+38		Detected non-ANSI characters in this Unicode file.\n\nData will be lost if this file is saved!
+39		This is a binary file.\nConvert any NULL terminators to spaces and load anyway?
+40		Error converting to Unicode string
+41		Error writing BOM
+42		Applying new font settings. This action will empty the undo buffer.
+43		Couldn't get char width.
+44		Couldn't set para format.
+45		Reached end of file. Continue searching from the top?
+46		Reached beginning of file. Continue searching from the bottom?
+47		&Recent
+49		Enter a maximum Recent File size between 0 and 16
+50		Main window will now always start up with its current size and position.
+51		This action will clear find, replace, and insert histories.
+52		This action will clear the recent files history
+53		Select a language plugin or choose Default (English).
+55		Enter a margin width between 0 and 300
+56		Enter a transparency mode percent between 1 and 99
+57		Enter a tab size between 1 and 100
+59		New File
+60		Open File
+61		Save File
+62		Print
+63		Find
+64		Replace
+65		Cut
+66		Copy
+67		Paste
+68		Undo
+69		Redo
+70		Settings
+71		Refresh/Revert
+72		Word Wrap
+73		Primary Font
+74		Always On Top
+75		Launch Primary Viewer
+76		Launch Secondary Viewer
+77		Can't undo this action!
+78		Reached memory limit at %d bytes!
+79		This version of Windows does not support loading files this large into an Edit window.\nLaunch in external viewer?
+80		Reached memory limit!\nSave file now and use another editor (metapad full not LE)!
+81		Updating hyperlinks. This action will empty the undo buffer.
+82		Unable to change the readonly attribute for this file.
+83		Settings
+84		No selected text.
+86		Replaced %d item(s).
+87		&Language Plugin...
+88		metapad requires RICHED20.DLL to be installed on your system.\n\nSee the FAQ on the website for further information.
+89		Usage: metapad [/i | /m | /v | /s] [/p | /g row:col | /e] [filename]\n\nOption descriptions:\n\n~/i - force INI mode for settings\n~/m - migrate all registry settings to INI file\n~/g row:col - goto position at row and column\n~/e - goto end of file\n~/p - print file\n~/v - disable plugin version checking\n~/s - skip loading language plugin
+90		GlobalLock failed
+91		Error unlocking clipboard memory.
+92		Error opening clipboard.
+93		Error reading file.
+100		All Rights Reserved
+102		Text (*.*)|*.*|
+103		new file
+104		Selection is larger than maximum quick buffer length.
+112		General
+114		Go To Line
+124		View
+128		Add Favorite
+199		Error
+200		\nError 0x%08X
+201		Some characters in this text cannot be saved in the selected encoding!\n\nWould you like to save this file as UTF-8?
+202		Error converting file to Unicode
+203		Detected unsupported or invalid code points.\n\nData will be lost if this file is saved!
+204		This is a binary file. Load anyway?\nNull terminators will be preserved unless the File Format is changed.
+205		This file is very large ( >16 MB). Loading it may take a long time.\nLoad anyway?
+206		Error converting string to Unicode
+207		%s in '%s' near:\n
+208		Invalid characters in base-%d string
+209		The base-%d string is not a multiple of %d characters
+210		Expected base-%d string
+211		Find what
+212		Replace with
+213		Insert Text
+214		Clipboard
+215		Macro
+216		Quote string
+217		About to insert %I64u characters of text.\nThis may take a very long time!\nContinue?
+218		Replaced %d item(s) in %d iteration(s).
+219		Reinterpret the current text as %s?
+220		This text has mixed line endings.\nYou can normalize the line endings in the File > Format menu.
+221		Mixed line endings have been normalized.\nYou can change this function in the File > Format menu.
+222		Note that all files without a Byte-Order Mark will now be interpreted as %s!
+223		This codepage is not available on your system.
+224		Error converting to the selected codepage!\nThe data was instead saved as ANSI.
+441		Invalid code string length!
+442		Invalid code characters!
+490		Migration to INI completed.
+491		` Bytes: %d `
+492		` Selected %d:%d  ->  %d:%d  %s
+493		` Line: %d/%d
+494		` Col: %d
+495		` INS
+496		OVR
+756		> `
+757		yyyyMMdd-HHmmss `
+1001	OK
+1002	Cancel
+1013	...
+1015	...
+1037	S&mart Select
+1040	Match &whole word only
+1041	Match &case
+1043	&Offset:
+1045	&Selection
+1046	Wh&ole file
+1076	C&lose dialog after find
+1078	&Favorite name:
+1086	&Default (English)
+1087	&Language plugin:
+1088	Alt + &%d:
+1089	C&lose dialog after insert
+1090	C&lose after replace all
+1091	Fi&nd what:
+1092	Re&place with:
+1540	Find
+1541	Replace
+1546	Page Setup
+1547	Advanced
+1549	Buffers && Language
+1550	Language Plugin
+1551	Insert
+1552	Enter codepage number
+2039	DOS
+2040	Unix
+2048	Mac
+2049	RAW
+2089	Unicode
+2090	Unicode BE
+2109	UTF-8
+2110	ANSI
+2111	Binary
+2118	CP%d
+21210	&Enable quick exit (Esc key)
+21211	Save &window placement
+21216	E&xit metapad after viewer is launched
+21230	Prompt to sa&ve
+21231	Automatica&lly save
+21232	Do&n't save
+21233	Aut&o-search at end of file 
+21234	A&uto-indent text
+21235	&Insert tabs as spaces
+21236	&Hide directory in caption
+21238	Save options &menu states
+21241	Remem&ber last folder
+22418	S&ystem fixed width
+22419	ANSI fi&xed width
+22420	&Custom:
+22421	Cust&om:
+22423	Font &1
+22424	Font &2
+22450	&Use system colors
+22453	Us&e system colors
+22456	Background color:
+22457	Font color:
+22458	Background color:
+22459	Font color:
+22466	Use def&ault toolbar style
+22481	&Transparency %:
+24001	&Find Next
+24002	Close
+24056	&Up
+24057	&Down
+24072	Direction
+24101	&Find Next
+24102	Close
+24124	&Replace
+24125	Replace &All
+24126	F&ull Replace
+24602	&Left:
+24603	&Right:
+24604	&Top:
+24605	&Bottom:
+24675	Margins
+24736	Hide &go to offset
+24741	Recent files to re&member:
+24742	&Separate recent files menu
+24743	Don't insert &time with date
+24744	Skip load &warning prompts
+24745	Use default &printer font
+24746	F&ind/replace use current font
+24747	Use fi&xed window position:
+24748	Sa&ve Window Position
+24749	Pri&nt using secondary font
+24759	Disable smart &home
+24760	&Enable read only menu item
+24767	&Launch viewer for large files
+24768	H&yperlinks require doubleclick
+24769	Don't a&uto-save extensions
+24770	&Context menu moves cursor
+24771	Su&ppress undo buffer prompt
+24772	Clear &Find History...
+24773	Clear &Recent Files...
+24774	Set &Default File Format...  `
+24775	Hide scro&llbars when possible
+24776	Don't s&ave find history
+24777	Disa&ble favorites menu
+24778	D&on't auto-select on find
+25101	&Insert
+25102	Close
+31208	&Tab size:
+31210	&Quote with:
+31212	&Primary external viewer:
+31215	&Args:
+31217	&Secondary external viewer:
+31220	A&rgs:
+31222	When launching viewers:
+31301	Now printing
+31400	&Line #:
+32400	Primary font
+32409	Secondary font
+32418	Window
+32419	&Selection margin width:
+34109	Replace all in
+34900	Quick buffers (select text and set with Alt + Shift + number)
+34921	Language for menus, dialogs and messages
+34926	Custom date formats:
+34927	&F12:
+34929	&Ctrl+F12:
+35001	Language:
+35003	Release:
+35005	Translator:
+35007	Contact:
+35100	&Text:
+35103	&Repeat:
+35105	time(s)
+40002	&About...
+40003	&Open...
+40004	E&xit
+40009	Save &As...
+40011	&Word Wrap
+40012	&New
+40013	&Save
+40017	&Primary Viewer
+40020	&Settings...
+40021	&Short Format
+40023	&Primary Font
+40026	&Find...
+40027	R&eplace...
+40028	Find Ne&xt
+40029	&Undo
+40030	Cu&t
+40031	&Copy
+40032	&Paste
+40033	Select &All
+40035	&Print...
+40036	&Select Word
+40037	&Go To Line...
+40038	Find Pre&vious
+40039	&DOS (CR+LF)
+40040	&Unix (LF)
+40041	&Indent
+40043	&Unindent
+40048	Old &Mac (CR)
+40049	Unmana&ged
+40051	Line Endings:
+40052	Text Encoding:
+40053	&Refresh/Revert
+40054	&Redo
+40055	R&ead Only
+40057	Show Status &Bar
+40058	&Long Format
+40059	Find Next &Word
+40062	S&trip First Character
+40063	&OEM/DOS Encoding
+40064	&ANSI/Windows Encoding
+40065	Co&mmit Word Wrap
+40067	Show Hyperlin&ks
+40071	Page Se&tup...
+40072	&Uppercase
+40073	&Lowercase
+40074	Un&wrap Lines
+40075	Show &Toolbar
+40078	Ta&bified
+40079	U&ntabified
+40081	New W&indow
+40082	&Always On Top
+40084	Unwrap Lines (w/ S&pace)
+40087	&Default Viewer
+40088	&Strip Trailing Whitespace
+40089	Un&icode
+40090	Unicode (&Big Endian)
+40091	&Delete
+40092	&Add to Favorites...
+40093	&Edit Favorites
+40094	&Reload Favorites
+40095	&Quote
+40096	&Inverted Case
+40097	&Sentence Case
+40098	&Title Case
+40099	Newline
+40100	&Insert File...
+40101	Backslash
+40102	Disabled
+40105	&Secondary Viewer
+40109	UTF-&8
+40110	Tab
+40111	&ANSI
+40112	Bi&nary (Preserve NULLs)
+40118	Codepage %d
+40119	Enter &Codepage...
+40204	Custom Format &1
+40205	Custom Format &2
+40206	Paste Mu&ltiple...
+40207	Insert Te&xt...
+40208	&Copy As Hex
+40209	&Paste As Hex
+40210	Clear clipboard
+40211	Hex Value
+40212	Decimal Value
+40213	Octal Value
+40214	Binary Value
+40215	Hex Value (Unicode)
+40216	Hex String
+40217	Hex String (Unicode)
+40218	Base-64 String
+40219	Base-64 String (Unicode)
+40220	Copy As B&ase-64
+40221	Paste As &Base-64
+40223	Any 1 Character
+40224	Random Character
+40225	Any 0+ Characters
+40226	Any 1+ Characters
+40227	0+ of Preceding Character
+40228	1+ of Preceding Character
+41110	&File
+41111	&Launch
+41112	F&ile Format
+41113	Recent &Files
+41120	&Edit
+41121	E&ncoded text
+41122	&Block
+41123	C&onvert Selected
+41124	Insert &Date/Time
+41130	F&avorites
+41140	&Options
+41150	&Help
+41211	&Make
+41212	&Insert Date
+44200	T&ransparent Mode
