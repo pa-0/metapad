@@ -313,15 +313,16 @@ void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 }
 
 #ifdef USE_RICH_EDIT
-void UpdateWindowText(void)
-{
+void UpdateWindowText(void) {
 	LPCTSTR szBuffer = GetShadowBuffer(NULL);
 	bLoading = TRUE;
+	RestoreClientView(0, FALSE, TRUE, TRUE);
 	SetWindowText(client, szBuffer);
 	bLoading = FALSE;
 	SetTabStops();
 	SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
 	UpdateStatus(TRUE);
+	RestoreClientView(0, TRUE, TRUE, TRUE);
 	InvalidateRect(client, NULL, TRUE);
 }
 #endif
@@ -532,10 +533,8 @@ LRESULT APIENTRY PageSetupProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 
 LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	HMENU hmenu, hsub;
-	CHARRANGE cr;
-	POINT pt;
-	RECT rc;
 	BOOL bOkEna = TRUE;
+	RECT rc;
 	LPTSTR szp, szNew;
 	LPTSTR szTmp = gTmpBuf, szBuf = gTmpBuf;
 	LPTSTR szTmp2 = gTmpBuf2, szRepl = gTmpBuf2;
@@ -775,22 +774,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					if (!bOkEna) return FALSE;
 					break;
 			}
-			SendMessage(client, EM_SCROLLCARET, 0, 0);
-			GetWindowRect(client, &rc);
-#ifdef USE_RICH_EDIT
-			SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-#else
-			SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-#endif
-			if (cr.cpMin >= cr.cpMax || cr.cpMin < 0 || cr.cpMax < 0) break;
-			do {
-#ifdef USE_RICH_EDIT
-				SendMessage(client, EM_POSFROMCHAR, (WPARAM)&pt, cr.cpMin);
-#else
-				pt.y = SendMessage(client, EM_POSFROMCHAR, cr.cpMin, 0) >> 16;
-#endif
-				if (pt.y < 1) SendMessage(client, EM_SCROLL, (-pt.y > HEIGHT(rc) ? SB_PAGEUP : SB_LINEUP), 0);
-			} while (pt.y < 1 && pt.y > -0x7fff);
+			SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_SCROLLTO_SELA, 0);
 			break;
 		case IDCANCEL:
 			if (HIWORD(wParam) != BN_CLICKED) break;
@@ -993,11 +977,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 				bLinkMenu = FALSE;
 			}
 */
-#ifdef USE_RICH_EDIT
-			SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-#else
-			SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-#endif
+			cr = GetSelection();
 			if (options.bContextCursor) {
 				if (cr.cpMin == cr.cpMax) {
 #ifdef USE_RICH_EDIT
@@ -1025,11 +1005,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 			return lRes;
 	case WM_CHAR:
 		if (options.bAutoIndent && (TCHAR)wParam == _T('\r')) {
-#ifdef USE_RICH_EDIT
-			SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-#else
-			SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-#endif
+			cr = GetSelection();
 			sz = (szBuf = ((LPTSTR)GetShadowLine(-1, -1, NULL, NULL, &cr2))) - 1;
 			if (!*szBuf) break;
 			while (*++sz == _T('\t') || *sz == _T(' ')) ;
@@ -1687,11 +1663,7 @@ void SelectWord(LPTSTR* target, BOOL bSmart, BOOL bAutoSelect)
 			}
 			cr.cpMin += cr2.cpMin;
 			cr.cpMax += cr2.cpMin;
-#ifdef USE_RICH_EDIT
-			SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-#else
-			SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-#endif
+			SetSelection(cr);
 		}
 		UpdateStatus(FALSE);
 	}
@@ -2031,11 +2003,7 @@ void GotoLine(LONG lLine, LONG lOffset) {
 	l = GetCharIndex(options.bHideGotoOffset ? 1 : lOffset, lLine-1, -1, NULL, NULL, &cr);
 	if (!options.bHideGotoOffset)
 		cr.cpMax = (cr.cpMin += l);
-#ifdef USE_RICH_EDIT
-	SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-#else
-	SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-#endif
+	SetSelection(cr);
 	SendMessage(client, EM_SCROLLCARET, 0, 0);
 	UpdateStatus(FALSE);
 }
@@ -3058,11 +3026,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			EnableMenuItem(hMenu, ID_PASTE_HEX, MF_BYCOMMAND | ena);
 			EnableMenuItem(hMenu, ID_PASTE_MUL, MF_BYCOMMAND | ena);
 			EnableMenuItem(hMenu, ID_COMMIT_WORDWRAP, MF_BYCOMMAND | (bWordWrap ? MF_ENABLED : MF_GRAYED));
-#ifdef USE_RICH_EDIT
-			SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-#else
-			SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-#endif
+			cr = GetSelection();
 			ena = (cr.cpMin != cr.cpMax ? MF_ENABLED : MF_GRAYED);
 			EnableMenuItem(hMenu, ID_MYEDIT_CUT, MF_BYCOMMAND | ena);
 			EnableMenuItem(hMenu, ID_MYEDIT_COPY, MF_BYCOMMAND | ena);
@@ -3272,11 +3236,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						if (bWholeWord) gfr.Flags |= FR_WHOLEWORD;
 						if (bDown) gfr.Flags |= FR_DOWN;
 						if (bMatchCase) gfr.Flags |= FR_MATCHCASE;
-#ifdef USE_RICH_EDIT
-						SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-#else
-						SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-#endif
+						cr = GetSelection();
 						break;
 					case ID_PASTE_MUL:
 						if (!OpenClipboard(NULL)) {
@@ -3396,12 +3356,22 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 #ifdef USE_RICH_EDIT
 			case ID_MYEDIT_REDO:
+				RestoreClientView(0, FALSE, FALSE, TRUE);
 				SendMessage(client, EM_REDO, 0, 0);
+				RestoreClientView(1, FALSE, FALSE, TRUE);
+				RestoreClientView(0, TRUE, FALSE, TRUE);
+				if (!IsSelectionVisible())
+					RestoreClientView(1, TRUE, FALSE, TRUE);
 				QueueUpdateStatus();
 				break;
 #endif
 			case ID_MYEDIT_UNDO:
+				RestoreClientView(0, FALSE, FALSE, TRUE);
 				SendMessage(client, EM_UNDO, 0, 0);
+				RestoreClientView(1, FALSE, FALSE, TRUE);
+				RestoreClientView(0, TRUE, FALSE, TRUE);
+				if (!IsSelectionVisible())
+					RestoreClientView(1, TRUE, FALSE, TRUE);
 				QueueUpdateStatus();
 				break;
 			case ID_CLEAR_CLIPBRD:
@@ -3534,11 +3504,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				QueueUpdateStatus();
 				break;
 			case ID_HOME:
-#ifdef USE_RICH_EDIT
-				SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-#else
-				SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-#endif
+				cr = GetSelection();
 				szOld = GetShadowLine(-1, -1, &len, NULL, &cr2);
 				for (l = 0; l < len; l++) {
 					if (szOld[l] != _T('\t') && szOld[l] != _T(' '))
@@ -3550,22 +3516,30 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					break;
 				}
 				cr2.cpMax = (cr2.cpMin += l);
-#ifdef USE_RICH_EDIT
-				SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr2);
-#else
-				SendMessage(client, EM_SETSEL, (WPARAM)cr2.cpMin, (LPARAM)cr2.cpMax);
-#endif
+				SetSelection(cr2);
 				SendMessage(client, EM_SCROLLCARET, 0, 0);
 				break;
 			case ID_MYEDIT_SELECTALL:
 				cr.cpMin = 0;
 				cr.cpMax = -1;
-#ifdef USE_RICH_EDIT
-				SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-#else
-				SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-#endif
+				SetSelection(cr);
 				UpdateStatus(FALSE);
+				break;
+			case ID_SCROLLTO_SELA:
+				cr = cr2 = GetSelection();
+				cr2.cpMax = cr2.cpMin;
+				SetSelection(cr2);
+				SendMessage(client, EM_SCROLLCARET, 0, 0);
+				SendMessage(client, EM_SCROLL, SB_PAGEDOWN, 0);
+				SendMessage(client, EM_SCROLLCARET, 0, 0);
+				SendMessage(client, EM_SCROLL, SB_LINEUP, 0);
+				SetSelection(cr);
+				break;
+			case ID_SCROLLTO_SELE:
+				SendMessage(client, EM_SCROLLCARET, 0, 0);
+				SendMessage(client, EM_SCROLL, SB_PAGEUP, 0);
+				SendMessage(client, EM_SCROLLCARET, 0, 0);
+				SendMessage(client, EM_SCROLL, SB_LINEDOWN, 0);
 				break;
 #ifdef USE_RICH_EDIT
 			case ID_SHOWHYPERLINKS:
@@ -3782,15 +3756,9 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				MakeNewFile();
 				break;
 			case ID_EDIT_SELECTWORD:
-#ifdef USE_RICH_EDIT
-				SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
+				cr = GetSelection();
 				cr.cpMin = cr.cpMax;
-				SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-#else
-				SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-				cr.cpMin = cr.cpMax;
-				SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-#endif
+				SetSelection(cr);
 				SelectWord(NULL, bSmartSelect, TRUE);
 				break;
 			case ID_GOTOLINE:
@@ -3798,6 +3766,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 			case ID_EDIT_WORDWRAP:
 				hCur = SetCursor(LoadCursor(NULL, IDC_WAIT));
+				RestoreClientView(0, FALSE, TRUE, TRUE);
 #ifdef USE_RICH_EDIT
 				bWordWrap = !GetCheckedState(GetMenu(hwndMain), ID_EDIT_WORDWRAP, TRUE);
 				SendMessage(client, EM_SETTARGETDEVICE, (WPARAM)0, (LPARAM)(LONG) !bWordWrap);
@@ -3827,6 +3796,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				SetFocus(client);
 				SendMessage(client, EM_SCROLLCARET, 0, 0);
 #endif
+				RestoreClientView(0, TRUE, TRUE, TRUE);
 				SetCursor(hCur);
 				UpdateStatus(TRUE);
 				break;
@@ -3885,13 +3855,8 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					cr.cpMax = sl;
 					if (cr.cpMax == cr.cpMin)
 						i=j;
-					else if(cr.cpMax > cr.cpMin) {
-#ifdef USE_RICH_EDIT
-						SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-#else
-						SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-#endif
-					}
+					else if(cr.cpMax > cr.cpMin)
+						SetSelection(cr);
 				}
 #ifdef USE_RICH_EDIT
 				sz = _T("\r");
@@ -4264,11 +4229,9 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				}
 				if (lstrcmp(szOld, szNew) != 0)
 					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szNew);
+				SetSelection(cr);
 #ifdef USE_RICH_EDIT
-				SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 				InvalidateRect(client, NULL, TRUE);
-#else
-				SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 #endif
 				FREE(szNew);
 				SetCursor(hCur);
@@ -4296,20 +4259,10 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				SetFileFormat(LOWORD(wParam) % 1000 + FC_BASE, 1);
 				break;
 			case ID_RELOAD_CURRENT:
-				if (SCNUL(szFile)[0]) {
-					if (!SaveIfDirty())
-						break;
-#ifdef USE_RICH_EDIT
-					SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-					LoadFile(szFile, FALSE, FALSE, FALSE, NULL);
-					SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-#else
-					SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-					LoadFile(szFile, FALSE, FALSE, FALSE, NULL);
-					SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-					SendMessage(client, EM_SCROLLCARET, 0, 0);
-#endif
-				}
+				if (!*SCNUL(szFile) || !SaveIfDirty()) break;
+				RestoreClientView(0, FALSE, TRUE, TRUE);
+				LoadFile(szFile, FALSE, FALSE, FALSE, NULL);
+				RestoreClientView(0, TRUE, TRUE, TRUE);
 				break;
 /*#ifdef USE_RICH_EDIT
 //This is now done automatically in UpdateStatus(). (v3.7+)
@@ -4370,7 +4323,6 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					ReportLastError();
 				if (!g_bIniMode)
 					RegCloseKey(key);
-
 				break;
 			case ID_MACRO_1:
 			case ID_MACRO_2:
@@ -4409,24 +4361,17 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						}
 					}
 					*sz = _T('\0');
-
+					RestoreClientView(0, FALSE, FALSE, TRUE);
 					cr.cpMin = 0;
 					cr.cpMax = -1;
 					SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
-#ifdef USE_RICH_EDIT
-					SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-#else
-					SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-#endif
+					SetSelection(cr);
 					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szBuf);
-					cr.cpMax = 0;
-#ifdef USE_RICH_EDIT
-					SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-#else
-					SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-#endif
-					SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
 					FREE(szBuf);
+					cr.cpMax = 0;
+					SetSelection(cr);
+					SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
+					RestoreClientView(0, TRUE, FALSE, TRUE);
 					InvalidateRect(client, NULL, TRUE);
 					SetCursor(hCur);
 				}

@@ -78,6 +78,8 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* format) {
 			enc = ((*lpiResult & IS_TEXT_UNICODE_REVERSE_MASK) ? FC_ENC_UTF16BE : FC_ENC_UTF16);
 		if (enc == FC_ENC_UNKNOWN)
 			enc = FC_ENC_ANSI;
+	}
+	if (enc != FC_ENC_UNKNOWN) {
 		*format &= 0xfff0000;
 		*format |= enc;
 	}
@@ -178,6 +180,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 			bLoading = FALSE;
 			tbuf = GetShadowBuffer(NULL);
 			bLoading = TRUE;
+			RestoreClientView(0, FALSE, TRUE, TRUE);
 			SetWindowText(client, szBuffer);
 #ifdef UNICODE
 			if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING_SAFE), GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
@@ -185,6 +188,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 			if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
 #endif
 				SetWindowText(client, tbuf);
+				RestoreClientView(0, TRUE, TRUE, TRUE);
 				bLoading = FALSE;
 				UpdateStatus(TRUE);
 				SetCursor(hcur);
@@ -201,7 +205,6 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 		if (insert) {
 			if (lChars)
 				SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)(LPTSTR)szBuffer);
-			FREE(lfn); FREE(dfn);
 		} else {
 			if (lChars) {
 				SetWindowText(client, szBuffer);
@@ -217,18 +220,14 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 			FREE(szCaptionFile);
 			szDir = dfn;
 			szFile = lfn;
+			lfn = NULL; dfn = NULL;
 			if (lChars >=4 && szBuffer && szBuffer[0] == _T('.') &&
 				szBuffer[1] == _T('L') &&
 				szBuffer[2] == _T('O') &&
 				szBuffer[3] == _T('G')) {
 				CHARRANGE cr;
 				cr.cpMin = cr.cpMax = lChars;
-
-		#ifdef USE_RICH_EDIT
-				SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-		#else
-				SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-		#endif
+				SetSelection(cr);
 				SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DATE_TIME_CUSTOM, 0), 0);
 				SendMessage(client, EM_SCROLLCARET, 0, 0);
 			}
@@ -240,7 +239,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 		FREE(szBuffer);
 	} else
 		*textOut = szBuffer;
-	FREE(rfn);
+	FREE(lfn); FREE(dfn); FREE(rfn);
 	bLoading = FALSE;
 	UpdateStatus(TRUE);
 	InvalidateRect(client, NULL, TRUE);

@@ -43,7 +43,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	TCHAR mbuf[64], mbuf2[128];
 	WORD enc, lfmt, cp, nenc, nlfmt, ncp;
 	DWORD len, lines, nCR, nLF, nStrays, nSub;
-	BOOL bufDirty = FALSE, b;
+	BOOL bufDirty = FALSE, fileDirty = bDirtyFile, b;
 
 	if (!hMenu || !format) return;
 	if (format < 0xffff && format >= FC_LFMT_BASE && format < FC_LFMT_END) format <<= 16;
@@ -56,7 +56,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	nlfmt = (format >> 16) & 0xfff;
 	if (nFormat >> 31) enc = FC_ENC_CODEPAGE;
 	if (format >> 31) nenc = FC_ENC_CODEPAGE;
-	if (!GetTextChars(NULL) || !((enc == FC_ENC_CODEPAGE || nenc == FC_ENC_CODEPAGE) && cp != ncp && reinterp)) reinterp = 0;
+	if (!GetTextChars(NULL) || !(((enc == FC_ENC_ANSI || enc == FC_ENC_CODEPAGE) && (nenc == FC_ENC_ANSI || nenc == FC_ENC_CODEPAGE)) && cp != ncp && reinterp)) reinterp = 0;
 	if (reinterp == 1) {
 		if (nenc == FC_ENC_CODEPAGE)
 			PrintCPName(ncp, mbuf, GetString(ID_ENC_CODEPAGE));
@@ -72,16 +72,16 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	}
 	hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 	if (reinterp) {
+		RestoreClientView(0, FALSE, TRUE, TRUE);
 		buf = (LPTSTR)GetShadowBuffer(&len);
+		bLoading = TRUE;
 		lines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
 		ExportLineFmt(&buf, &len, lfmt, lines, &bufDirty);
 		if (enc == FC_ENC_BIN)
 			ExportBinary(buf, len);
-		if (enc == FC_ENC_CODEPAGE)
-			len = EncodeText((LPBYTE*)&buf, len, nFormat, &bufDirty, NULL);
+		len = EncodeText((LPBYTE*)&buf, len, nFormat, &bufDirty, NULL);
 		if (len) {
-			if (nenc == FC_ENC_CODEPAGE)
-				len = DecodeText((LPBYTE*)&buf, len, &format, &bufDirty);
+			len = DecodeText((LPBYTE*)&buf, len, &format, &bufDirty);
 			if (len) {
 				format &= 0x8000ffff;
 				format |= (GetLineFmt(buf, len, lfmt, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
@@ -92,6 +92,11 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 				InvalidateRect(client, NULL, TRUE);
 			}
 		}
+		RestoreClientView(0, TRUE, TRUE, TRUE);
+		bLoading = FALSE;
+		nFormat = format;
+		if (!fileDirty)
+			UpdateSavedInfo();
 	}
 	if (bufDirty)
 		FREE(buf);
@@ -441,6 +446,59 @@ DWORD CalcTextSize(LPCTSTR* szText, CHARRANGE* range, DWORD estBytes, DWORD form
 
 
 
+CHARRANGE GetSelection() {
+	CHARRANGE cr;
+#ifdef USE_RICH_EDIT
+	SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
+#else
+	SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
+#endif
+	return cr;
+}
+LRESULT SetSelection(CHARRANGE cr) {
+#ifdef USE_RICH_EDIT
+	return SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
+#else
+	return SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
+#endif
+}
+void RestoreClientView(WORD index, BOOL restore, BOOL sel, BOOL scroll){
+	static LONG x[8], y[8];
+	static CHARRANGE cr[8];
+	if (restore) {
+		if (sel) SetSelection(cr[index]);
+		if (scroll) {
+			SendMessage(client, EM_SCROLLCARET, 0, 0);
+			if (x[index] < 0x10000) SendMessage(client, WM_HSCROLL, SB_THUMBPOSITION | (x[index]<<16), 0);
+			if (y[index] < 0x10000) SendMessage(client, WM_VSCROLL, SB_THUMBPOSITION | (y[index]<<16), 0);
+		}
+	} else {
+		if (sel) cr[index] = GetSelection();
+		if (scroll) {
+			y[index] = GetScrollPos(client, SB_VERT);
+			x[index] = GetScrollPos(client, SB_HORZ);
+		}
+	}
+}
+BOOL IsSelectionVisible(){
+	RECT rc;
+	POINT pt1, pt2;
+	CHARRANGE cr = GetSelection();
+	GetWindowRect(client, &rc);
+	cr.cpMin = MAX(cr.cpMin-1, 0);
+	cr.cpMax = MAX(cr.cpMax-1, 0);
+#ifdef USE_RICH_EDIT
+	SendMessage(client, EM_POSFROMCHAR, (WPARAM)&pt1, cr.cpMin);
+	SendMessage(client, EM_POSFROMCHAR, (WPARAM)&pt2, cr.cpMax);
+#else
+	pt1.y = SendMessage(client, EM_POSFROMCHAR, cr.cpMin, 0) >> 16;
+	pt2.y = SendMessage(client, EM_POSFROMCHAR, cr.cpMax, 0) >> 16;
+#endif
+	return pt1.y < HEIGHT(rc)-16 && pt2.y >= 0;
+}
+
+
+
 
 
 void UpdateSavedInfo() {
@@ -540,13 +598,7 @@ CHARRANGE DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWho
 BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE pbFindSpec) {
 	CHARRANGE f1, f2;
 	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
-	CHARRANGE cr;
-
-#ifdef USE_RICH_EDIT
-	SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-#else
-	SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-#endif
+	CHARRANGE cr = GetSelection();
 	f1 = DoSearch(szText, cr.cpMin, cr.cpMax, bDown, bWholeWord, bCase, FALSE, pbFindSpec);
 	if (f1.cpMin < 0) {
 		f2 = DoSearch(szText, cr.cpMin, cr.cpMax, bDown, bWholeWord, bCase, TRUE, pbFindSpec);
@@ -786,21 +838,13 @@ DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* 
 		SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
 		if (!selection) {
 			cr.cpMin = 0; cr.cpMax = -1;
-#ifdef USE_RICH_EDIT
-			SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-#else
-			SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-#endif
+			SetSelection(cr);
 		}
 		szBuf[l - lf] = _T('\0');
 		SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)(szBuf+lh));
 		if (selection) {
 			cr.cpMax = cr.cpMin + l - lf;
-#ifdef USE_RICH_EDIT
-			SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-#else
-			SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-#endif
+			SetSelection(cr);
 		}
 	}
 	FREE(szTmp);
