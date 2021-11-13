@@ -213,38 +213,28 @@ BOOL GetReadableFilename(LPCTSTR lfn, LPTSTR* dst){
 
 
 
-LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
+LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* linecr) {
+#ifdef USE_RICH_EDIT
+	GETTEXTLENGTHEX gtl = {0};
+	TEXTRANGE tr;
+#endif
 	DWORD l;
+	CHARRANGE lcr;
 	if (max <= min && max >= 0){
 		if (len) *len = 0;
 		return _T("");
 	}
-	if (bDirtyShadow || !szShadow || !shadowLen) {
-		if (line < 0 && min <= max && max >= 0) {
+	if (bDirtyShadow || !szShadow || !shadowLen || shadowLine >= 0) {
 #ifdef USE_RICH_EDIT
-			line = SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)min);
-			if (line != SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)max)) line = -1;
+		l = shadowLen = SendMessage(client, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
 #else
-			line = SendMessage(client, EM_LINEFROMCHAR, (WPARAM)min, 0);
-			if (line != SendMessage(client, EM_LINEFROMCHAR, (WPARAM)max, 0)) line = -1;
+		l = shadowLen = GetWindowTextLength(client);
 #endif
-		}
-		if (line >= 0 && (l = max - min + 1) > 0)
-			shadowLen = 0;
-		else {
-#ifdef USE_RICH_EDIT
-			GETTEXTLENGTHEX gtl = {0};
-			l = shadowLen = SendMessage(client, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
-#else
-			l = shadowLen = GetWindowTextLength(client);
-#endif
-			shadowRngEnd = 0; 
-		}
 		if (l < 1) {
 			if (len) *len = 0;
 			return _T("");
 		}
-		if (l+9 > shadowAlloc || (line < 0 && shadowAlloc / 4 > l+9)) {
+		if (l+9 > shadowAlloc || (shadowAlloc / 4 > l+9)) {
 			printf("\nA!");
 			shadowAlloc = ((l+9) / 2) * 3;
 			if (szShadow) {
@@ -258,32 +248,54 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 			}
 			szShadow += 8;	//The extra leading bytes are used in: EditProc() -> case WM_CHAR (autoindent newline insertion)
 		}
+		if (line < 0 && min <= max && max >= 0) {
+#ifdef USE_RICH_EDIT
+			line = SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)min);
+			if (line != SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)max)) line = -1;
+#else
+			line = SendMessage(client, EM_LINEFROMCHAR, (WPARAM)min, 0);
+			if (line != SendMessage(client, EM_LINEFROMCHAR, (WPARAM)max, 0)) line = -1;
+#endif
+		}
 		if (line >= 0) {
-			if (bDirtyShadow || shadowRngEnd != line) {
+			lcr.cpMin = SendMessage(client, EM_LINEINDEX, (WPARAM)line, 0);
+			lcr.cpMax = lcr.cpMin + SendMessage(client, EM_LINELENGTH, (WPARAM)lcr.cpMin, 0);
+			l = lcr.cpMax - lcr.cpMin;
+			if (linecr) *linecr = lcr;
+			if (max < min) { min = lcr.cpMin; max = lcr.cpMax; }
+		}
+		if (l < 1) {
+			if (len) *len = 0;
+			return _T("");
+		}
+		if (line >= 0) {
+			if (bDirtyShadow || shadowLine != line) {
 				printf("l");
-				shadowRngEnd = line;
-				*((LPWORD)szShadow) = (USHORT)(l + 1);
-				SendMessage(client, EM_GETLINE, (WPARAM)line, (LPARAM)(LPCTSTR)szShadow);
-				szShadow[l-1] = '\0';
-				bDirtyShadow = FALSE;
+				shadowRngEnd = 0;
+				*((LPWORD)(szShadow+lcr.cpMin)) = (USHORT)l;
+				l = SendMessage(client, EM_GETLINE, (WPARAM)line, (LPARAM)(LPCTSTR)(szShadow+lcr.cpMin));
+				szShadow[lcr.cpMin+l] = 0;
 			}
-			if (len) *len = l;
-			return szShadow;
 		} else {
 			printf("G");
+			shadowRngEnd = 0;
 #ifdef USE_RICH_EDIT
-			{
-				TEXTRANGE tr;
-				tr.chrg.cpMin = 0;
-				tr.chrg.cpMax = -1;
-				tr.lpstrText = szShadow;
-				SendMessage(client, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
-			}
+			tr.chrg.cpMin = 0;
+			tr.chrg.cpMax = -1;
+			tr.lpstrText = szShadow;
+			SendMessage(client, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
 #else
 			GetWindowText(client, szShadow, shadowLen+1);
 #endif
-			bDirtyShadow = FALSE;
 		}
+		shadowLine = line;
+		bDirtyShadow = FALSE;
+	} else if (line >= 0) {
+		lcr.cpMin = SendMessage(client, EM_LINEINDEX, (WPARAM)line, 0);
+		lcr.cpMax = lcr.cpMin + SendMessage(client, EM_LINELENGTH, (WPARAM)lcr.cpMin, 0);
+		l = lcr.cpMax - lcr.cpMin;
+		if (linecr) *linecr = lcr;
+		if (max < min) { min = lcr.cpMin; max = lcr.cpMax; }
 	}
 	printf(".");
 	if (min < 0) min = 0;
@@ -311,10 +323,9 @@ LPCTSTR GetShadowSelection(DWORD* len, CHARRANGE* pcr) {
 	SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
 #endif
 	if (pcr) *pcr = cr;
-	return GetShadowRange(cr.cpMin, cr.cpMax, -1, len);
+	return GetShadowRange(cr.cpMin, cr.cpMax, -1, len, NULL);
 }
 LPCTSTR GetShadowLine(LONG line, LONG cp, DWORD* len, LONG* lineout, CHARRANGE* pcr){
-	CHARRANGE cr;
 	if (line < 0) {
 #ifdef USE_RICH_EDIT
 		line = SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)MAX(cp, -1));
@@ -322,14 +333,11 @@ LPCTSTR GetShadowLine(LONG line, LONG cp, DWORD* len, LONG* lineout, CHARRANGE* 
 		line = SendMessage(client, EM_LINEFROMCHAR, (WPARAM)MAX(cp, -1), 0);
 #endif
 	}
-	cr.cpMin = SendMessage(client, EM_LINEINDEX, (WPARAM)line, 0);
-	cr.cpMax = cr.cpMin + SendMessage(client, EM_LINELENGTH, (WPARAM)cr.cpMin, 0);
-	if (pcr) *pcr = cr;
 	if (lineout) *lineout = line;
-	return GetShadowRange(cr.cpMin, cr.cpMax, line, len);
+	return GetShadowRange(0, -1, line, len, pcr);
 }
 LPCTSTR GetShadowBuffer(DWORD* len) {
-	return GetShadowRange(0, -1, -1, len);
+	return GetShadowRange(0, -1, -1, len, NULL);
 }
 
 
@@ -405,7 +413,7 @@ DWORD CalcTextSize(LPCTSTR* szText, CHARRANGE* range, DWORD estBytes, DWORD form
 	if (enc == FC_ENC_UTF8 || enc == FC_ENC_CODEPAGE || ExportLineFmtDelta(NULL, NULL, (format >> 16) & 0xfff)){
 		deep = TRUE;
 		if (!szBuffer) {
-			if (urange) szBuffer = GetShadowRange(range->cpMin, range->cpMax, -1, &estBytes);
+			if (urange) szBuffer = GetShadowRange(range->cpMin, range->cpMax, -1, &estBytes, NULL);
 			else szBuffer = GetShadowBuffer(&estBytes);
 		} else if (!estBytes && !urange) estBytes = lstrlen(szBuffer);
 	} else if (!estBytes && !urange)

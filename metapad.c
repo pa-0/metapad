@@ -425,10 +425,10 @@ void UpdateStatus(BOOL refresh) {
 				else {
 					j = 32 / sizeof(TCHAR);
 					//memset(pbTmp, 0, sizeof(pbTmp));
-					szBuf = GetShadowRange(0, j, -1, &i);
+					szBuf = GetShadowRange(0, j, -1, &i, NULL);
 					if (!memcmp(szBuf, savedHead, i * sizeof(TCHAR))) {
 						//memset(pbTmp, 0, sizeof(pbTmp));
-						szBuf = GetShadowRange(chars < j ? 0 : chars-j, chars, -1, &i);
+						szBuf = GetShadowRange(chars < j ? 0 : chars-j, chars, -1, &i, NULL);
 						if (!memcmp(szBuf, savedFoot, i * sizeof(TCHAR))) {
 							bDirtyFile = FALSE;
 
@@ -1156,7 +1156,7 @@ void PrintContents()
 		return;
 	}
 
-	szBuffer = GetShadowRange(cr.cpMin, cr.cpMax, -1, &l);
+	szBuffer = GetShadowRange(cr.cpMin, cr.cpMax, -1, &l, NULL);
 	lStringLen = (LONG)l;
 	bPrint = TRUE;
 
@@ -4561,6 +4561,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	frDlgId = -1;
 	szShadow = NULL;
 	shadowLen = shadowAlloc = shadowRngEnd = 0;
+	shadowLine = -1;
 	bDirtyShadow = bDirtyStatus = TRUE;
 	nFormat = 0;
 	g_bIniMode = FALSE;

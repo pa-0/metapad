@@ -84,7 +84,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 	LPTSTR szBuffer, lfn = NULL, dfn = NULL, rfn = NULL;
 	LPBYTE origBuf;
 	LPCTSTR tbuf;
-	TCHAR cPad = _T(' '), buffer[MAXFN + 40];
+	TCHAR cPad = _T(' '), msgbuf[MAXFN + 40];
 	DWORD lChars, nCR, nLF, nStrays, nSub, cfmt = nFormat;
 	BOOL b;
 	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
@@ -108,8 +108,8 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 					lstrcat(lfn, _T(".txt"));
 					continue;
 				}
-				wsprintf(buffer, GetString(IDS_CREATE_FILE_MESSAGE), rfn);
-				switch (MessageBox(hwnd, buffer, GetString(STR_METAPAD), MB_YESNOCANCEL | MB_ICONEXCLAMATION)) {
+				wsprintf(msgbuf, GetString(IDS_CREATE_FILE_MESSAGE), rfn);
+				switch (MessageBox(hwnd, msgbuf, GetString(STR_METAPAD), MB_YESNOCANCEL | MB_ICONEXCLAMATION)) {
 				case IDYES:
 					hFile = (HANDLE)CreateFile(lfn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 					if (hFile == INVALID_HANDLE_VALUE) {
@@ -187,7 +187,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 			ImportBinary(szBuffer, lChars);
 		} else if (((cfmt >> 16) & 0xfff) == FC_LFMT_MIXED && !options.bNoWarningPrompt)
 			ERROROUT(GetString(IDS_LFMT_MIXED));
-		b = TRUE;
+		b = (!origBuf || origBuf == (LPBYTE)szBuffer);
 		ImportLineFmt(&szBuffer, &lChars, (WORD)((cfmt >> 16) & 0xfff), nCR, nLF, nStrays, nSub, &b);
 	}
 	if (!textOut) {
@@ -229,11 +229,20 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 		}
 		if (bMRU)
 			SaveMRUInfo(rfn);
-	} else
+		if (origBuf){ FREE(origBuf); }
+		else{ FREE(szBuffer); }
+	} else {
+		if (origBuf) {
+			tbuf = szBuffer;
+			SSTRCPY(szBuffer, tbuf);
+			FREE(origBuf);
+		}
 		*textOut = szBuffer;
+	}
 	FREE(rfn);
-	if ((LPBYTE)szBuffer != origBuf) FREE(origBuf);
-	if (!textOut) FREE(szBuffer);
+
+	//if ((LPBYTE)szBuffer != origBuf) FREE(origBuf);
+	//if (!textOut) FREE(szBuffer);
 	bLoading = FALSE;
 	UpdateStatus(TRUE);
 	InvalidateRect(client, NULL, TRUE);

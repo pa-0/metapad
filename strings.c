@@ -862,6 +862,7 @@ BOOL HaveLanguagePlugin(){
 void UnloadLanguagePlugin(){
 	FREE(pstrings);
 	FREE(pstringsidx);
+	FREE(pstringsofs);
 	if (hinstLang && hinstLang != hinstThis)
 		FreeLibrary(hinstLang);
 	hinstLang = NULL;
@@ -874,23 +875,24 @@ void UnloadLanguagePlugin(){
 BOOL LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin, BOOL checkver, HINSTANCE* hinstTemp){
 	TCHAR plugVer[16] = {0}, szErr[MAXSTRING];
 	LPCTSTR thisVer, pplugVer = (LPCTSTR)plugVer;
-	WORD dlen = ARRLEN(stringsidx);
+	LPTSTR pstr = NULL;
+	WORD dlen = ARRLEN(stringsidx), *pstridx = NULL, *pstrofs = NULL;
 	BOOL dll;
 	if (dll = (szPlugin[lstrlen(szPlugin)-1] == _T('l')))
 		*hinstTemp = LoadLibrary(szPlugin);
 	else
-		*hinstTemp = (HINSTANCE)LoadLng((LPTSTR)szPlugin, &pstrings, &pstringsidx, &pstringsofs);
+		*hinstTemp = (HINSTANCE)LoadLng((LPTSTR)szPlugin, &pstr, &pstridx, &pstrofs);
 	if (!*hinstTemp) {
-		if (!dll) { FREE(pstrings); FREE(pstringsidx); }
+		if (!dll) { FREE(pstr); FREE(pstridx); }
 		ERROROUT(GetString(IDS_INVALID_PLUGIN_ERROR));
 		return FALSE;
 	}
 	if (dll)
 		LoadString(*hinstTemp, IDS_VERSION_SYNCH, plugVer, 16);
 	else
-		pplugVer = GetStringEx(IDS_VERSION_SYNCH, dlen, NULL, pstringsidx, pstringsofs, pstrings, &dlen, NULL);
+		pplugVer = GetStringEx(IDS_VERSION_SYNCH, dlen, NULL, pstridx, pstrofs, pstr, &dlen, NULL);
 	if (!pplugVer || !*pplugVer) {
-		if (!dll) { FREE(pstrings); FREE(pstringsidx); }
+		if (!dll) { FREE(pstr); FREE(pstridx); }
 		else FreeLibrary(*hinstTemp);
 		ERROROUT(GetString(IDS_BAD_STRING_PLUGIN_ERROR));
 		return FALSE;
@@ -899,8 +901,15 @@ BOOL LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin, BOOL checkver, HINSTANCE* hin
 		wsprintf(szErr, GetString(IDS_PLUGIN_MISMATCH_ERROR), plugVer, thisVer);
 		ERROROUT(szErr);
 	}
-	if (!dll) *hinstTemp = 0;
-	else if (checkver) FreeLibrary(*hinstTemp);
+	if (!dll) {
+		*hinstTemp = 0;
+		if (!checkver) {
+			UnloadLanguagePlugin();
+			pstrings = pstr;
+			pstringsofs = pstrofs;
+			pstringsidx = pstridx;
+		}
+	} else if (checkver) FreeLibrary(*hinstTemp);
 	return TRUE;
 }
 
