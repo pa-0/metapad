@@ -50,7 +50,7 @@ LPTSTR szCaptionFile, szFile, szDir;
 LPTSTR szFav, szMetapadIni;
 LPTSTR szFindText, szReplaceText, szInsert;
 LPBYTE pbFindTextSpec, pbReplaceTextSpec;
-TCHAR szStatusMessage[MAXSTRING];
+TCHAR szStatusMessage[96];
 TCHAR _szString[MAXSTRING];
 LPTSTR szShadow;
 TCHAR shadowHold;

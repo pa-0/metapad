@@ -141,7 +141,6 @@ typedef struct tag_options {
 
 ///// Prototypes /////
 
-LPTSTR GetString(UINT uID);
 BOOL EncodeWithEscapeSeqs(TCHAR* szText);
 BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext);
 void SwitchReadOnly(BOOL bNewVal);
@@ -198,7 +197,7 @@ BOOL SaveIfDirty(void);
 // file_utils.c //
 void SetFileFormat(DWORD format, WORD reinterp);
 void MakeNewFile(void);
-void FixFilterString(LPTSTR szIn);
+LPTSTR FixFilterString(LPTSTR szIn);
 BOOL FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt);
 BOOL GetReadableFilename(LPCTSTR lfn, LPTSTR* dst);
 
