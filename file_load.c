@@ -79,7 +79,7 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, LPBYTE* origBuffer, DWO
 	return DecodeText(ppBuffer, buflen, format, &bResult, origBuffer);
 }
 
-BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
+BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* textOut) {
 	HANDLE hFile = NULL;
 	LPTSTR szBuffer, lfn = NULL, dfn = NULL, rfn = NULL;
 	LPBYTE origBuf;
@@ -168,7 +168,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 	if (lChars) {
 		cfmt &= 0x8000ffff;
 		cfmt |= (GetLineFmt(szBuffer, lChars, (options.nFormat>>16)&0xfff, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
-		if (b) {
+		if (b && !textOut) {
 			cfmt = FC_ENC_BIN | ((cfmt >> 16) & 0xfff);
 			tbuf = GetShadowBuffer(NULL);
 			SetWindowText(client, szBuffer);
@@ -190,46 +190,50 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 		b = TRUE;
 		ImportLineFmt(&szBuffer, &lChars, (WORD)((cfmt >> 16) & 0xfff), nCR, nLF, nStrays, nSub, &b);
 	}
-	if (insert) {
-		if (lChars)
-			SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)(LPTSTR)szBuffer);
-		FREE(lfn); FREE(dfn);
-	} else {
-		if (lChars) {
-			SetWindowText(client, szBuffer);
-			SetFileFormat(cfmt, 0);
+	if (!textOut) {
+		if (insert) {
+			if (lChars)
+				SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)(LPTSTR)szBuffer);
+			FREE(lfn); FREE(dfn);
 		} else {
-			SetWindowText(client, _T(""));
-			SetFileFormat(options.nFormat, 0);
-		}
-		UpdateSavedInfo();
-		SetTabStops();
-		SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
-		FREE(szDir);
-		FREE(szFile);
-		FREE(szCaptionFile);
-		szDir = dfn;
-		szFile = lfn;
-		if (lChars >=4 && szBuffer && szBuffer[0] == _T('.') &&
-			szBuffer[1] == _T('L') &&
-			szBuffer[2] == _T('O') &&
-			szBuffer[3] == _T('G')) {
-			CHARRANGE cr;
-			cr.cpMin = cr.cpMax = lChars;
+			if (lChars) {
+				SetWindowText(client, szBuffer);
+				SetFileFormat(cfmt, 0);
+			} else {
+				SetWindowText(client, _T(""));
+				SetFileFormat(options.nFormat, 0);
+			}
+			UpdateSavedInfo();
+			SetTabStops();
+			SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
+			FREE(szDir);
+			FREE(szFile);
+			FREE(szCaptionFile);
+			szDir = dfn;
+			szFile = lfn;
+			if (lChars >=4 && szBuffer && szBuffer[0] == _T('.') &&
+				szBuffer[1] == _T('L') &&
+				szBuffer[2] == _T('O') &&
+				szBuffer[3] == _T('G')) {
+				CHARRANGE cr;
+				cr.cpMin = cr.cpMax = lChars;
 
-	#ifdef USE_RICH_EDIT
-			SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
-	#else
-			SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
-	#endif
-			SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DATE_TIME_CUSTOM, 0), 0);
-			SendMessage(client, EM_SCROLLCARET, 0, 0);
+		#ifdef USE_RICH_EDIT
+				SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
+		#else
+				SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
+		#endif
+				SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DATE_TIME_CUSTOM, 0), 0);
+				SendMessage(client, EM_SCROLLCARET, 0, 0);
+			}
 		}
-	}
-	if (bMRU)
-		SaveMRUInfo(rfn);
+		if (bMRU)
+			SaveMRUInfo(rfn);
+	} else
+		*textOut = szBuffer;
 	FREE(rfn);
-	FREE(origBuf);
+	if (szBuffer != origBuf) FREE(origBuf);	//TODO CHK
+	if (!textOut) FREE(szBuffer);
 	bLoading = FALSE;
 	UpdateStatus(TRUE);
 	InvalidateRect(client, NULL, TRUE);

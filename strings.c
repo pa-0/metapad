@@ -39,6 +39,9 @@
 #include "include/encoding.h"
 
 
+#define WS_EX_LAYOUTRTL	0x00400000L
+
+
 static const CHAR strings[] = ""
 /*		1		IDS_VERSION_SYNCH				*/	"\0""3.7"
 /*		2		IDS_PLUGIN_LANGUAGE				*/	"\0"
@@ -144,8 +147,8 @@ static const CHAR strings[] = ""
 /*		92		IDS_CLIPBOARD_OPEN_ERROR		*/	"\0Error opening clipboard."
 /*		93		IDS_FILE_READ_ERROR				*/	"\0Error reading file."
 "\0\0\0"
-/*		97		IDS_INVALID_PLUGIN_ERROR		*/	"\0Error loading language plugin DLL. It is probably not a valid metapad language plugin."
-/*		98		IDS_BAD_STRING_PLUGIN_ERROR		*/	"\0Error fetching version string resource from plugin DLL. It is probably not a valid metapad language plugin."
+/*		97		IDS_INVALID_PLUGIN_ERROR		*/	"\0Error loading language plugin. It is probably not a valid metapad language plugin."
+/*		98		IDS_BAD_STRING_PLUGIN_ERROR		*/	"\0Error fetching version string resource from plugin. It is probably not a valid metapad language plugin."
 /*		99		IDS_PLUGIN_MISMATCH_ERROR		*/	"\0Your language plugin is for metapad %s, but you are running metapad %s.\n\nSome menu or dialog texts may not be translated."
 /*		100		IDS_ALLRIGHTS					*/	"\0All Rights Reserved"
 /*		102		IDS_DEFAULT_FILTER_TEXT			*/	"\0Text (*.*)|*.*|"
@@ -219,7 +222,8 @@ static const CHAR strings[] = ""
 /*		513		IDS_PLUGIN_ERRFIND				*/	"\0Could not find the language plugin DLL."
 /*		514		IDS_PLUGIN_ERR					*/	"\0Temporarily reverting language to Default (English)\n\nCheck the language plugin setting."
 /*		518		IDS_FILTER_EXEC					*/	"\0Executable Files (*.exe)|*.exe|All Files (*.*)|*.*|"
-/*		519		IDS_FILTER_PLUGIN				*/	"\0metapad language plugins (*.dll)|*.dll|All Files (*.*)|*.*|"
+/*		519		IDS_FILTER_PLUGIN				*/	"\0metapad language plugins (*.lng, *.dll)|*.lng;*.dll|All Files (*.*)|*.*|"
+/*		520		IDS_LOADLNG_ERROR				*/	"\0Error loading language plugin on line %d: ID number missing or out of range"
 /*		600		IDSS_WSTATE						*/	"\0w_WindowState"
 /*		601		IDSS_WLEFT						*/	"\0w_Left"
 /*		602		IDSS_WTOP						*/	"\0w_Top"
@@ -590,9 +594,60 @@ static const CHAR strings[] = ""
 	Import:	\n->\n/*\t		(~A->\t~A)		~A\t->		~B\t->\t\t\t*\/\t"\\0		\n->"\n		`->		(*\/->\t*\/)	(\t*\/->*\/)
 	Export:
 */
-static WORD stringsidx[] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,7,1,9,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,216,0,47,0,0,0,0,0,0,3,0,0,3,0,0,0,0,0,0,0,0,3,0,80,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,74,0,243,0,10,1,21,2,0,1,1,0,29,1,7,0,0,0,0,0,0,447,0,4,0,1,0,0,0,486,0,7,0,39,0,18,1,0,5,19091,0,4,13,0,0,0,0,0,0,1,2,1176,0,0,0,1,0,25,2,2,0,0,0,6,14,1519,0,53,0,14,28,0,21,0,0,475,0,0,0,69,60,4,0,0,0,0,0,0,0,0,9,0,6,0,0,0,0,0,0,0,0,0,0,0,322,0,6105,1,1,2,1,2,1,78,98,999,8,8,0,1689,790,20,4,0,1,71,1,1,1,92,2,1,4896,0,0,4,1,0,0,3,2,0,1,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,4,0,1,0,0,0,0,1,0,0,2,0,0,0,1,3,0,0,0,0,2,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,0,5,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,881,0,0,0,6,0,0,0,0,5,9,9,60,0,2987};
+static WORD stringsidx[] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,7,1,9,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,216,0,47,0,0,0,0,0,0,3,0,0,3,0,0,0,0,0,0,0,0,3,0,0,79,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,74,0,243,0,10,1,21,2,0,1,1,0,29,1,7,0,0,0,0,0,0,447,0,4,0,1,0,0,0,486,0,7,0,39,0,18,1,0,5,19091,0,4,13,0,0,0,0,0,0,1,2,1176,0,0,0,1,0,25,2,2,0,0,0,6,14,1519,0,53,0,14,28,0,21,0,0,475,0,0,0,69,60,4,0,0,0,0,0,0,0,0,9,0,6,0,0,0,0,0,0,0,0,0,0,0,322,0,6105,1,1,2,1,2,1,78,98,999,8,8,0,1689,790,20,4,0,1,71,1,1,1,92,2,1,4896,0,0,4,1,0,0,3,2,0,1,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,4,0,1,0,0,0,0,1,0,0,2,0,0,0,1,3,0,0,0,0,2,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,0,5,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,881,0,0,0,6,0,0,0,0,5,9,9,60,0,2987};
+
+static LPTSTR pstrings = NULL;
+static WORD *pstringsidx = NULL, *pstringsofs = NULL;
 
 
+BOOL LoadLng(LPTSTR filename, LPTSTR* str, WORD** stridx, WORD** strofs, WORD upto){
+	LPTSTR os, ds, np;
+	TCHAR c, err[MAXSTRING];
+	WORD ct = 0, smax = ARRLEN(stringsidx), st, lin;
+	LONG l;
+	if (str) FREE(*str);
+	if (stridx) FREE(*stridx);
+	if (strofs) FREE(*strofs);
+	if (!LoadFile(filename, FALSE, FALSE, FALSE, str) || !*str || !**str) return FALSE;
+	*stridx = (WORD*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, smax * sizeof(WORD));
+	*strofs = (WORD*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, smax * sizeof(WORD));
+	for (st=0, os=ds=*str, lin=1, ct-- ; **str && ct < smax; (*str)++) {
+		switch(st){
+			case 0:
+				if ((c = **str) == _T('\r') || c == _T('\n') || c == _T('\t') || c == _T(' ')) continue;
+				else if (c == _T('#') || c == _T('/')) { st = 1; continue; }
+				else if (c >= _T('0') && c <= _T('9')) { np = *str; st = 2; continue}
+				st = 9;
+				break;
+			case 2:
+				if ((c = **str) >= _T('0') && c <= _T('9')) continue;
+				st = 3;
+				l = _ttol(np);
+				if (l <= 0 || l >= 0xffff) {
+					st = 9; break;
+				}
+				if (ct++ >= smax) continue;
+				*stridx[ct] = (WORD)l;
+				if ((l = ds-os) > 0xffff) { st = 9; break; }
+				*strofs[ct] = (WORD)l;
+				break;
+			case 3:
+				*ds++ = **str;
+				break;
+		}
+		if (st == 9) {
+			wsprintf(err, GetString(IDS_LOADLNG_ERROR), lin)
+			return FALSE;
+		}
+		else if ((c = **str) == _T('\r') || c == _T('\n')) {
+			lin++;
+			st = 0;
+			*ds++ = 0;
+		}
+	}
+	for (ct++ ; ct < smax; *stridx[ct++] = 0xffff) ;
+	return TRUE;
+}
 
 /**
  * Load and verify a language plugin.
@@ -633,6 +688,8 @@ void FindAndLoadLanguagePlugin(void) {
 	HINSTANCE hinstTemp;
 	if (hinstLang && hinstLang != hinstThis) FreeLibrary(hinstLang);
 	hinstLang = NULL;
+	FREE(pstrings);
+	FREE(pstringsidx);
 	if (!SCNUL(options.szLangPlugin)[0])
 		return;
 
@@ -852,6 +909,11 @@ BOOL CALLBACK LocalizeDialogGather(HWND hwnd, LPARAM lParam){
 	return TRUE;
 }
 BOOL CALLBACK LocalizeDialogItems(HWND hwnd, LPARAM lParam){
+	/* Escape string definitions (in .rc file):
+		\1: Don't use IDDC_ string for this control (handles some conflicting IDs grandfathered in from 3.6-)
+		\2: External lang. DLL handling - localize by-position if by-command localization failed - for controls which didn't have specific ID assigned in 3.6-
+		\3: External lang. DLL handling - force localize by-position - for controls whose ID has changed since 3.6-
+	*/
 	INT i, j;
 	LPCTSTR ts=NULL;
 	TCHAR tbuf[16];
@@ -890,8 +952,13 @@ BOOL CALLBACK LocalizeDialogItems(HWND hwnd, LPARAM lParam){
 		else if ((BYTE)*tbuf != 1 && (ts = GetString(IDDC_BASE + (state->dID%100)*100 + i%100)) && *ts) ;
 		else if ((ts = GetString(IDDP_BASE + (state->dID%100)*100 + state->cnum-1)) && *ts) ;
 		else if ((ts = GetString(i)) && *ts) ;
-		if (ts && *ts)
+		if (ts && *ts) {
+#ifdef UNICODE
+			if (*ts == _T('\x200f'))
+				SetWindowLongPtr(hwnd, GWL_EXSTYLE, GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_EX_LAYOUTRTL);
+#endif
 			SetWindowText(hwnd, ts);
+		}
 	}
 	return TRUE;
 }
