@@ -82,7 +82,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 		RestoreClientView(0, FALSE, TRUE, TRUE);
 		buf = (LPTSTR)GetShadowBuffer(&len);
 		bLoading = TRUE;
-		lines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
+		lines = SendMessage(client, EM_GETLINECOUNT, 0, 0)-1;
 		ExportLineFmt(&buf, &len, lfmt, lines, &bufDirty);
 		if (cp != ncp)
 			len = EncodeText((LPBYTE*)&buf, len, nFormat, &bufDirty, NULL);
@@ -241,7 +241,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* lin
 #endif
 		if (l < 1) return _T("");
 		if (l+9 > shadowAlloc || (shadowAlloc / 4 > l+9)) {
-			printf("\nA!");
+			//printf("\nA!");
 			shadowAlloc = ((l+9) / 2) * 3;
 			if (szShadow) {
 				szShadow -= 8;
@@ -273,14 +273,14 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* lin
 		if (l < 1) return _T("");
 		if (line >= 0) {
 			if (bDirtyShadow || shadowLine != line) {
-				printf("l");
+				//printf("l");
 				shadowRngEnd = 0;
 				*((LPWORD)(szShadow+lcr.cpMin)) = (USHORT)l;
 				l = SendMessage(client, EM_GETLINE, (WPARAM)line, (LPARAM)(LPCTSTR)(szShadow+lcr.cpMin));
 				szShadow[lcr.cpMin+l] = 0;
 			}
 		} else {
-			printf("G");
+			//printf("G");
 			shadowRngEnd = 0;
 #ifdef USE_RICH_EDIT
 			tr.chrg.cpMin = 0;
@@ -300,7 +300,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* lin
 		if (linecr) *linecr = lcr;
 		if (max < min) { min = lcr.cpMin; max = lcr.cpMax; }
 	}
-	printf(".");
+	//printf(".");
 	if (min < 0) min = 0;
 	if (max < 0) l = shadowLen;
 	else l = MIN((DWORD)(max-min), shadowLen);

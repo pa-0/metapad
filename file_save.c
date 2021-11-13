@@ -56,7 +56,7 @@ BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
 	BOOL bufDirty = FALSE, fail = FALSE;
 	WORD enc = (nFormat >> 31) ? FC_ENC_CODEPAGE : (WORD)nFormat;
 	WORD lfmt = (nFormat >> 16) & 0xfff;
-	DWORD lines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
+	DWORD lines = SendMessage(client, EM_GETLINECOUNT, 0, 0)-1;
 
 	szBuffer = (LPTSTR)GetShadowBuffer(&nChars);
 	nBytes = nChars;

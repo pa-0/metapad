@@ -286,6 +286,11 @@ void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 	//SendMessage(client, EM_SETEDITSTYLE, (WPARAM)SES_USECRLF, (LPARAM)SES_USECRLF);	//obsolete, doesn't work
 	SendMessage(client, EM_SETEDITSTYLE, (WPARAM)SES_XLTCRCRLFTOCR, (LPARAM)SES_XLTCRCRLFTOCR);
 
+	if (!bWordWrap && !options.bHideScrollbars) { // Hack for initially drawing hscrollbar for Richedit
+		SetWindowLongPtr(client, GWL_STYLE, GetWindowLongPtr(client, GWL_STYLE) | WS_HSCROLL);
+		SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+	}
+
 	wpOrigEditProc = (WNDPROC) SetWindowLongPtr(client, GWLP_WNDPROC, (LONG) EditProc);
 #else
 	DWORD dwStyle = ES_NOHIDESEL | WS_VSCROLL | ES_MULTILINE | WS_CHILD;
@@ -319,9 +324,9 @@ void UpdateWindowText(void) {
 	LPCTSTR szBuffer = GetShadowBuffer(NULL);
 	bLoading = TRUE;
 	RestoreClientView(0, FALSE, TRUE, TRUE);
+	SetTabStops();
 	SetWindowText(client, szBuffer);
 	bLoading = FALSE;
-	SetTabStops();
 	SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
 	UpdateStatus(TRUE);
 	RestoreClientView(0, TRUE, TRUE, TRUE);
@@ -397,7 +402,7 @@ void UpdateStatus(BOOL refresh) {
 	if (full) {
 		if (bDirtyStatus){
 			if (status && bShowStatus){
-				printf("F");
+				//printf("F");
 				if (!((nFormat >> 30) & 1)) {
 					lstrcpy(szPane, _T("  "));
 					if (nFormat >> 31)
@@ -464,7 +469,7 @@ void UpdateStatus(BOOL refresh) {
 		}
 	}
 	if (bDirtyStatus) {
-		printf("D");
+		//printf("D");
 #ifdef USE_RICH_EDIT
 		if (bInsertMode) 	lstrcpy(szPane, GetString(IDS_STATFMT_INS));
 		else 				lstrcpy(szPane, GetString(IDS_STATFMT_OVR));
@@ -486,7 +491,7 @@ void UpdateStatus(BOOL refresh) {
 	}
 	if (status && bShowStatus && (bDirtyStatus || cr.cpMin != oldcr.cpMin || cr.cpMax != oldcr.cpMax)) {
 		if (!bLoading) {
-			printf("s");
+			//printf("s");
 			oldcr = full ? cr : ecr;
 			lLines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
 			wsprintf(szPane, GetString(IDS_STATFMT_LINE), FormatNumber(lLine+1, options.bDigitGrp, 0, 0), FormatNumber(lLines, options.bDigitGrp, 0, 1));
@@ -512,7 +517,7 @@ void UpdateStatus(BOOL refresh) {
 		statup = TRUE;
 	}
 	if (statup) {
-		printf("u");
+		//printf("u");
 		for (i = 0; i < NUMSTATPANES; i++)
 			tpsz[i] = (i ? tpsz[i-1] : 0) + nPaneSizes[i];
 		SendMessage(status, SB_SETPARTS, NUMSTATPANES, (DWORD_PTR)(LPINT)tpsz);
@@ -1001,7 +1006,10 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 	case WM_CHAR:
 		if (options.bAutoIndent && (TCHAR)wParam == _T('\r')) {
 			cr = GetSelection();
-			sz = (szBuf = ((LPTSTR)GetShadowLine(-1, -1, NULL, NULL, &cr2))) - 1;
+#ifdef USE_RICH_EDIT
+			cr.cpMin--; cr.cpMax--;
+#endif
+			sz = (szBuf = ((LPTSTR)GetShadowLine(-1, cr.cpMin, NULL, NULL, &cr2))) - 1;
 			if (!*szBuf) break;
 			while (*++sz == _T('\t') || *sz == _T(' ')) ;
 			*sz = _T('\0');
@@ -1039,12 +1047,8 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 			return lRes;
 		}*/
-#ifdef USE_RICH_EDIT
-	case WM_PAINT:
-#else
 	case WM_IME_NOTIFY:
-#endif
-		//Selection was changed
+		//Selection was changed (LE)
 		if (!bLoading)
 			QueueUpdateStatus();
 		break;
@@ -2607,39 +2611,21 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 				options.FontColour2 = TmpFontColour2;
 			}
 		case PSN_RESET:
-			if (hfont)
-				DeleteObject(hfont);
-			if (hfont2)
-				DeleteObject(hfont2);
-			if (hbackbrush)
-				DeleteObject(hbackbrush);
-			if (hfontbrush)
-				DeleteObject(hfontbrush);
-			if (hbackbrush2)
-				DeleteObject(hbackbrush2);
-			if (hfontbrush2)
-				DeleteObject(hfontbrush2);
+			if (hfont) DeleteObject(hfont);
+			if (hfont2) DeleteObject(hfont2);
+			if (hbackbrush) DeleteObject(hbackbrush);
+			if (hfontbrush) DeleteObject(hfontbrush);
+			if (hbackbrush2) DeleteObject(hbackbrush2);
+			if (hfontbrush2) DeleteObject(hfontbrush2);
 			break;
 		}
 		break;
 	case WM_CTLCOLORBTN:
-		if (GetDlgItem(hwndDlg, IDC_COLOUR_BACK) == (HWND)lParam) {
-			SetBkColor((HDC)wParam, TmpBackColour);
-			return (BOOL)(!(!hbackbrush));
-		}
-		if (GetDlgItem(hwndDlg, IDC_COLOUR_FONT) == (HWND)lParam) {
-			SetBkColor((HDC)wParam, TmpFontColour);
-			return (BOOL)(!(!hfontbrush));
-		}
-		if (GetDlgItem(hwndDlg, IDC_COLOUR_BACK2) == (HWND)lParam) {
-			SetBkColor((HDC)wParam, TmpBackColour2);
-			return (BOOL)(!(!hbackbrush2));
-		}
-		if (GetDlgItem(hwndDlg, IDC_COLOUR_FONT2) == (HWND)lParam) {
-			SetBkColor((HDC)wParam, TmpFontColour2);
-			return (BOOL)(!(!hfontbrush2));
-		}
-		return (BOOL)(!(!NULL));
+		if (GetDlgItem(hwndDlg, IDC_COLOUR_BACK) == (HWND)lParam) return (BOOL)hbackbrush;
+		if (GetDlgItem(hwndDlg, IDC_COLOUR_FONT) == (HWND)lParam) return (BOOL)hfontbrush;
+		if (GetDlgItem(hwndDlg, IDC_COLOUR_BACK2) == (HWND)lParam) return (BOOL)hbackbrush2;
+		if (GetDlgItem(hwndDlg, IDC_COLOUR_FONT2) == (HWND)lParam) return (BOOL)hfontbrush2;
+		return FALSE;
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDC_COLOUR_BACK:
@@ -3084,7 +3070,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				//printf("%d,%d  %08X %d ----- ",pt.x,pt.y,l,l);
 				SendMessage(client, EM_POSFROMCHAR, (WPARAM)&pt, k);
 				//printf("%08X %d   -> %d,%d\n",l,l,pt.x,pt.y);
-				abort = (k >= GetWindowTextLength(client) || i-fontmainHt-2 > pt.y);
+				abort = (k >= (LONG)GetTextChars(NULL) || i-fontmainHt-2 > pt.y);
 				switch (pLink->msg) {
 					case WM_SETCURSOR:
 						if (abort || options.bLinkDoubleClick)
@@ -3115,7 +3101,9 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						break;
 				}
 			case EN_SELCHANGE:
-//TODO TEST
+				//Selection was changed (RICH)
+				if (!bLoading)
+					QueueUpdateStatus();
 				break;
 #endif
 		}
@@ -3137,7 +3125,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					case EN_ERRSPACE:
 					case EN_MAXTEXT:
 #ifdef USE_RICH_EDIT
-						wsprintf(szTmp, GetString(IDS_MEMORY_LIMIT), FormatNumber(GetWindowTextLength(client), options.bDigitGrp, 0, 0));
+						wsprintf(szTmp, GetString(IDS_MEMORY_LIMIT), FormatNumber(GetTextChars(NULL), options.bDigitGrp, 0, 0));
 						ERROROUT(szTmp);
 #else
 						if (bLoading) {
@@ -3393,7 +3381,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					else {
 						sl = 0;
 						sz = (LPTSTR)szOld;
-						ExportLineFmt(&sz, &sl, (nFormat >> 16) & 0xfff, (DWORD)-1, &b);
+						ExportLineFmtLE(&sz, &sl, (nFormat >> 16) & 0xfff, (DWORD)-1, &b);
 						if (base && enc == FC_ENC_BIN) ExportBinary(sz, sl);
 						if (base && sl) sl = EncodeText((LPBYTE*)&sz, sl, nFormat, &b, NULL);
 						switch (base){
@@ -3597,7 +3585,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				UpdateCaption();
 				break;
 			case ID_FONT_PRIMARY:
-				bPrimaryFont = !GetCheckedState(GetMenu(hwndMain), ID_FONT_PRIMARY, TRUE);
+				bPrimaryFont = !bPrimaryFont;
 				if (!SetClientFont(bPrimaryFont)) {
 					GetCheckedState(GetMenu(hwndMain), ID_FONT_PRIMARY, TRUE);
 					bPrimaryFont = !bPrimaryFont;
@@ -3690,9 +3678,8 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						SetLWA(hwnd, 0, (BYTE)((255 * (100 - options.nTransparentPct)) / 100), LWA_ALPHA);
 					}
 #ifdef USE_RICH_EDIT
-					if (tmpOptions.bHideScrollbars != options.bHideScrollbars) {
-						//TODO ERROROUT(GetString(IDS_RESTART_HIDE_SB));
-					}
+					if (tmpOptions.bHideScrollbars != options.bHideScrollbars)
+						ERROROUT(GetString(IDS_RESTART_HIDE_SB));
 #endif
 					if (tmpOptions.bNoFaves != options.bNoFaves || lstrcmp(SCNUL(tmpOptions.szLangPlugin), SCNUL(options.szLangPlugin))) {
 						FindAndLoadLanguagePlugin();
@@ -3752,18 +3739,14 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 #else
 				szOld = GetShadowBuffer(NULL);
 				bWordWrap = !GetCheckedState(GetMenu(hwnd), ID_EDIT_WORDWRAP, TRUE);
-				SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
 				if (!DestroyWindow(client))
 					ReportLastError();
-				CreateClient(hwnd, _T(""), bWordWrap);
+				CreateClient(hwnd, NULL, bWordWrap);
 				SetWindowText(client, szOld);
-				SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 				SetClientFont(bPrimaryFont);
-
 				GetClientRect(hwnd, &rect);
 				SetWindowPos(client, 0, 0, bShowToolbar ? GetToolbarHeight() : rect.top - GetToolbarHeight(), rect.right - rect.left, rect.bottom - rect.top - GetStatusHeight() - GetToolbarHeight(), SWP_NOZORDER | SWP_SHOWWINDOW);
 				SetFocus(client);
-				SendMessage(client, EM_SCROLLCARET, 0, 0);
 #endif
 				RestoreClientView(0, TRUE, TRUE, TRUE);
 				SetCursor(hCur);
@@ -4421,12 +4404,6 @@ DWORD WINAPI LoadThread(LPVOID lpParameter) {
 		return 1;
 	}
 	SendMessage(client, EM_SETREADONLY, (WPARAM)FALSE, 0);
-#ifdef USE_RICH_EDIT
-	if (!bWordWrap && !options.bHideScrollbars) { // Hack for initially drawing hscrollbar for Richedit
-		SetWindowLongPtr(client, GWL_STYLE, GetWindowLongPtr(client, GWL_STYLE) | WS_HSCROLL);
-		SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-	}
-#endif
 	EnableWindow(hwnd, TRUE);
 	SendMessage(hwnd, WM_ACTIVATE, 0, 0);
 	return 0;
@@ -4734,13 +4711,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		ShowWindow(hwnd, nCmdShow);
 		bStarted = TRUE;
 	}
-
-#ifdef USE_RICH_EDIT
-	if (!bWordWrap && !options.bHideScrollbars) { // Hack for initially drawing hscrollbar for Richedit
-		SetWindowLongPtr(client, GWL_STYLE, GetWindowLongPtr(client, GWL_STYLE) | WS_HSCROLL);
-		SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-	}
-#endif
 
 	//SetWindowLongPtr(hwnd, GWL_EXSTYLE, GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_CLIPCHILDREN);	//prevent flicker at expense of CPU time (no effect on Aero?)
 	UpdateStatus(TRUE);

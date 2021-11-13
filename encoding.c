@@ -423,11 +423,12 @@ void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDi
 	if (chars) *chars = len;
 	if (lfmt == FC_LFMT_MAC || !sz || !*sz) return;
 	odst = dst = osz = *sz;
-	if ((LONG)lines == -1) {	//TODO copy paste linefmt?
-		for (l = len, lines = 0; len--; ) {
-
+	if ((LONG)lines == -1) {
+		for (l = len, lines = 0; l--; ) {
+			if (*osz++ == _T('\r'))
+				lines++;
 		}
-
+		osz = *sz;
 	}
 	if (lfmt == FC_LFMT_DOS && lines) odst = dst = (LPTSTR)HeapAlloc(globalHeap, 0, (len+lines+1) * sizeof(TCHAR));
 	for ( ; len--; (*sz)++, *dst++) {
@@ -448,7 +449,7 @@ void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDi
 			*bufDirty = TRUE;
 		}
 		*sz = odst;
-	}
+	} else *sz = osz;
 }
 LONG ExportLineFmtDelta(LPCTSTR sz, DWORD* chars, WORD lfmt){
 	DWORD len, olen, ct;
@@ -468,7 +469,9 @@ LONG ExportLineFmtDelta(LPCTSTR sz, DWORD* chars, WORD lfmt){
 	if (chars) *chars = ct;
 	return ct - olen;
 }
+void ExportLineFmtLE(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDirty){
 #else
+#define ExportLineFmtLE	ExportLineFmt
 void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DWORD nStrays, DWORD nSub, BOOL* bufDirty){
 	LPTSTR odst, dst, osz;
 	TCHAR cc, cp = _T('\0');
@@ -493,7 +496,20 @@ void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DW
 	}
 	*sz = odst;
 }
+LONG ExportLineFmtDelta(LPCTSTR sz, DWORD* chars, WORD lfmt){
+	DWORD len, olen, ct;
+	if (!sz) return (lfmt != FC_LFMT_UNIX && lfmt != FC_LFMT_MAC ? 0 : -1);
+	if (lfmt != FC_LFMT_UNIX && lfmt != FC_LFMT_MAC) return 0;
+	ct = len = olen = (chars && *chars) ? *chars : lstrlen(sz);
+	while ( len-- ) {
+		if (*sz++ == _T('\r'))
+			ct--;
+	}
+	if (chars) *chars = ct;
+	return ct - olen;
+}
 void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDirty){
+#endif
 	LPTSTR odst, dst, osz;
 	DWORD len;
 	len = (chars && *chars) ? *chars : lstrlen(*sz);
@@ -512,19 +528,7 @@ void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDi
 	*dst = _T('\0');
 	*sz = osz;
 }
-LONG ExportLineFmtDelta(LPCTSTR sz, DWORD* chars, WORD lfmt){
-	DWORD len, olen, ct;
-	if (!sz) return (lfmt != FC_LFMT_UNIX && lfmt != FC_LFMT_MAC ? 0 : -1);
-	if (lfmt != FC_LFMT_UNIX && lfmt != FC_LFMT_MAC) return 0;
-	ct = len = olen = (chars && *chars) ? *chars : lstrlen(sz);
-	while ( len-- ) {
-		if (*sz++ == _T('\r'))
-			ct--;
-	}
-	if (chars) *chars = ct;
-	return ct - olen;
-}
-#endif
+
 
 //Returns number of decoded chars (not including the null terminator)
 DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty) {

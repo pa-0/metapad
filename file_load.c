@@ -217,9 +217,9 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 			if (lChars)
 				SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)(LPTSTR)szBuffer);
 		} else {
+			SetTabStops();
 			SetWindowText(client, lChars ? szBuffer : _T(""));
 			SetFileFormat(cfmt, 0);
-			SetTabStops();
 			SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
 			FREE(szDir);
 			FREE(szFile);

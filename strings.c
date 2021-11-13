@@ -149,7 +149,12 @@ static const CHAR strings[] = ""
 /*		91		IDS_CLIPBOARD_UNLOCK_ERROR		*/	"\0Error unlocking clipboard memory."
 /*		92		IDS_CLIPBOARD_OPEN_ERROR		*/	"\0Error opening clipboard."
 /*		93		IDS_FILE_READ_ERROR				*/	"\0Error reading file."
-"\0\0\0"
+#ifdef USE_RICH_EDIT
+/*	R	94		IDS_RESTART_HIDE_SB				*/	"\0The change in \"Hide scrollbars when possible\" will be reflected upon restarting the program."
+#else
+"\0"
+#endif
+"\0\0"
 /*		97		IDS_INVALID_PLUGIN_ERROR		*/	"\0Error loading language plugin. It is probably not a valid metapad language plugin."
 /*		98		IDS_BAD_STRING_PLUGIN_ERROR		*/	"\0Error fetching version string resource from plugin. It is probably not a valid metapad language plugin."
 /*		99		IDS_PLUGIN_MISMATCH_ERROR		*/	"\0Your language plugin is for metapad %s, but you are running metapad %s.\n\nSome menu or dialog texts may not be translated."
