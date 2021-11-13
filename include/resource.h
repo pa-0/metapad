@@ -231,6 +231,7 @@ ID mapping:
 #define IDS_ENC_BAD						223
 #define IDS_ENC_FAILED					224
 #define IDS_FILE_SAVING					225
+#define IDS_LFMT_NORMALIZE				226
 
 #define IDS_DECODEBASE_BADLEN			441
 #define IDS_DECODEBASE_BADCHAR			442

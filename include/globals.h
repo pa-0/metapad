@@ -45,6 +45,7 @@ HFONT hfontmain;
 HFONT hfontfind;
 WNDPROC wpOrigEditProc;
 //WNDPROC wpOrigFindProc;
+UINT_PTR tmrUpdate;
 LPTSTR szCaptionFile, szFile, szDir;
 LPTSTR szFav, szMetapadIni;
 LPTSTR szFindText, szReplaceText, szInsert;
