@@ -624,6 +624,8 @@ ID mapping:
 #define ID_ESCAPE_WILD1					40226
 #define ID_ESCAPE_REP0					40227
 #define ID_ESCAPE_REP1					40228
+#define ID_SCROLLTO_SELA				40229
+#define ID_SCROLLTO_SELE				40230
 
 /* IDM_ menu by-position text. Currently used for menu items which do not / cannot have IDs assigned. */
 #define IDM_BASE						41000	//(range)

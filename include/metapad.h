@@ -209,8 +209,12 @@ DWORD GetCharIndex(DWORD col, LONG line, LONG cp, DWORD* lineLen, LONG* lineout,
 
 DWORD GetTextChars(LPCTSTR szText);
 DWORD CalcTextSize(LPCTSTR* szText, CHARRANGE* range, DWORD estBytes, DWORD format, BOOL inclBOM, DWORD* numChars);
-void UpdateSavedInfo();
+CHARRANGE GetSelection();
+LRESULT SetSelection(CHARRANGE cr);
+void RestoreClientView(WORD index, BOOL restore, BOOL sel, BOOL scroll);
+BOOL IsSelectionVisible();
 
+void UpdateSavedInfo();
 BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE pbFindSpec);
 DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, LPBYTE pbReplSpec, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen);
 DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* szRepl, LPBYTE* pbFindSpec, LPBYTE* pbReplSpec, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen, LPCTSTR header, LPCTSTR footer);
