@@ -33,7 +33,6 @@ SLWA SetLWA;
 SWT SetWindowTheme;
 HANDLE globalHeap;
 HINSTANCE hinstThis;
-HINSTANCE hinstLang;
 HWND hwnd;
 HWND client;
 HWND status;

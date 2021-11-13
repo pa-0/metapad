@@ -143,8 +143,6 @@ typedef struct tag_options {
 
 ///// Prototypes /////
 
-BOOL EncodeWithEscapeSeqs(TCHAR* szText);
-BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext);
 void SwitchReadOnly(BOOL bNewVal);
 BOOL GetCheckedState(HMENU hmenu, UINT nID, BOOL bToggle);
 void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap);
@@ -184,7 +182,7 @@ void LaunchExternalViewer(int);
 
 
 // file_load.c //
-BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert);
+BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* textOut);
 BOOL LoadFileFromMenu(WORD wMenu, BOOL bMRU);
 BOOL BrowseFile(HWND owner, LPCTSTR defExt, LPCTSTR defDir, LPCTSTR filter, BOOL load, BOOL bMRU, BOOL insert, LPTSTR* fileName);
 
@@ -235,14 +233,19 @@ void SaveMenusAndData(void);
 
 
 // strings.c //
-HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin, BOOL checkver);
+BOOL EncodeWithEscapeSeqs(TCHAR* szText);
+BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext);
+
+BOOL HaveLanguagePlugin();
+void UnloadLanguagePlugin();
+BOOL LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin, BOOL checkver, HINSTANCE* hinstTemp);
 void FindAndLoadLanguagePlugin(void);
 
 LPCTSTR GetString(WORD uID);
 LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, WORD* dictidx, WORD* dictofs, LPTSTR dictcache, WORD* ofspop, LPCTSTR def);
-void AlterMenuAccelText(LPCTSTR src, LPCTSTR tgt, LPTSTR buf);
-HMENU LocalizeMenu(WORD mID, HINSTANCE src, HINSTANCE plugin);
-void LocalizeDialog(WORD dID, HWND dlg, HINSTANCE plugin);
+LPTSTR AlterMenuAccelText(LPCTSTR src, LPCTSTR tgt, LPTSTR buf);
+HMENU LocalizeMenu(WORD mID);
+void LocalizeDialog(WORD dID, HWND dlg);
 
 
 #endif
