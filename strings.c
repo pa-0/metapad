@@ -125,7 +125,7 @@ static const CHAR strings[] = ""
 /*		76		IDS_TB_SECONDARYVIEWER			*/	"\0Launch Secondary Viewer"
 #ifdef USE_RICH_EDIT
 /*	R	77		IDS_CANT_UNDO_WARNING			*/	"\0Can't undo this action!"
-/*	R	78		IDS_MEMORY_LIMIT				*/	"\0Reached memory limit at %d bytes!"
+/*	R	78		IDS_MEMORY_LIMIT				*/	"\0Reached memory limit at %s bytes!"
 "\0\0"
 /*	R	81		IDS_UNDO_HYPERLINKS_WARNING		*/	"\0Updating hyperlinks. This action will empty the undo buffer."
 #else
@@ -137,7 +137,7 @@ static const CHAR strings[] = ""
 /*		82		IDS_CHANGE_READONLY_ERROR		*/	"\0Unable to change the readonly attribute for this file."
 /*		83		IDS_SETTINGS_TITLE				*/	"\0Settings"
 /*		84		IDS_NO_SELECTED_TEXT			*/	"\0No selected text."
-/*		86		IDS_ITEMS_REPLACED				*/	"\0Replaced %d item(s)."
+/*		86		IDS_ITEMS_REPLACED				*/	"\0Replaced %s item(s)."
 /*		87		IDS_MENU_LANGUAGE_PLUGIN		*/	"\0&Language Plugin..."
 #ifdef USE_RICH_EDIT
 /*	R	88		IDS_RICHED_MISSING_ERROR		*/	"\0metapad requires RICHED20.DLL to be installed on your system.\n\nSee the FAQ on the website for further information."
@@ -179,8 +179,8 @@ static const CHAR strings[] = ""
 /*		214		IDS_ESCAPE_CTX_CLIPBRD			*/	"\0Clipboard"
 /*		215		IDS_ESCAPE_CTX_MACRO			*/	"\0Macro"
 /*		216		IDS_ESCAPE_CTX_QUOTE			*/	"\0Quote string"
-/*		217		IDS_LARGE_PASTE_WARNING			*/	"\0About to insert %I64u characters of text.\nThis may take a very long time!\nContinue?"
-/*		218		IDS_ITEMS_REPLACED_ITER			*/	"\0Replaced %d item(s) in %d iteration(s)."
+/*		217		IDS_LARGE_PASTE_WARNING			*/	"\0About to insert %s characters of text.\nThis may take a very long time!\nContinue?"
+/*		218		IDS_ITEMS_REPLACED_ITER			*/	"\0Replaced %s item(s) in %s iteration(s)."
 /*		219		IDS_ENC_REINTERPRET				*/	"\0Reinterpret the current text as %s?"
 /*		220		IDS_LFMT_MIXED					*/	"\0This text has mixed line endings.\nYou can normalize the line endings in the File > Format menu."
 /*		221		IDS_LFMT_FIXED					*/	"\0Mixed line endings have been normalized.\nYou can change this function in the File > Format menu."
@@ -192,10 +192,10 @@ static const CHAR strings[] = ""
 /*		441		IDS_DECODEBASE_BADLEN			*/	"\0Invalid code string length!"
 /*		442		IDS_DECODEBASE_BADCHAR			*/	"\0Invalid code characters!"
 /*		490		IDS_MIGRATED					*/	"\0Migration to INI completed."
-/*		491		IDS_STATFMT_BYTES				*/	"\0 Bytes: %d "
-/*		492		IDS_STATFMT_LINES				*/	"\0 Lines: %d "
-/*		493		IDS_STATFMT_SEL					*/	"\0 Selected %d:%d  ->  %d:%d  %s  %s"
-/*		494		IDS_STATFMT_LINE				*/	"\0 Line: %d/%d"
+/*		491		IDS_STATFMT_BYTES				*/	"\0 Bytes: %s "
+/*		492		IDS_STATFMT_LINES				*/	"\0 Lines: %s "
+/*		493		IDS_STATFMT_SEL					*/	"\0 Selected %s:%d  ->  %s:%d  %s  %s"
+/*		494		IDS_STATFMT_LINE				*/	"\0 Line: %s/%s"
 /*		495		IDS_STATFMT_COL					*/	"\0 Col: %d"
 #ifdef USE_RICH_EDIT
 /*	R	498		IDS_STATFMT_INS					*/	"\0 INS"
@@ -229,7 +229,7 @@ static const CHAR strings[] = ""
 /*		514		IDS_PLUGIN_ERR					*/	"\0Temporarily reverting language to Default (English)\n\nCheck the language plugin setting."
 /*		518		IDS_FILTER_EXEC					*/	"\0Executable Files (*.exe)|*.exe|All Files (*.*)|*.*|"
 /*		519		IDS_FILTER_PLUGIN				*/	"\0metapad language plugins (*.lng, *.dll)|*.lng;*.dll|All Files (*.*)|*.*|"
-/*		520		IDS_LOADLNG_ERROR				*/	"\0Error loading language plugin on line %d: ID number missing or out of range or invalid escape sequence"
+/*		520		IDS_LOADLNG_ERROR				*/	"\0Error loading language plugin on line %s: ID number missing or out of range or invalid escape sequence"
 /*		600		IDSS_WSTATE						*/	"\0w_WindowState"
 /*		601		IDSS_WLEFT						*/	"\0w_Left"
 /*		602		IDSS_WTOP						*/	"\0w_Top"
@@ -324,6 +324,7 @@ static const CHAR strings[] = ""
 /*		679		IDSS_REPLACEARRAY				*/	"\0szReplaceArray%d"
 /*		680		IDSS_INSERTARRAY				*/	"\0szInsertArray%d"
 /*		681		IDSS_LASTDIRECTORY				*/	"\0szLastDirectory"
+/*		682		IDSS_DIGITGRP					*/	"\0bDigitGrp"
 /*		756		IDSD_QUOTE						*/	"\0> "
 /*		757		IDSD_CUSTOMDATE					*/	"\0yyyyMMdd-HHmmss "
 /*		1001	IDC_OK							*/	"\0OK"
@@ -388,6 +389,7 @@ static const CHAR strings[] = ""
 /*		22458	IDDC_PROPPAGE_VIEW_BASE+IDC_STAT_WIND2%100						*/	"\0Background color:"
 /*		22459	IDDC_PROPPAGE_VIEW_BASE+IDC_STAT_FONT2%100						*/	"\0Font color:"
 /*		22466	IDDC_PROPPAGE_VIEW_BASE+IDC_FLAT_TOOLBAR%100					*/	"\0Use def&ault toolbar style"
+/*		22467	IDDC_PROPPAGE_VIEW_BASE+IDC_DIGITGRP%100						*/	"\0Use digit grouping"
 /*		22481	IDDC_PROPPAGE_VIEW_BASE+IDC_STAT_TRANS%100						*/	"\0&Transparency %:"
 /*		24001	IDDC_FIND_BASE+IDOK				*/	"\0\5"
 /*		24002	IDDC_FIND_BASE+IDCANCEL			*/	"\0\5"
@@ -602,7 +604,7 @@ static const CHAR strings[] = ""
 	Import:	\n->\n/*\t		(~A->\t~A)		~A\t->		~B\t->\t\t\t*\/\t"\\0		\n->"\n		`->		(*\/->\t*\/)	(\t*\/->*\/)
 	Export:
 */
-static WORD stringsidx[] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,7,1,9,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,214,0,47,0,0,0,0,0,2,0,0,0,0,3,0,0,0,0,0,0,0,0,3,0,0,79,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,74,0,243,0,10,1,21,2,0,1,1,0,29,1,7,0,0,0,0,0,0,447,0,4,0,1,0,0,0,486,0,7,0,39,0,18,1,0,5,19091,0,4,13,0,0,0,0,0,0,1,2,1176,0,0,0,1,0,25,2,2,0,0,0,6,14,1519,0,53,0,14,28,0,21,0,0,475,0,0,0,69,60,4,0,0,0,0,0,0,0,0,9,0,6,0,0,0,0,0,0,0,0,0,0,0,322,0,6105,1,1,2,1,2,1,78,98,999,8,8,0,1689,790,20,4,0,1,71,1,1,1,92,2,1,4896,0,0,4,1,0,0,3,2,0,1,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,4,0,1,0,0,0,0,1,0,0,2,0,0,0,1,3,0,0,0,0,2,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,0,5,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,879,0,0,0,6,0,0,0,0,5,9,9,60,0,2987};
+static WORD stringsidx[] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,7,1,9,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,214,0,47,0,0,0,0,0,2,0,0,0,0,3,0,0,0,0,0,0,0,0,3,0,0,79,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,73,0,243,0,10,1,21,2,0,1,1,0,29,1,7,0,0,0,0,0,0,447,0,4,0,1,0,0,0,486,0,7,0,39,0,18,1,0,5,19091,0,4,13,0,0,0,0,0,0,1,2,1176,0,0,0,1,0,25,2,2,0,0,0,6,0,13,1519,0,53,0,14,28,0,21,0,0,475,0,0,0,69,60,4,0,0,0,0,0,0,0,0,9,0,6,0,0,0,0,0,0,0,0,0,0,0,322,0,6105,1,1,2,1,2,1,78,98,999,8,8,0,1689,790,20,4,0,1,71,1,1,1,92,2,1,4896,0,0,4,1,0,0,3,2,0,1,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,4,0,1,0,0,0,0,1,0,0,2,0,0,0,1,3,0,0,0,0,2,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,0,5,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,879,0,0,0,6,0,0,0,0,5,9,9,60,0,2987};
 
 static LPTSTR pstrings = NULL;
 static WORD *pstringsidx = NULL, *pstringsofs = NULL;
@@ -810,7 +812,7 @@ BOOL LoadLng(LPTSTR filename, LPTSTR* str, WORD** stridx, WORD** strofs){
 	*strofs = (WORD*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, smax * sizeof(WORD));
 	for (st=0, os=ds=*str; *os && ct < smax; os++, pc=c) {
 		if (st == 9) {
-			wsprintf(err, GetString(IDS_LOADLNG_ERROR), lin);
+			wsprintf(err, GetString(IDS_LOADLNG_ERROR), FormatNumber(lin, options.bDigitGrp, 0, 0));
 			ERROROUT(err);
 			return FALSE;
 		}

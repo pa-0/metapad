@@ -420,6 +420,7 @@ void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDi
 	LPTSTR odst, dst, osz;
 	DWORD len, l;
 	len = (chars && *chars) ? *chars : lstrlen(*sz);
+	if (chars) *chars = len;
 	if (lfmt == FC_LFMT_MAC || !sz || !*sz) return;
 	odst = dst = osz = *sz;
 	if ((LONG)lines == -1) {	//TODO copy paste linefmt?
@@ -496,6 +497,7 @@ void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDi
 	LPTSTR odst, dst, osz;
 	DWORD len;
 	len = (chars && *chars) ? *chars : lstrlen(*sz);
+	if (chars) *chars = len;
 	if ((lfmt != FC_LFMT_UNIX && lfmt != FC_LFMT_MAC) || !sz || !*sz || !lines) return;
 	odst = dst = osz = *sz;
 	for ( ; len--; dst++) {
@@ -652,9 +654,9 @@ DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* t
 }
 
 void EvaHash(LPBYTE buf, DWORD len, LPBYTE hash) {							//Originally by Bob Jenkins, 1996, Public Domain. Variant: 32-byte multiples only!
-	DWORD register a = 0x9e3779b9, b=a, c=a, d=a, e=a, f=a, h=a, g=a, h=a;
+	DWORD register a = 0x9e3779b9, b=a, c=a, d=a, e=a, f=a, g=a, h=a;
 	DWORD* bb = (DWORD*)buf;
-	for (len/=32; len--; ){
+	for (len=(len+31)/32; len--; ){
 		a+=*bb++; b+=*bb++; c+=*bb++; d+=*bb++; e+=*bb++; f+=*bb++; g+=*bb++; h+=*bb++;
 		a^=b<<11; d+=a; b+=c;	b^=c>>2; e+=b; c+=d;	c^=d<<8; f+=c; d+=e;	d^=e>>16; g+=d; e+=f;	e^=f<<10; h+=e; f+=g;	f^=g>>4; a+=f; g+=h;	g^=h<<8; b+=g; h+=a;	h^=a>>9; c+=h; a+=b;
 		a^=b<<11; d+=a; b+=c;	b^=c>>2; e+=b; c+=d;	c^=d<<8; f+=c; d+=e;	d^=e>>16; g+=d; e+=f;	e^=f<<10; h+=e; f+=g;	f^=g>>4; a+=f; g+=h;	g^=h<<8; b+=g; h+=a;	h^=a>>9; c+=h; a+=b;
@@ -663,4 +665,19 @@ void EvaHash(LPBYTE buf, DWORD len, LPBYTE hash) {							//Originally by Bob Jen
 	}
 	bb = (DWORD*)hash;
 	*bb++=a; *bb++=b; *bb++=c; *bb++=d; *bb++=e; *bb++=f; *bb++=g; *bb++=h;
+}
+
+LPTSTR FormatNumber(LONGLONG num, BOOL group, TCHAR sep, WORD buffer){
+	static TCHAR buf[28*2] = {0};
+	INT i, j, c;
+	LPTSTR bp = buf + buffer*28;
+	if (!sep) sep = _T('\'');
+	_i64tot(num, bp, 10);
+	if (!group || (num >= -9999 && num <= 9999)) return bp;
+	for (i=lstrlen(bp), j=26, c=0; i--; ) {
+		bp[j--] = bp[i];
+		if (!(++c % 3) && i && (i > 1 || bp[i-1] != _T('-')))
+			bp[j--] = sep;
+	}
+	return bp+j+1;
 }

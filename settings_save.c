@@ -123,6 +123,7 @@ void SaveOptions(void)
 	writeSucceeded &= SaveOption(key, GetString(IDSS_DONTINSERTTIME), REG_DWORD, (LPBYTE)&options.bDontInsertTime, sizeof(BOOL));
 	writeSucceeded &= SaveOption(key, GetString(IDSS_NOWARNINGPROMPT), REG_DWORD, (LPBYTE)&options.bNoWarningPrompt, sizeof(BOOL));
 	writeSucceeded &= SaveOption(key, GetString(IDSS_UNFLATTOOLBAR), REG_DWORD, (LPBYTE)&options.bUnFlatToolbar, sizeof(BOOL));
+	writeSucceeded &= SaveOption(key, GetString(IDSS_DIGITGRP), REG_DWORD, (LPBYTE)&options.bDigitGrp, sizeof(BOOL));
 	writeSucceeded &= SaveOption(key, GetString(IDSS_STICKYWINDOW), REG_DWORD, (LPBYTE)&options.bStickyWindow, sizeof(BOOL));
 	writeSucceeded &= SaveOption(key, GetString(IDSS_READONLYMENU), REG_DWORD, (LPBYTE)&options.bReadOnlyMenu, sizeof(BOOL));
 	writeSucceeded &= SaveOption(key, GetString(IDSS_SELECTIONMARGINWIDTH), REG_DWORD, (LPBYTE)&options.nSelectionMarginWidth, sizeof(int));

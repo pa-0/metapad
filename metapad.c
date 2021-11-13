@@ -417,7 +417,7 @@ void UpdateStatus(BOOL refresh) {
 					nFormat |= (1<<30);
 				}
 				if (!bLoading) {
-					wsprintf(szPane, GetString(IDS_STATFMT_BYTES), bytes = CalcTextSize(NULL, NULL, 0, nFormat, TRUE, &chars));
+					wsprintf(szPane, GetString(IDS_STATFMT_BYTES), FormatNumber(bytes = CalcTextSize(NULL, NULL, 0, nFormat, TRUE, &chars), options.bDigitGrp, 0, 0));
 					nPaneSizes[SBPANE_SIZE] = txtScale * (lstrlen(szPane) - 1);
 					SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_SIZE, (LPARAM)(LPTSTR)szPane);
 				}
@@ -427,7 +427,7 @@ void UpdateStatus(BOOL refresh) {
 
 			if (!bLoading) {
 				bDirtyFile = TRUE;
-				if (chars == savedChars && savedFormat == (nFormat & 0x8fffffff)) {
+				if (chars == savedChars && (!chars || savedFormat == (nFormat & 0x8fffffff))) {
 					if (!chars) bDirtyFile = FALSE;
 					else {
 						j = 32 / sizeof(TCHAR);
@@ -489,7 +489,7 @@ void UpdateStatus(BOOL refresh) {
 			printf("s");
 			oldcr = full ? cr : ecr;
 			lLines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
-			wsprintf(szPane, GetString(IDS_STATFMT_LINE), lLine+1, lLines);
+			wsprintf(szPane, GetString(IDS_STATFMT_LINE), FormatNumber(lLine+1, options.bDigitGrp, 0, 0), FormatNumber(lLines, options.bDigitGrp, 0, 1));
 			SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_LINE, (LPARAM)(LPTSTR)szPane);
 			nPaneSizes[SBPANE_LINE] = txtScale * lstrlen(szPane);
 			wsprintf(szPane, GetString(IDS_STATFMT_COL), lCol);
@@ -499,11 +499,11 @@ void UpdateStatus(BOOL refresh) {
 			if (cr.cpMax > cr.cpMin) {
 				*szPane = 0;
 				if (full)
-					wsprintf(szPane, GetString(IDS_STATFMT_BYTES), CalcTextSize(NULL, &cr, 0, nFormat, FALSE, NULL));
+					wsprintf(szPane, GetString(IDS_STATFMT_BYTES), FormatNumber(CalcTextSize(NULL, &cr, 0, nFormat, FALSE, NULL), options.bDigitGrp, 0, 0));
 				i = GetColNum(cr.cpMin, -1, NULL, &lLine, NULL);
 				j = GetColNum(cr.cpMax, -1, NULL, &lLines, NULL);
-				wsprintf(szPane+24, GetString(IDS_STATFMT_LINES), lLines-lLine+1);
-				wsprintf(szStatusMessage, GetString(IDS_STATFMT_SEL), lLine+1, i, lLines+1, j, szPane+24, szPane);
+				wsprintf(szPane+24, GetString(IDS_STATFMT_LINES), FormatNumber(lLines-lLine+1, options.bDigitGrp, 0, 0));
+				wsprintf(szStatusMessage, GetString(IDS_STATFMT_SEL), FormatNumber(lLine+1, options.bDigitGrp, 0, 0), i, FormatNumber(lLines+1, options.bDigitGrp, 0, 1), j, szPane+24, szPane);
 			} else
 				*szStatusMessage = 0;
 		}
@@ -726,14 +726,14 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					if (!(l1 = lstrlen(szBuf)))
 						return FALSE;
 					if (!options.bNoWarningPrompt && (LONGLONG)l1 * l2 > LARGEPASTEWARN) {
-						wsprintf(szTmp2, GetString(IDS_LARGE_PASTE_WARNING), (LONGLONG)l1 * l2);
+						wsprintf(szTmp2, GetString(IDS_LARGE_PASTE_WARNING), FormatNumber((LONGLONG)l1 * l2, options.bDigitGrp, 0, 0));
 						nPos = MessageBox(hdlgFind, szTmp2, GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL);
 						if (nPos == IDCANCEL)
 							return FALSE;
 					}
 					SSTRCPY(szInsert, szBuf);
 					GetLineFmt(szInsert, l1, 0, &i, &j, &k, &nPos, NULL);
-					ImportLineFmt(&szInsert, &l1, lfmt, i, j, k, nPos, &bOkEna);
+					ImportLineFmt(&szInsert, &l1, (nFormat >> 16) & 0xfff, i, j, k, nPos, &bOkEna);
 					szNew = (LPTSTR)HeapAlloc(globalHeap, 0, ((LONGLONG)l1 * l2 + 1) * sizeof(TCHAR));
 					if (!szNew) {
 						ReportLastError();
@@ -1140,7 +1140,10 @@ void PrintContents()
 		return;
 	}
 
-	szBuffer = GetShadowRange(cr.cpMin, cr.cpMax, -1, &l, NULL);
+	if (pd.Flags & PD_SELECTION)
+		szBuffer = GetShadowSelection(&l, NULL);
+	else
+		szBuffer = GetShadowBuffer(&l);
 	lStringLen = (LONG)l;
 	bPrint = TRUE;
 
@@ -2514,6 +2517,7 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 			}
 
 			SendDlgItemMessage(hwndDlg, IDC_FLAT_TOOLBAR, BM_SETCHECK, (WPARAM) options.bUnFlatToolbar, 0);
+			SendDlgItemMessage(hwndDlg, IDC_DIGITGRP, BM_SETCHECK, (WPARAM) options.bDigitGrp, 0);
 			SendDlgItemMessage(hwndDlg, IDC_SYSTEM_COLOURS, BM_SETCHECK, (WPARAM) options.bSystemColours, 0);
 			SendDlgItemMessage(hwndDlg, IDC_SYSTEM_COLOURS2, BM_SETCHECK, (WPARAM) options.bSystemColours2, 0);
 			SendMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_SYSTEM_COLOURS, 0), 0);
@@ -2601,6 +2605,7 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 					options.bSystemColours2 = FALSE;
 
 				options.bUnFlatToolbar = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_FLAT_TOOLBAR, BM_GETCHECK, 0, 0));
+				options.bDigitGrp = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_DIGITGRP, BM_GETCHECK, 0, 0));
 				options.PrimaryFont = TmpPrimaryFont;
 				options.SecondaryFont = TmpSecondaryFont;
 				options.BackColour = TmpBackColour;
@@ -2930,7 +2935,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 	HMENU hMenu;
 	LPTOOLTIPTEXT lpttt;
 	LPCTSTR szOld;
-	LPTSTR sz = NULL, szNew, szBuf;
+	LPTSTR sz = NULL, szNew;
 	LPTSTR szTmp = gTmpBuf, szFileName = gTmpBuf;
 	LPTSTR szTmp2 = gTmpBuf2;
 	BOOL b = FALSE, abort, uni;
@@ -3140,7 +3145,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					case EN_ERRSPACE:
 					case EN_MAXTEXT:
 #ifdef USE_RICH_EDIT
-						wsprintf(szTmp, GetString(IDS_MEMORY_LIMIT), GetWindowTextLength(client));
+						wsprintf(szTmp, GetString(IDS_MEMORY_LIMIT), FormatNumber(GetWindowTextLength(client), options.bDigitGrp, 0));
 						ERROROUT(szTmp);
 #else
 						if (bLoading) {
@@ -3375,9 +3380,8 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_MYEDIT_COPY:
 			case ID_COPY_B64:
 			case ID_COPY_HEX:
-				base = 0;
+				l = base = 0;
 				enc = (nFormat >> 31 ? FC_ENC_CODEPAGE : (WORD)nFormat);
-				lfmt = (nFormat >> 16) & 0xfff;
 				switch(LOWORD(wParam)){
 					case ID_MYEDIT_CUT:
 						SendMessage(client, WM_CUT, 0, 0); break;
@@ -3397,22 +3401,25 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					else {
 						sl = 0;
 						sz = (LPTSTR)szOld;
-						ExportLineFmt(&sz, &sl, lfmt, (DWORD)-1, &b);
-						if (enc == FC_ENC_BIN) ExportBinary(sz, sl);	//TODO chk when sz == szold (readonly?)
-						if (base && sl) sl = EncodeText((LPBYTE)&sz, sl, nFormat, &b, NULL)
+						ExportLineFmt(&sz, &sl, (nFormat >> 16) & 0xfff, (DWORD)-1, &b);
+						if (base && enc == FC_ENC_BIN) ExportBinary(sz, sl);
+						if (base && sl) sl = EncodeText((LPBYTE*)&sz, sl, nFormat, &b, NULL);
 						switch (base){
 							case 16: if (!l) l = sl * 2;
 							case 64: if (!l) l = ((sl + 2) / 3) * 4;
 								if (enc == FC_ENC_UTF16 || enc == FC_ENC_UTF16BE)
-									l *= 2;
+									ReverseBytes((LPBYTE)sz, sl);
 							default: if (!l) l = sl; break;
 						}
 						hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (l+1));
 						if (!(hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (l+1))) || !(szNew = (LPTSTR)GlobalLock(hMem2)))
 							ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
 						else {
-							if (base) EncodeBase(base, (LPBYTE)sz, szNew, l, NULL);
-							else lstrcpy(szNew, sz);
+							if (base) EncodeBase(base, (LPBYTE)sz, szNew, sl, NULL);
+							else {
+								lstrcpy(szNew, sz);
+								if (enc == FC_ENC_BIN) ExportBinary(szNew, sl);
+							}
 							SetLastError(NO_ERROR);
 							if ((!GlobalUnlock(hMem) && (l = GetLastError())) || (!GlobalUnlock(hMem2) && (l = GetLastError()))) {
 								ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
@@ -3433,15 +3440,14 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_INT_GETCLIPBOARD:
 				base = 0;
 				enc = ((sl = nFormat) >> 31 ? FC_ENC_CODEPAGE : (WORD)nFormat);
-				lfmt = (nFormat >> 16) & 0xfff;
 				if (!OpenClipboard(NULL)) {
 					ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
 					break;
 				}
 				if ( hMem = GetClipboardData(_CF_TEXT) ) {
-					if (!(szOld = (LPTCSTR)GlobalLock(hMem)))
+					if (!(sz = (LPTSTR)(szOld = (LPCTSTR)GlobalLock(hMem)))) {
 						ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
-					else {
+					} else {
 						uni = (enc == FC_ENC_UTF16 || enc == FC_ENC_UTF16BE);
 						l = lstrlen(szOld);
 						switch(LOWORD(wParam)){
@@ -3451,20 +3457,23 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 								lstrcpy(sz, szNew);
 								lstrcat(sz, szOld);
 								if (!ParseForEscapeSeqs(sz, NULL, GetString(IDS_ESCAPE_CTX_CLIPBRD))) { FREE(sz); }
+								else {
+									b = TRUE;
+									ExportBinary(sz, l=lstrlen(sz));
+									if (!uni) l = EncodeText((LPBYTE*)&sz, l, FC_ENC_ANSI, &b, NULL);
+								}
 								break;
 						}
-						szBuf = sz ? sz : szOld;
-						if (base && l) l = DecodeText((LPBYTE*)&szBuf, l, &sl, &b);
-						GetLineFmt(szBuf, l, 0, &i, &j, &k, &nPos, &uni);
-						if (uni) ImportBinary(szBuf, l);
-						ImportLineFmt(&szBuf, &l, lfmt, i, j, k, nPos, &b);
+						if (base && l && !uni) l = DecodeText((LPBYTE*)&sz, l, &sl, &b);
+						GetLineFmt(sz, l, 0, &i, &j, &k, &nPos, &uni);
+						if (uni) ImportBinary(sz, l);
+						ImportLineFmt(&sz, &l, (nFormat >> 16) & 0xfff, i, j, k, nPos, &b);
 						if (LOWORD(wParam) == ID_INT_GETCLIPBOARD)
-							lstrncpy(szTmp, szBuf, ARRLEN(szTmp));
+							lstrcpyn(szTmp, sz, ARRLEN(szTmp));
 						else
-							SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szBuf);
+							SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)sz);
 						GlobalUnlock(hMem);
-						FREE(sz);
-						if (b) FREE(szBuf);
+						if (b) FREE(sz);
 					}
 				}
 				CloseClipboard();
@@ -4316,7 +4325,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					hCur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 					l = GetWindowTextLength(client);
 					nPos = SendMessage(client, EM_GETLINECOUNT, 0, 0);
-					sz = szBuf = (LPTSTR) HeapAlloc(globalHeap, 0, (l + nPos + 1) * sizeof(TCHAR));
+					sz = szNew = (LPTSTR) HeapAlloc(globalHeap, 0, (l + nPos + 1) * sizeof(TCHAR));
 					for (i = 0; i < nPos; i++) {
 						szOld = GetShadowLine(i, -1, &sl, NULL, NULL);
 						lstrcpyn(sz, szOld, sl+1);
@@ -4334,8 +4343,8 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					cr.cpMax = -1;
 					SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
 					SetSelection(cr);
-					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szBuf);
-					FREE(szBuf);
+					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szNew);
+					FREE(szNew);
 					cr.cpMax = 0;
 					SetSelection(cr);
 					SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);

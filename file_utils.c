@@ -851,7 +851,7 @@ DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* 
 	InvalidateRect(client, NULL, TRUE);
 	SetCursor(hCur);
 	if (owner && szMsgBuf) {
-		wsprintf(szMsgBuf, GetString(recur ? IDS_ITEMS_REPLACED_ITER : IDS_ITEMS_REPLACED), r, ict-1);
+		wsprintf(szMsgBuf, GetString(recur ? IDS_ITEMS_REPLACED_ITER : IDS_ITEMS_REPLACED), FormatNumber(r, options.bDigitGrp, 0, 0), FormatNumber(ict-1, options.bDigitGrp, 0, 1));
 		MessageBox(owner, szMsgBuf, GetString(STR_METAPAD), MB_OK|MB_ICONINFORMATION);
 	}
 	return r;

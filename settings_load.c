@@ -108,6 +108,7 @@ void LoadOptions(void)
 	options.bDontInsertTime = FALSE;
 	options.bNoWarningPrompt = FALSE;
 	options.bUnFlatToolbar = TRUE;
+	options.bDigitGrp = TRUE;
 	options.bStickyWindow = FALSE;
 	options.bReadOnlyMenu = FALSE;
 	//options.nStatusFontWidth = 16;
@@ -156,6 +157,7 @@ void LoadOptions(void)
 		LoadOptionNumeric(key, GetString(IDSS_DONTINSERTTIME), (LPBYTE)&options.bDontInsertTime, dwBufferSize);
 		LoadOptionNumeric(key, GetString(IDSS_NOWARNINGPROMPT), (LPBYTE)&options.bNoWarningPrompt, dwBufferSize);
 		LoadOptionNumeric(key, GetString(IDSS_UNFLATTOOLBAR), (LPBYTE)&options.bUnFlatToolbar, dwBufferSize);
+		LoadOptionNumeric(key, GetString(IDSS_DIGITGRP), (LPBYTE)&options.bDigitGrp, dwBufferSize);
 		LoadOptionNumeric(key, GetString(IDSS_STICKYWINDOW), (LPBYTE)&options.bStickyWindow, dwBufferSize);
 		LoadOptionNumeric(key, GetString(IDSS_READONLYMENU), (LPBYTE)&options.bReadOnlyMenu, dwBufferSize);
 		LoadOptionNumeric(key, GetString(IDSS_SELECTIONMARGINWIDTH), (LPBYTE)&options.nSelectionMarginWidth, dwBufferSize);
