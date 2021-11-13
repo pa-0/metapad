@@ -53,6 +53,7 @@ TCHAR szStatusMessage[96];
 LPTSTR szShadow;
 TCHAR shadowHold;
 DWORD shadowLen, shadowAlloc, shadowRngEnd;
+LONG shadowLine;
 BOOL bLoading, bStarted, bQuit;
 BOOL bDirtyShadow, bDirtyStatus;
 BOOL bDirtyFile, bMatchCase, bDown, bWholeWord, bReadOnly;

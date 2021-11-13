@@ -201,7 +201,7 @@ BOOL FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt);
 BOOL GetReadableFilename(LPCTSTR lfn, LPTSTR* dst);
 
 LPCTSTR GetShadowBuffer(DWORD* len);
-LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len);
+LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* linecr);
 LPCTSTR GetShadowSelection(DWORD* len, CHARRANGE* pcr);
 LPCTSTR GetShadowLine(LONG line, LONG cp, DWORD* len, LONG* lineout, CHARRANGE* pcr);
 DWORD GetColNum(LONG cp, LONG line, DWORD* lineLen, LONG* lineout, CHARRANGE* pcr);

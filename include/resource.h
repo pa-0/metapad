@@ -477,18 +477,18 @@ ID mapping:
 #define FC_ENC_BASE						2052	//804	(range)
 #define FC_ENC_END						2119	//847	(range)
 #define FC_ENC_UNKNOWN					2052	//804	corresponds to ID_ENC_UNKNOWN	(40052)
-#define FC_ENC_ANSI						2111	//83f	corresponds to ID_ENC_ANSI	(40111)
-#define FC_ENC_UTF8						2109	//83d	corresponds to ID_ENC_UTF8	(40109), grandfathered in from 3.6-
-#define FC_ENC_UTF16					2089	//829	corresponds to ID_ENC_UTF16	(40089), grandfathered in from 3.6-
-#define FC_ENC_UTF16BE					2090	//830	corresponds to ID_ENC_UTF16BE	(40090), grandfathered in from 3.6-
+#define FC_ENC_ANSI						2111	//83f	corresponds to ID_ENC_ANSI		(40111)
+#define FC_ENC_UTF8						2109	//83d	corresponds to ID_ENC_UTF8		(40109), grandfathered in from 3.6-
+#define FC_ENC_UTF16					2089	//829	corresponds to ID_ENC_UTF16		(40089), grandfathered in from 3.6-
+#define FC_ENC_UTF16BE					2090	//82a	corresponds to ID_ENC_UTF16BE	(40090), grandfathered in from 3.6-
 #define FC_ENC_BIN						2112	//840	corresponds to ID_ENC_BIN		(40112)
-#define FC_ENC_CODEPAGE					2118	//846	corresponds to ID_ENC_CODEPAGE(40118)
+#define FC_ENC_CODEPAGE					2118	//846	corresponds to ID_ENC_CODEPAGE	(40118)
 //#define FC_ENC_CUSTOM					2119	//847	corresponds to ID_ENC_CUSTOM	(40119)
-#define FC_LFMT_UNKNOWN					2051	//803	corresponds to ID_LFMT_UNKNOWN(40051)
-#define FC_LFMT_DOS						2039	//7f7	corresponds to ID_LFMT_DOS	(40039), grandfathered in from 3.6-
-#define FC_LFMT_UNIX					2040	//7f8	corresponds to ID_LFMT_UNIX	(40040), grandfathered in from 3.6-
-#define FC_LFMT_MAC						2048	//800	corresponds to ID_LFMT_MAC	(40048)
-#define FC_LFMT_MIXED					2049	//801	corresponds to ID_LFMT_MIXED(40049)
+#define FC_LFMT_UNKNOWN					2051	//803	corresponds to ID_LFMT_UNKNOWN	(40051)
+#define FC_LFMT_DOS						2039	//7f7	corresponds to ID_LFMT_DOS		(40039), grandfathered in from 3.6-
+#define FC_LFMT_UNIX					2040	//7f8	corresponds to ID_LFMT_UNIX		(40040), grandfathered in from 3.6-
+#define FC_LFMT_MAC						2048	//800	corresponds to ID_LFMT_MAC		(40048)
+#define FC_LFMT_MIXED					2049	//801	corresponds to ID_LFMT_MIXED	(40049)
 
 /* IDDC_ per-dialog by-command text (preferred, unless the text has already been manually assigned by program code) */
 #define IDDC_BASE						20000	//(range)
