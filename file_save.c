@@ -56,7 +56,7 @@ BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
 	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 	UINT nonansi = 0, cp = CP_ACP;
 	BOOL bufDirty = FALSE, fail = FALSE;
-	WORD enc = (nFormat >> 31) ? FC_ENC_CUSTOM : (WORD)nFormat;
+	WORD enc = (nFormat >> 31) ? FC_ENC_CODEPAGE : (WORD)nFormat;
 	WORD lfmt = (nFormat >> 16) & 0xfff;
 	DWORD lines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
 

@@ -79,17 +79,17 @@ static const CHAR strings[] = ""
 /*	`	23	`	IDS_DECODEBASE_BADCHAR			*/	"\0Invalid code characters!"
 /*	`	24	`	IDS_PLUGIN_ERRFIND				*/	"\0Could not find the language plugin DLL."
 /*	`	25	`	IDS_PLUGIN_ERR					*/	"\0Temporarily reverting language to Default (English)\n\nCheck the language plugin setting."
-/*	`	26	`	ID_LFMT_DOS						*/	"\0DOS"
-/*	`	27	`	ID_LFMT_UNIX					*/	"\0Unix"
-/*	`	28	`	ID_LFMT_MAC						*/	"\0Mac"
-/*	`	29	`	ID_LFMT_MIXED					*/	"\0RAW"
-/*	`	30	`	ID_ENC_ANSI						*/	"\0ANSI"
-/*	`	31	`	ID_ENC_UTF8						*/	"\0UTF-8"
-/*	`	32	`	ID_ENC_UTF16					*/	"\0Unicode"
-/*	`	33	`	ID_ENC_UTF16BE					*/	"\0Unicode BE"
-/*	`	34	`	ID_ENC_BIN						*/	"\0Binary"
-/*	`	35	`	ID_ENC_CUSTOM					*/	"\0CP%d"
-/*	`	36	`	IDS_ENC_CUSTOM_CAPTION			*/	"\0Codepage %d"
+/*	`	26	`	FC_LFMT_DOS						*/	"\0DOS"
+/*	`	27	`	FC_LFMT_UNIX					*/	"\0Unix"
+/*	`	28	`	FC_LFMT_MAC						*/	"\0Mac"
+/*	`	29	`	FC_LFMT_MIXED					*/	"\0RAW"
+/*	`	30	`	FC_ENC_ANSI						*/	"\0ANSI"
+/*	`	31	`	FC_ENC_UTF8						*/	"\0UTF-8"
+/*	`	32	`	FC_ENC_UTF16					*/	"\0Unicode"
+/*	`	33	`	FC_ENC_UTF16BE					*/	"\0Unicode BE"
+/*	`	34	`	FC_ENC_BIN						*/	"\0Binary"
+/*	`	35	`	FC_ENC_CODEPAGE					*/	"\0CP%d"
+/*	`	36	`	ID_ENC_CODEPAGE					*/	"\0Codepage %d"
 /*	`	37	`									*/	"\0"
 /*	`	38	`									*/	"\0"
 /*	`	39	`									*/	"\0"
@@ -281,7 +281,8 @@ static const CHAR strings[] = ""
 /*	`	202	`	IDS_MENU_LANGUAGE_PLUGIN		*/	"\0&Language Plugin..."
 /*	`	203	`	IDS_COMMAND_LINE_OPTIONS		*/	"\0Usage: metapad [/i | /m | /v | /s] [/p | /g row:col | /e] [filename]\n\nOption descriptions:\n\n\t/i - force INI mode for settings\n\t/m - migrate all registry settings to INI file\n\t/g row:col - goto position at row and column\n\t/e - goto end of file\n\t/p - print file\n\t/v - disable plugin version checking\n\t/s - skip loading language plugin"
 /*	`	204	`	IDS_GLOBALLOCK_ERROR			*/	"\0GlobalLock failed"
-/*	`	205	`	IDS_CLIPBOARD_UNLOCK_ERROR		*/	"\0There was an error unlocking the clipboard memory."
+/*	`	   	`	IDS_CLIPBOARD_OPEN_ERROR		*/	"\0Error opening clipboard."
+/*	`	205	`	IDS_CLIPBOARD_UNLOCK_ERROR		*/	"\0Error unlocking clipboard memory."
 /*	`	206	`	IDS_FILE_READ_ERROR				*/	"\0Error reading file."
 /*	`	207	`	IDS_RESTART_FAVES				*/	"\0The change in \"Disable Favorites\" will be reflected upon restarting the program."
 /*	`	208	`	IDS_RESTART_LANG				*/	"\0Language changes will be reflected upon restarting the program."
@@ -356,17 +357,17 @@ IDS_DECODEBASE_BADLEN,
 IDS_DECODEBASE_BADCHAR,
 IDS_PLUGIN_ERRFIND,
 IDS_PLUGIN_ERR,
-ID_LFMT_DOS,
-ID_LFMT_UNIX,
-ID_LFMT_MAC,
-ID_LFMT_MIXED,
-ID_ENC_ANSI,
-ID_ENC_UTF8,
-ID_ENC_UTF16,
-ID_ENC_UTF16BE,
-ID_ENC_BIN,
-ID_ENC_CUSTOM,
-IDS_ENC_CUSTOM_CAPTION,
+FC_LFMT_DOS,
+FC_LFMT_UNIX,
+FC_LFMT_MAC,
+FC_LFMT_MIXED,
+FC_ENC_ANSI,
+FC_ENC_UTF8,
+FC_ENC_UTF16,
+FC_ENC_UTF16BE,
+FC_ENC_BIN,
+FC_ENC_CODEPAGE,
+ID_ENC_CODEPAGE,
 0,
 0,
 0,
@@ -543,7 +544,7 @@ IDS_INVALID_PLUGIN_ERROR,
 IDS_BAD_STRING_PLUGIN_ERROR,
 IDS_PLUGIN_MISMATCH_ERROR,
 IDS_ALLRIGHTS,
-IDS_OK,
+IDC_OK,
 IDS_NEW_FILE,
 IDS_MACRO_LENGTH_ERROR,
 IDS_ERROR,

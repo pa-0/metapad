@@ -134,7 +134,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
 	LPTSTR op = buf, bout, end, szErr, szErr2, szErr3, dbuf;
 	INT l, m, base = 0, mul = 3, uni = 0, str, expl = 0, dbufalloc = 0, spi = 0;
 	DWORD p = 0;
-	WORD enc = (nFormat >> 31 ? FC_ENC_CUSTOM : (WORD)nFormat);
+	WORD enc = (nFormat >> 31 ? FC_ENC_CODEPAGE : (WORD)nFormat);
 #ifdef UNICODE
 	const TCHAR spsub[] = {_T('\x332'), _T('\xFFFD'), _T('\xD7'), _T('\x2014'), _T('\x2026'), _T('\xFFFC')};
 #endif
@@ -729,11 +729,11 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			switch(LOWORD(wParam)){
 				case IDC_ESCAPE:
 					GetWindowRect(GetDlgItem(hwndFind, IDC_ESCAPE), &rc);
-					SendDlgItemMessage(hwndFind, (frDlgId == ID_FIND || frDlgId == ID_REPLACE? ID_DROP_FIND : ID_DROP_INSERT), WM_GETTEXT, (WPARAM)MAXFIND, (LPARAM)szText);
+					SendDlgItemMessage(hwndFind, (frDlgId == ID_FIND || frDlgId == ID_REPLACE? IDC_DROP_FIND : IDC_DROP_INSERT), WM_GETTEXT, (WPARAM)MAXFIND, (LPARAM)szText);
 					break;
 				case IDC_ESCAPE2:
 					GetWindowRect(GetDlgItem(hwndFind, IDC_ESCAPE2), &rc);
-					SendDlgItemMessage(hwndFind, ID_DROP_REPLACE, WM_GETTEXT, (WPARAM)MAXFIND, (LPARAM)szText);
+					SendDlgItemMessage(hwndFind, IDC_DROP_REPLACE, WM_GETTEXT, (WPARAM)MAXFIND, (LPARAM)szText);
 					break;
 			}
 
@@ -791,9 +791,9 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 			switch(LOWORD(wParam)){
 				case IDC_ESCAPE:
-					i = (frDlgId == ID_FIND || frDlgId == ID_REPLACE? ID_DROP_FIND : ID_DROP_INSERT); break;
+					i = (frDlgId == ID_FIND || frDlgId == ID_REPLACE? IDC_DROP_FIND : IDC_DROP_INSERT); break;
 				case IDC_ESCAPE2:
-					i = ID_DROP_REPLACE; break;
+					i = IDC_DROP_REPLACE; break;
 			}
 			SendDlgItemMessage(hwndFind, i, WM_SETTEXT, (WPARAM)(BOOL)FALSE, (LPARAM)szText);
 			SetFocus(GetDlgItem(hwndFind, i));
@@ -806,22 +806,22 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			DestroyMenu(hmenu);
 			break; }
 		case IDC_NUM:
-		case ID_DROP_INSERT:
+		case IDC_DROP_INSERT:
 			if (HIWORD(wParam) != EN_CHANGE && HIWORD(wParam) != CBN_EDITCHANGE && HIWORD(wParam) != CBN_SELCHANGE && HIWORD(wParam) != CBN_SETFOCUS) break;
-			bOkEna &= (0 != SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, WM_GETTEXTLENGTH, 0, 0) || SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_GETCURSEL, 0, 0) >= 0);
+			bOkEna &= (0 != SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, WM_GETTEXTLENGTH, 0, 0) || SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_GETCURSEL, 0, 0) >= 0);
 			bOkEna &= (0 != SendDlgItemMessage(hdlgFind, IDC_NUM, WM_GETTEXTLENGTH, 0, 0));
-		case ID_DROP_FIND:
-		case ID_DROP_REPLACE:
+		case IDC_DROP_FIND:
+		case IDC_DROP_REPLACE:
 			if (HIWORD(wParam) != EN_CHANGE && HIWORD(wParam) != CBN_EDITCHANGE && HIWORD(wParam) != CBN_SELCHANGE && HIWORD(wParam) != CBN_SETFOCUS) break;
-			bOkEna &= (0 != SendDlgItemMessage(hdlgFind, ID_DROP_FIND, WM_GETTEXTLENGTH, 0, 0) || SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_GETCURSEL, 0, 0) >= 0);
+			bOkEna &= (0 != SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, WM_GETTEXTLENGTH, 0, 0) || SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_GETCURSEL, 0, 0) >= 0);
 			EnableWindow(GetDlgItem(hdlgFind, IDOK), bOkEna);
 			if (frDlgId == ID_REPLACE){
 				EnableWindow(GetDlgItem(hdlgFind, 1024), bOkEna);
 				EnableWindow(GetDlgItem(hdlgFind, 1025), bOkEna);
-				SendDlgItemMessage(hdlgFind, ID_DROP_FIND, WM_GETTEXT, MAXFIND, (WPARAM)szTmp);
+				SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, WM_GETTEXT, MAXFIND, (WPARAM)szTmp);
 				if (!bNoFindHidden) bOkEna &= ParseForEscapeSeqs(szTmp, NULL, NULL);
 				l1 = lstrlen(szTmp);
-				SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, WM_GETTEXT, MAXFIND, (WPARAM)szTmp);
+				SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, WM_GETTEXT, MAXFIND, (WPARAM)szTmp);
 				if (!bNoFindHidden) bOkEna &= ParseForEscapeSeqs(szTmp, NULL, NULL);
 				l2 = lstrlen(szTmp);
 				bOkEna &= l1 > l2;
@@ -836,28 +836,28 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			szRepl[0] = _T('\0');
 			switch (frDlgId) {
 				case ID_REPLACE:
-					SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, WM_GETTEXT, MAXFIND, (WPARAM)szRepl);
-					nPos = SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_FINDSTRINGEXACT, 0, (WPARAM)szRepl);
+					SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, WM_GETTEXT, MAXFIND, (WPARAM)szRepl);
+					nPos = SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_FINDSTRINGEXACT, 0, (WPARAM)szRepl);
 					if (nPos == CB_ERR) {
-						if (SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_GETCOUNT, 0, 0) >= NUMFINDS)
-							SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_DELETESTRING, (LPARAM)NUMFINDS-1, 0);
+						if (SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_GETCOUNT, 0, 0) >= NUMFINDS)
+							SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_DELETESTRING, (LPARAM)NUMFINDS-1, 0);
 					} else {
-						SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_DELETESTRING, (LPARAM)nPos, 0);
+						SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_DELETESTRING, (LPARAM)nPos, 0);
 					}
-					SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_INSERTSTRING, 0, (WPARAM)szRepl);
-					SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_SETCURSEL, (LPARAM)0, 0);
+					SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_INSERTSTRING, 0, (WPARAM)szRepl);
+					SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_SETCURSEL, (LPARAM)0, 0);
 					if (!bNoFindHidden && !ParseForEscapeSeqs(szRepl, &pbReplaceTextSpec, GetString(IDS_ESCAPE_CTX_REPLACE))) return FALSE;
 				case ID_FIND:
-					SendDlgItemMessage(hdlgFind, ID_DROP_FIND, WM_GETTEXT, MAXFIND, (WPARAM)szBuf);
-					nPos = SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_FINDSTRINGEXACT, 0, (WPARAM)szBuf);
+					SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, WM_GETTEXT, MAXFIND, (WPARAM)szBuf);
+					nPos = SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_FINDSTRINGEXACT, 0, (WPARAM)szBuf);
 					if (nPos == CB_ERR) {
-						if (SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_GETCOUNT, 0, 0) >= NUMFINDS)
-							SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_DELETESTRING, (LPARAM)NUMFINDS-1, 0);
+						if (SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_GETCOUNT, 0, 0) >= NUMFINDS)
+							SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_DELETESTRING, (LPARAM)NUMFINDS-1, 0);
 					} else {
-						SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_DELETESTRING, (LPARAM)nPos, 0);
+						SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_DELETESTRING, (LPARAM)nPos, 0);
 					}
-					SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_INSERTSTRING, 0, (WPARAM)szBuf);
-					SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_SETCURSEL, (LPARAM)0, 0);
+					SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_INSERTSTRING, 0, (WPARAM)szBuf);
+					SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_SETCURSEL, (LPARAM)0, 0);
 					bWholeWord = SendDlgItemMessage(hdlgFind, 0x410, BM_GETCHECK, 0, 0);
 					bMatchCase = SendDlgItemMessage(hdlgFind, 0x411, BM_GETCHECK, 0, 0);
 					bDown = (frDlgId != ID_FIND || SendDlgItemMessage(hdlgFind, 0x421, BM_GETCHECK, 0, 0));
@@ -868,19 +868,19 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					SendDlgItemMessage(hdlgFind, IDC_NUM, WM_GETTEXT, 16, (WPARAM)szBuf);
 					l2 = _ttol(szBuf);
 					if (!l2) return FALSE;
-					SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, WM_GETTEXT, MAXINSERT, (WPARAM)szBuf);
+					SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, WM_GETTEXT, MAXINSERT, (WPARAM)szBuf);
 					if (frDlgId == ID_PASTE_MUL && lstrcmp(szBuf, SCNUL(szInsert)) != 0)
 						frDlgId = ID_INSERT_TEXT;
 					if (frDlgId == ID_INSERT_TEXT) {
-						nPos = SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_FINDSTRINGEXACT, 0, (WPARAM)szBuf);
+						nPos = SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_FINDSTRINGEXACT, 0, (WPARAM)szBuf);
 						if (nPos == CB_ERR) {
-							if (SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_GETCOUNT, 0, 0) >= NUMINSERTS)
-								SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_DELETESTRING, (LPARAM)NUMINSERTS-1, 0);
+							if (SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_GETCOUNT, 0, 0) >= NUMINSERTS)
+								SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_DELETESTRING, (LPARAM)NUMINSERTS-1, 0);
 						} else {
-							SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_DELETESTRING, (LPARAM)nPos, 0);
+							SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_DELETESTRING, (LPARAM)nPos, 0);
 						}
-						SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_INSERTSTRING, 0, (WPARAM)szBuf);
-						SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_SETCURSEL, (LPARAM)0, 0);
+						SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_INSERTSTRING, 0, (WPARAM)szBuf);
+						SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_SETCURSEL, (LPARAM)0, 0);
 					}
 					if (!bNoFindHidden && !ParseForEscapeSeqs(szBuf, NULL, GetString(IDS_ESCAPE_CTX_INSERT))) return FALSE;
 					if (!(l1 = lstrlen(szBuf)))
@@ -961,12 +961,12 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			switch (frDlgId){
 				case ID_REPLACE:
 					for (l1 = 0; l1 < NUMFINDS; l1++) {
-						SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_GETLBTEXT, l1, (WPARAM)szBuf);
+						SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_GETLBTEXT, l1, (WPARAM)szBuf);
 						SSTRCPY(ReplaceArray[l1], szBuf);
 					}
 				case ID_FIND:
 					for (l1 = 0; l1 < NUMFINDS; l1++) {
-						SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_GETLBTEXT, l1, (WPARAM)szBuf);
+						SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_GETLBTEXT, l1, (WPARAM)szBuf);
 						SSTRCPY(FindArray[l1], szBuf);
 					}
 					bWholeWord = SendDlgItemMessage(hdlgFind, 0x410, BM_GETCHECK, 0, 0);
@@ -975,7 +975,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					break;
 				case ID_INSERT_TEXT:
 					for (l1 = 0; l1 < NUMINSERTS; l1++) {
-						SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_GETLBTEXT, l1, (WPARAM)szBuf);
+						SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_GETLBTEXT, l1, (WPARAM)szBuf);
 						SSTRCPY(InsertArray[l1], szBuf);
 					}
 					break;
@@ -2125,7 +2125,7 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 			SetWindowPos(client, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED); // hack for icon jitter
 			SetDlgItemText(hwndDlg, IDC_STATICX, GetString(STR_ABOUT));
 			SetDlgItemText(hwndDlg, IDC_EDIT_URL, GetString(STR_URL));
-			SetDlgItemText(hwndDlg, IDOK, GetString(IDS_OK));
+			SetDlgItemText(hwndDlg, IDOK, GetString(IDC_OK));
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT, GetString(STR_COPYRIGHT));
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT2, GetString(IDS_ALLRIGHTS));
 			break;
@@ -2293,7 +2293,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 	WORD enc, lfmt, cp;
 	switch (uMsg) {
 	case WM_INITDIALOG:
-		SendDlgItemMessage(hwndDlg, IDC_GOTO_OFFSET, BM_SETCHECK, (WPARAM) options.bHideGotoOffset, 0);
+		SendDlgItemMessage(hwndDlg, IDC_GOTO_HIDE_OFFSET, BM_SETCHECK, (WPARAM) options.bHideGotoOffset, 0);
 		SendDlgItemMessage(hwndDlg, IDC_RECENT, BM_SETCHECK, (WPARAM) options.bRecentOnOwn, 0);
 		SendDlgItemMessage(hwndDlg, IDC_SMARTHOME, BM_SETCHECK, (WPARAM) options.bNoSmartHome, 0);
 		SendDlgItemMessage(hwndDlg, IDC_NO_SAVE_EXTENSIONS, BM_SETCHECK, (WPARAM) options.bNoAutoSaveExt, 0);
@@ -2342,7 +2342,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			nTmp = _ttoi(szInt);
 			options.nMaxMRU = nTmp;
 
-			options.bHideGotoOffset = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_GOTO_OFFSET, BM_GETCHECK, 0, 0));
+			options.bHideGotoOffset = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_GOTO_HIDE_OFFSET, BM_GETCHECK, 0, 0));
 			options.bRecentOnOwn = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RECENT, BM_GETCHECK, 0, 0));
 			options.bNoSmartHome = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_SMARTHOME, BM_GETCHECK, 0, 0));
 			options.bNoAutoSaveExt = (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_NO_SAVE_EXTENSIONS, BM_GETCHECK, 0, 0));
@@ -2429,7 +2429,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			GetWindowRect(GetDlgItem(hwndDlg, IDC_BUTTON_FORMAT), &rc);
 			enc = cp = (WORD)newFormat;
 			lfmt = (newFormat >> 16) & 0xfff;
-			if (newFormat >> 31) enc = FC_ENC_CUSTOM;
+			if (newFormat >> 31) enc = FC_ENC_CODEPAGE;
 
 			mio.cbSize = sizeof(MENUITEMINFO);
 			mio.fMask = MIIM_TYPE | MIIM_ID;
@@ -2443,11 +2443,11 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 					SetMenuItemInfo(hsub, u, TRUE, &mio);
 				}
 			}
-			if (enc == FC_ENC_CUSTOM){
+			if (enc == FC_ENC_CODEPAGE){
 				PrintCPName(cp, szInt, GetString(ID_ENC_CODEPAGE));
 				mio.fType = MFT_STRING;
 				mio.dwTypeData = szInt;
-				mio.wID = enc = ID_ENC_CODEPAGE;
+				mio.wID = ID_ENC_CODEPAGE;
 				InsertMenuItem(hsub, v, TRUE, &mio);
 			}
 			CheckMenuRadioItem(hsub, ID_ENC_BASE, ID_ENC_END, enc % 1000 + ID_MENUCMD_BASE, MF_BYCOMMAND);
@@ -2459,7 +2459,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 					break;
 				default:
 					v = v % 1000 + FC_BASE;
-					if (v > FC_LFMT_UNKNOWN && v <= FC_LFMT_MIXED) v <<= 16;
+					if (v >= FC_LFMT_BASE && v < FC_LFMT_END) v <<= 16;
 					if (!(v & 0x8000ffff)) v |= newFormat & 0x8000ffff;
 					if (!(v & 0xfff0000)) v |= newFormat & 0xfff0000;
 					newFormat = v;
@@ -3407,16 +3407,16 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					case ID_PASTE_MUL:
 						gfr.lpTemplateName = MAKEINTRESOURCE(IDD_INSERT);
 						hdlgFind = FindText(&gfr);
-						SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_LIMITTEXT, (WPARAM)MAXINSERT, 0);
+						SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_LIMITTEXT, (WPARAM)MAXINSERT, 0);
 						SendDlgItemMessage(hdlgFind, IDC_NUM, EM_LIMITTEXT, (WPARAM)9, 0);
 						SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_INSERT, BM_SETCHECK, (WPARAM) bCloseAfterInsert, 0);
 						for (i = 0; i < NUMINSERTS; ++i)
 							if (SCNUL(InsertArray[i])[0])
-								SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_ADDSTRING, 0, (LPARAM)InsertArray[i]);
-						if (options.bCurrentFindFont) SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, WM_SETFONT, (WPARAM)hfontfind, 0);
+								SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_ADDSTRING, 0, (LPARAM)InsertArray[i]);
+						if (options.bCurrentFindFont) SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, WM_SETFONT, (WPARAM)hfontfind, 0);
 						if (SCNUL(szInsert)[0]) {
-							SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, WM_SETTEXT, 0, (LPARAM)szInsert);
-							SendDlgItemMessage(hdlgFind, ID_DROP_INSERT, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
+							SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, WM_SETTEXT, 0, (LPARAM)szInsert);
+							SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
 						}
 						SendDlgItemMessage(hdlgFind, IDC_NUM, WM_SETTEXT, 0, (LPARAM)_T("1"));
 						break;
@@ -3425,11 +3425,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						hdlgFind = ReplaceText(&gfr);
 						if (SetWindowTheme) SetWindowTheme(GetDlgItem(hdlgFind, IDC_ESCAPE2),_T(""),_T(""));
 						SendDlgItemMessage(hdlgFind, IDC_ESCAPE2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
-						SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_LIMITTEXT, (WPARAM)MAXFIND, 0);
+						SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_LIMITTEXT, (WPARAM)MAXFIND, 0);
 						for (i = 0; i < NUMFINDS; ++i)
 							if (SCNUL(ReplaceArray[i])[0])
-								SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_ADDSTRING, 0, (LPARAM)ReplaceArray[i]);
-						if (options.bCurrentFindFont) SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, WM_SETFONT, (WPARAM)hfontfind, 0);
+								SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_ADDSTRING, 0, (LPARAM)ReplaceArray[i]);
+						if (options.bCurrentFindFont) SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, WM_SETFONT, (WPARAM)hfontfind, 0);
 #ifdef USE_RICH_EDIT
 						if (SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)cr.cpMin) == SendMessage(client, EM_EXLINEFROMCHAR, 0, (LPARAM)cr.cpMax))
 #else
@@ -3439,8 +3439,8 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						else
 							SendDlgItemMessage(hdlgFind, IDC_RADIO_SELECTION, BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
 						if (SCNUL(szReplaceText)[0]) {
-							SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, WM_SETTEXT, 0, (LPARAM)szReplaceText);
-							SendDlgItemMessage(hdlgFind, ID_DROP_REPLACE, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
+							SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, WM_SETTEXT, 0, (LPARAM)szReplaceText);
+							SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
 						}
 						SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_REPLACE, BM_SETCHECK, (WPARAM) bCloseAfterReplace, 0);
 						break;
@@ -3456,14 +3456,14 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				switch (LOWORD(wParam)) {
 					case ID_REPLACE:
 					case ID_FIND:
-						SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_LIMITTEXT, (WPARAM)MAXFIND, 0);
+						SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_LIMITTEXT, (WPARAM)MAXFIND, 0);
 						for (i = 0; i < NUMFINDS; ++i)
 							if (SCNUL(FindArray[i])[0])
-								SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_ADDSTRING, 0, (WPARAM)FindArray[i]);
-						if (options.bCurrentFindFont) SendDlgItemMessage(hdlgFind, ID_DROP_FIND, WM_SETFONT, (WPARAM)hfontfind, 0);
+								SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_ADDSTRING, 0, (WPARAM)FindArray[i]);
+						if (options.bCurrentFindFont) SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, WM_SETFONT, (WPARAM)hfontfind, 0);
 						if (SCNUL(szFindText)[0]) {
-							SendDlgItemMessage(hdlgFind, ID_DROP_FIND, WM_SETTEXT, 0, (LPARAM)szFindText);
-							SendDlgItemMessage(hdlgFind, ID_DROP_FIND, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
+							SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, WM_SETTEXT, 0, (LPARAM)szFindText);
+							SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
 						}
 						break;
 				}
@@ -3519,7 +3519,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				szTmp = NULL;
 				l = 0;
 				base = 0;
-				enc = (nFormat >> 31 ? FC_ENC_CUSTOM : (WORD)nFormat);
+				enc = (nFormat >> 31 ? FC_ENC_CODEPAGE : (WORD)nFormat);
 
 				switch(LOWORD(wParam)){
 					case ID_MYEDIT_CUT:
@@ -3588,7 +3588,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_PASTE_HEX:
 				szTmp2 = NULL;
 				base = 0;
-				enc = ((sl = nFormat) >> 31 ? FC_ENC_CUSTOM : (WORD)nFormat);
+				enc = ((sl = nFormat) >> 31 ? FC_ENC_CODEPAGE : (WORD)nFormat);
 
 				if (!OpenClipboard(NULL)) {
 					ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
@@ -4672,6 +4672,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	HACCEL accel = NULL;
 	int left, top, width, height;
 	int nCmdLen;
+	HMODULE hmod;
 	HMENU hmenu;
 	MENUITEMINFO mio;
 	CHARRANGE crLineCol = {-1, -1};
@@ -4863,21 +4864,17 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		}
 	}
 
-	{
-		HMODULE hm;
-		hm = GetModuleHandleA("user32.dll");
-		SetLWA = (SLWA)(GetProcAddress(hm, "SetLayeredWindowAttributes"));
-		if (SetLWA) {
-			SetLWA(hwnd, 0, 255, LWA_ALPHA);
-		} else {
-			HMENU hsub = GetSubMenu(GetMenu(hwnd), 3);
-			DeleteMenu(hsub, 4, MF_BYPOSITION);
-		}
-		hm = GetModuleHandleA("uxtheme.dll");
-		SetWindowTheme = (SWT)(GetProcAddress(hm, "SetWindowTheme"));
+	hmod = GetModuleHandleA("user32.dll");
+	SetLWA = (SLWA)(GetProcAddress(hmod, "SetLayeredWindowAttributes"));
+	if (SetLWA) {
+		SetLWA(hwnd, 0, 255, LWA_ALPHA);
+	} else {
+		HMENU hsub = GetSubMenu(GetMenu(hwnd), 3);
+		DeleteMenu(hsub, 4, MF_BYPOSITION);
 	}
-
-	accel = LoadAccelerators(hinstLang, MAKEINTRESOURCE(IDR_ACCELERATOR));
+	hmod = GetModuleHandleA("uxtheme.dll");
+	SetWindowTheme = (SWT)(GetProcAddress(hmod, "SetWindowTheme"));
+	accel = LoadAccelerators(hinstThis, MAKEINTRESOURCE(IDR_ACCELERATOR));
 	if (!accel) {
 		ReportLastError();
 		return FALSE;
@@ -4890,7 +4887,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		return FALSE;
 	}
 #endif
-
 	CreateClient(hwnd, NULL, bWordWrap);
 	if (!client) {
 		ReportLastError();

@@ -487,7 +487,7 @@ DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty, LPBYTE
 	WORD enc, cp;
 	if (!buf || !*buf || !format || !bytes) return 0;
 	cp = (*format >> 31 ? (WORD)*format : 0);
-	enc = cp ? FC_ENC_CUSTOM : (WORD)*format;
+	enc = cp ? FC_ENC_CODEPAGE : (WORD)*format;
 	if (!cp || enc == FC_ENC_ANSI) cp = CP_ACP;
 	if (enc == FC_ENC_UTF16 || enc == FC_ENC_UTF16BE) {
 		chars /= 2;
@@ -519,7 +519,7 @@ DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty, LPBYTE
 				return 0;
 			} else if (!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, *buf, chars, (LPWSTR)newbuf, bytes)){
 				if (!MultiByteToWideChar(cp, 0, *buf, chars, (LPWSTR)newbuf, bytes)){
-					if (enc == FC_ENC_CUSTOM) {
+					if (enc == FC_ENC_CODEPAGE) {
 						cp = CP_ACP;
 						*format &= 0xfff0000;
 						*format |= FC_ENC_ANSI;
@@ -556,7 +556,7 @@ DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* t
 	LPBYTE newbuf = NULL;
 	if (!buf || !*buf || !chars) return 0;
 	cp = (format >> 31 ? (WORD)format : 0);
-	enc = cp ? FC_ENC_CUSTOM : (WORD)format;
+	enc = cp ? FC_ENC_CODEPAGE : (WORD)format;
 	if (!cp || enc == FC_ENC_ANSI) cp = CP_ACP;
 	if (enc == FC_ENC_UTF16 || enc == FC_ENC_UTF16BE) {
 #ifndef UNICODE
@@ -583,7 +583,7 @@ DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* t
 				ReportLastError();
 				return 0;
 			} else if (!WideCharToMultiByte(cp, 0, (LPTSTR)*buf, chars, (LPSTR)newbuf, bytes, NULL, (cp != CP_UTF8 && truncated ? truncated : NULL))) {
-				if (enc == FC_ENC_CUSTOM) {
+				if (enc == FC_ENC_CODEPAGE) {
 					cp = CP_ACP;
 					ERROROUT(GetString(IDS_ENC_FAILED));
 					continue;
