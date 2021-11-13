@@ -73,7 +73,8 @@ ID mapping:
 			44500-44899		 (rsvd for new non-menu commands)
 			44900-44999		3.7 remapped
 
-	45000-59999		 (unused - rsvd)
+	45000-45999		internal commands (non-menu && non-accel) 3.7+
+	46000-59999		 (unused - rsvd)
 	60000-64999		nonlocalized object IDs
 			60000			IDR_ACCELERATOR - not localized starting 3.7+
 			61000-61999		IDI_/IDC_/IDB_ graphics - not localized
@@ -686,6 +687,7 @@ ID mapping:
 #define ID_CONTEXTMENU					44983	//3.7: moved from 40083. not associated with a string. used as ID for function inserted into main menu dynamically
 #define ID_SCROLLUP						44985	//3.7: moved from 40085. not associated with a string. used as ID for function inserted into main menu dynamically
 #define ID_SCROLLDOWN					44986	//3.7: moved from 40086. not associated with a string. used as ID for function inserted into main menu dynamically
+#define ID_INT_GETCLIPBOARD				45001
 
 /* nonlocalized object IDs */
 #define IDR_ACCELERATOR					60000	//3.7: moved from 104. Starting 3.7+ accelerators are not localized!

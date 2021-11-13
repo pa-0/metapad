@@ -58,4 +58,6 @@ DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* t
 
 void ExpandDifMap(LPVOID map, WORD width, DWORD len);
 
+void EvaHash(LPBYTE buf, DWORD len, LPBYTE hash);
+
 #endif
