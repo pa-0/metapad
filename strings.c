@@ -35,8 +35,9 @@
 #include "include/resource.h"
 #include "include/globals.h"
 #include "include/macros.h"
+#include "include/encoding.h"
 
-#define NUMSTRINGS 475
+//#define NUMSTRINGS 475
 static const CHAR strings[] = ""
 /*		1		IDS_VERSION_SYNCH				*/	"\0""3.7"
 /*		2		IDS_PLUGIN_LANGUAGE				*/	"\0"
@@ -572,8 +573,8 @@ static const CHAR strings[] = ""
 /*		40224	ID_ESCAPE_RAND					*/	"\0Random Character"
 /*		40225	ID_ESCAPE_WILD0					*/	"\0Any 0+ Characters"
 /*		40226	ID_ESCAPE_WILD1					*/	"\0Any 1+ Characters"
-/*		40227	ID_ESCAPE_REP0					*/	"\00+ of Preceding Character"
-/*		40228	ID_ESCAPE_REP1					*/	"\01+ of Preceding Character"
+/*		40227	ID_ESCAPE_REP0					*/	"\0""0+ of Preceding Character"
+/*		40228	ID_ESCAPE_REP1					*/	"\0""1+ of Preceding Character"
 /*		41110	IDM_MENU_BASE+10				*/	"\0&File"
 /*		41111	IDM_MENU_BASE+11				*/	"\0&Launch"
 /*		41112	IDM_MENU_BASE+12				*/	"\0F&ile Format"
@@ -594,7 +595,7 @@ static const CHAR strings[] = ""
 	Import:	\n->\n/*\t		(~A->\t~A)		~A\t->		~B\t->\t\t\t*\/\t"\\0		\n->"\n		`->		(*\/->\t*\/)	(\t*\/->*\/)
 	Export:
 */
-static WORD stringsidx[NUMSTRINGS] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,7,1,9,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,216,0,47,0,0,0,0,0,0,3,0,0,3,0,0,0,0,0,0,0,0,3,0,80,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,74,0,243,0,10,1,21,2,0,1,1,0,29,1,7,0,0,0,0,0,0,447,0,4,0,1,0,0,0,486,0,7,0,39,0,18,0,0,6,19091,0,4,13,0,0,0,0,0,0,1,2,1176,0,0,0,1,0,25,2,2,0,0,0,6,14,1519,0,53,0,14,28,0,21,0,0,475,0,0,0,69,60,4,0,0,0,0,0,0,0,0,9,0,6,0,0,0,0,0,0,0,0,0,0,0,322,0,6105,1,1,2,1,2,1,78,98,999,8,8,0,1689,790,21,4,0,1,70,1,1,1,92,2,1,4896,0,0,4,1,0,0,3,2,0,1,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,4,0,1,0,0,0,0,1,0,0,2,0,0,0,1,3,0,0,0,0,2,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,0,5,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,881,0,0,0,6,0,0,0,0,5,9,9,60,0,2987};
+static WORD stringsidx[] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,7,1,9,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,216,0,47,0,0,0,0,0,0,3,0,0,3,0,0,0,0,0,0,0,0,3,0,80,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,74,0,243,0,10,1,21,2,0,1,1,0,29,1,7,0,0,0,0,0,0,447,0,4,0,1,0,0,0,486,0,7,0,39,0,18,0,0,6,19091,0,4,13,0,0,0,0,0,0,1,2,1176,0,0,0,1,0,25,2,2,0,0,0,6,14,1519,0,53,0,14,28,0,21,0,0,475,0,0,0,69,60,4,0,0,0,0,0,0,0,0,9,0,6,0,0,0,0,0,0,0,0,0,0,0,322,0,6105,1,1,2,1,2,1,78,98,999,8,8,0,1689,790,21,4,0,1,70,1,1,1,92,2,1,4896,0,0,4,1,0,0,3,2,0,1,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,4,0,1,0,0,0,0,1,0,0,2,0,0,0,1,3,0,0,0,0,2,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,0,5,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,881,0,0,0,6,0,0,0,0,5,9,9,60,0,2987};
 
 
 #ifdef _DEBUG
@@ -603,28 +604,29 @@ static WORD stringsidx[NUMSTRINGS] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,
 	TCHAR s[16];
 	LONG i, l;
 	SSTRCPYA(buf, _T(" "), 1024*1024);
-
-
+	for (i=l=0; i <   ; i++){
+		wsprintf(s, _T("\n%d"),  );
+		lstrcpy(buf+l, s);
+		l += lstrlen(s);
+	}
 	DUMP(buf, 1024*1024, NULL);
 }*/
 #endif
 
-LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, const WORD* dictidx, WORD* dictofs, LPTSTR dictcache, WORD* ofspop, LPCTSTR def){
+LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, WORD* dictidx, WORD* dictofs, LPTSTR dictcache, WORD* ofspop, LPCTSTR def){
 	WORD i, j, idx;
 	LPSTR sp;
 	LPTSTR cp;
-	for (idx = 0; idx < total; idx++) {
-		if (dictidx[idx] == uID)
-			break;
+	if (dictidx[0]>=dictidx[1])
+		ExpandDifMap(dictidx, sizeof(*dictidx), total);
+	for (i=0, j=total, idx=total/2; i<j; idx = ((j-i)/2)+i){
+		if (dictidx[idx] > uID)
+			j = idx; 
+		else if (dictidx[idx] < uID)
+			i = idx+1;
+		else break;
 	}
-/*{
-		DWORD o, l;
-		//if (idx == 240) _printids();
-		//_printids();
-		DUMP(o, l, NULL);
-		exit(0);
-	}*/
-	if (idx >= total) return def;
+	if (i >= j) return def;
 	for (i = *ofspop, j = dictofs[i], sp = dict+j, cp = dictcache+j; i <= idx; i++) {
 		for (j=1; *sp; j++)
 			*cp++ = *sp++;
@@ -636,7 +638,7 @@ LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, const WORD* dictidx,
 }
 
 LPCTSTR GetString(WORD uID) {
-	static WORD ofs[NUMSTRINGS] = {0}, ofspop = 0;
+	static WORD ofs[ARRLEN(stringsidx)] = {0}, ofspop = 0;
 	static TCHAR strcache[sizeof(strings)];
 	static LPTSTR szRsrc = NULL;
 	LPTSTR sz = NULL;
@@ -645,5 +647,18 @@ LPCTSTR GetString(WORD uID) {
 		LoadString(hinstLang, uID, szRsrc, MAXSTRING);
 		return szRsrc;
 	}
-	return GetStringEx(uID, NUMSTRINGS, (LPSTR)strings, stringsidx, ofs, strcache, &ofspop, _T(""));
+	return GetStringEx(uID, ARRLEN(stringsidx), (LPSTR)strings, stringsidx, ofs, strcache, &ofspop, _T(""));
+}
+
+
+HMENU LocalizeMenu(WORD mID, HINSTANCE src, HINSTANCE plugin) {
+	HMENU menu, pmenu;
+	if (!(menu = LoadMenu(src, MAKEINTRESOURCE(mID))))
+		return menu;
+	if (plugin && src != plugin && (pmenu = LoadMenu(plugin, MAKEINTRESOURCE(mID)))){
+
+
+	}
+
+	return menu;
 }

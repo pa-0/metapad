@@ -2243,12 +2243,12 @@ BOOL CALLBACK AddFavDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 }
 
 BOOL CALLBACK CPDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	LONG i;
+	LONG i, j;
 	TCHAR buf[64], buf2[128];
 	switch (uMsg) {
 		case WM_INITDIALOG:
 			CenterWindow(hwndDlg);
-			for (i=0; i < NUMKNOWNCPS; i++) {
+			for (i=0, j=GetNumKnownCPs(); i < j; i++) {
 				PrintCPName((WORD)i+100, buf, _T("%d"));
 				SendDlgItemMessage(hwndDlg, IDC_DATA, CB_ADDSTRING, 0, (LPARAM)buf);
 			}
@@ -4673,7 +4673,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	int left, top, width, height;
 	int nCmdLen;
 	HMODULE hmod;
-	HMENU hmenu;
+	HMENU hmenu, hsub;
 	MENUITEMINFO mio;
 	CHARRANGE crLineCol = {-1, -1};
 	LPTSTR szCmdLine;
@@ -4818,7 +4818,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
 	LoadMenusAndData();
 	FixFilterString(szCustomFilter);
-	
 	if (options.bSaveWindowPlacement || options.bStickyWindow)
 		LoadWindowPlacement(&left, &top, &width, &height, &nCmdShow);
 	else {
@@ -4826,7 +4825,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		nCmdShow = SW_SHOWNORMAL;
 	}
 	
-	hwnd = CreateWindowEx(
+	if (!(hwnd = CreateWindowEx(
 		WS_EX_ACCEPTFILES,
 		GetString(STR_METAPAD),
 		GetString(STR_CAPTION_FILE),
@@ -4835,33 +4834,26 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		NULL,
 		NULL,
 		hInstance,
-		NULL);
-
-	if (!hwnd) {
+		NULL))) {
 		ReportLastError();
 		return FALSE;
 	}
-	
 	if (!bSkipLanguagePlugin)
 		FindAndLoadLanguagePlugin();
 
-	{
-		HMENU hm = LoadMenu(hinstLang, MAKEINTRESOURCE(IDR_MENU));
-		if (hm == NULL) {
-			ReportLastError();
-			return FALSE;
-		}
-		SetMenu(hwnd, hm);
-		if (hinstLang != hinstThis) {
-			HMENU hsub = GetSubMenu(hm, 4);
-			MENUITEMINFO mio;
-			mio.cbSize = sizeof(MENUITEMINFO);
-			mio.fMask = MIIM_TYPE | MIIM_ID;
-			mio.fType = MFT_STRING;
-			mio.wID = ID_ABOUT_PLUGIN;
-			mio.dwTypeData = (LPTSTR)GetString(IDS_MENU_LANGUAGE_PLUGIN);
-			InsertMenuItem(hsub, 1, TRUE, &mio);
-		}
+	if (!(hmenu = LocalizeMenu(IDR_MENU, hinstThis, hinstLang))){
+		ReportLastError();
+		return FALSE;
+	}
+	SetMenu(hwnd, hmenu);
+	if (hinstLang != hinstThis) {
+		hsub = GetSubMenu(hmenu, 4);
+		mio.cbSize = sizeof(MENUITEMINFO);
+		mio.fMask = MIIM_TYPE | MIIM_ID;
+		mio.fType = MFT_STRING;
+		mio.wID = ID_ABOUT_PLUGIN;
+		mio.dwTypeData = (LPTSTR)GetString(IDS_MENU_LANGUAGE_PLUGIN);
+		InsertMenuItem(hsub, 1, TRUE, &mio);
 	}
 
 	hmod = GetModuleHandleA("user32.dll");
@@ -4869,7 +4861,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	if (SetLWA) {
 		SetLWA(hwnd, 0, 255, LWA_ALPHA);
 	} else {
-		HMENU hsub = GetSubMenu(GetMenu(hwnd), 3);
+		hsub = GetSubMenu(GetMenu(hwnd), 3);
 		DeleteMenu(hsub, 4, MF_BYPOSITION);
 	}
 	hmod = GetModuleHandleA("uxtheme.dll");
@@ -4895,7 +4887,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	SetClientFont(bPrimaryFont);
 	//uFindReplaceMsg = RegisterWindowMessage(FINDMSGSTRING);
 
-	hmenu = GetMenu(hwnd);
 	mio.cbSize = sizeof(MENUITEMINFO);
 	mio.fMask = MIIM_STATE;
 	if (bWordWrap) {
