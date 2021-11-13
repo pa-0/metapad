@@ -3,6 +3,89 @@
 // Used by metapad.rc
 //
 
+/*
+ID mapping:
+	(*'ed IDs are grandfathered in from v3.6 and cannot be changed without breaking legacy language plugins)
+	(s'ed IDs are associated with a string in the strings.c string table)
+	(x'ed IDs are nonlocalized)
+	(starting 3.7+ all IDs MUST be unique - all conflicts have been resolved. (Does not apply to _BASE and _END range markers). Please don't regen this file with automated tools!)
+*s	    1-  111		IDS_ - strings (3.6- formerly defined in .rc) with some exceptions:
+*			  101			IDD_ABOUT - NOT associated with a string
+* 			  105-  111		 (unused - rsvd)
+
+*s	  112-  128		IDD_ - dialog titles (all associated with a string except 113)
+*	  129-  131		IDR_ - menus (NOT associated with a string but must still match up to language plugin rsrc IDs)
+	  132-  198		 (unused - rsvd)
+ s	  199-  499		IDS_ - strings
+ s	  		  199-  249		various strings (3.7+)
+			  250-  439		 (unused - rsvd for new strings)
+ s			  440-  449		encoding.c strings (3.7+)
+ s            450-  499		formerly defined as literals in 3.6-
+
+ sx	  500-  599		IDS_/STR_ nonlocalized strings
+ sx			  500-  519		formerly defined as literals in 3.6-
+  x	  		  520-  599		(rsvd for nonlocalized strings)
+
+ sx	  600-  699		IDSS_ - setting names for storing settings in registry or ini file. Used by settings_load/save.c
+ s	  700-  799		IDSD_ - setting defaults strings (3.7+). Localizable.
+	  800-  999		 (unused - rsvd)
+
+
+*s	 1540- 1599		IDD_ - dialog titles
+*s			 1540- 1550		3.6- existing
+ s			 1551- 1559		3.7+ new
+			 1560- 1599		 (rsvd for dialog titles)
+
+	 1600- 1999		 (unused - rsvd)
+*s	 2000- 2999		FC_ - constants for various operational flags which are also associated with a string. Currently used by:
+*s							Line format and encoding ids - associated with a string and ID_ menu commands in the 40xxx range
+
+	 3000-39999		 (unused - rsvd)
+*s	40000-40999		ID_ menu commands
+*s			40002-40109		3.6- existing
+ s			40110-40199		3.7 remapped
+ s			40200-40299		3.7+ new
+			40300-40899		 (rsvd for menu commands)
+
+ s	41000-41999		IDM_ menu by-position text. Currently used for menu items which do not / cannot have IDs assigned.
+ 							Matched by (parent menu IDR_ id minus IDR_BASE (129)) times 100 plus IDM_BASE (41000) plus position*10 plus submenu-position.
+			41000-41099		 (unused - rsvd for IDR_ESCAPE_SEQUENCES)
+ s			41100-41199		for IDR_MENU (main menu)
+ s			41200-41299		for IDR_POPUP (right-click menu)
+			41300-41999		 (rsvd for new menus)
+
+	42000-43999		 (unused - rsvd)
+*	44000-44999		ID_ non-menu / accel / manually-inserted commands, with some exceptions:
+*			44000-44499		3.6- existing
+*s					44200		ID_TRANSPARENT menu command
+			44500-44899		 (rsvd for new non-menu commands)
+			44900-44999		3.7 remapped
+
+	45000-59999		 (unused - rsvd)
+	60000-64999		object IDs
+			60000			IDR_ACCELERATOR - not localized starting 3.7+
+			61000-61999		IDI_/IDC_/IDB_ graphics - not localized
+
+	65000-65535		 (unused - rsvd)
+
+
+Localization info:
+	ID_ menu commands
+	IDD_ dialog titles are matched by exact ID
+	IDR_ menus are matched by exact ID							[  129-  131]
+	IDS_ strings are matched by exact ID
+	I
+
+
+
+Nonlocalized:
+	ID_ accel commands which are not present in any menu
+	IDB_/IDC_/IDI graphics										[]
+	STR_ strings (3.6- formerly defined as literals)			[  500-  512]
+
+
+*/
+
 #define IDS_VERSION_SYNCH               1
 #define IDS_PLUGIN_LANGUAGE             2
 #define IDS_PLUGIN_RELEASE              3
@@ -22,7 +105,6 @@
 #define IDS_READONLY_WARNING            17
 #define IDS_PRINTER_NOT_FOUND           18
 #define IDS_PRINT_INIT_ERROR            19
-#define IDD_FILE                        20
 #define IDS_PRINT_ABORT_ERROR           20
 #define IDS_PRINT_START_ERROR           21
 #define IDS_DRAWTEXT_ERROR              22
@@ -103,30 +185,22 @@
 #define IDS_PLUGIN_MISMATCH_ERROR       99
 #define IDS_ALLRIGHTS                   100
 #define IDD_ABOUT                       101
-#define ID_FIND_PREV_WORD               102
 #define IDS_DEFAULT_FILTER_TEXT         102
 #define IDS_NEW_FILE                    103
-#define IDR_ACCELERATOR                 104
-#define ID_ABOUT_PLUGIN                 104
 #define IDS_MACRO_LENGTH_ERROR          104
 //#define IDS_NEW_INSTANCE                105
-#define IDI_PAD                         109
-#define IDI_EYE                         110
+
 #define IDD_PROPPAGE_GENERAL            112
 #define IDD_ABORT_PRINT                 113
 #define IDD_GOTO                        114
-#define IDC_MYHAND                      122
 #define IDD_PROPPAGE_VIEW               124
-#define IDB_TOOLBAR                     126
 #define IDD_FAV_NAME                    128
+
+#define IDR_BASE						129
 #define IDR_ESCAPE_SEQUENCES            129
 #define IDR_MENU                        130
-#define IDB_DROP_ARROW                  131
 #define IDR_POPUP                       131
-//#define IDS_METAPAD						150
-#define IDS_OK							151
-//#define IDS_CANCEL						152
-//#define IDS_CLOSE						153
+
 #define IDS_ERROR                       199
 #define IDS_ERROR_MSG                   200
 #define IDS_UNICODE_SAVE_TRUNCATION     201
@@ -153,126 +227,119 @@
 #define IDS_SETDEF_FORMAT_WARN			222
 #define IDS_ENC_BAD						223
 #define IDS_ENC_FAILED					224
-#define IDS_ENC_CUSTOM_CAPTION			225
-#define NONLOCALIZED_START				300
-#define NONLOCALIZED_END				320
-#define	STR_METAPAD						300
-#define	STR_CAPTION_FILE				301
-#define	STR_ABOUT						302
-#define	STR_FAV_FILE					306
-#define	STR_INI_FILE					307
-#define	STR_URL							308
-#define	STR_REGKEY						309
-#define	STR_FAV_APPNAME					310
-#define	STR_OPTIONS						311
-#define	STR_COPYRIGHT					312
-#define	IDS_MIGRATED					320
-#define	IDS_DECODEBASE_BADLEN			321
-#define	IDS_DECODEBASE_BADCHAR			322
-#define	IDS_PLUGIN_ERRFIND				323
-#define	IDS_PLUGIN_ERR					324
-#define	IDS_STATFMT_BYTES				325
-#define	IDS_STATFMT_SEL					326
-#define	IDS_STATFMT_LINE				327
-#define	IDS_STATFMT_COL					328
-#define	IDS_STATFMT_INS					329
-#define	IDS_STATFMT_OVR					330
-#define	IDS_FILTER_EXEC					331
-#define	IDS_FILTER_PLUGIN				332
-#define	IDSS_WSTATE						340
-#define	IDSS_WLEFT						341
-#define	IDSS_WTOP						342
-#define	IDSS_WWIDTH						343
-#define	IDSS_WHEIGHT					344
-#define	IDSS_MRU						345
-#define	IDSS_MRUTOP						346
-#define	IDSS_HIDEGOTOOFFSET				347
-#define	IDSS_SYSTEMCOLOURS				348
-#define	IDSS_SYSTEMCOLOURS2				349
-#define	IDSS_NOSMARTHOME				350
-#define	IDSS_NOAUTOSAVEEXT				351
-#define	IDSS_CONTEXTCURSOR				352
-#define	IDSS_CURRENTFINDFONT			353
-#define	IDSS_PRINTWITHSECONDARYFONT		354
-#define	IDSS_NOSAVEHISTORY				355
-#define	IDSS_NOFINDAUTOSELECT			356
-#define	IDSS_RECENTONOWN				357
-#define	IDSS_DONTINSERTTIME				358
-#define	IDSS_NOWARNINGPROMPT			359
-#define	IDSS_UNFLATTOOLBAR				360
-#define	IDSS_STICKYWINDOW				361
-#define	IDSS_READONLYMENU				362
-#define	IDSS_SELECTIONMARGINWIDTH		363
-#define	IDSS_MAXMRU						364
-#define	IDSS_FORMAT						365
-#define	IDSS_TRANSPARENTPCT				366
-#define	IDSS_NOCAPTIONDIR				367
-#define	IDSS_AUTOINDENT					368
-#define	IDSS_INSERTSPACES				369
-#define	IDSS_FINDAUTOWRAP				370
-#define	IDSS_QUICKEXIT					371
-#define	IDSS_SAVEWINDOWPLACEMENT		372
-#define	IDSS_SAVEMENUSETTINGS			373
-#define	IDSS_SAVEDIRECTORY				374
-#define	IDSS_LAUNCHCLOSE				375
-#define	IDSS_NOFAVES					376
-#define	IDSS_DEFAULTPRINTFONT			377
-#define	IDSS_ALWAYSLAUNCH				378
-#define	IDSS_LINKDOUBLECLICK			379
-#define	IDSS_HIDESCROLLBARS				380
-#define	IDSS_SUPPRESSUNDOBUFFERPROMPT	381
-#define	IDSS_LAUNCHSAVE					382
-#define	IDSS_TABSTOPS					383
-#define	IDSS_NPRIMARYFONT				384
-#define	IDSS_NSECONDARYFONT				385
-#define	IDSS_PRIMARYFONT				388
-#define	IDSS_SECONDARYFONT				389
-#define	IDSS_BROWSER					390
-#define	IDSS_BROWSER2					391
-#define	IDSS_LANGPLUGIN					392
-#define	IDSS_FAVDIR						393
-#define	IDSS_ARGS						394
-#define	IDSS_ARGS2						395
-#define	IDSS_QUOTE						396
-#define	IDSS_CUSTOMDATE					397
-#define	IDSS_CUSTOMDATE2				398
-#define	IDSS_MACROARRAY					399
-#define	IDSS_BACKCOLOUR					400
-#define	IDSS_FONTCOLOUR					401
-#define	IDSS_BACKCOLOUR2				402
-#define	IDSS_FONTCOLOUR2				403
-#define	IDSS_MARGINS					404
-#define	IDSS_WORDWRAP					405
-#define	IDSS_FONTIDX					406
-#define	IDSS_SMARTSELECT				407
-#define	IDSS_HYPERLINKS					408
-#define	IDSS_SHOWSTATUS					409
-#define	IDSS_SHOWTOOLBAR				410
-#define	IDSS_ALWAYSONTOP				411
-#define	IDSS_TRANSPARENT				412
-#define	IDSS_CLOSEAFTERFIND				413
-#define	IDSS_CLOSEAFTERREPLACE			414
-#define	IDSS_CLOSEAFTERINSERT			415
-#define	IDSS_NOFINDHIDDEN				416
-#define	IDSS_FILEFILTER					417
-#define	IDSS_FINDARRAY					418
-#define	IDSS_REPLACEARRAY				419
-#define	IDSS_INSERTARRAY				420
-#define	IDSS_LASTDIRECTORY				421
-#define	IDSD_QUOTE						451
-#define	IDSD_CUSTOMDATE					452
-#define ID_ENC_UNKNOWN					480
-#define ID_ENC_ANSI						481
-#define ID_ENC_UTF8						482
-#define ID_ENC_UTF16					483
-#define ID_ENC_UTF16BE					484
-#define ID_ENC_BIN						485
-#define ID_ENC_CUSTOM					489
-#define ID_LFMT_UNKNOWN					490
-#define ID_LFMT_DOS						491
-#define ID_LFMT_UNIX					492
-#define ID_LFMT_MAC						493
-#define ID_LFMT_MIXED					494
+
+#define	IDS_DECODEBASE_BADLEN			441
+#define	IDS_DECODEBASE_BADCHAR			442
+#define	IDS_MIGRATED					490
+#define	IDS_STATFMT_BYTES				491
+#define	IDS_STATFMT_SEL					492
+#define	IDS_STATFMT_LINE				493
+#define	IDS_STATFMT_COL					494
+#define	IDS_STATFMT_INS					495
+#define	IDS_STATFMT_OVR					496
+
+#define NONLOCALIZED_BASE				500
+#define NONLOCALIZED_END				699
+#define	STR_METAPAD						500
+#define	STR_CAPTION_FILE				501
+#define	STR_ABOUT						502
+#define	STR_FAV_FILE					506
+#define	STR_INI_FILE					507
+#define	STR_URL							508
+#define	STR_REGKEY						509
+#define	STR_FAV_APPNAME					510
+#define	STR_OPTIONS						511
+#define	STR_COPYRIGHT					512
+#define	IDS_PLUGIN_ERRFIND				513
+#define	IDS_PLUGIN_ERR					514
+#define	IDS_FILTER_EXEC					518
+#define	IDS_FILTER_PLUGIN				519
+
+#define	IDSS_WSTATE						600
+#define	IDSS_WLEFT						601
+#define	IDSS_WTOP						602
+#define	IDSS_WWIDTH						603
+#define	IDSS_WHEIGHT					604
+#define	IDSS_MRU						605
+#define	IDSS_MRUTOP						606
+#define	IDSS_HIDEGOTOOFFSET				607
+#define	IDSS_SYSTEMCOLOURS				608
+#define	IDSS_SYSTEMCOLOURS2				609
+#define	IDSS_NOSMARTHOME				610
+#define	IDSS_NOAUTOSAVEEXT				611
+#define	IDSS_CONTEXTCURSOR				612
+#define	IDSS_CURRENTFINDFONT			613
+#define	IDSS_PRINTWITHSECONDARYFONT		614
+#define	IDSS_NOSAVEHISTORY				615
+#define	IDSS_NOFINDAUTOSELECT			616
+#define	IDSS_RECENTONOWN				617
+#define	IDSS_DONTINSERTTIME				618
+#define	IDSS_NOWARNINGPROMPT			619
+#define	IDSS_UNFLATTOOLBAR				620
+#define	IDSS_STICKYWINDOW				621
+#define	IDSS_READONLYMENU				622
+#define	IDSS_SELECTIONMARGINWIDTH		623
+#define	IDSS_MAXMRU						624
+#define	IDSS_FORMAT						625
+#define	IDSS_TRANSPARENTPCT				626
+#define	IDSS_NOCAPTIONDIR				627
+#define	IDSS_AUTOINDENT					628
+#define	IDSS_INSERTSPACES				629
+#define	IDSS_FINDAUTOWRAP				630
+#define	IDSS_QUICKEXIT					631
+#define	IDSS_SAVEWINDOWPLACEMENT		632
+#define	IDSS_SAVEMENUSETTINGS			633
+#define	IDSS_SAVEDIRECTORY				634
+#define	IDSS_LAUNCHCLOSE				635
+#define	IDSS_NOFAVES					636
+#define	IDSS_DEFAULTPRINTFONT			637
+#define	IDSS_ALWAYSLAUNCH				638
+#define	IDSS_LINKDOUBLECLICK			639
+#define	IDSS_HIDESCROLLBARS				640
+#define	IDSS_SUPPRESSUNDOBUFFERPROMPT	641
+#define	IDSS_LAUNCHSAVE					642
+#define	IDSS_TABSTOPS					643
+#define	IDSS_NPRIMARYFONT				644
+#define	IDSS_NSECONDARYFONT				645
+#define	IDSS_PRIMARYFONT				648
+#define	IDSS_SECONDARYFONT				649
+#define	IDSS_BROWSER					650
+#define	IDSS_BROWSER2					651
+#define	IDSS_LANGPLUGIN					652
+#define	IDSS_FAVDIR						653
+#define	IDSS_ARGS						654
+#define	IDSS_ARGS2						655
+#define	IDSS_QUOTE						656
+#define	IDSS_CUSTOMDATE					657
+#define	IDSS_CUSTOMDATE2				658
+#define	IDSS_MACROARRAY					659
+#define	IDSS_BACKCOLOUR					660
+#define	IDSS_FONTCOLOUR					661
+#define	IDSS_BACKCOLOUR2				662
+#define	IDSS_FONTCOLOUR2				663
+#define	IDSS_MARGINS					664
+#define	IDSS_WORDWRAP					665
+#define	IDSS_FONTIDX					666
+#define	IDSS_SMARTSELECT				667
+#define	IDSS_HYPERLINKS					668
+#define	IDSS_SHOWSTATUS					669
+#define	IDSS_SHOWTOOLBAR				670
+#define	IDSS_ALWAYSONTOP				671
+#define	IDSS_TRANSPARENT				672
+#define	IDSS_CLOSEAFTERFIND				673
+#define	IDSS_CLOSEAFTERREPLACE			674
+#define	IDSS_CLOSEAFTERINSERT			675
+#define	IDSS_NOFINDHIDDEN				676
+#define	IDSS_FILEFILTER					677
+#define	IDSS_FINDARRAY					678
+#define	IDSS_REPLACEARRAY				679
+#define	IDSS_INSERTARRAY				680
+#define	IDSS_LASTDIRECTORY				681
+
+#define	IDSD_QUOTE						756
+#define	IDSD_CUSTOMDATE					757
+
+
 #define IDC_STATICX                     1005
 #define IDC_EDIT_URL                    1007
 #define IDC_EDIT_PLUGIN_RELEASE         1008
@@ -379,15 +446,46 @@
 #define ID_DROP_REPLACE                 1153
 #define ID_DROP_FIND                    1154
 #define ID_DROP_INSERT                  1155
+
+
+
 #define IDD_FIND                        1540
 #define IDD_REPLACE                     1541
 #define IDD_PAGE_SETUP                  1546
-#define IDD_PROPPAGE_A1                 1547
-#define IDD_PROPPAGE_A1_LE              1548
+#ifdef USE_RICH_EDIT
+#define IDD_PROPPAGE_A1					1547
+#else
+#define IDD_PROPPAGE_A1					1548
+#endif
 #define IDD_PROPPAGE_A2                 1549
 #define IDD_ABOUT_PLUGIN                1550
 #define IDD_INSERT						1551
 #define IDD_CP							1552
+
+#define FC_BASE							2000
+#define FC_ENC_UNKNOWN					2052	/* corresponds to ID_ENC_UNKNOWN	(40052) */
+#define FC_ENC_ANSI						2110	/* corresponds to ID_ENC_ANSI		(40110) */
+#define FC_ENC_UTF8						2109	/* corresponds to ID_ENC_UTF8		(40109), grandfathered in from 3.6- */
+#define FC_ENC_UTF16					2089	/* corresponds to ID_ENC_UTF16		(40089), grandfathered in from 3.6- */
+#define FC_ENC_UTF16BE					2090	/* corresponds to ID_ENC_UTF16BE	(40090), grandfathered in from 3.6- */
+#define FC_ENC_BIN						2111	/* corresponds to ID_ENC_BIN		(40111) */
+#define FC_ENC_CODEPAGE					2118	/* corresponds to ID_ENC_CODEPAGE	(40118) */
+#define FC_ENC_CUSTOM					2119	/* corresponds to ID_ENC_CUSTOM		(40119) */
+#define FC_LFMT_UNKNOWN					2051	/* corresponds to ID_LFMT_UNKNOWN	(40051) */
+#define FC_LFMT_DOS						2039	/* corresponds to ID_LFMT_DOS		(40039), grandfathered in from 3.6- */
+#define FC_LFMT_UNIX					2040	/* corresponds to ID_LFMT_UNIX		(40040), grandfathered in from 3.6- */
+#define FC_LFMT_MAC						2048	/* corresponds to ID_LFMT_MAC		(40048) */
+#define FC_LFMT_MIXED					2049	/* corresponds to ID_LFMT_MIXED		(40049) */
+
+
+
+
+
+#define ID_MENUCMD_BASE					40000
+#define ID_LFMT_BASE					40039
+#define ID_LFMT_END						40051
+#define ID_ENC_BASE						40052
+#define ID_ENC_END						40119
 #define ID_HELP_ABOUT                   40002
 #define ID_MYFILE_OPEN                  40003
 #define ID_MYFILE_EXIT                  40004
@@ -412,8 +510,14 @@
 #define ID_EDIT_SELECTWORD              40036
 #define ID_GOTOLINE                     40037
 #define ID_FIND_PREV                    40038
+#define ID_LFMT_DOS						40039
+#define ID_LFMT_UNIX					40040
 #define ID_INDENT                       40041
 #define ID_UNINDENT                     40043
+#define ID_LFMT_MAC						40048	/* 3.7+ */
+#define ID_LFMT_MIXED					40049	/* 3.7+ */
+#define ID_LFMT_UNKNOWN					40051	/* 3.7+ */
+#define ID_ENC_UNKNOWN					40052	/* 3.7+ */
 #define ID_RELOAD_CURRENT               40053
 #define ID_MYEDIT_REDO                  40054
 #define ID_READONLY                     40055
@@ -427,7 +531,7 @@
 #define ID_COMMIT_WORDWRAP              40065
 #define ID_SHOWFILESIZE                 40066
 #define ID_SHOWHYPERLINKS               40067
-#define IDD_MRU_1                       40068
+//#define IDD_MRU_1                       40068
 #define ID_HOME                         40070
 #define ID_PAGESETUP                    40071
 #define ID_MAKE_UPPER                   40072
@@ -445,6 +549,8 @@
 #define ID_SCROLLDOWN                   40086
 #define ID_LAUNCH_ASSOCIATED_VIEWER     40087
 #define ID_STRIP_TRAILING_WS            40088
+#define ID_ENC_UTF16					40089
+#define ID_ENC_UTF16BE					40090
 #define ID_MYEDIT_DELETE                40091
 #define ID_FAV_ADD                      40092
 #define ID_FAV_EDIT                     40093
@@ -463,7 +569,11 @@
 #define ID_SCROLLLEFT                   40106
 #define ID_SCROLLRIGHT                  40107
 #define ID_SAVE_AND_QUIT                40108
-#define ID_CONTROL_SHIFT_ENTER          40110
+#define ID_ENC_UTF8						40109
+#define ID_ENC_ANSI						40110	/* 3.7+ */
+#define ID_ENC_BIN						40111	/* 3.7+ */
+#define ID_ENC_CODEPAGE					40118	/* 3.7+ */
+#define ID_ENC_CUSTOM					40119	/* 3.7+ */
 #define ID_DATE_TIME_CUSTOM             40204
 #define ID_DATE_TIME_CUSTOM2            40205
 #define ID_PASTE_MUL                    40206
@@ -482,13 +592,18 @@
 #define ID_ESCAPE_B64SU                 40219
 #define ID_COPY_B64                     40220
 #define ID_PASTE_B64                    40221
-#define ID_BASECONV                     40222
+//#define ID_BASECONV                     40222
 #define ID_ESCAPE_ANY					40223
 #define ID_ESCAPE_RAND					40224
 #define ID_ESCAPE_WILD0					40225
 #define ID_ESCAPE_WILD1					40226
 #define ID_ESCAPE_REP0					40227
 #define ID_ESCAPE_REP1					40228
+
+#define IDM_BASE						41000
+#define IDM_MENU_BASE					41100
+#define IDM_POPUP_BASE					41200
+
 #define ID_MRU_BASE                     44000
 #define ID_MRU_1                        44001
 #define ID_MRU_2                        44002
@@ -529,16 +644,24 @@
 #define ID_SET_MACRO_8                  44407
 #define ID_SET_MACRO_9                  44408
 #define ID_SET_MACRO_10                 44409
-#define IDD_TEXT                        65535
+#define ID_CONTROL_SHIFT_ENTER          44910	/* 3.7: moved from 40110. not associated with a string. used by accelerator only */
+#define ID_FIND_PREV_WORD               44952	/* 3.7: moved from 102. not associated with a string. used by accelerator only */
+#define ID_ABOUT_PLUGIN                 44954	/* 3.7: moved from 104. not associated with a string. used as ID for function inserted into main menu dynamically */
+#define IDR_ACCELERATOR                 60000	/* 3.7: moved from 104. Starting 3.7+ accelerators are not localized! */
+#define IDI_PAD                         61109	/* 3.7: moved from 109. Graphics are not localized */
+#define IDI_EYE                         61110	/* 3.7: moved from 110. Graphics are not localized */
+#define IDC_MYHAND                      61122	/* 3.7: moved from 122. Graphics are not localized */
+#define IDB_TOOLBAR                     61126	/* 3.7: moved from 126. Graphics are not localized */
+#define IDB_DROP_ARROW                  61131	/* 3.7: moved from 131. Graphics are not localized */
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        301
-#define _APS_NEXT_COMMAND_VALUE         40301
-#define _APS_NEXT_CONTROL_VALUE         1301
-#define _APS_NEXT_SYMED_VALUE           107
+#define _APS_NEXT_RESOURCE_VALUE        50000
+#define _APS_NEXT_COMMAND_VALUE         50000
+#define _APS_NEXT_CONTROL_VALUE         50000
+#define _APS_NEXT_SYMED_VALUE           50000
 #endif
 #endif
