@@ -34,10 +34,8 @@
 #include <shellapi.h>
 
 #include "include/globals.h"
-#include "include/resource.h"
-#include "include/metapad.h"
-#include "include/strings.h"
 #include "include/macros.h"
+#include "include/metapad.h"
 
 /**
  * Try to execute a third party program.

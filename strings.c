@@ -598,6 +598,65 @@ static const CHAR strings[] = ""
 static WORD stringsidx[] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,7,1,9,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,216,0,47,0,0,0,0,0,0,3,0,0,3,0,0,0,0,0,0,0,0,3,0,80,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,74,0,243,0,10,1,21,2,0,1,1,0,29,1,7,0,0,0,0,0,0,447,0,4,0,1,0,0,0,486,0,7,0,39,0,18,1,0,5,19091,0,4,13,0,0,0,0,0,0,1,2,1176,0,0,0,1,0,25,2,2,0,0,0,6,14,1519,0,53,0,14,28,0,21,0,0,475,0,0,0,69,60,4,0,0,0,0,0,0,0,0,9,0,6,0,0,0,0,0,0,0,0,0,0,0,322,0,6105,1,1,2,1,2,1,78,98,999,8,8,0,1689,790,21,4,0,1,70,1,1,1,92,2,1,4896,0,0,4,1,0,0,3,2,0,1,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,4,0,1,0,0,0,0,1,0,0,2,0,0,0,1,3,0,0,0,0,2,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,0,5,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,881,0,0,0,6,0,0,0,0,5,9,9,60,0,2987};
 
 
+
+/**
+ * Load and verify a language plugin.
+ *
+ * @param szPlugin Path to language plugin.
+ * @return NULL if unable to load the plugin, an instance to the plugin otherwise.
+ */
+HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin, BOOL checkver){
+	HINSTANCE hinstTemp;
+	TCHAR plugVer[16], szErr[MAXSTRING];
+	LPCTSTR thisVer;
+	hinstTemp = LoadLibrary(szPlugin);
+	if (hinstTemp == NULL) {
+		ERROROUT(GetString(IDS_INVALID_PLUGIN_ERROR));
+		return NULL;
+	}
+	if (LoadString(hinstTemp, IDS_VERSION_SYNCH, plugVer, 16) == 0) {
+		ERROROUT(GetString(IDS_BAD_STRING_PLUGIN_ERROR));
+		FreeLibrary(hinstTemp);
+		return NULL;
+	}
+	if (checkver && !g_bDisablePluginVersionChecking && lstrcmpi((thisVer = GetString(IDS_VERSION_SYNCH)), plugVer) != 0) {
+		wsprintf(szErr, GetString(IDS_PLUGIN_MISMATCH_ERROR), plugVer, thisVer);
+		ERROROUT(szErr);
+	}
+	return hinstTemp;
+}
+
+/**
+ * Find and load a language plugin.
+ *
+ * @note Plugin's path is stored in options.szLangPlugin.
+ * @note Default to english if unable to load a plugin.
+ */
+void FindAndLoadLanguagePlugin(void) {
+	WIN32_FIND_DATA FileData;
+	HANDLE hSearch;
+	HINSTANCE hinstTemp;
+	hinstLang = hinstThis;
+	if (!SCNUL(options.szLangPlugin)[0])
+		return;
+
+	hSearch = FindFirstFile(options.szLangPlugin, &FileData);
+	if (hSearch == INVALID_HANDLE_VALUE) {
+		ERROROUT(GetString(IDS_PLUGIN_ERRFIND));
+		goto badplugin;
+	} else
+		FindClose(hSearch);
+	hinstTemp = LoadAndVerifyLanguagePlugin(options.szLangPlugin, FALSE);
+	if (hinstTemp) {
+		hinstLang = hinstTemp;
+		return;
+	}
+badplugin:
+	ERROROUT(GetString(IDS_PLUGIN_ERR));
+}
+
+
+
 #ifdef _DEBUG
 /*void _printids(){
 	LPTSTR buf=NULL;
@@ -635,7 +694,7 @@ LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, WORD* dictidx, WORD*
 			dictofs[i+1] = dictofs[i] + j;
 		}
 		*ofspop = MAX(*ofspop, idx+1);
-		if ((BYTE)*(dict + dictofs[idx]) < ' '){
+		if (*(dict + dictofs[idx]) && (BYTE)*(dict + dictofs[idx]) < ' '){
 			idx += *(dict + dictofs[idx]);
 			continue;
 		}
@@ -670,7 +729,7 @@ void AlterMenuAccelText(LPCTSTR src, LPCTSTR tgt, LPTSTR buf){
 void LocalizeMenuItems(HMENU m, HMENU pm, WORD pos, WORD depth, LPTSTR tpbuf){
 	MENUITEMINFO mio;
 	LPCTSTR ts = NULL, pts = NULL;
-	TCHAR tbuf[1];
+	TCHAR tbuf[2];
 	LPVOID *psub = NULL;
 	WORD cmd=0, gpos, *pgpos = NULL;
 	INT i, j, ct, pct=0;
@@ -762,8 +821,60 @@ HMENU LocalizeMenu(WORD mID, HINSTANCE src, HINSTANCE plugin) {
 }
 
 
+#define MAXDLGCONTROLS 48
+typedef struct {
+	WORD dID, cnum, pcct, _pad;
+	HWND parent, pctl[MAXDLGCONTROLS];
+	DWORD gpos, pgpos[MAXDLGCONTROLS];
+
+} LDCList;
+typedef struct {
+	WORD dID, cnum;
+	HWND parent;
+	LDCList *plist;
+} LDCState;
+
+BOOL CALLBACK LocalizeDialogItems(HWND hwnd, LPARAM lParam){
+	INT i;
+	LPCTSTR ts=NULL;
+	TCHAR tbuf[2];
+	LDCState *state = (LDCState*)lParam;
+	if (!state || GetParent(hwnd) != state->parent) return TRUE;
+	GetWindowText(hwnd, tbuf, 2);
+	if (*tbuf < _T(' ')) {
+		i = GetDlgCtrlID(hwnd);
+		if (i < IDC_BASE) i+= IDC_BASE;
+		else if (i == (WORD)IDC_STATIC) i = 0;
+		if ((BYTE)*tbuf != 1 && (ts = GetString(IDDC_BASE + (state->dID%100)*100 + i%100)) && *ts) ;
+		else if ((ts = GetString(IDDP_BASE + (state->dID%100)*100 + state->cnum)) && *ts) ;
+		else if ((ts = GetString(i)) && *ts) ;
+		if (ts && *ts)
+			SetWindowText(hwnd, ts);
+	}
+	state->cnum++;
+	return TRUE;
+	//if (!list || list->pcct >= MAXDLGCONTROLS) return FALSE;
+
+/*	TCHAR szLine[12]={0};
+	//GetDlgItemText(GetParent(hwnd), IDC_LINE, szLine, 12);
+	GetWindowText(hwnd, szLine, 12);
+	MSGOUT(szLine);
+	return TRUE;*/
+}
 
 void LocalizeDialog(WORD dID, HWND dlg, HINSTANCE plugin) {
 
+
 	//return CreateDialog(src, MAKEINTRESOURCE(dID), dlg, NULL);
+	LPCTSTR ts;
+	TCHAR tbuf[2];
+	LDCState state = {0};
+	state.dID = dID;
+	//list.pcct = 0xffff;
+	state.parent = dlg;
+	GetWindowText(dlg, tbuf, 2);
+	if (*tbuf < _T(' ') && (ts = GetString(dID)) && *ts) ;
+	else ts = GetString(STR_METAPAD);
+	SetWindowText(dlg, ts);
+	EnumChildWindows(dlg, LocalizeDialogItems, (LPARAM)&state);
 }

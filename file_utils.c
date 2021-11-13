@@ -29,8 +29,6 @@
 
 #include "include/consts.h"
 #include "include/globals.h"
-#include "include/resource.h"
-#include "include/strings.h"
 #include "include/macros.h"
 #include "include/metapad.h"
 #include "include/encoding.h"

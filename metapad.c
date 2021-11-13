@@ -51,8 +51,6 @@
 #define TBSTYLE_FLAT 0x0800
 #endif
 
-#include "include/resource.h"
-
 #if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
  #define PROPSHEETHEADER_V1_SIZE 40
 #elif !defined(__MINGW32__)
@@ -67,7 +65,6 @@
 
 #include "include/consts.h"
 #include "include/globals.h"
-#include "include/strings.h"
 #include "include/macros.h"
 #include "include/metapad.h"
 #include "include/encoding.h"
@@ -1279,7 +1276,6 @@ LRESULT CALLBACK AbortPrintJob(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 	switch (message) {
 		case WM_INITDIALOG:
 			CenterWindow(hwndDlg);
-			//TODO set caption
 			SetDlgItemText(hwndDlg, IDC_STATIC, SCNUL8(szCaptionFile)+8);
 			LocalizeDialog(IDD_ABORT_PRINT, hwndDlg, hinstLang);
 			return TRUE;
@@ -2137,7 +2133,6 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 	static BOOL bIcon = FALSE;
 	switch (uMsg) {
 		case WM_INITDIALOG:
-			//TODO set text
 			if (bIcon)
 				SendDlgItemMessage(hwndDlg, IDC_DLGICON, STM_SETICON, (WPARAM)LoadIcon(hinstThis, MAKEINTRESOURCE(IDI_EYE)), 0);
 			CenterWindow(hwndDlg);
@@ -2147,6 +2142,7 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 			SetDlgItemText(hwndDlg, IDOK, GetString(IDC_OK));
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT, GetString(STR_COPYRIGHT));
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT2, GetString(IDS_ALLRIGHTS));
+			LocalizeDialog(IDD_ABOUT, hwndDlg, hinstLang);
 			break;
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
