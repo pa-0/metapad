@@ -32,9 +32,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="external_viewers.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="file_load.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -42,9 +39,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="file_utils.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="language_plugin.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="metapad.c">
@@ -65,6 +59,9 @@
     <ClCompile Include="strings.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="external_viewers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="metapad.rc">
@@ -75,37 +72,10 @@
     <ClInclude Include="include\consts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\external_viewers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\file_load.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\file_save.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\file_utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\globals.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\language_plugin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\settings_load.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\settings_save.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\strings.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\w32crt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\macros.h">
@@ -115,6 +85,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\metapad.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
