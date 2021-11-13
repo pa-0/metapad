@@ -81,7 +81,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 			len = EncodeText((LPBYTE*)&buf, len, nFormat, &bufDirty, NULL);
 		if (len) {
 			if (nenc == FC_ENC_CODEPAGE)
-				len = DecodeText((LPBYTE*)&buf, len, &format, &bufDirty, NULL);
+				len = DecodeText((LPBYTE*)&buf, len, &format, &bufDirty);
 			if (len) {
 				format &= 0x8000ffff;
 				format |= (GetLineFmt(buf, len, lfmt, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
@@ -121,8 +121,8 @@ void MakeNewFile(void) {
 	FREE(szFile);
 	FREE(szCaptionFile);
 	SetFileFormat(options.nFormat, 0);
-	UpdateSavedInfo();
 	bLoading = FALSE;
+	UpdateSavedInfo();
 	UpdateStatus(TRUE);
 }
 
@@ -224,6 +224,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* lin
 		if (len) *len = 0;
 		return _T("");
 	}
+	if (bLoading) return szShadow;
 	if (bDirtyShadow || !szShadow || !shadowLen || shadowLine >= 0) {
 #ifdef USE_RICH_EDIT
 		l = shadowLen = SendMessage(client, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
@@ -408,7 +409,7 @@ DWORD CalcTextSize(LPCTSTR* szText, CHARRANGE* range, DWORD estBytes, DWORD form
 		enc = FC_ENC_CODEPAGE;
 		cp = (WORD)format;
 	} else enc = (WORD)format;
-	if (range && range->cpMin <= range->cpMax && range->cpMin > 0 && range->cpMax > 0) urange = TRUE;
+	if (range && range->cpMin <= range->cpMax && range->cpMin >= 0 && range->cpMax >= 0) urange = TRUE;
 	if (!estBytes && urange) estBytes = range->cpMax - range->cpMin;
 	if (enc == FC_ENC_UTF8 || enc == FC_ENC_CODEPAGE || ExportLineFmtDelta(NULL, NULL, (format >> 16) & 0xfff)){
 		deep = TRUE;
@@ -588,8 +589,8 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 	lf = lstrlen(szFind);
 	lr = lstrlen(szRepl);
 	if (pbFindSpec && pbReplSpec) {
-		for (k = 0; k < lf; ) if (pbFindSpec[k] < 6) nglob[pbFindSpec[k++]]++;
-		for (k = 0; k < lr; ) if (pbReplSpec[k] < 6) cglob[pbReplSpec[k++]]++;
+		for (k = 0; k < lf; k++) { if (pbFindSpec[k] < 6) nglob[pbFindSpec[k]]++; }
+		for (k = 0; k < lr; k++) { if (pbReplSpec[k] < 6) cglob[pbReplSpec[k]]++; }
 		for (k = 0; ++k < 6; ) {
 			globs[k] = globe[k] = NULL;
 			if (nglob[k] = MIN(nglob[k], cglob[k])) {

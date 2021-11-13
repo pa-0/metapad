@@ -363,7 +363,7 @@ void QueueUpdateStatus(){
 	SetTimer(hwnd, IDT_UPDATE, 16, NULL);
 }
 void UpdateStatus(BOOL refresh) {
-	static TCHAR szPane[32];
+	static TCHAR szPane[48];
 	static CHARRANGE oldcr = {0}, ecr = {0};
 	static int nPaneSizes[NUMSTATPANES] = {0}, txtScale = 0;
 	int tpsz[NUMSTATPANES] = {0};
@@ -412,27 +412,31 @@ void UpdateStatus(BOOL refresh) {
 					SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_TYPE, (LPARAM)(LPTSTR)szPane);
 					nFormat |= (1<<30);
 				}
-				wsprintf(szPane, GetString(IDS_STATFMT_BYTES), bytes = CalcTextSize(NULL, NULL, 0, nFormat, TRUE, &chars));
-				nPaneSizes[SBPANE_SIZE] = txtScale * (lstrlen(szPane) - 1);
-				SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_SIZE, (LPARAM)(LPTSTR)szPane);
+				if (!bLoading) {
+					wsprintf(szPane, GetString(IDS_STATFMT_BYTES), bytes = CalcTextSize(NULL, NULL, 0, nFormat, TRUE, &chars));
+					nPaneSizes[SBPANE_SIZE] = txtScale * (lstrlen(szPane) - 1);
+					SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_SIZE, (LPARAM)(LPTSTR)szPane);
+				}
 				statup = TRUE;
 			} else
 				chars = GetTextChars(NULL);
 
-			bDirtyFile = TRUE;
-			if (chars == savedChars && savedFormat == (nFormat & 0x8fffffff)) {
-				if (!chars) bDirtyFile = FALSE;
-				else {
-					j = 32 / sizeof(TCHAR);
-					//memset(pbTmp, 0, sizeof(pbTmp));
-					szBuf = GetShadowRange(0, j, -1, &i, NULL);
-					if (!memcmp(szBuf, savedHead, i * sizeof(TCHAR))) {
+			if (!bLoading) {
+				bDirtyFile = TRUE;
+				if (chars == savedChars && savedFormat == (nFormat & 0x8fffffff)) {
+					if (!chars) bDirtyFile = FALSE;
+					else {
+						j = 32 / sizeof(TCHAR);
 						//memset(pbTmp, 0, sizeof(pbTmp));
-						szBuf = GetShadowRange(chars < j ? 0 : chars-j, chars, -1, &i, NULL);
-						if (!memcmp(szBuf, savedFoot, i * sizeof(TCHAR))) {
-							bDirtyFile = FALSE;
+						szBuf = GetShadowRange(0, j, -1, &i, NULL);
+						if (!memcmp(szBuf, savedHead, i * sizeof(TCHAR))) {
+							//memset(pbTmp, 0, sizeof(pbTmp));
+							szBuf = GetShadowRange(chars < j ? 0 : chars-j, chars, -1, &i, NULL);
+							if (!memcmp(szBuf, savedFoot, i * sizeof(TCHAR))) {
+								bDirtyFile = FALSE;
 
 
+							}
 						}
 					}
 				}
@@ -466,7 +470,7 @@ void UpdateStatus(BOOL refresh) {
 		statup = TRUE;
 	}
 
-	if ((status && bShowStatus) || (full && toolbar && bShowToolbar)){
+	if (!bLoading && ((status && bShowStatus) || (full && toolbar && bShowToolbar))){
 		lCol = GetColNum(-1, -1, NULL, &lLine, &cr);
 		if (full && toolbar && bShowToolbar) {
 			SendMessage(toolbar, TB_ENABLEBUTTON, (WPARAM)ID_MYEDIT_CUT, MAKELONG((cr.cpMin != cr.cpMax), 0));
@@ -475,25 +479,28 @@ void UpdateStatus(BOOL refresh) {
 		}
 	}
 	if (status && bShowStatus && (bDirtyStatus || cr.cpMin != oldcr.cpMin || cr.cpMax != oldcr.cpMax)) {
-		printf("s");
-		oldcr = full ? cr : ecr;
-		lLines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
-		wsprintf(szPane, GetString(IDS_STATFMT_LINE), lLine+1, lLines);
-		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_LINE, (LPARAM)(LPTSTR)szPane);
-		nPaneSizes[SBPANE_LINE] = txtScale * lstrlen(szPane);
-		wsprintf(szPane, GetString(IDS_STATFMT_COL), lCol);
-		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_COL, (LPARAM)(LPTSTR)szPane);
-		nPaneSizes[SBPANE_COL] = txtScale * lstrlen(szPane) + 2;
+		if (!bLoading) {
+			printf("s");
+			oldcr = full ? cr : ecr;
+			lLines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
+			wsprintf(szPane, GetString(IDS_STATFMT_LINE), lLine+1, lLines);
+			SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_LINE, (LPARAM)(LPTSTR)szPane);
+			nPaneSizes[SBPANE_LINE] = txtScale * lstrlen(szPane);
+			wsprintf(szPane, GetString(IDS_STATFMT_COL), lCol);
+			SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_COL, (LPARAM)(LPTSTR)szPane);
+			nPaneSizes[SBPANE_COL] = txtScale * lstrlen(szPane) + 2;
 
-		if (cr.cpMax > cr.cpMin) {
-			*szPane = 0;
-			if (full)
-				wsprintf(szPane, GetString(IDS_STATFMT_BYTES), CalcTextSize(NULL, &cr, 0, nFormat, FALSE, NULL));
-			i = GetColNum(cr.cpMin, -1, NULL, &lLine, NULL);
-			j = GetColNum(cr.cpMax, -1, NULL, &lLines, NULL);
-			wsprintf(szStatusMessage, GetString(IDS_STATFMT_SEL), lLine+1, i, lLines+1, j, szPane);
-		} else if (!bLoading)
-			*szStatusMessage = 0;
+			if (cr.cpMax > cr.cpMin) {
+				*szPane = 0;
+				if (full)
+					wsprintf(szPane, GetString(IDS_STATFMT_BYTES), CalcTextSize(NULL, &cr, 0, nFormat, FALSE, NULL));
+				i = GetColNum(cr.cpMin, -1, NULL, &lLine, NULL);
+				j = GetColNum(cr.cpMax, -1, NULL, &lLines, NULL);
+				wsprintf(szPane+24, GetString(IDS_STATFMT_LINES), lLines-lLine+1);
+				wsprintf(szStatusMessage, GetString(IDS_STATFMT_SEL), lLine+1, i, lLines+1, j, szPane+24, szPane);
+			} else
+				*szStatusMessage = 0;
+		}
 		nPaneSizes[SBPANE_MESSAGE] = txtScale * (lstrlen(szStatusMessage) + 5);
 		SendMessage(status, SB_SETTEXT, (WPARAM) SBPANE_MESSAGE | SBT_NOBORDERS, (LPARAM)szStatusMessage);
 		statup = TRUE;
@@ -3509,7 +3516,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						}
 						GlobalUnlock(hMem);
 						if (szTmp2) {
-							l = DecodeText((LPBYTE*)&szTmp2, l, &sl, NULL, NULL);
+							l = DecodeText((LPBYTE*)&szTmp2, l, &sl, NULL);
 							if (l) {
 								sl &= 0xf000ffff;
 								sl |= (GetLineFmt(szTmp2, l, 0, &i, &j, &k, &nPos, &b) << 16);

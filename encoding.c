@@ -272,18 +272,18 @@ void ReverseBytes(LPBYTE buffer, ULONG len) {
  * If it does, the buffer is also advanced past the BOM and the given length value is decremented appropriately.
  *
  * @param[in,out] pb Pointer to the starting byte to check.
- * @param[in,out] pbLen Length of input.
+ * @param[in,out] len In: length of [pb] in bytes; Out: length of detected BOM in bytes
  * @return One of FC_ENC_* enums if a BOM is found, else FC_ENC_UNKNOWN
  */
-WORD CheckBOM(LPBYTE *pb, DWORD* pbLen) {
+WORD CheckBOM(LPBYTE pb, DWORD* len) {
 	DWORD i, j;
 	for (i = 0; i < ARRLEN(bomLut); i++){
-		if(pb && pbLen && *pb && *pbLen >= (j = bomLut[i][0]) && !memcmp(*pb, bomLut[i]+1, j)){
-			*pb += j;
-			*pbLen -= j;
+		if(pb && len && *len >= (j = bomLut[i][0]) && !memcmp(pb, bomLut[i]+1, j)){
+			*len = j;
 			return bomIdx[i];
 		}
 	}
+	if (len) *len=0;
 	return FC_ENC_UNKNOWN;
 }
 WORD GetBOM(LPBYTE* bom, WORD enc){
@@ -509,7 +509,7 @@ LONG ExportLineFmtDelta(LPCTSTR sz, DWORD* chars, WORD lfmt){
 #endif
 
 //Returns number of decoded chars (not including the null terminator)
-DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty, LPBYTE* origBuf) {
+DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty) {
 #ifndef UNICODE
 	BOOL bUsedDefault;
 #endif
@@ -567,14 +567,10 @@ DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty, LPBYTE
 	}
 	if (newbuf) {
 		if (bufDirty) {
-			if (*bufDirty) {
-				if (origBuf) {	FREE(*origBuf); }
-				else		 {	FREE(*buf); }
-			}
+			if (*bufDirty) FREE(*buf)
 			*bufDirty = TRUE;
 		}
 		*buf = newbuf;
-		if (origBuf) *origBuf = NULL;
 	}
 	((LPTSTR)(*buf))[bytes/=sizeof(TCHAR)] = _T('\0');
 	return bytes;

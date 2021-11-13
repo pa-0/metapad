@@ -60,6 +60,9 @@ BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
 
 	szBuffer = (LPTSTR)GetShadowBuffer(&nChars);
 	nBytes = nChars;
+	bLoading = TRUE;
+	lstrcpy(szStatusMessage, GetString(IDS_FILE_SAVING));
+	UpdateStatus(TRUE);
 	if (nChars) {
 		ExportLineFmt(&szBuffer, &nChars, lfmt, lines, &bufDirty);
 		if (enc == FC_ENC_BIN)
@@ -90,6 +93,7 @@ BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
 		if (hFile == INVALID_HANDLE_VALUE) {
 			SetCursor(hcur);
 			ReportLastError();
+			bLoading = FALSE;
 			return FALSE;
 		}
 		nChars = GetBOM(&bom, enc);
@@ -124,6 +128,7 @@ BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
 		bLoading = FALSE;
 		UpdateSavedInfo();
 	}
+	bLoading = FALSE;
 	UpdateStatus(TRUE);
 	SetCursor(hcur);
 	return !fail;

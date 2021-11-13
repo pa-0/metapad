@@ -183,6 +183,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
+      <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
