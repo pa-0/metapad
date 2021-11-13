@@ -34,14 +34,13 @@
 #include <wchar.h>
 #endif
 
-#define NUMKNOWNCPS 144
-
 INT DecodeBase( BYTE base, LPCTSTR code, LPBYTE bin, INT len, BYTE extractMode, BYTE alignMode, BOOL showError, LPCTSTR* end );
 INT EncodeBase( BYTE base, LPBYTE bin, LPTSTR code, INT len, LPBYTE* end );
 
 void ReverseBytes(LPBYTE buffer, ULONG len);
 WORD CheckBOM(LPBYTE *pb, DWORD* pbLen);
 WORD GetBOM(LPBYTE* bom, WORD enc);
+WORD GetNumKnownCPs();
 WORD GetKnownCP(WORD idx);
 LPCTSTR GetCPName(WORD cp);
 void PrintCPName(WORD cp, LPTSTR buf, LPCTSTR format);
@@ -56,5 +55,7 @@ void ExportBinary(LPTSTR sz, DWORD len);
 
 DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty, LPBYTE* origBuf);
 DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* truncated);
+
+void ExpandDifMap(LPVOID map, WORD width, DWORD len);
 
 #endif

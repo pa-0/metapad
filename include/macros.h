@@ -32,7 +32,7 @@
 #define MIN(x,y)		((x)<(y)?(x):(y))
 #define WIDTH(x)		(x.right - x.left + 1)
 #define HEIGHT(x)		(x.bottom - x.top + 1)
-//#define ARRLEN(X)		sizeof(X)/sizeof(X[0])
+#define ARRLEN(x)		(sizeof(x)/sizeof(*(x)))
 
 #ifdef _DEBUG
 #define FREE(x) {\
