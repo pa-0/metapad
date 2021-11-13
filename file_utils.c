@@ -39,8 +39,8 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	HCURSOR hcur;
 	HMENU hMenu = GetSubMenu(GetSubMenu(GetMenu(hwnd), 0), MPOS_FILE_FORMAT);
 	MENUITEMINFO mio;
-	LPTSTR buf = NULL;
 	TCHAR mbuf[64], mbuf2[128];
+	LPTSTR buf = NULL, pmbuf2 = mbuf2;
 	WORD enc, lfmt, cp, nenc, nlfmt, ncp;
 	DWORD len, lines, nCR, nLF, nStrays, nSub;
 	BOOL bufDirty = FALSE, fileDirty = bDirtyFile, b;
@@ -56,14 +56,21 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	nlfmt = (format >> 16) & 0xfff;
 	if (nFormat >> 31) enc = FC_ENC_CODEPAGE;
 	if (format >> 31) nenc = FC_ENC_CODEPAGE;
-	if (!GetTextChars(NULL) || !(((enc == FC_ENC_ANSI || enc == FC_ENC_CODEPAGE) && (nenc == FC_ENC_ANSI || nenc == FC_ENC_CODEPAGE)) && cp != ncp && reinterp)) reinterp = 0;
+	if (!GetTextChars(NULL) || 
+		( !((enc == FC_ENC_ANSI || enc == FC_ENC_CODEPAGE) && (nenc == FC_ENC_ANSI || nenc == FC_ENC_CODEPAGE) && cp != ncp)
+		&& !(lfmt == FC_LFMT_MIXED && nlfmt != lfmt) ) )
+		reinterp = 0;
 	if (reinterp == 1) {
-		if (nenc == FC_ENC_CODEPAGE)
-			PrintCPName(ncp, mbuf, GetString(ID_ENC_CODEPAGE));
-		else
-			lstrcpy(mbuf, GetString(nenc));
-		wsprintf(mbuf2, GetString(IDS_ENC_REINTERPRET), mbuf);
-		switch (MessageBox(hwnd, mbuf2, GetString(STR_METAPAD), MB_YESNOCANCEL | MB_ICONQUESTION)) {
+		if (lfmt != nlfmt)
+			pmbuf2 = (LPTSTR)GetString(IDS_LFMT_NORMALIZE);
+		else {
+			if (nenc == FC_ENC_CODEPAGE)
+				PrintCPName(ncp, mbuf, GetString(ID_ENC_CODEPAGE));
+			else
+				lstrcpy(mbuf, GetString(nenc));
+			wsprintf(mbuf2, GetString(IDS_ENC_REINTERPRET), mbuf);
+		}
+		switch (MessageBox(hwnd, pmbuf2, GetString(STR_METAPAD), MB_YESNOCANCEL | MB_ICONQUESTION)) {
 			case IDCANCEL:
 				return;
 			case IDNO:
@@ -77,16 +84,13 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 		bLoading = TRUE;
 		lines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
 		ExportLineFmt(&buf, &len, lfmt, lines, &bufDirty);
-		if (enc == FC_ENC_BIN)
-			ExportBinary(buf, len);
-		len = EncodeText((LPBYTE*)&buf, len, nFormat, &bufDirty, NULL);
+		if (cp != ncp)
+			len = EncodeText((LPBYTE*)&buf, len, nFormat, &bufDirty, NULL);
 		if (len) {
-			len = DecodeText((LPBYTE*)&buf, len, &format, &bufDirty);
+			if (cp != ncp)
+				len = DecodeText((LPBYTE*)&buf, len, &format, &bufDirty);
 			if (len) {
-				format &= 0x8000ffff;
-				format |= (GetLineFmt(buf, len, lfmt, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
-				if (nenc == FC_ENC_BIN)
-					ImportBinary(buf, len);
+				GetLineFmt(buf, len, lfmt, &nCR, &nLF, &nStrays, &nSub, &b);
 				ImportLineFmt(&buf, &len, nlfmt, nCR, nLF, nStrays, nSub, &bufDirty);
 				SetWindowText(client, buf);
 				InvalidateRect(client, NULL, TRUE);
@@ -95,7 +99,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 		RestoreClientView(0, TRUE, TRUE, TRUE);
 		bLoading = FALSE;
 		nFormat = format;
-		if (!fileDirty)
+		if (!fileDirty && cp != ncp)
 			UpdateSavedInfo();
 	}
 	if (bufDirty)

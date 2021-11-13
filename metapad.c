@@ -74,6 +74,7 @@
 SLWA SetLWA = NULL;
 HANDLE globalHeap = NULL;
 HINSTANCE hinstThis = NULL;
+UINT_PTR tmrUpdate = 0;
 int _fltused = 0x9875; // see CMISCDAT.C for more info on this
 
 TCHAR gTmpBuf[MAX(MAX(MAXFN,MAXMACRO),MAX(MAXFIND,MAXINSERT))+MAXSTRING], gTmpBuf2[MAX(MAXFN,MAXMACRO)+MAXSTRING];
@@ -101,6 +102,7 @@ TCHAR gDummyBuf[1], gDummyBuf2[1];
 void CleanUp(void)
 {
 	KillTimer(hwnd, IDT_UPDATE);
+	tmrUpdate = 0;
 	if (szShadow) {
 		szShadow -= 8;
 		FREE(szShadow);
@@ -361,7 +363,10 @@ void UpdateCaption(void) {
 }
 
 void QueueUpdateStatus(){
-	SetTimer(hwnd, IDT_UPDATE, 16, NULL);
+	if (!tmrUpdate)
+		tmrUpdate = SetTimer(hwnd, IDT_UPDATE, 16, NULL);
+	else if (updateThrottle - GetTickCount() < THROTTLEMAX)
+		updateThrottle += MIN(updateTime/2, 96);
 }
 void UpdateStatus(BOOL refresh) {
 	static TCHAR szPane[48];
@@ -370,7 +375,7 @@ void UpdateStatus(BOOL refresh) {
 	int tpsz[NUMSTATPANES] = {0};
 	DWORD i, j, st, bytes, chars;
 	LONG lLine = -1, lLines, lCol;
-	BOOL tmu, full = TRUE, statup = FALSE, oldDirty = bDirtyFile;
+	BOOL full = TRUE, statup = FALSE, oldDirty = bDirtyFile;
 	CHARRANGE cr;
 	LPCTSTR szBuf;
 	HDC dc;
@@ -378,14 +383,11 @@ void UpdateStatus(BOOL refresh) {
 
 	if (!bStarted) return;
 	bDirtyStatus |= refresh;
-	tmu = KillTimer(hwnd, IDT_UPDATE);
+	KillTimer(hwnd, IDT_UPDATE);
+	tmrUpdate = 0;
 	st = GetTickCount();
 	if (st < updateThrottle && (i = updateThrottle - st) < THROTTLEMAX*4) {
-		//printf("\n....%d", (updateThrottle - st));
-		if (i < THROTTLEMAX) updateThrottle += MIN(updateTime/2, 96);
-		full = FALSE;
-	} else if (!tmu && updateTime > 64) {
-		updateThrottle = st + MIN(updateTime/2, 96);
+		//printf("\n++++%d", (updateThrottle - st));
 		full = FALSE;
 	}
 	if (!txtScale) txtScale = (int)(LOWORD(GetDialogBaseUnits())/STATUS_FONT_CONST);
@@ -516,10 +518,10 @@ void UpdateStatus(BOOL refresh) {
 	if (full){
 		bDirtyStatus = FALSE;
 		updateTime = (i = GetTickCount()) - st;
-		updateThrottle = i + updateTime / 2;
+		updateThrottle = i + updateTime;
 		//printf("\n%d", (int)(updateTime / 2));
 	} else
-		SetTimer(hwnd, IDT_UPDATE, 64, NULL);
+		tmrUpdate = SetTimer(hwnd, IDT_UPDATE, 64, NULL);
 }
 
 LRESULT APIENTRY PageSetupProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -4426,7 +4428,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 	case WM_TIMER:
 		switch (LOWORD(wParam)) {
 			case IDT_UPDATE:
-				if (bLoading || ((l = GetTickCount()) < updateThrottle && updateThrottle - l < THROTTLEMAX*4)) break;
+				if (bLoading) break;
 				UpdateStatus(FALSE);
 				break;
 		}
