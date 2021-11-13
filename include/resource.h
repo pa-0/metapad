@@ -274,6 +274,7 @@ Nonlocalized:
 #define IDS_PLUGIN_ERR					514
 #define IDS_FILTER_EXEC					518
 #define IDS_FILTER_PLUGIN				519
+#define IDS_LOADLNG_ERROR				520
 
 /* IDSS_ setting key names for storing settings in registry or ini file */
 #define IDSS_WSTATE						600
