@@ -2048,7 +2048,7 @@ void FixReadOnlyMenu(void)
 		mio.cbSize = sizeof(MENUITEMINFO);
 		mio.fMask = MIIM_TYPE | MIIM_ID | MIIM_STATE;
 		mio.fType = MFT_STRING;
-		mio.dwTypeData = (LPTSTR)GetString(IDS_READONLY_MENU);
+		mio.dwTypeData = (LPTSTR)GetString(ID_READONLY);
 		mio.wID = ID_READONLY;
 		if (bReadOnly)
 			mio.fState = MFS_CHECKED;
@@ -2082,7 +2082,7 @@ void FixMRUMenus(void)
 		DeleteMenu(GetSubMenu(hmenu, 0), MPOS_FILE_RECENT, MF_BYPOSITION);
 	}
 	else {
-		mio.dwTypeData = (LPTSTR)GetString(IDS_RECENT_FILES_MENU);
+		mio.dwTypeData = (LPTSTR)GetString(IDM_MENU_BASE+13);
 		InsertMenuItem(GetSubMenu(hmenu, 0), MPOS_FILE_RECENT, TRUE, &mio);
 		if (hrecentmenu)
 			DestroyMenu(hrecentmenu);

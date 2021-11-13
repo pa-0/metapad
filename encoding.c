@@ -44,23 +44,24 @@ void ReportLastError(void);
 static const BYTE bomLut[NUMBOMS][4] = {{0x3,0xEF,0xBB,0xBF}, {0x2,0xFF,0xFE}, {0x2,0xFE,0xFF}};
 
 #define NUMKNOWNCPS 144
-static const CHAR knownCPT[] = "Latin2 / Central European\0Cyrillic\0Latin1 / Western European\0Greek\0Turkish\0Hebrew\0Arabic\0Baltic\0Vietnamese\0Russian KOI8-R\0Ukrainian KOI8-U\0Thai\0Japanese Shift-JIS\0Simplified Chinese GB2312\0Korean Hangul\0Traditional Chinese Big5\0UTF-7\0UTF-8\0Local DOS\0MacOS\0Symbol\0DOS USA / OEM-US\0DOS Arabic ASMO-708\0DOS Arabic\0DOS Greek\0DOS Baltic\0DOS Latin1 / Western European\0DOS Latin2 / Central European \0DOS Cyrillic\0DOS Turkish\0DOS Latin1 Multilingual\0DOS Portuguese\0DOS Icelandic\0DOS Hebrew\0DOS French Canadian\0DOS Arabic\0DOS Nordic\0DOS Russian\0DOS Modern Greek\0Traditional Chinese Big5-HKSCS\0Korean Johab\0MAC Roman / Western European\0MAC Japanese\0MAC Traditional Chinese Big5\0MAC Korean\0MAC Arabic\0MAC Hebrew\0MAC Greek\0MAC Cyrillic\0MAC Simplified Chinese GB2312\0MAC Romanian\0MAC Ukrainian\0MAC Thai\0MAC Roman2 / Central European\0MAC Icelandic\0MAC Turkish\0MAC Croatian\0CNS-11643 Taiwan\0TCA Taiwan\0ETEN Taiwan\0IBM5550 Taiwan\0TeleText Taiwan\0Wang Taiwan\0IA5 IRV Western European 7-bit\0IA5 German 7-bit\0IA5 Swedish 7-bit\0IA5 Norwegian 7-bit\0US-ASCII 7-bit\0T.61\0ISO-6937\0Japanese EUC / JIS 0208-1990\0Simplified Chinese GB2312-80\0Korean Wansung\0ISO8859-1 Latin1 / Western European\0ISO8859-2 Latin2 / Central European\0ISO8859-3 Latin3 / South European\0ISO8859-4 Baltic\0ISO8859-5 Cyrillic\0ISO8859-6 Arabic\0ISO8859-7 Greek\0ISO8859-8 Hebrew Visual\0ISO8859-9 Turkish\0ISO8859-11 Thai\0ISO8859-13 Estonian\0ISO8859-14 Celtic\0ISO8859-15 Latin9\0ISO8859-8 Hebrew Logical\0ISO2022 Japanese JIS\0ISO2022 Japanese halfwidth Katakana\0ISO2022 Japanese JIS X 0201-1989\0ISO2022 Korean\0ISO2022 Simplified Chinese\0ISO2022 Traditional Chinese\0EUC Japanese\0EUC Simplified Chinese\0EUC Korean\0EUC Traditional Chinese\0HZ-GB2312 Simplified Chinese \0GB18030 Simplified Chinese\0ISCII Devanagari\0ISCII Bangla\0ISCII Tamil\0ISCII Telugu\0ISCII Assamese\0ISCII Odia\0ISCII Kannada\0ISCII Malayalam\0ISCII Gujarati\0ISCII Punjabi\0EBCDIC US-Canada\0EBCDIC International\0EBCDIC Latin2 Multilingual\0EBCDIC Greek Modern\0EBCDIC Turkish\0EBCDIC Latin1\0EBCDIC US-Canada\0EBCDIC Germany\0EBCDIC Denmark-Norway\0EBCDIC Finland-Sweden\0EBCDIC Italy\0EBCDIC Latin America-Spain\0EBCDIC UK\0EBCDIC France\0EBCDIC International\0EBCDIC Icelandic\0EBCDIC Germany\0EBCDIC Denmark-Norway\0EBCDIC Finland-Sweden\0EBCDIC Italy\0EBCDIC Latin America-Spain\0EBCDIC UK\0EBCDIC Japanese Katakana\0EBCDIC France\0EBCDIC Arabic\0EBCDIC Greek\0EBCDIC Hebrew\0EBCDIC Korean\0EBCDIC Thai\0EBCDIC Icelandic\0EBCDIC Cyrillic\0EBCDIC Turkish\0EBCDIC Latin1\0EBCDIC Serbian-Bulgarian\0EBCDIC Japanese\0";
-static const WORD knownCPN[NUMKNOWNCPS] = {1250,1251,1252,1253,1254,1255,1256,1257,1258,20866,21866,874,932,936,949,950,65000,65001,1,2,42,437,708,720,737,775,850,852,855,857,858,860,861,862,863,864,865,866,869,951,1361,10000,10001,10002,10003,10004,10005,10006,10007,10008,10010,10017,10021,10029,10079,10081,10082,20000,20001,20002,20003,20004,20005,20105,20106,20107,20108,20127,20261,20269,20932,20936,20949,28591,28592,28593,28594,28595,28596,28597,28598,28599,28601,28603,28604,28605,38598,50220,50221,50222,50225,50227,50229,51932,51936,51949,51950,52936,54936,57002,57003,57004,57005,57006,57007,57008,57009,57010,57011,37,500,870,875,1026,1047,1140,1141,1142,1143,1144,1145,1146,1147,1148,1149,20273,20277,20278,20280,20284,20285,20290,20297,20420,20423,20424,20833,20838,20871,20880,20905,20924,21025,21027};
+static const CHAR knownCPT[] = "Local DOS\0MacOS\0EBCDIC US-Canada\0Symbol\0DOS USA / OEM-US\0EBCDIC International\0DOS Arabic ASMO-708\0DOS Arabic\0DOS Greek\0DOS Baltic\0DOS Latin1 / Western European\0DOS Latin2 / Central European \0DOS Cyrillic\0DOS Turkish\0DOS Latin1 Multilingual\0DOS Portuguese\0DOS Icelandic\0DOS Hebrew\0DOS French Canadian\0DOS Arabic\0DOS Nordic\0DOS Russian\0DOS Modern Greek\0EBCDIC Latin2 Multilingual\0Thai\0EBCDIC Greek Modern\0Japanese Shift-JIS\0Simplified Chinese GB2312\0Korean Hangul\0Traditional Chinese Big5\0Traditional Chinese Big5-HKSCS\0EBCDIC Turkish\0EBCDIC Latin1\0EBCDIC US-Canada\0EBCDIC Germany\0EBCDIC Denmark-Norway\0EBCDIC Finland-Sweden\0EBCDIC Italy\0EBCDIC Latin America-Spain\0EBCDIC UK\0EBCDIC France\0EBCDIC International\0EBCDIC Icelandic\0Latin2 / Central European\0Cyrillic\0Latin1 / Western European\0Greek\0Turkish\0Hebrew\0Arabic\0Baltic\0Vietnamese\0Korean Johab\0MAC Roman / Western European\0MAC Japanese\0MAC Traditional Chinese Big5\0MAC Korean\0MAC Arabic\0MAC Hebrew\0MAC Greek\0MAC Cyrillic\0MAC Simplified Chinese GB2312\0MAC Romanian\0MAC Ukrainian\0MAC Thai\0MAC Roman2 / Central European\0MAC Icelandic\0MAC Turkish\0MAC Croatian\0CNS-11643 Taiwan\0TCA Taiwan\0ETEN Taiwan\0IBM5550 Taiwan\0TeleText Taiwan\0Wang Taiwan\0IA5 IRV Western European 7-bit\0IA5 German 7-bit\0IA5 Swedish 7-bit\0IA5 Norwegian 7-bit\0US-ASCII 7-bit\0T.61\0ISO-6937\0EBCDIC Germany\0EBCDIC Denmark-Norway\0EBCDIC Finland-Sweden\0EBCDIC Italy\0EBCDIC Latin America-Spain\0EBCDIC UK\0EBCDIC Japanese Katakana\0EBCDIC France\0EBCDIC Arabic\0EBCDIC Greek\0EBCDIC Hebrew\0EBCDIC Korean\0EBCDIC Thai\0Russian KOI8-R\0EBCDIC Icelandic\0EBCDIC Cyrillic\0EBCDIC Turkish\0EBCDIC Latin1\0Japanese EUC / JIS 0208-1990\0Simplified Chinese GB2312-80\0Korean Wansung\0EBCDIC Serbian-Bulgarian\0EBCDIC Japanese\0Ukrainian KOI8-U\0ISO8859-1 Latin1 / Western European\0ISO8859-2 Latin2 / Central European\0ISO8859-3 Latin3 / South European\0ISO8859-4 Baltic\0ISO8859-5 Cyrillic\0ISO8859-6 Arabic\0ISO8859-7 Greek\0ISO8859-8 Hebrew Visual\0ISO8859-9 Turkish\0ISO8859-11 Thai\0ISO8859-13 Estonian\0ISO8859-14 Celtic\0ISO8859-15 Latin9\0ISO8859-8 Hebrew Logical\0ISO2022 Japanese JIS\0ISO2022 Japanese halfwidth Katakana\0ISO2022 Japanese JIS X 0201-1989\0ISO2022 Korean\0ISO2022 Simplified Chinese\0ISO2022 Traditional Chinese\0EUC Japanese\0EUC Simplified Chinese\0EUC Korean\0EUC Traditional Chinese\0HZ-GB2312 Simplified Chinese \0GB18030 Simplified Chinese\0ISCII Devanagari\0ISCII Bangla\0ISCII Tamil\0ISCII Telugu\0ISCII Assamese\0ISCII Odia\0ISCII Kannada\0ISCII Malayalam\0ISCII Gujarati\0ISCII Punjabi\0UTF-7\0UTF-8\0";
+static WORD knownCPI[NUMKNOWNCPS] = {1,0,34,4,394,62,207,11,16,37,74,1,2,1,0,1,0,0,0,0,0,0,2,0,3,0,56,3,12,0,0,74,20,92,0,0,0,0,0,0,0,0,0,100,0,0,0,0,0,0,0,0,102,8638,0,0,0,0,0,0,0,0,1,6,3,7,49,1,0,9917,0,0,0,0,0,99,0,0,0,18,133,7,3,3,0,1,3,0,4,6,122,2,0,408,4,27,4,8,24,18,7,3,12,75,1,838,6724,0,0,0,0,0,0,0,0,1,1,0,0,9992,11621,0,0,2,1,1,1702,3,12,0,985,1999,2065,0,0,0,0,0,0,0,0,0,7988,0};
+static BYTE knownCPOrd[NUMKNOWNCPS] = {19,0,89,166,0,88,167,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,72,155,100,155,0,0,0,23,73,0,0,0,0,0,0,0,0,0,0,0,131,0,0,0,0,0,0,0,0,31,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,55,0,0,0,0,0,0,0,0,0,0,0,0,127,128,0,0,0,184,0,0,69,0,122,62,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,163,0};
 
-static const unsigned short decLut[] = {
-	0xfe3f, 0x803f, 0x81ff, 0x817f,  0x80ff, 0x80ff, 0x80ff, 0x80bf,  0x80bf, 0x80bf, 0x80bf, 0x7cbf,  0x80bf, 0x80bf, 0x80bf, 0x7ebf,
-	0x6840, 0x6a41, 0x6c42, 0x6e43,  0x7044, 0x7245, 0x7446, 0x7647,  0x7848, 0x7a49, 0x807f, 0x807f,  0x807f, 0xfe7f, 0x807f, 0x807f,
-	0x807f, 0x004a, 0x024b, 0x044c,  0x064d, 0x080e, 0x0a0f, 0x0c10,  0x0e11, 0x1012, 0x1213, 0x1414,  0x1615, 0x1816, 0x1a17, 0x1c18,
-	0x1e19, 0x201a, 0x221b, 0x241c,  0x261d, 0x281e, 0x2a1f, 0x2c20,  0x2e21, 0x3022, 0x3223, 0x803f,  0x803f, 0x803f, 0x803f, 0x803f,
-	0x80ff, 0x344a, 0x360b, 0x388c,  0x3a0d, 0x3c0e, 0x3e0f, 0x40d0,  0x4211, 0x4412, 0x4613, 0x4814,  0x4a15, 0x4c16, 0x4e17, 0x5118,
-	0x5219, 0x541a, 0x561b, 0x581c,  0x5a1d, 0x5c1e, 0x5e1f, 0x6020,  0x6221, 0x6422, 0x6623, 0x803f,  0x803f, 0x803f, 0x803f, 0x817f
+static unsigned short decLut[] = {
+	0xfe3f, 0x81ff, 0x01bf, 0xff7f,  0xff7f, 0xffff, 0xffff, 0xffbf,  0xffff, 0xffff, 0xffff, 0xfbff,  0x03ff, 0xffff, 0xffff, 0xfdff,
+	0xe980, 0x0200, 0x0200, 0x0200,  0x0200, 0x0200, 0x0200, 0x0200,  0x0200, 0x0200, 0x0635, 0xffff,  0xffff, 0x7dff, 0x81ff, 0xffff,
+	0xffff, 0x7fca, 0x0200, 0x0200,  0x0200, 0x01c0, 0x0200, 0x0200,  0x0200, 0x0200, 0x0200, 0x0200,  0x0200, 0x0200, 0x0200, 0x0200,
+	0x0200, 0x0200, 0x0200, 0x0200,  0x0200, 0x0200, 0x0200, 0x0200,  0x0200, 0x0200, 0x0200, 0x4e1b,  0xffff, 0xffff, 0xffff, 0xffff,
+	0x00bf, 0xb34a, 0x01c0, 0x0280,  0x0180, 0x0200, 0x0200, 0x02c0,  0x0140, 0x0200, 0x0200, 0x0200,  0x0200, 0x0200, 0x0200, 0x0300,
+	0x0100, 0x0200, 0x0200, 0x0200,  0x0200, 0x0200, 0x0200, 0x0200,  0x0200, 0x0200, 0x0200, 0x1a1b,  0xffff, 0xffff, 0xffff, 0x013f,
 };
-static const unsigned short encLut[] = {
-	0x4130, 0x4231, 0x4332, 0x4433,  0x4534, 0x4635, 0x4736, 0x4837,  0x4938, 0x4a39, 0x4b61, 0x4c62,  0x4d63, 0x4e64, 0x4f65, 0x5066,
-	0x5167, 0x5268, 0x5369, 0x546a,  0x556b, 0x566c, 0x576d, 0x586e,  0x596f, 0x5a70, 0x6171, 0x6272,  0x6373, 0x6474, 0x6575, 0x6676,
-	0x6777, 0x6878, 0x6979, 0x6a7a,  0x6b20, 0x6c20, 0x6d20, 0x6e20,  0x6f20, 0x7020, 0x7120, 0x7220,  0x7320, 0x7420, 0x7520, 0x7620,
-	0x7720, 0x7820, 0x7920, 0x7a20,  0x3020, 0x3120, 0x3220, 0x3320,  0x3420, 0x3520, 0x3620, 0x3720,  0x3820, 0x3920, 0x2b20, 0x2f20,
-	0x3d20
+static unsigned short encLut[] = {
+	0x4130, 0x0100, 0x0100, 0x0100,  0x0100, 0x0100, 0x0100, 0x0100,  0x0100, 0x0100, 0x0127, 0x0100,  0x0100, 0x0100, 0x0100, 0x0100,
+	0x0100, 0x0100, 0x0100, 0x0100,  0x0100, 0x0100, 0x0100, 0x0100,  0x0100, 0x0100, 0x0700, 0x0100,  0x0100, 0x0100, 0x0100, 0x0100,
+	0x0100, 0x0100, 0x0100, 0x0100,  0x00a5, 0x00ff, 0x00ff, 0x00ff,  0x00ff, 0x00ff, 0x00ff, 0x00ff,  0x00ff, 0x00ff, 0x00ff, 0x00ff,
+	0x00ff, 0x00ff, 0x00ff, 0x00ff,  0xb5ff, 0x00ff, 0x00ff, 0x00ff,  0x00ff, 0x00ff, 0x00ff, 0x00ff,  0x00ff, 0x00ff, 0xf1ff, 0x03ff,
+	0x0dff,
 };
 
 
@@ -275,17 +276,17 @@ WORD GetBOM(LPBYTE* bom, WORD enc){
 }
 
 WORD GetKnownCP(WORD idx) {
-	return knownCPN[idx];
+	return knownCPI[knownCPOrd[idx]];
 }
 LPCTSTR GetCPName(WORD cp){
 	static WORD ofs[NUMKNOWNCPS] = {0}, ofspop = 0;
 	static TCHAR strcache[sizeof(knownCPT)];
-	if (cp >= 100 && cp < 300) cp = knownCPN[cp-100];
-	return GetStringEx(cp, NUMKNOWNCPS, (LPSTR)knownCPT, knownCPN, ofs, strcache, &ofspop, NULL);
+	if (cp >= 100 && cp < 300) cp = knownCPI[knownCPOrd[cp-100]];
+	return GetStringEx(cp, NUMKNOWNCPS, (LPSTR)knownCPT, knownCPI, ofs, strcache, &ofspop, NULL);
 }
 void PrintCPName(WORD cp, LPTSTR buf, LPCTSTR format) {
 	LPCTSTR asz;
-	if (cp >= 100 && cp < 300) cp = knownCPN[cp-100];
+	if (cp >= 100 && cp < 300) cp = knownCPI[knownCPOrd[cp-100]];
 	asz = GetCPName(cp);
 	wsprintf(buf, format, cp);
 	if (asz) {
