@@ -31,6 +31,7 @@
 #ifdef USE_RICH_EDIT
 #include <richedit.h>
 #include <commdlg.h>
+#define STR_RICHDLL "RICHED20.DLL"
 #endif
 #if !defined(UNICODE) && !defined(__MINGW64_VERSION_MAJOR)
 extern long _ttol(const TCHAR*);
@@ -45,6 +46,7 @@ extern int _ttoi(const TCHAR*);
 #endif
 
 #include "consts.h"
+#include "resource.h"
 
 
 ///// Typedefs /////
@@ -172,8 +174,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
 
 // language_plugin.c //
-HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin, BOOL checkver);
-void FindAndLoadLanguagePlugin(void);
+
 
 
 // external_viewers.c //
@@ -217,7 +218,7 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* szRepl, LPBYTE* pbFindSpec, LPBYTE* pbReplSpec, LPTSTR szMsgBuf, BOOL selection, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen, LPCTSTR header, LPCTSTR footer);
 
 
-// settings_load.h //
+// settings_load.c //
 void LoadWindowPlacement(int* left, int* top, int* width, int* height, int* nShow);
 void LoadOptionString(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData);
 void LoadOptionStringDefault(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData, LPCTSTR);
@@ -226,11 +227,22 @@ BOOL LoadOptionNumeric(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData);
 void LoadMenusAndData(void);
 
 
-// settings_save.h //
+// settings_save.c //
 BOOL SaveOption(HKEY hKey, LPCTSTR name, DWORD dwType, CONST LPBYTE lpData, DWORD cbData);
 void SaveWindowPlacement(HWND hWndSave);
 void SaveOptions(void);
 void SaveMenusAndData(void);
+
+
+// strings.c //
+HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin, BOOL checkver);
+void FindAndLoadLanguagePlugin(void);
+
+LPCTSTR GetString(WORD uID);
+LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, WORD* dictidx, WORD* dictofs, LPTSTR dictcache, WORD* ofspop, LPCTSTR def);
+void AlterMenuAccelText(LPCTSTR src, LPCTSTR tgt, LPTSTR buf);
+HMENU LocalizeMenu(WORD mID, HINSTANCE src, HINSTANCE plugin);
+void LocalizeDialog(WORD dID, HWND dlg, HINSTANCE plugin);
 
 
 #endif
