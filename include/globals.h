@@ -66,7 +66,6 @@ UINT nMRUTop;
 //UINT uFindReplaceMsg;
 int nStatusHeight, nToolbarHeight;
 LPTSTR szCustomFilter;
-HWND hwndSheet;
 LPTSTR FindArray[NUMFINDS];
 LPTSTR ReplaceArray[NUMFINDS];
 LPTSTR InsertArray[NUMINSERTS];

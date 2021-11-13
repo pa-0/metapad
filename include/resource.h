@@ -455,15 +455,7 @@ Nonlocalized:
 #define IDC_OFFSET						1444	//3.7: moved from 1044. unintialized
 #define IDC_EDIT_MAX_MRU				1450	//3.7: moved from 1050. unintialized
 #define IDC_MACRO_1						1461	//3.7: moved from 1070. unintialized
-#define IDC_MACRO_2						1462	
-#define IDC_MACRO_3						1463
-#define IDC_MACRO_4						1464
-#define IDC_MACRO_5						1465
-#define IDC_MACRO_6						1466
-#define IDC_MACRO_7						1467
-#define IDC_MACRO_8						1468
-#define IDC_MACRO_9						1469
-#define IDC_MACRO_10					1470
+//(1461-1470 rsvd for IDC_MACRO_x)		1470
 #define IDC_EDIT_SM_WIDTH				1471	//3.7: moved from 1071. unintialized
 #define IDC_EDIT_TRANSPARENT			1472	//3.7: moved from 1072. unintialized
 #define IDC_EDIT_QUOTE					1479	//3.7: moved from 1079. unintialized
