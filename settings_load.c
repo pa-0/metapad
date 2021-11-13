@@ -277,26 +277,16 @@ void LoadOptionStringDefault(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbDa
  * @param cbData The size of lpData, in bytes.
  * @return TRUE if the value was loaded successfully, FALSE otherwise.
  */
-BOOL LoadOptionNumeric(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData)
-{
+BOOL LoadOptionNumeric(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbData) {
 	DWORD clen = cbData;
-	if (hKey) {
+	TCHAR val[16];
+	if (hKey)
 		return (RegQueryValueEx(hKey, name, NULL, NULL, lpData, &clen) == ERROR_SUCCESS);
-	}
-	else {
-		TCHAR val[10];
-		if (GetPrivateProfileString(_T("Options"), name, NULL, val, 10, SCNUL(szMetapadIni)) > 0) {
-			long int longInt = _ttoi(val);
-			lpData[3] = (int)((longInt >> 24) & 0xFF) ;
-			lpData[2] = (int)((longInt >> 16) & 0xFF) ;
-			lpData[1] = (int)((longInt >> 8) & 0XFF);
-			lpData[0] = (int)((longInt & 0XFF));
-			return TRUE;
-		}
-		else {
-			return FALSE;
-		}
-	}
+	else if (GetPrivateProfileString(_T("Options"), name, NULL, val, 16, SCNUL(szMetapadIni)) > 0) {
+		*((DWORD*)lpData) = (DWORD)_ttol(val);
+		return TRUE;
+	} else
+		return FALSE;
 }
 
 /**

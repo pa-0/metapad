@@ -614,7 +614,7 @@ void UpdateStatus(BOOL refresh) {
 				chars = GetTextChars(NULL);
 
 			bDirtyFile = TRUE;
-			if (chars == savedChars && savedFormat == nFormat) {
+			if (chars == savedChars && savedFormat == (nFormat & 0x8fffffff)) {
 				if (!chars) bDirtyFile = FALSE;
 				else {
 					j = 32 / sizeof(TCHAR);
@@ -1028,7 +1028,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 }
 
 LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	CHARRANGE cr;
+	CHARRANGE cr, cr2;
 	LRESULT lRes;
 	LPTSTR sz, szBuf;
 
@@ -1195,10 +1195,16 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 			return lRes;
 	case WM_CHAR:
 		if (options.bAutoIndent && (TCHAR)wParam == _T('\r')) {
-			sz = (szBuf = ((LPTSTR)GetShadowLine(-1, -1, NULL, NULL, NULL))) - 1;
+#ifdef USE_RICH_EDIT
+			SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
+#else
+			SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
+#endif
+			sz = (szBuf = ((LPTSTR)GetShadowLine(-1, -1, NULL, NULL, &cr2))) - 1;
 			if (!*szBuf) break;
 			while (*++sz == _T('\t') || *sz == _T(' ')) ;
 			*sz = _T('\0');
+			szBuf[MAX(0,cr.cpMin - cr2.cpMin)] = _T('\0');
 #ifndef USE_RICH_EDIT
 			*--szBuf = _T('\n');
 			*--szBuf = _T('\r');
@@ -2203,6 +2209,7 @@ BOOL CALLBACK GotoDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			return TRUE;
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
+				case IDOK:
 					GetDlgItemText(hwndDlg, IDC_LINE, szLine, 12);
 					lLine = _ttol(szLine);
 					if (!options.bHideGotoOffset) {
@@ -2424,7 +2431,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			if (HIWORD(wParam) != BN_CLICKED) break;
 			hmenu = LoadMenu(hinstLang, (LPCTSTR)IDR_MENU);
 			hsub = GetSubMenu(hmenu, 0);
-			hsub = GetSubMenu(hsub, MPOS_FILE_FORMAT);
+			hsub = GetSubMenu(hsub, MPOS_FILE_FORMAT_STATIC);
 			SendMessage(hwnd, WM_INITMENUPOPUP, (WPARAM)hsub, MAKELPARAM(1, FALSE));
 			GetWindowRect(GetDlgItem(hwndDlg, IDC_BUTTON_FORMAT), &rc);
 			enc = cp = (WORD)newFormat;
@@ -3076,7 +3083,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 		break;
 	case WM_ACTIVATE:
 		if (bLoading) break;
-		UpdateStatus(TRUE);
+		UpdateStatus(FALSE);
 		if (status && bShowStatus)
 			InvalidateRect(status, NULL, TRUE);
 		SetFocus(client);
@@ -3611,10 +3618,10 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						}
 						GlobalUnlock(hMem);
 						if (szTmp2) {
-							l = DecodeText((LPBYTE*)&szTmp2, l, &sl, NULL);
+							l = DecodeText((LPBYTE*)&szTmp2, l, &sl, NULL, NULL);
 							if (l) {
 								sl &= 0xf000ffff;
-								sl |= (GetLineFmt(szTmp2, l, &i, &j, &k, &nPos, &b) << 16);
+								sl |= (GetLineFmt(szTmp2, l, 0, &i, &j, &k, &nPos, &b) << 16);
 								if (enc == ID_ENC_BIN)
 									ImportBinary(szTmp2, l);
 								ImportLineFmt(&szTmp2, &l, (WORD)((sl >> 16) & 0xfff), i, j, k, nPos, NULL);
@@ -4447,11 +4454,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						break;
 #ifdef USE_RICH_EDIT
 					SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-					LoadFile(szFile, FALSE, FALSE, TRUE);
+					LoadFile(szFile, FALSE, FALSE, FALSE);
 					SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 #else
 					SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-					LoadFile(szFile, FALSE, FALSE, TRUE);
+					LoadFile(szFile, FALSE, FALSE, FALSE);
 					SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 					SendMessage(client, EM_SCROLLCARET, 0, 0);
 #endif

@@ -38,22 +38,19 @@
 
 
 
-DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* format) {
+DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, LPBYTE* origBuffer, DWORD* format) {
 	DWORD dwBytes = 0, buflen;
 	BOOL bResult;
 	INT unitest = IS_TEXT_UNICODE_UNICODE_MASK | IS_TEXT_UNICODE_REVERSE_MASK | IS_TEXT_UNICODE_NOT_UNICODE_MASK | IS_TEXT_UNICODE_NOT_ASCII_MASK;
 	LPINT lpiResult = &unitest;
 	WORD enc, cp;
-#ifndef UNICODE
-	BOOL bUsedDefault;
-#endif
 
-	if (!ppBuffer || !format) return -1;
+	if (!ppBuffer || !origBuffer || !format) return -1;
 	buflen = GetFileSize(hFile, NULL);
 	if (!options.bNoWarningPrompt && buflen > LARGEFILESIZEWARN && MessageBox(hwnd, GetString(IDS_LARGE_FILE_WARNING), STR_METAPAD, MB_ICONQUESTION|MB_OKCANCEL) == IDCANCEL) {
 		return -1;
 	}
-	*ppBuffer = (LPBYTE)HeapAlloc(globalHeap, 0, buflen+2);
+	*origBuffer = *ppBuffer = (LPBYTE)HeapAlloc(globalHeap, 0, buflen+sizeof(TCHAR));
 	if (*ppBuffer == NULL) {
 		ReportLastError();
 		return -1;
@@ -81,12 +78,13 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* format) {
 		*format |= enc;
 	}
 	bResult = TRUE;
-	return DecodeText(ppBuffer, buflen, format, &bResult);
+	return DecodeText(ppBuffer, buflen, format, &bResult, origBuffer);
 }
 
 BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 	HANDLE hFile = NULL;
 	LPTSTR szBuffer, lfn = NULL, dfn = NULL, rfn = NULL;
+	LPBYTE origBuf;
 	LPCTSTR tbuf;
 	TCHAR cPad = _T(' '), buffer[MAXFN + 40];
 	DWORD lChars, nCR, nLF, nStrays, nSub, cfmt = nFormat;
@@ -159,7 +157,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 		}
 	}
 
-	if ((LONG)(lChars = LoadFileIntoBuffer(hFile, (LPBYTE*)&szBuffer, &cfmt)) < 0) {
+	if ((LONG)(lChars = LoadFileIntoBuffer(hFile, (LPBYTE*)&szBuffer, &origBuf, &cfmt)) < 0) {
 		CloseHandle(hFile);
 		bLoading = FALSE;
 		UpdateStatus(TRUE);
@@ -171,7 +169,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 
 	if (lChars) {
 		cfmt &= 0x8000ffff;
-		cfmt |= (GetLineFmt(szBuffer, lChars, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
+		cfmt |= (GetLineFmt(szBuffer, lChars, (options.nFormat>>16)&0xfff, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
 		if (b) {
 			cfmt = ID_ENC_BIN | ((cfmt >> 16) & 0xfff);
 			tbuf = GetShadowBuffer(NULL);
@@ -233,7 +231,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 	if (bMRU)
 		SaveMRUInfo(rfn);
 	FREE(rfn);
-	FREE(szBuffer);
+	FREE(origBuf);
 	bLoading = FALSE;
 	UpdateStatus(TRUE);
 	InvalidateRect(client, NULL, TRUE);

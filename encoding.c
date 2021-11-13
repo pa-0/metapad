@@ -296,18 +296,19 @@ LPSTR GetCPName(WORD cp){
 void PrintCPName(WORD cp, LPTSTR buf, LPCTSTR format) {
 	TCHAR t[40];
 	LPSTR asz = GetCPName(cp);
+	LPTSTR tp = t;
 	if (cp >= 100 && cp < 300) cp = knownCPN[cp-100];
 	if (asz) {
 #ifdef UNICODE
 		MultiByteToWideChar(CP_ACP, 0, asz, strlen(asz)+1, t, sizeof(t));
 #else
-		t = asz;
+		tp = asz;
 #endif
 	}
 	wsprintf(buf, format, cp);
 	if (asz) {
 		lstrcat(buf, _T(" - "));
-		lstrcat(buf, t);
+		lstrcat(buf, tp);
 	}
 }
 
@@ -324,7 +325,7 @@ BOOL IsTextUTF8(LPBYTE buf){
 	return yes;
 }
 
-WORD GetLineFmt(LPCTSTR sz, DWORD len, DWORD* nCR, DWORD* nLF, DWORD* nStrays, DWORD* nSub, BOOL* binary){
+WORD GetLineFmt(LPCTSTR sz, DWORD len, WORD preferred, DWORD* nCR, DWORD* nLF, DWORD* nStrays, DWORD* nSub, BOOL* binary){
 	DWORD i, crlf = 1, cr = 0, lf = 0;
 	TCHAR cc, cp = _T('\0');
 	if (binary) *binary = FALSE;
@@ -347,6 +348,7 @@ WORD GetLineFmt(LPCTSTR sz, DWORD len, DWORD* nCR, DWORD* nLF, DWORD* nStrays, D
 	if (nCR) *nCR = cr;
 	if (nLF) *nLF = lf;
 	if (cr && lf && !crlf) return ID_LFMT_MIXED;
+	else if (!cr && !lf && preferred) return preferred;
 	else if (crlf) return ID_LFMT_DOS;
 	else if (cr) return ID_LFMT_MAC;
 	else return ID_LFMT_UNIX;
@@ -463,10 +465,11 @@ void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DW
 	*sz = odst;
 }
 void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDirty){
-	LPTSTR odst = *sz, dst = *sz;
+	LPTSTR odst, dst, osz;
 	DWORD len;
 	if ((lfmt != ID_LFMT_UNIX && lfmt != ID_LFMT_MAC) || !sz || !*sz || !lines) return;
 	len = (chars && *chars) ? *chars : lstrlen(*sz);
+	odst = dst = osz = *sz;
 	for ( ; len--; dst++) {
 		*dst = *(*sz)++;
 		if (*dst == _T('\r')) {
@@ -476,6 +479,7 @@ void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDi
 	}
 	if (chars) *chars = dst - odst;
 	*dst = _T('\0');
+	*sz = osz;
 }
 LONG ExportLineFmtDelta(LPCTSTR sz, DWORD* chars, WORD lfmt){
 	DWORD len, olen, ct;
@@ -492,7 +496,7 @@ LONG ExportLineFmtDelta(LPCTSTR sz, DWORD* chars, WORD lfmt){
 #endif
 
 //Returns number of decoded chars (not including the null terminator)
-DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty) {
+DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty, LPBYTE* origBuf) {
 #ifndef UNICODE
 	BOOL bUsedDefault;
 #endif
@@ -550,10 +554,14 @@ DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty) {
 	}
 	if (newbuf) {
 		if (bufDirty) {
-			if (*bufDirty) FREE(*buf)
+			if (*bufDirty) {
+				if (origBuf) {	FREE(*origBuf); }
+				else		 {	FREE(*buf); }
+			}
 			*bufDirty = TRUE;
 		}
 		*buf = newbuf;
+		if (origBuf) *origBuf = NULL;
 	}
 	((LPTSTR)(*buf))[bytes/=sizeof(TCHAR)] = _T('\0');
 	return bytes;
@@ -580,16 +588,16 @@ DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* t
 				ERROROUT(GetString(IDS_UNICODE_STRING_ERROR));
 				bytes = 0;
 			}
-		} else
+		}
 #else
-			bytes = chars * sizeof(TCHAR);
+		bytes = chars * sizeof(TCHAR);
 	} else if (sizeof(TCHAR) > 1) {
 		if (enc == ID_ENC_UTF8)
 			cp = CP_UTF8;
 		do {
 			FREE(newbuf)
 			bytes = WideCharToMultiByte(cp, 0, (LPTSTR)*buf, chars, NULL, 0, NULL, NULL);
-			if (!(newbuf = (LPBYTE)HeapAlloc(globalHeap, 0, bytes))) {
+			if (!(newbuf = (LPBYTE)HeapAlloc(globalHeap, 0, bytes+1))) {
 				ReportLastError();
 				return 0;
 			} else if (!WideCharToMultiByte(cp, 0, (LPTSTR)*buf, chars, (LPSTR)newbuf, bytes, NULL, (cp != CP_UTF8 && truncated ? truncated : NULL))) {
@@ -612,6 +620,6 @@ DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* t
 	}
 	if (enc == ID_ENC_UTF16BE)
 		ReverseBytes(*buf, bytes);
-	((LPTSTR)(*buf))[bytes] = _T('\0');
+	(*buf)[bytes] = _T('\0');
 	return bytes;
 }

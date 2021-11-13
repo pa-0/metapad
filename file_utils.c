@@ -58,7 +58,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	nlfmt = (format >> 16) & 0xfff;
 	if (nFormat >> 31) enc = ID_ENC_CUSTOM;
 	if (format >> 31) nenc = ID_ENC_CUSTOM;
-	if (!((enc == ID_ENC_CUSTOM || nenc == ID_ENC_CUSTOM) && cp != ncp && reinterp)) reinterp = 0;
+	if (!GetTextChars(NULL) || !((enc == ID_ENC_CUSTOM || nenc == ID_ENC_CUSTOM) && cp != ncp && reinterp)) reinterp = 0;
 	if (reinterp == 1) {
 		if (nenc == ID_ENC_CUSTOM)
 			PrintCPName(ncp, mbuf, GetString(IDS_ENC_CUSTOM_CAPTION));
@@ -83,10 +83,10 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 			len = EncodeText((LPBYTE*)&buf, len, nFormat, &bufDirty, NULL);
 		if (len) {
 			if (nenc == ID_ENC_CUSTOM)
-				len = DecodeText((LPBYTE*)&buf, len, &format, &bufDirty);
+				len = DecodeText((LPBYTE*)&buf, len, &format, &bufDirty, NULL);
 			if (len) {
 				format &= 0x8000ffff;
-				format |= (GetLineFmt(buf, len, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
+				format |= (GetLineFmt(buf, len, lfmt, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
 				if (nenc == ID_ENC_BIN)
 					ImportBinary(buf, len);
 				ImportLineFmt(&buf, &len, nlfmt, nCR, nLF, nStrays, nSub, &bufDirty);
@@ -240,9 +240,9 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 			if (len) *len = 0;
 			return _T("");
 		}
-		if (l + 9 > shadowAlloc || (line < 0 && shadowAlloc / 4 > l)) {
+		if (l+9 > shadowAlloc || (line < 0 && shadowAlloc / 4 > l+9)) {
 			printf("\nA!");
-			shadowAlloc = ((l + 9) / 2) * 3;
+			shadowAlloc = ((l+9) / 2) * 3;
 			if (szShadow) {
 				szShadow -= 8;
 				FREE(szShadow);
@@ -252,7 +252,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len) {
 				ReportLastError();
 				return _T("");
 			}
-			szShadow += 8;
+			szShadow += 8;	//The extra leading bytes are used in: EditProc() -> case WM_CHAR (autoindent newline insertion)
 		}
 		if (line >= 0) {
 			if (bDirtyShadow || shadowRngEnd != line) {
@@ -347,6 +347,10 @@ DWORD GetColNum(LONG cp, LONG line, DWORD* lineLen, LONG* lineout, CHARRANGE* pc
 	for (i = 0, l = cp - cr.cpMin; i < l && ts[i]; i++, c++) {
 		if (ts[i] == _T('\t'))
 			c += (options.nTabStops - (c-1) % options.nTabStops)-1;
+#ifdef UNICODE
+		else if (ts[i] >= _T('\xd800') && ts[i] < _T('\xdc00'))	//Unicode surrogate pair - displays as 1 char while actually taking up 2 in memory
+			c--;
+#endif
 	}
 	return c;
 }
@@ -357,6 +361,10 @@ DWORD GetCharIndex(DWORD col, LONG line, LONG cp, DWORD* lineLen, LONG* lineout,
 	for (i = 0; ts[i] && ts[i] != _T('\r') && c < col; i++, c++) {
 		if (ts[i] == _T('\t'))
 			c += (options.nTabStops - (c-1) % options.nTabStops)-1;
+#ifdef UNICODE
+		else if (ts[i] >= _T('\xd800') && ts[i] < _T('\xdc00'))	//Unicode surrogate pair - displays as 1 char while actually taking up 2 in memory
+			c--;
+#endif
 	}
 	return i;
 }
@@ -429,7 +437,7 @@ void UpdateSavedInfo() {
 	bDirtyShadow = bDirtyStatus = TRUE;
 	buf = GetShadowBuffer(&lChars);
 	savedChars = lChars;
-	savedFormat = nFormat;
+	savedFormat = nFormat & 0x8fffffff;
 	memset(savedHead, 0, sizeof(savedHead));
 	memset(savedFoot, 0, sizeof(savedFoot));
 	memcpy(savedHead, (LPBYTE)buf, l = MIN(lChars*sizeof(TCHAR), sizeof(savedHead)));
