@@ -64,6 +64,20 @@ static unsigned short encLut[] = {
 };
 
 
+
+void ExpandDifMap(LPVOID map, WORD width, DWORD len){
+	switch(width){
+		case 1:
+			while(--len)
+				*(++(BYTE*)map) = *((BYTE*)map)+((BYTE*)map)[-1]+1;
+			break;
+		case 2:
+			while(--len)
+				*(++(WORD*)map) = *((WORD*)map)+((WORD*)map)[-1]+1;
+			break;
+	}
+}
+
 /**
  * Decodes a string of ANSI or wide characters, of given [base], to the binary data it represents.
  * Valid bases: 2 - 36, 64.
@@ -82,6 +96,10 @@ INT DecodeBase( BYTE base, LPCTSTR code, LPBYTE bin, INT len, BYTE extractMode, 
 	DWORD i, ct;
 	BYTE j, k = 0, v, w, ls = 0, la = 0x3f, vs = 0, mi = 0, mc = 0;
 	unsigned const short* lut = decLut - 0x20;
+	if (encLut[1] == encLut[2]) {
+		ExpandDifMap(decLut, sizeof(*decLut), ARRLEN(decLut));
+		ExpandDifMap(encLut, sizeof(*encLut), ARRLEN(encLut));
+	}
 	if (base < 2 || base > 64 || (w = ((lut[base+0x20] >> 6) & 7) + 1) < 2) return -3;
 	if (!SCNUL(code)[0]) return 0;
 	if (len < 0) len = 0x7fffffff;
@@ -186,6 +204,10 @@ INT EncodeBase( BYTE base, LPBYTE bin, LPTSTR code, INT len, LPBYTE* end ) {
 	DWORD i, ct = 0, v;
 	BYTE k, w, vs = 0, ma = base-1;
 	unsigned const short *lut = decLut - 0x20, *elut = encLut;
+	if (encLut[1] == encLut[2]) {
+		ExpandDifMap(decLut, sizeof(*decLut), ARRLEN(decLut));
+		ExpandDifMap(encLut, sizeof(*encLut), ARRLEN(encLut));
+	}
 	if (base < 2 || base > 64 || (w = ((lut[base+0x20] >> 6) & 7) + 1) < 2) return -3;
 	if (!bin) len = 0;
 	if (base <= 32) vs = ((lut[base+0x5f] >> 6) & 7);
@@ -223,20 +245,6 @@ INT EncodeBase( BYTE base, LPBYTE bin, LPTSTR code, INT len, LPBYTE* end ) {
 	return ct;
 }
 
-
-
-void ExpandDifMap(LPVOID map, WORD width, DWORD len){
-	switch(width){
-		case 1:
-			while(--len)
-				*(++(BYTE*)map) = *((BYTE*)map)+((BYTE*)map)[-1]+1;
-			break;
-		case 2:
-			while(--len)
-				*(++(WORD*)map) = *((WORD*)map)+((WORD*)map)[-1]+1;
-			break;
-	}
-}
 
 
 
@@ -410,6 +418,7 @@ void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDi
 		*dst = **sz;
 		if (lfmt == FC_LFMT_MIXED && **sz == _T('\x14')) {
 			if (*++(*sz) == _T('\r')) *dst = _T('\n');
+			len--;
 		} else if (**sz == _T('\r')) {
 			if (lfmt == FC_LFMT_UNIX) *dst = _T('\n');
 			else if (lfmt == FC_LFMT_DOS) *++dst = _T('\n');
@@ -433,7 +442,7 @@ LONG ExportLineFmtDelta(LPCTSTR sz, DWORD* chars, WORD lfmt){
 	for ( ; len--; sz++) {
 		switch(lfmt){
 			case FC_LFMT_MIXED:
-				if (*sz == _T('\x14')) { sz++; ct--; }
+				if (*sz == _T('\x14')) { sz++; ct--; len--; }
 				break;
 			case FC_LFMT_DOS:
 				if (*sz == _T('\r')) ct++;
@@ -478,7 +487,8 @@ void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDi
 		*dst = *(*sz)++;
 		if (*dst == _T('\r')) {
 			if (lfmt == FC_LFMT_UNIX) *dst = _T('\n');
-			*sz++;
+			(*sz)++;
+			len--;
 		}
 	}
 	if (chars) *chars = dst - odst;
@@ -618,9 +628,11 @@ DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* t
 #endif	
 	}
 	if (newbuf) {
-		if (*bufDirty) FREE(*buf)
+		if (bufDirty) {
+			if (*bufDirty) FREE(*buf)
+			*bufDirty = TRUE;
+		}
 		*buf = newbuf;
-		*bufDirty = TRUE;
 	}
 	if (enc == FC_ENC_UTF16BE)
 		ReverseBytes(*buf, bytes);

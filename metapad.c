@@ -74,7 +74,6 @@
 SLWA SetLWA = NULL;
 HANDLE globalHeap = NULL;
 HINSTANCE hinstThis = NULL;
-HINSTANCE hinstLang = NULL;
 int _fltused = 0x9875; // see CMISCDAT.C for more info on this
 
 TCHAR gTmpBuf[MAX(MAX(MAXFN,MAXMACRO),MAX(MAXFIND,MAXINSERT))+MAXSTRING], gTmpBuf2[MAX(MAXFN,MAXMACRO)+MAXSTRING];
@@ -94,191 +93,7 @@ TCHAR gDummyBuf[1], gDummyBuf2[1];
 
 ///// Implementation /////
 
-BOOL EncodeWithEscapeSeqs(TCHAR* szText)
-{                     
-	TCHAR* szStore = gTmpBuf2;
-	INT i,j;
 
-	for (i = 0, j = 0; i < MAXMACRO && szText[i]; ++i) {
-		switch (szText[i]) {
-		case _T('\n'):
-			break;
-		case _T('\r'):
-			szStore[j++] = _T('\\');
-			szStore[j++] = _T('n');
-			break;
-		case _T('\t'):
-			szStore[j++] = _T('\\');
-			szStore[j++] = _T('t');
-			break;
-		case _T('\\'):
-			szStore[j++] = _T('\\');
-			szStore[j++] = _T('\\');
-			break;
-		default:
-			szStore[j++] = szText[i];
-		}
-		if (j >= MAXMACRO - 1) {
-			return FALSE;
-		}
-	}
-	szStore[j] = _T('\0');
-	lstrcpy(szText, szStore);
-	return TRUE;
-}
-
-BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
-	LPTSTR op = buf, bout, end, szErr, szErr2, szErr3, dbuf;
-	INT l, m, base = 0, mul = 3, uni = 0, str, expl = 0, dbufalloc = 0, spi = 0;
-	DWORD p = 0;
-	WORD enc = (nFormat >> 31 ? FC_ENC_CODEPAGE : (WORD)nFormat);
-#ifdef UNICODE
-	const TCHAR spsub[] = {_T('\x332'), _T('\xFFFD'), _T('\xD7'), _T('\x2014'), _T('\x2026'), _T('\xFFFC')};
-#endif
-
-	if (!SCNUL(buf)[0]) return TRUE;
-	if (specials) FREE(*specials);
-	for (bout = buf; *buf; buf++, base = uni = expl = spi = 0, p++) {
-		if (*buf == _T('\\')) {
-			switch(*++buf){
-			case _T('n'):
-#ifdef USE_RICH_EDIT
-				*bout++ = _T('\r');
-#else
-				*bout++ = _T('\r');
-				*bout++ = _T('\n');
-				p++;
-#endif
-				continue;
-			case _T('R'): *bout++ = _T('\r'); continue;
-			case _T('N'): *bout++ = _T('\n'); continue;
-			case _T('t'): *bout++ = _T('\t'); continue;
-			case _T('a'): *bout++ = _T('\a'); continue;
-			case _T('e'): *bout++ = _T('\x1e'); continue;
-			case _T('f'): *bout++ = _T('\f'); continue;
-			case _T('v'): *bout++ = _T('\v'); continue;
-			case _T('_'): if (!spi) spi = 1;
-			case _T('?'): if (!spi) spi = 2;
-			case _T('*'): if (!spi) spi = 3;
-			case _T('-'): if (!spi) spi = 4;
-			case _T('+'): if (!spi) spi = 5;
-			case _T('$'): if (!spi) spi = 6;
-				if (specials) {
-					if (!*specials) *specials = (LPBYTE)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, lstrlen(op)+1);
-					(*specials)[p] = spi;
-				}
-				if (spi == 6){
-#ifdef UNICODE
-					if (enc == FC_ENC_UTF16 || enc == FC_ENC_UTF16BE)
-						*bout++ = RAND()%0xffe0+0x20;
-					else
-#endif
-						*bout++ = RAND()%0x60+0x20;
-					continue;
-				}
-#ifdef UNICODE
-				*bout++ = spsub[spi-1];
-				continue;
-#endif
-				break;
-			case _T('U'):
-			case _T('u'): uni = 1; 
-			case _T('X'):
-			case _T('x'): if (!base) { base = 16; mul = 2; } if (!uni) uni = 2;
-			case _T('W'):
-			case _T('w'): if (!uni) uni = 1;
-			case _T('S'): 
-			case _T('s'): if (!base) { base = 64; mul = 4; }
-			case _T('B'):
-			case _T('b'): if (!base) { base = 2; mul = 8; }
-			case _T('D'):
-			case _T('d'): if (!base) base = 10;
-			case _T('O'):
-			case _T('o'): buf++; expl = 1;
-			default:	  if (!base) base = 8;
-				str = (expl && (*(buf-1) & _T('_')) == *(buf-1));
-				end = buf;
-				if (uni == 1) mul *= 2;
-				if (sizeof(TCHAR) >= 2 && uni != 1) {
-					if (!dbufalloc) {
-						dbuf = (LPTSTR)HeapAlloc(globalHeap, 0, (MAXFIND + 2) * sizeof(TCHAR));
-						dbufalloc = 1;
-					}
-				} else
-					dbuf = bout;
-				l = DecodeBase(base, buf, (LPBYTE)dbuf, str ? -1 : mul, 1, str && base != 64 ? 0 : 1, FALSE, &end);
-				if (l > 0) {
-					m = l;
-					if (sizeof(TCHAR) >= 2 && uni == 1){
-						while (m % sizeof(TCHAR))
-							*((LPBYTE)(dbuf)+(m++)) = 0;
-						m /= sizeof(TCHAR);
-					}
-					buf = end;
-					if (str && *buf && *buf != '\\') 
-						l = -1;
-#ifdef UNICODE
-					else if (sizeof(TCHAR) >= 2 && uni != 1 && !(m = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)dbuf, m, bout, m * sizeof(TCHAR))))
-						l = -3;
-#endif
-					else if (str && uni == 1 && l % sizeof(TCHAR))
-						l = -2;
-#ifdef UNICODE
-					else if (uni == 1 && l >= 2 && enc != FC_ENC_UTF16BE)
-						ReverseBytes((LPBYTE)bout, l * 2);
-#endif
-					if (!str) buf--;
-				} else if (l == -2 && str && *end && *end != '\\') l = -1;
-				if (l > 0) {
-					p += m - 1;
-#ifdef UNICODE
-					for (; m; m--, bout++) {
-						if (*bout == _T('\0'))
-							*bout = _T('\x2400');
-					}
-#else
-					bout += m;
-#endif
-					if (str && !*buf) buf--;
-					continue;
-				}
-				if (l == 0 && !expl) break;
-				if (!errContext) return FALSE;
-				szErr2 = (LPTSTR)HeapAlloc(globalHeap, 0, (MAXSTRING * 2 + 32) * sizeof(TCHAR));
-				szErr3 = szErr2 + MAXSTRING * 2;
-				lstrcpy(szErr3, errContext);
-				switch(l) {
-					case 0: szErr = (LPTSTR)GetString(IDS_ESCAPE_EXPECTED); break;
-					case -1: szErr = (LPTSTR)GetString(IDS_ESCAPE_BADCHARS); break;
-					case -2: szErr = (LPTSTR)GetString(IDS_ESCAPE_BADALIGN); break;
-					case -3: szErr = (LPTSTR)GetString(IDS_UNICODE_CONV_ERROR); break;
-					default: szErr = (LPTSTR)GetString(IDS_ERROR); break;
-				}
-				wsprintf(szErr2, szErr, base, mul);
-				szErr = szErr2 + MAXSTRING;
-				wsprintf(szErr, GetString(IDS_ESCAPE_ERROR), szErr2, szErr3);
-				lstrcat(szErr, _T("\n'"));
-				lstrcpyn(szErr3, &op[MAX(0, end-op-15)], MIN(end-op, 15)+1);
-				lstrcat(szErr, szErr3);
-				lstrcat(szErr, _T(" *** "));
-				lstrcpyn(szErr3, end, 16);
-				lstrcat(szErr, szErr3);
-				lstrcat(szErr, _T("'"));
-				ERROROUT(szErr);
-				FREE(szErr2);
-				if (dbufalloc) FREE(dbuf);
-				return FALSE;
-			}
-		}
-		if (*buf)	*bout++ = *buf;
-		else		*buf--;
-	}
-	*bout = _T('\0');
-	if (dbufalloc) FREE(dbuf);
-	return TRUE;
-	// abcdefghijklmnopqrstuvwxyz _?*-+$
-	// xM Mxx       XM  XMxMxMM  M123456
-}
 
 /**
  * Cleanup objects.
@@ -294,7 +109,7 @@ void CleanUp(void)
 	if (hfontmain) DeleteObject(hfontmain);
 	if (hfontfind) DeleteObject(hfontfind);
 	if (hthread) CloseHandle(hthread);
-	if (hinstLang && hinstLang != hinstThis) FreeLibrary(hinstLang);
+	UnloadLanguagePlugin();
 
 #ifdef USE_RICH_EDIT
 	DestroyWindow(client);
@@ -560,6 +375,7 @@ void UpdateStatus(BOOL refresh) {
 	HDC dc;
 	SIZE sz;
 
+	if (!bStarted) return;
 	bDirtyStatus |= refresh;
 	tmu = KillTimer(hwnd, IDT_UPDATE);
 	st = GetTickCount();
@@ -701,7 +517,7 @@ void UpdateStatus(BOOL refresh) {
 LRESULT APIENTRY PageSetupProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
 	case WM_INITDIALOG:
-		LocalizeDialog(IDD_PAGE_SETUP, hwndDlg, hinstLang);
+		LocalizeDialog(IDD_PAGE_SETUP, hwndDlg);
 		break;
 	}
 	return FALSE;
@@ -722,10 +538,10 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		switch(frDlgId) {
-			case ID_FIND: LocalizeDialog(IDD_FIND, hwndFind, hinstLang); break;
-			case ID_REPLACE: LocalizeDialog(IDD_REPLACE, hwndFind, hinstLang); break;
+			case ID_FIND: LocalizeDialog(IDD_FIND, hwndFind); break;
+			case ID_REPLACE: LocalizeDialog(IDD_REPLACE, hwndFind); break;
 			case ID_INSERT_TEXT:
-			case ID_PASTE_MUL: LocalizeDialog(IDD_INSERT, hwndFind, hinstLang); break;
+			case ID_PASTE_MUL: LocalizeDialog(IDD_INSERT, hwndFind); break;
 		}
 		break;
 	case WM_COMMAND:
@@ -735,7 +551,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			TCHAR* szText = gTmpBuf;
 			DWORD i, j = 0;
 			if (HIWORD(wParam) != BN_CLICKED) break;
-			hmenu = LocalizeMenu(IDR_ESCAPE_SEQUENCES, hinstThis, hinstLang);
+			hmenu = LocalizeMenu(IDR_ESCAPE_SEQUENCES);
 			hsub = GetSubMenu(hmenu, 0);
 
 			SendMessage(hwnd, WM_INITMENUPOPUP, (WPARAM)hsub, MAKELPARAM(1, FALSE));
@@ -1160,7 +976,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 #endif
 	case WM_RBUTTONUP:
 		{
-			HMENU hmenu = LocalizeMenu(IDR_POPUP, hinstThis, hinstLang);
+			HMENU hmenu = LocalizeMenu(IDR_POPUP);
 			HMENU hsub = GetSubMenu(hmenu, 0);
 			POINT pt;
 			UINT id;
@@ -1276,7 +1092,7 @@ LRESULT CALLBACK AbortPrintJob(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 		case WM_INITDIALOG:
 			CenterWindow(hwndDlg);
 			SetDlgItemText(hwndDlg, IDD_ABORT_PRINT+2, SCNUL8(szCaptionFile)+8);
-			LocalizeDialog(IDD_ABORT_PRINT, hwndDlg, hinstLang);
+			LocalizeDialog(IDD_ABORT_PRINT, hwndDlg);
 			return TRUE;
 		case WM_COMMAND:
 			bPrint = FALSE;
@@ -2113,13 +1929,13 @@ BOOL CreateMainMenu(HWND hwnd) {
 	MENUITEMINFO mio;
 	HMENU hmenu, hsub, hmold = GetMenu(hwnd);
 	TCHAR* bufFn = gTmpBuf;
-	if (!(hmenu = LocalizeMenu(IDR_MENU, hinstThis, hinstLang))){
+	if (!(hmenu = LocalizeMenu(IDR_MENU))){
 		ReportLastError();
 		return FALSE;
 	}
 	SetMenu(hwnd, hmenu);
 	mio.cbSize = sizeof(MENUITEMINFO);
-	if (hinstLang && hinstLang != hinstThis) {
+	if (HaveLanguagePlugin()) {
 		hsub = GetSubMenu(hmenu, 4);
 		mio.fMask = MIIM_TYPE | MIIM_ID;
 		mio.fType = MFT_STRING;
@@ -2231,7 +2047,7 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT, GetString(STR_COPYRIGHT));
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT2, GetString(IDS_ALLRIGHTS));
 			SetWindowText(hwndDlg, GetString(STR_METAPAD));
-			LocalizeDialog(0, hwndDlg, NULL);
+			LocalizeDialog(0, hwndDlg);
 			break;
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
@@ -2268,7 +2084,7 @@ BOOL CALLBACK AboutPluginDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 			SetDlgItemText(hwndDlg, IDC_EDIT_PLUGIN_RELEASE, GetString(IDS_PLUGIN_RELEASE));
 			SetDlgItemText(hwndDlg, IDC_EDIT_PLUGIN_TRANSLATOR, GetString(IDS_PLUGIN_TRANSLATOR));
 			SetDlgItemText(hwndDlg, IDC_EDIT_PLUGIN_EMAIL, GetString(IDS_PLUGIN_EMAIL));
-			LocalizeDialog(IDD_ABOUT_PLUGIN, hwndDlg, hinstLang);
+			LocalizeDialog(IDD_ABOUT_PLUGIN, hwndDlg);
 			CenterWindow(hwndDlg);
 			return TRUE;
 		case WM_COMMAND:
@@ -2303,7 +2119,7 @@ BOOL CALLBACK GotoDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 				SetDlgItemText(hwndDlg, IDC_OFFSET, szLine);
 				SendDlgItemMessage(hwndDlg, IDC_LINE, EM_SETSEL, 0, (LPARAM)-1);
 			}
-			LocalizeDialog(IDD_GOTO, hwndDlg, hinstLang);
+			LocalizeDialog(IDD_GOTO, hwndDlg);
 			return TRUE;
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
@@ -2330,7 +2146,7 @@ BOOL CALLBACK AddFavDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		case WM_INITDIALOG: {
 			SetDlgItemText(hwndDlg, IDC_DATA, SCNUL8(szCaptionFile)+8);
 			CenterWindow(hwndDlg);
-			LocalizeDialog(IDD_FAV_NAME, hwndDlg, hinstLang);
+			LocalizeDialog(IDD_FAV_NAME, hwndDlg);
 			return TRUE;
 		}
 		case WM_COMMAND:
@@ -2358,7 +2174,7 @@ BOOL CALLBACK CPDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 				PrintCPName(GetKnownCP(i), buf, _T("%d"));
 				SendDlgItemMessage(hwndDlg, IDC_DATA, CB_ADDSTRING, 0, (LPARAM)buf);
 			}
-			LocalizeDialog(IDD_CP, hwndDlg, hinstLang);
+			LocalizeDialog(IDD_CP, hwndDlg);
 			return TRUE;
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
@@ -2430,7 +2246,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		if (SetWindowTheme) SetWindowTheme(GetDlgItem(hwndDlg, IDC_BUTTON_FORMAT),_T(""),_T(""));
 		SendDlgItemMessage(hwndDlg, IDC_BUTTON_FORMAT, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)CreateMappedBitmap(hinstThis, IDB_DROP_ARROW, 0, NULL, 0));
 		newFormat = options.nFormat;
-		LocalizeDialog(IDD_PROPPAGE_A1, hwndDlg, hinstLang);
+		LocalizeDialog(IDD_PROPPAGE_A1, hwndDlg);
 		return TRUE;
 	case WM_NOTIFY:
 		switch (((NMHDR FAR *)lParam)->code) {
@@ -2528,7 +2344,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			break;
 		case IDC_BUTTON_FORMAT:
 			if (HIWORD(wParam) != BN_CLICKED) break;
-			hmenu = LocalizeMenu(IDR_MENU, hinstThis, hinstLang);
+			hmenu = LocalizeMenu(IDR_MENU);
 			hsub = GetSubMenu(hmenu, 0);
 			hsub = GetSubMenu(hsub, MPOS_FILE_FORMAT_STATIC);
 			SendMessage(hwnd, WM_INITMENUPOPUP, (WPARAM)hsub, MAKELPARAM(1, FALSE));
@@ -2561,7 +2377,9 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 				case ID_ENC_CUSTOM:
 					DialogBox(hinstThis, MAKEINTRESOURCE(IDD_CP), hwndDlg, (DLGPROC)CPDialogProc);
 					break;
+				case 0: break;
 				default:
+					if (!v) break;
 					v = v % 1000 + FC_BASE;
 					if (v >= FC_LFMT_BASE && v < FC_LFMT_END) v <<= 16;
 					if (!(v & 0x8000ffff)) v |= newFormat & 0x8000ffff;
@@ -2580,6 +2398,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	INT i;
 	LPTSTR sz = NULL, buf = gTmpBuf;
+	HINSTANCE hinstTemp;
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		SendDlgItemMessage(hwndDlg, IDC_EDIT_LANG_PLUGIN, EM_LIMITTEXT, (WPARAM)MAXFN-1, 0);
@@ -2590,7 +2409,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 		SetDlgItemText(hwndDlg, IDC_CUSTOMDATE2, SCNUL(options.szCustomDate2));
 		for (i = 0; i < 10; i++) {
 			SendDlgItemMessage(hwndDlg, IDC_MACRO_1+i, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
-			SetDlgItemText(hwndDlg, IDC_MACRO_1+1, SCNUL(options.MacroArray[i]));
+			SetDlgItemText(hwndDlg, IDC_MACRO_1+i, SCNUL(options.MacroArray[i]));
 			wsprintf(buf, GetString(IDC_TEXT_MACRO), (i+1)%10);
 			SetDlgItemText(hwndDlg, IDC_TEXT_MACRO+i, buf);
 		}
@@ -2602,7 +2421,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 			SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_PLUGIN, BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
 			SendMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_RADIO_LANG_PLUGIN, 0), 0);
 		}
-		LocalizeDialog(IDD_PROPPAGE_A2, hwndDlg, hinstLang);
+		LocalizeDialog(IDD_PROPPAGE_A2, hwndDlg);
 		return TRUE;
 	case WM_NOTIFY:
 		switch (((NMHDR FAR *)lParam)->code) {
@@ -2648,11 +2467,8 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 					SetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, sz);
 				}
 				else {
-					HINSTANCE hinstTemp = LoadAndVerifyLanguagePlugin(sz, TRUE);
-					if (hinstTemp) {
+					if (LoadAndVerifyLanguagePlugin(sz, TRUE, &hinstTemp))
 						SetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, sz);
-						FreeLibrary(hinstTemp);
-					}
 					else {
 						SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_DEFAULT, BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
 						SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_PLUGIN, BM_SETCHECK, (WPARAM)BST_UNCHECKED, 0);
@@ -2727,7 +2543,7 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 			SendMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_SYSTEM_COLOURS, 0), 0);
 			SendMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_SYSTEM_COLOURS2, 0), 0);
 
-			LocalizeDialog(IDD_PROPPAGE_VIEW, hwndDlg, hinstLang);
+			LocalizeDialog(IDD_PROPPAGE_VIEW, hwndDlg);
 			hfont = CreateFontIndirect(&TmpPrimaryFont);
 			SendDlgItemMessage(hwndDlg, IDC_BTN_FONT1, WM_SETFONT, (WPARAM)hfont, 0);
 			hfont2 = CreateFontIndirect(&TmpSecondaryFont);
@@ -3043,7 +2859,7 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 			SendDlgItemMessage(hwndDlg, IDC_LAUNCH_SAVE1, BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
 		else
 			SendDlgItemMessage(hwndDlg, IDC_LAUNCH_SAVE2, BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
-		LocalizeDialog(IDD_PROPPAGE_GENERAL, hwndDlg, hinstLang);
+		LocalizeDialog(IDD_PROPPAGE_GENERAL, hwndDlg);
 		return TRUE;
 	case WM_NOTIFY:
 		switch (((NMHDR FAR *)lParam)->code) {
@@ -3169,7 +2985,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			break;
 		DragQueryFile(hDrop, 0, szFileName, MAXFN);
 		DragFinish(hDrop);
-		LoadFile(szFileName, FALSE, TRUE, FALSE);
+		LoadFile(szFileName, FALSE, TRUE, FALSE, NULL);
 		break;
 	case WM_SIZING:
 		InvalidateRect(client, NULL, FALSE); // ML: for decreasing window size, update scroll bar
@@ -3942,8 +3758,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				DialogBox(hinstThis, MAKEINTRESOURCE(IDD_ABOUT), hwndMain, (DLGPROC)AboutDialogProc);
 				break;
 			case ID_ABOUT_PLUGIN:
-				if (hinstLang && hinstThis != hinstLang)
-					DialogBox(hinstThis, MAKEINTRESOURCE(IDD_ABOUT_PLUGIN), hwndMain, (DLGPROC)AboutPluginDialogProc);
+				DialogBox(hinstThis, MAKEINTRESOURCE(IDD_ABOUT_PLUGIN), hwndMain, (DLGPROC)AboutPluginDialogProc);
 				break;
 			case ID_MYFILE_OPEN:
 				//SetCurrentDirectory(SCNUL(szDir));
@@ -4479,11 +4294,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						break;
 #ifdef USE_RICH_EDIT
 					SendMessage(client, EM_EXGETSEL, 0, (LPARAM)&cr);
-					LoadFile(szFile, FALSE, FALSE, FALSE);
+					LoadFile(szFile, FALSE, FALSE, FALSE, NULL);
 					SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 #else
 					SendMessage(client, EM_GETSEL, (WPARAM)&cr.cpMin, (LPARAM)&cr.cpMax);
-					LoadFile(szFile, FALSE, FALSE, FALSE);
+					LoadFile(szFile, FALSE, FALSE, FALSE, NULL);
 					SendMessage(client, EM_SETSEL, (WPARAM)cr.cpMin, (LPARAM)cr.cpMax);
 					SendMessage(client, EM_SCROLLCARET, 0, 0);
 #endif
@@ -4671,7 +4486,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 }
 
 DWORD WINAPI LoadThread(LPVOID lpParameter) {
-	if (LoadFile(SCNUL(szFile), TRUE, TRUE, FALSE)) {
+	if (LoadFile(SCNUL(szFile), TRUE, TRUE, FALSE, NULL)) {
 #ifdef USE_RICH_EDIT
 		if (lpParameter != NULL) {
 			GotoLine(((CHARRANGE*)lpParameter)->cpMin, ((CHARRANGE*)lpParameter)->cpMax);
@@ -4869,11 +4684,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		ReportLastError();
 		return FALSE;
 	}
-	if (!bSkipLanguagePlugin)
-		FindAndLoadLanguagePlugin();
-	if (!CreateMainMenu(hwnd))
-		return FALSE;
-
 	hmod = GetModuleHandleA("user32.dll");
 	SetLWA = (SLWA)(GetProcAddress(hmod, "SetLayeredWindowAttributes"));
 	if (SetLWA)
@@ -4885,6 +4695,10 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		ReportLastError();
 		return FALSE;
 	}
+	if (!bSkipLanguagePlugin)
+		FindAndLoadLanguagePlugin();
+	if (!CreateMainMenu(hwnd))
+		return FALSE;
 
 #ifdef USE_RICH_EDIT
 	if (LoadLibraryA(STR_RICHDLL) == NULL) {
@@ -4921,7 +4735,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 					lstrcpyn(szFile, szCmdLine + 1, nCmdLen - 1);
 				else
 					lstrcpyn(szFile, szCmdLine, nCmdLen + 1);
-				if (!LoadFile(szFile, FALSE, FALSE, FALSE))
+				if (!LoadFile(szFile, FALSE, FALSE, FALSE, NULL))
 					return FALSE;
 				UpdateCaption();
 				PrintContents();

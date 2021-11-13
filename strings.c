@@ -42,6 +42,9 @@
 #define WS_EX_LAYOUTRTL	0x00400000L
 
 
+static HINSTANCE hinstLang = NULL;
+
+
 static const CHAR strings[] = ""
 /*		1		IDS_VERSION_SYNCH				*/	"\0""3.7"
 /*		2		IDS_PLUGIN_LANGUAGE				*/	"\0"
@@ -219,11 +222,11 @@ static const CHAR strings[] = ""
 /*		510		STR_FAV_APPNAME					*/	"\0Favourites"
 /*		511		STR_OPTIONS						*/	"\0Options"
 /*		512		STR_COPYRIGHT					*/	"\0\xa9 1999-2011 Alexander Davidson\n\xa9 2013 Mario Rugiero\n\xa9 2021 SoBiT Corp"
-/*		513		IDS_PLUGIN_ERRFIND				*/	"\0Could not find the language plugin DLL."
+/*		513		IDS_PLUGIN_ERRFIND				*/	"\0Could not find the language plugin."
 /*		514		IDS_PLUGIN_ERR					*/	"\0Temporarily reverting language to Default (English)\n\nCheck the language plugin setting."
 /*		518		IDS_FILTER_EXEC					*/	"\0Executable Files (*.exe)|*.exe|All Files (*.*)|*.*|"
 /*		519		IDS_FILTER_PLUGIN				*/	"\0metapad language plugins (*.lng, *.dll)|*.lng;*.dll|All Files (*.*)|*.*|"
-/*		520		IDS_LOADLNG_ERROR				*/	"\0Error loading language plugin on line %d: ID number missing or out of range"
+/*		520		IDS_LOADLNG_ERROR				*/	"\0Error loading language plugin on line %d: ID number missing or out of range or invalid escape sequence"
 /*		600		IDSS_WSTATE						*/	"\0w_WindowState"
 /*		601		IDSS_WLEFT						*/	"\0w_Left"
 /*		602		IDSS_WTOP						*/	"\0w_Top"
@@ -600,80 +603,305 @@ static LPTSTR pstrings = NULL;
 static WORD *pstringsidx = NULL, *pstringsofs = NULL;
 
 
-BOOL LoadLng(LPTSTR filename, LPTSTR* str, WORD** stridx, WORD** strofs, WORD upto){
+
+BOOL EncodeWithEscapeSeqs(TCHAR* szText) {                     
+	TCHAR szStore[MAX(MAXMACRO,MAXSTRING)];
+	INT i,j;
+	for (i = 0, j = 0; i < MAXMACRO && szText[i]; ++i) {
+		switch (szText[i]) {
+		case _T('\n'):
+			break;
+		case _T('\r'):
+			szStore[j++] = _T('\\');
+			szStore[j++] = _T('n');
+			break;
+		case _T('\t'):
+			szStore[j++] = _T('\\');
+			szStore[j++] = _T('t');
+			break;
+		case _T('\\'):
+			szStore[j++] = _T('\\');
+			szStore[j++] = _T('\\');
+			break;
+		default:
+			szStore[j++] = szText[i];
+		}
+		if (j >= MAXMACRO - 1) {
+			return FALSE;
+		}
+	}
+	szStore[j] = _T('\0');
+	lstrcpy(szText, szStore);
+	return TRUE;
+}
+
+BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
+	LPTSTR op = buf, bout, end, szErr, szErr2, szErr3, dbuf;
+	INT l, m, base = 0, mul = 3, uni = 0, str, expl = 0, dbufalloc = 0, spi = 0;
+	DWORD p = 0;
+	WORD enc = (nFormat >> 31 ? FC_ENC_CODEPAGE : (WORD)nFormat);
+#ifdef UNICODE
+	const TCHAR spsub[] = {_T('\x332'), _T('\xFFFD'), _T('\xD7'), _T('\x2014'), _T('\x2026'), _T('\xFFFC')};
+#endif
+
+	if (!SCNUL(buf)[0]) return TRUE;
+	if (specials) FREE(*specials);
+	for (bout = buf; *buf; buf++, base = uni = expl = spi = 0, p++) {
+		if (*buf == _T('\\')) {
+			switch(*++buf){
+			case _T('n'):
+#ifdef USE_RICH_EDIT
+				*bout++ = _T('\r');
+#else
+				*bout++ = _T('\r');
+				*bout++ = _T('\n');
+				p++;
+#endif
+				continue;
+			case _T('R'): *bout++ = _T('\r'); continue;
+			case _T('N'): *bout++ = _T('\n'); continue;
+			case _T('t'): *bout++ = _T('\t'); continue;
+			case _T('a'): *bout++ = _T('\a'); continue;
+			case _T('e'): *bout++ = _T('\x1e'); continue;
+			case _T('f'): *bout++ = _T('\f'); continue;
+			case _T('v'): *bout++ = _T('\v'); continue;
+			case _T('_'): if (!spi) spi = 1;
+			case _T('?'): if (!spi) spi = 2;
+			case _T('*'): if (!spi) spi = 3;
+			case _T('-'): if (!spi) spi = 4;
+			case _T('+'): if (!spi) spi = 5;
+			case _T('$'): if (!spi) spi = 6;
+				if (specials) {
+					if (!*specials) *specials = (LPBYTE)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, lstrlen(op)+1);
+					(*specials)[p] = spi;
+				}
+				if (spi == 6){
+#ifdef UNICODE
+					if (enc == FC_ENC_UTF16 || enc == FC_ENC_UTF16BE)
+						*bout++ = RAND()%0xffe0+0x20;
+					else
+#endif
+						*bout++ = RAND()%0x60+0x20;
+					continue;
+				}
+#ifdef UNICODE
+				*bout++ = spsub[spi-1];
+				continue;
+#endif
+				break;
+			case _T('U'):
+			case _T('u'): uni = 1; 
+			case _T('X'):
+			case _T('x'): if (!base) { base = 16; mul = 2; } if (!uni) uni = 2;
+			case _T('W'):
+			case _T('w'): if (!uni) uni = 1;
+			case _T('S'): 
+			case _T('s'): if (!base) { base = 64; mul = 4; }
+			case _T('B'):
+			case _T('b'): if (!base) { base = 2; mul = 8; }
+			case _T('D'):
+			case _T('d'): if (!base) base = 10;
+			case _T('O'):
+			case _T('o'): buf++; expl = 1;
+			default:	  if (!base) base = 8;
+				str = (expl && (*(buf-1) & _T('_')) == *(buf-1));
+				end = buf;
+				if (uni == 1) mul *= 2;
+				if (sizeof(TCHAR) >= 2 && uni != 1) {
+					if (!dbufalloc) {
+						dbuf = (LPTSTR)HeapAlloc(globalHeap, 0, (MAXFIND + 2) * sizeof(TCHAR));
+						dbufalloc = 1;
+					}
+				} else
+					dbuf = bout;
+				l = DecodeBase(base, buf, (LPBYTE)dbuf, str ? -1 : mul, 1, str && base != 64 ? 0 : 1, FALSE, &end);
+				if (l > 0) {
+					m = l;
+					if (sizeof(TCHAR) >= 2 && uni == 1){
+						while (m % sizeof(TCHAR))
+							*((LPBYTE)(dbuf)+(m++)) = 0;
+						m /= sizeof(TCHAR);
+					}
+					buf = end;
+					if (str && *buf && *buf != '\\') 
+						l = -1;
+#ifdef UNICODE
+					else if (sizeof(TCHAR) >= 2 && uni != 1 && !(m = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)dbuf, m, bout, m * sizeof(TCHAR))))
+						l = -3;
+#endif
+					else if (str && uni == 1 && l % sizeof(TCHAR))
+						l = -2;
+#ifdef UNICODE
+					else if (uni == 1 && l >= 2 && enc != FC_ENC_UTF16BE)
+						ReverseBytes((LPBYTE)bout, l * 2);
+#endif
+					if (!str) buf--;
+				} else if (l == -2 && str && *end && *end != '\\') l = -1;
+				if (l > 0) {
+					p += m - 1;
+#ifdef UNICODE
+					for (; m; m--, bout++) {
+						if (*bout == _T('\0'))
+							*bout = _T('\x2400');
+					}
+#else
+					bout += m;
+#endif
+					if (str && !*buf) buf--;
+					continue;
+				}
+				if (l == 0 && !expl) break;
+				if (!errContext) return FALSE;
+				szErr2 = (LPTSTR)HeapAlloc(globalHeap, 0, (MAXSTRING * 2 + 32) * sizeof(TCHAR));
+				szErr3 = szErr2 + MAXSTRING * 2;
+				lstrcpy(szErr3, errContext);
+				switch(l) {
+					case 0: szErr = (LPTSTR)GetString(IDS_ESCAPE_EXPECTED); break;
+					case -1: szErr = (LPTSTR)GetString(IDS_ESCAPE_BADCHARS); break;
+					case -2: szErr = (LPTSTR)GetString(IDS_ESCAPE_BADALIGN); break;
+					case -3: szErr = (LPTSTR)GetString(IDS_UNICODE_CONV_ERROR); break;
+					default: szErr = (LPTSTR)GetString(IDS_ERROR); break;
+				}
+				wsprintf(szErr2, szErr, base, mul);
+				szErr = szErr2 + MAXSTRING;
+				wsprintf(szErr, GetString(IDS_ESCAPE_ERROR), szErr2, szErr3);
+				lstrcat(szErr, _T("\n'"));
+				lstrcpyn(szErr3, &op[MAX(0, end-op-15)], MIN(end-op, 15)+1);
+				lstrcat(szErr, szErr3);
+				lstrcat(szErr, _T(" *** "));
+				lstrcpyn(szErr3, end, 16);
+				lstrcat(szErr, szErr3);
+				lstrcat(szErr, _T("'"));
+				ERROROUT(szErr);
+				FREE(szErr2);
+				if (dbufalloc) FREE(dbuf);
+				return FALSE;
+			}
+		}
+		if (*buf)	*bout++ = *buf;
+		else		*buf--;
+	}
+	*bout = _T('\0');
+	if (dbufalloc) FREE(dbuf);
+	return TRUE;
+	// abcdefghijklmnopqrstuvwxyz _?*-+$
+	// xM Mxx       XM  XMxMxMM  M123456
+}
+
+
+
+
+
+
+BOOL LoadLng(LPTSTR filename, LPTSTR* str, WORD** stridx, WORD** strofs){
 	LPTSTR os, ds, np;
-	TCHAR c, err[MAXSTRING];
-	WORD ct = 0, smax = ARRLEN(stringsidx), st, lin;
-	LONG l;
-	if (str) FREE(*str);
-	if (stridx) FREE(*stridx);
-	if (strofs) FREE(*strofs);
+	TCHAR c, pc = _T(' '), err[MAXSTRING];
+	LONG st, l, ct=0, smax=ARRLEN(stringsidx), lin=1;
+	FREE(*str);
+	FREE(*stridx);
+	FREE(*strofs);
 	if (!LoadFile(filename, FALSE, FALSE, FALSE, str) || !*str || !**str) return FALSE;
 	*stridx = (WORD*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, smax * sizeof(WORD));
 	*strofs = (WORD*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, smax * sizeof(WORD));
-	for (st=0, os=ds=*str, lin=1, ct-- ; **str && ct < smax; (*str)++) {
+	for (st=0, os=ds=*str; *os && ct < smax; os++, pc=c) {
+		if (st == 9) {
+			wsprintf(err, GetString(IDS_LOADLNG_ERROR), lin);
+			ERROROUT(err);
+			return FALSE;
+		}
+		if ((c = *os) == _T('\r') || c == _T('\n')) {
+			if (pc == c || (pc != _T('\r') && pc != _T('\n'))) lin++;
+			if (st == 4) {
+				*ds++ = 0;
+				ct++;
+				if (!ParseForEscapeSeqs(np, NULL, _T(""))) { st = 9; continue; }
+				ds = np+lstrlen(np)+1;
+				//if ((*stridx)[ct++] == upto) break;
+			}
+			st = 0;
+			continue;
+		}
 		switch(st){
 			case 0:
-				if ((c = **str) == _T('\r') || c == _T('\n') || c == _T('\t') || c == _T(' ')) continue;
+				if (c == _T('\t') || c == _T(' ')) continue;
 				else if (c == _T('#') || c == _T('/')) { st = 1; continue; }
-				else if (c >= _T('0') && c <= _T('9')) { np = *str; st = 2; continue}
+				else if (c >= _T('0') && c <= _T('9')) { np = os; st = 2; continue; }
 				st = 9;
 				break;
 			case 2:
-				if ((c = **str) >= _T('0') && c <= _T('9')) continue;
+				if (c >= _T('0') && c <= _T('9')) continue;
 				st = 3;
 				l = _ttol(np);
 				if (l <= 0 || l >= 0xffff) {
 					st = 9; break;
 				}
-				if (ct++ >= smax) continue;
-				*stridx[ct] = (WORD)l;
-				if ((l = ds-os) > 0xffff) { st = 9; break; }
-				*strofs[ct] = (WORD)l;
-				break;
+				(*stridx)[ct] = (WORD)l;
+				if ((l = ds-*str) > 0xffff) { st = 9; break; }
+				(*strofs)[ct] = (WORD)l;
+				os--;
+				continue;
 			case 3:
-				*ds++ = **str;
-				break;
-		}
-		if (st == 9) {
-			wsprintf(err, GetString(IDS_LOADLNG_ERROR), lin)
-			return FALSE;
-		}
-		else if ((c = **str) == _T('\r') || c == _T('\n')) {
-			lin++;
-			st = 0;
-			*ds++ = 0;
+				if (c == _T('\t') || c == _T(' ')) continue;
+				np = ds;
+				st = 4;
+				os--;
+				continue;
+			case 4:
+				if (c == _T('`')) continue;
+				*ds++ = *os;
+				continue;
 		}
 	}
-	for (ct++ ; ct < smax; *stridx[ct++] = 0xffff) ;
+	for ( ; ct < smax; (*stridx)[ct++] = 0xffff) ;
 	return TRUE;
 }
 
+BOOL HaveLanguagePlugin(){
+	return pstringsidx || (hinstLang && hinstThis != hinstLang);
+}
+void UnloadLanguagePlugin(){
+	FREE(pstrings);
+	FREE(pstringsidx);
+	if (hinstLang && hinstLang != hinstThis)
+		FreeLibrary(hinstLang);
+	hinstLang = NULL;
+}
 /**
  * Load and verify a language plugin.
  *
- * @param szPlugin Path to language plugin.
- * @return NULL if unable to load the plugin, an instance to the plugin otherwise.
+ * @param szPlugin Path to language plugin. 
  */
-HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin, BOOL checkver){
-	HINSTANCE hinstTemp;
-	TCHAR plugVer[16], szErr[MAXSTRING];
-	LPCTSTR thisVer;
-	hinstTemp = LoadLibrary(szPlugin);
-	if (hinstTemp == NULL) {
+BOOL LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin, BOOL checkver, HINSTANCE* hinstTemp){
+	TCHAR plugVer[16] = {0}, szErr[MAXSTRING];
+	LPCTSTR thisVer, pplugVer = (LPCTSTR)plugVer;
+	WORD dlen = ARRLEN(stringsidx);
+	BOOL dll;
+	if (dll = (szPlugin[lstrlen(szPlugin)-1] == _T('l')))
+		*hinstTemp = LoadLibrary(szPlugin);
+	else
+		*hinstTemp = (HINSTANCE)LoadLng((LPTSTR)szPlugin, &pstrings, &pstringsidx, &pstringsofs);
+	if (!*hinstTemp) {
+		if (!dll) { FREE(pstrings); FREE(pstringsidx); }
 		ERROROUT(GetString(IDS_INVALID_PLUGIN_ERROR));
-		return NULL;
+		return FALSE;
 	}
-	if (LoadString(hinstTemp, IDS_VERSION_SYNCH, plugVer, 16) == 0) {
+	if (dll)
+		LoadString(*hinstTemp, IDS_VERSION_SYNCH, plugVer, 16);
+	else
+		pplugVer = GetStringEx(IDS_VERSION_SYNCH, dlen, NULL, pstringsidx, pstringsofs, pstrings, &dlen, NULL);
+	if (!pplugVer || !*pplugVer) {
+		if (!dll) { FREE(pstrings); FREE(pstringsidx); }
+		else FreeLibrary(*hinstTemp);
 		ERROROUT(GetString(IDS_BAD_STRING_PLUGIN_ERROR));
-		FreeLibrary(hinstTemp);
-		return NULL;
+		return FALSE;
 	}
-	if (checkver && !g_bDisablePluginVersionChecking && lstrcmpi((thisVer = GetString(IDS_VERSION_SYNCH)), plugVer) != 0) {
+	if (checkver && !g_bDisablePluginVersionChecking && lstrcmpi((thisVer = GetString(IDS_VERSION_SYNCH)), pplugVer) != 0) {
 		wsprintf(szErr, GetString(IDS_PLUGIN_MISMATCH_ERROR), plugVer, thisVer);
 		ERROROUT(szErr);
 	}
-	return hinstTemp;
+	if (!dll) *hinstTemp = 0;
+	else if (checkver) FreeLibrary(*hinstTemp);
+	return TRUE;
 }
 
 /**
@@ -686,22 +914,17 @@ void FindAndLoadLanguagePlugin(void) {
 	WIN32_FIND_DATA FileData;
 	HANDLE hSearch;
 	HINSTANCE hinstTemp;
-	if (hinstLang && hinstLang != hinstThis) FreeLibrary(hinstLang);
-	hinstLang = NULL;
-	FREE(pstrings);
-	FREE(pstringsidx);
+	UnloadLanguagePlugin();
 	if (!SCNUL(options.szLangPlugin)[0])
 		return;
-
 	hSearch = FindFirstFile(options.szLangPlugin, &FileData);
 	if (hSearch == INVALID_HANDLE_VALUE) {
 		ERROROUT(GetString(IDS_PLUGIN_ERRFIND));
 		goto badplugin;
 	} else
 		FindClose(hSearch);
-	hinstTemp = LoadAndVerifyLanguagePlugin(options.szLangPlugin, FALSE);
-	if (hinstTemp) {
-		hinstLang = hinstTemp;
+	if (LoadAndVerifyLanguagePlugin(options.szLangPlugin, FALSE, &hinstTemp)) {
+		if (hinstTemp) hinstLang = hinstTemp;
 		return;
 	}
 badplugin:
@@ -725,6 +948,19 @@ badplugin:
 }*/
 #endif
 
+LPTSTR AlterMenuAccelText(LPCTSTR src, LPCTSTR tgt, LPTSTR buf){
+	BOOL dif=FALSE;
+	LPTSTR pch;
+	if (src != buf) lstrcpy(buf, src);
+	pch = lstrchr(buf, _T('\t'));
+	if (pch) { *pch = '\0'; dif = TRUE; }
+	if (tgt && *tgt) pch = lstrchr(tgt, _T('\t'));
+	if (pch) { lstrcat(buf, pch); dif = TRUE; }
+	if (dif) return buf;
+	return (LPTSTR)src;
+}
+
+
 LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, WORD* dictidx, WORD* dictofs, LPTSTR dictcache, WORD* ofspop, LPCTSTR def){
 	WORD i, j, idx;
 	LPSTR sp;
@@ -744,10 +980,10 @@ LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, WORD* dictidx, WORD*
 			for (j=1; *sp; j++)
 				*cp++ = (BYTE)*sp++;
 			*cp++ = *sp++;
-			dictofs[i+1] = dictofs[i] + j;
+			if (i+1 < total) dictofs[i+1] = dictofs[i] + j;
 		}
 		*ofspop = MAX(*ofspop, idx+1);
-		if (*(dict + dictofs[idx]) && (BYTE)*(dict + dictofs[idx]) < ' ' && !*(dict + dictofs[idx] + 1)){
+		if (dict && *(dict + dictofs[idx]) && (BYTE)*(dict + dictofs[idx]) < ' ' && !*(dict + dictofs[idx] + 1)){
 			idx += *(dict + dictofs[idx]);
 			continue;
 		}
@@ -756,7 +992,7 @@ LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, WORD* dictidx, WORD*
 }
 
 LPCTSTR GetString(WORD uID) {
-	static WORD ofs[ARRLEN(stringsidx)] = {0}, ofspop = 0;
+	static WORD l = ARRLEN(stringsidx), ofs[ARRLEN(stringsidx)] = {0}, ofspop = 0;
 	static TCHAR strcache[sizeof(strings)];
 	static LPTSTR szRsrc = NULL;
 	LPTSTR sz = NULL;
@@ -765,17 +1001,12 @@ LPCTSTR GetString(WORD uID) {
 		LoadString(hinstLang, uID, szRsrc, MAXSTRING);
 		return szRsrc;
 	}
-	return GetStringEx(uID, ARRLEN(stringsidx), (LPSTR)strings, stringsidx, ofs, strcache, &ofspop, _T(""));
-}
-
-
-void AlterMenuAccelText(LPCTSTR src, LPCTSTR tgt, LPTSTR buf){
-	LPTSTR pch;
-	if (src != buf) lstrcpy(buf, src);
-	pch = lstrchr(buf, _T('\t'));
-	if (pch) *pch = '\0';
-	if (tgt && *tgt) pch = lstrchr(tgt, _T('\t'));
-	if (pch) lstrcat(buf, pch);
+	if (pstringsidx && uID > IDS_VERSION_SYNCH && (uID < NONLOCALIZED_BASE || uID > NONLOCALIZED_END) && (sz = (LPTSTR)GetStringEx(uID, l, NULL, pstringsidx, pstringsofs, pstrings, &l, NULL)) && *sz) {
+		if (uID < IDC_BASE) return sz;
+		if (!szRsrc) szRsrc = (LPTSTR)HeapAlloc(globalHeap, 0, MAXSTRING * sizeof(TCHAR));
+		return AlterMenuAccelText(sz, GetStringEx(uID, l, (LPSTR)strings, stringsidx, ofs, strcache, &ofspop, _T("")), szRsrc);
+	}
+	return GetStringEx(uID, l, (LPSTR)strings, stringsidx, ofs, strcache, &ofspop, _T(""));
 }
 
 
@@ -856,13 +1087,13 @@ void LocalizeMenuItems(HMENU m, HMENU pm, WORD pos, WORD depth, LPTSTR tpbuf){
 	FREE(pgpos);
 }
 
-HMENU LocalizeMenu(WORD mID, HINSTANCE src, HINSTANCE plugin) {
+HMENU LocalizeMenu(WORD mID) {
 	HMENU menu, pmenu = NULL;
 	LPTSTR pbuf = NULL;
-	if (!(menu = LoadMenu(src, MAKEINTRESOURCE(mID))))
+	if (!(menu = LoadMenu(hinstThis, MAKEINTRESOURCE(mID))))
 		return menu;
-	if (plugin && src != plugin) {
-		pmenu = LoadMenu(plugin, MAKEINTRESOURCE(mID));
+	if (hinstLang && hinstThis != hinstLang) {
+		pmenu = LoadMenu(hinstLang, MAKEINTRESOURCE(mID));
 		pbuf = (LPTSTR)HeapAlloc(globalHeap, 0, MAXSTRING * sizeof(TCHAR));
 	}
 	LocalizeMenuItems(menu, pmenu, IDM_BASE+(mID-IDR_BASE)*100+10, 10, pbuf);
@@ -963,7 +1194,7 @@ BOOL CALLBACK LocalizeDialogItems(HWND hwnd, LPARAM lParam){
 	return TRUE;
 }
 
-void LocalizeDialog(WORD dID, HWND dlg, HINSTANCE plugin) {
+void LocalizeDialog(WORD dID, HWND dlg) {
 	HWND pdlg = NULL;
 	LPCTSTR ts = NULL;
 	TCHAR tbuf[2];
@@ -973,7 +1204,7 @@ void LocalizeDialog(WORD dID, HWND dlg, HINSTANCE plugin) {
 #ifndef USE_RICH_EDIT
 	if (dID == IDD_PROPPAGE_A1) dID = IDD_PROPPAGE_A1_LE;
 #endif
-	if (plugin && (pdlg = CreateDialog(plugin, MAKEINTRESOURCE(dID), dlg, NULL))) {
+	if (hinstLang && hinstLang != hinstThis && (pdlg = CreateDialog(hinstLang, MAKEINTRESOURCE(dID), dlg, NULL))) {
 		state.plist = (LDCList*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, sizeof(LDCList));
 		state.plist->parent = pdlg;
 		EnumChildWindows(pdlg, LocalizeDialogGather, (LPARAM)state.plist);

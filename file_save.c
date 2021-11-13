@@ -116,7 +116,10 @@ BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
 			if (szBuffer) *szBuffer = _T('\0');
 		}
 		FREE(szCaptionFile);
-		if (bMRU) SaveMRUInfo(szFile);
+		if (bMRU){
+			GetReadableFilename(szFilename, (LPTSTR*)&szFilename);
+			SaveMRUInfo(szFilename);
+		}
 		SwitchReadOnly(FALSE);
 		bLoading = FALSE;
 		UpdateSavedInfo();
@@ -134,8 +137,8 @@ BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
  */
 BOOL SaveCurrentFileAs(void) {
 	OPENFILENAME ofn;
-	TCHAR fn[MAXFN] = _T("");
-	TCHAR* pch;
+	TCHAR fn[MAXFN] = {0};
+	LPTSTR pch, sfn = fn;
 
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = client;
@@ -165,7 +168,7 @@ BOOL SaveCurrentFileAs(void) {
 	ofn.nFileOffset = 0;
 	ofn.nFileExtension = 0;
 	if (!GetSaveFileName(&ofn)) return FALSE;
-	FixShortFilename(fn, (LPTSTR*)&fn);
+	FixShortFilename(fn, &sfn);
 	return SaveFile(fn, TRUE);
 }
 

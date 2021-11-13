@@ -232,7 +232,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 	} else
 		*textOut = szBuffer;
 	FREE(rfn);
-	if (szBuffer != origBuf) FREE(origBuf);	//TODO CHK
+	if ((LPBYTE)szBuffer != origBuf) FREE(origBuf);
 	if (!textOut) FREE(szBuffer);
 	bLoading = FALSE;
 	UpdateStatus(TRUE);
@@ -275,7 +275,7 @@ BOOL LoadFileFromMenu(WORD wMenu, BOOL bMRU) {
 				return FALSE;
 			}
 		}
-		return LoadFile(pbuf, FALSE, TRUE, FALSE);
+		return LoadFile(pbuf, FALSE, TRUE, FALSE, NULL);
 	}
 	return FALSE;
 }
@@ -301,6 +301,6 @@ BOOL BrowseFile(HWND owner, LPCTSTR defExt, LPCTSTR defDir, LPCTSTR filter, BOOL
 	ofn.lpstrDefExt = defExt;
 	if (!GetOpenFileName(&ofn)) return FALSE;
 	if (fileName) SSTRCPY(*fileName, fn);
-	if (load) return LoadFile(fn, FALSE, bMRU, insert);
+	if (load) return LoadFile(fn, FALSE, bMRU, insert, NULL);
 	return TRUE;
 }
