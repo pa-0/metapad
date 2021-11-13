@@ -2109,6 +2109,95 @@ void FixMRUMenus(void)
 	DrawMenuBar(hwnd);
 }
 
+BOOL CreateMainMenu(HWND hwnd) {
+	MENUITEMINFO mio;
+	HMENU hmenu, hsub, hmold = GetMenu(hwnd);
+	TCHAR* bufFn = gTmpBuf;
+	if (!(hmenu = LocalizeMenu(IDR_MENU, hinstThis, hinstLang))){
+		ReportLastError();
+		return FALSE;
+	}
+	SetMenu(hwnd, hmenu);
+	mio.cbSize = sizeof(MENUITEMINFO);
+	if (hinstLang && hinstLang != hinstThis) {
+		hsub = GetSubMenu(hmenu, 4);
+		mio.fMask = MIIM_TYPE | MIIM_ID;
+		mio.fType = MFT_STRING;
+		mio.wID = ID_ABOUT_PLUGIN;
+		mio.dwTypeData = (LPTSTR)GetString(IDS_MENU_LANGUAGE_PLUGIN);
+		InsertMenuItem(hsub, 1, TRUE, &mio);
+	}
+	mio.fMask = MIIM_STATE;
+	if (bWordWrap) {
+		mio.fState = MFS_CHECKED;
+		SetMenuItemInfo(hmenu, ID_EDIT_WORDWRAP, 0, &mio);
+	}
+	if (!bSmartSelect) {
+		mio.fState = MFS_UNCHECKED;
+		SetMenuItemInfo(hmenu, ID_SMARTSELECT, 0, &mio);
+	}
+#ifdef USE_RICH_EDIT
+	if (!bHyperlinks) {
+		mio.fState = MFS_UNCHECKED;
+		SetMenuItemInfo(hmenu, ID_SHOWHYPERLINKS, 0, &mio);
+	}
+#endif
+	if (bTransparent && SetLWA) {
+		mio.fState = MFS_CHECKED;
+		SetMenuItemInfo(hmenu, ID_TRANSPARENT, 0, &mio);
+		SetWindowLongPtr(hwnd, GWL_EXSTYLE, GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+		SetLWA(hwnd, 0, (BYTE)((255 * (100 - options.nTransparentPct)) / 100), LWA_ALPHA);
+	} else if (!SetLWA) {
+		hsub = GetSubMenu(GetMenu(hwnd), 3);
+		DeleteMenu(hsub, 4, MF_BYPOSITION);
+	}
+	if (bShowStatus) {
+		mio.fState = MFS_CHECKED;
+		SetMenuItemInfo(hmenu, ID_SHOWSTATUS, 0, &mio);
+	}
+	if (bShowToolbar) {
+		mio.fState = MFS_CHECKED;
+		SetMenuItemInfo(hmenu, ID_SHOWTOOLBAR, 0, &mio);
+	}
+	if (!bPrimaryFont) {
+		mio.fState = MFS_UNCHECKED;
+		SetMenuItemInfo(hmenu, ID_FONT_PRIMARY, 0, &mio);
+	}
+	if (bAlwaysOnTop) {
+		mio.fState = MFS_CHECKED;
+		SetMenuItemInfo(hmenu, ID_ALWAYSONTOP, 0, &mio);
+		SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+	}
+	if (options.bRecentOnOwn)
+		FixMRUMenus();
+	if (!options.bReadOnlyMenu)
+		FixReadOnlyMenu();
+	PopulateMRUList();
+	if (options.bNoFaves) {
+		DeleteMenu(hmenu, MPOS_FAVE, MF_BYPOSITION);
+		SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+	} else {
+		WIN32_FIND_DATA FindFileData;
+		HANDLE handle;
+		if (SCNUL(options.szFavDir)[0] == _T('\0') || (handle = FindFirstFile(options.szFavDir, &FindFileData)) == INVALID_HANDLE_VALUE) {
+			TCHAR* pch;
+			GetModuleFileName(hinstThis, bufFn, MAXFN);
+			SSTRCPYA(szFav, bufFn, lstrlen(GetString(STR_FAV_FILE))+4);
+			pch = lstrrchr(szFav, _T('\\'));
+			++pch;
+			*pch = _T('\0');
+		} else {
+			FindClose(handle);
+			SSTRCPYA(szFav, options.szFavDir, lstrlen(GetString(STR_FAV_FILE))+4);
+			lstrcat(szFav, _T("\\"));
+		}
+		lstrcat(szFav, GetString(STR_FAV_FILE));
+		PopulateFavourites();
+	}
+	if (hmold) DestroyMenu(hmold);
+	return TRUE;
+}
+
 void GotoLine(LONG lLine, LONG lOffset) {
 	DWORD l;
 	CHARRANGE cr;
@@ -2142,6 +2231,7 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT, GetString(STR_COPYRIGHT));
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT2, GetString(IDS_ALLRIGHTS));
 			SetWindowText(hwndDlg, GetString(STR_METAPAD));
+			LocalizeDialog(0, hwndDlg, NULL);
 			break;
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
@@ -2637,11 +2727,11 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 			SendMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_SYSTEM_COLOURS, 0), 0);
 			SendMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_SYSTEM_COLOURS2, 0), 0);
 
+			LocalizeDialog(IDD_PROPPAGE_VIEW, hwndDlg, hinstLang);
 			hfont = CreateFontIndirect(&TmpPrimaryFont);
 			SendDlgItemMessage(hwndDlg, IDC_BTN_FONT1, WM_SETFONT, (WPARAM)hfont, 0);
 			hfont2 = CreateFontIndirect(&TmpSecondaryFont);
 			SendDlgItemMessage(hwndDlg, IDC_BTN_FONT2, WM_SETFONT, (WPARAM)hfont2, 0);
-			LocalizeDialog(IDD_PROPPAGE_VIEW, hwndDlg, hinstLang);
 		}
 		return TRUE;
 	case WM_NOTIFY:
@@ -3838,10 +3928,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						ERROROUT(GetString(IDS_RESTART_HIDE_SB));
 					}
 #endif
-					if (tmpOptions.bNoFaves != options.bNoFaves)
-						ERROROUT(GetString(IDS_RESTART_FAVES));
-					if (lstrcmp(SCNUL(tmpOptions.szLangPlugin), SCNUL(options.szLangPlugin)) != 0)
-						ERROROUT(GetString(IDS_RESTART_LANG));
+					if (tmpOptions.bNoFaves != options.bNoFaves || lstrcmp(SCNUL(tmpOptions.szLangPlugin), SCNUL(options.szLangPlugin))) {
+						FindAndLoadLanguagePlugin();
+						CreateMainMenu(hwnd);
+						FREE(szCaptionFile);
+					}
 					PopulateMRUList();
 					UpdateStatus(TRUE);
 				} else if (i < 0)
@@ -4615,8 +4706,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	int left, top, width, height;
 	int nCmdLen;
 	HMODULE hmod;
-	HMENU hmenu, hsub;
-	MENUITEMINFO mio;
 	CHARRANGE crLineCol = {-1, -1};
 	LPTSTR szCmdLine;
 	BOOL bSkipLanguagePlugin = FALSE;
@@ -4782,30 +4871,13 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	}
 	if (!bSkipLanguagePlugin)
 		FindAndLoadLanguagePlugin();
-
-	if (!(hmenu = LocalizeMenu(IDR_MENU, hinstThis, hinstLang))){
-		ReportLastError();
+	if (!CreateMainMenu(hwnd))
 		return FALSE;
-	}
-	SetMenu(hwnd, hmenu);
-	if (hinstLang && hinstLang != hinstThis) {
-		hsub = GetSubMenu(hmenu, 4);
-		mio.cbSize = sizeof(MENUITEMINFO);
-		mio.fMask = MIIM_TYPE | MIIM_ID;
-		mio.fType = MFT_STRING;
-		mio.wID = ID_ABOUT_PLUGIN;
-		mio.dwTypeData = (LPTSTR)GetString(IDS_MENU_LANGUAGE_PLUGIN);
-		InsertMenuItem(hsub, 1, TRUE, &mio);
-	}
 
 	hmod = GetModuleHandleA("user32.dll");
 	SetLWA = (SLWA)(GetProcAddress(hmod, "SetLayeredWindowAttributes"));
-	if (SetLWA) {
+	if (SetLWA)
 		SetLWA(hwnd, 0, 255, LWA_ALPHA);
-	} else {
-		hsub = GetSubMenu(GetMenu(hwnd), 3);
-		DeleteMenu(hsub, 4, MF_BYPOSITION);
-	}
 	hmod = GetModuleHandleA("uxtheme.dll");
 	SetWindowTheme = (SWT)(GetProcAddress(hmod, "SetWindowTheme"));
 	accel = LoadAccelerators(hinstThis, MAKEINTRESOURCE(IDR_ACCELERATOR));
@@ -4828,80 +4900,11 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	}
 	SetClientFont(bPrimaryFont);
 	//uFindReplaceMsg = RegisterWindowMessage(FINDMSGSTRING);
-
-	mio.cbSize = sizeof(MENUITEMINFO);
-	mio.fMask = MIIM_STATE;
-	if (bWordWrap) {
-		mio.fState = MFS_CHECKED;
-		SetMenuItemInfo(hmenu, ID_EDIT_WORDWRAP, 0, &mio);
-	}
-	if (!bSmartSelect) {
-		mio.fState = MFS_UNCHECKED;
-		SetMenuItemInfo(hmenu, ID_SMARTSELECT, 0, &mio);
-	}
-#ifdef USE_RICH_EDIT
-	if (!bHyperlinks) {
-		mio.fState = MFS_UNCHECKED;
-		SetMenuItemInfo(hmenu, ID_SHOWHYPERLINKS, 0, &mio);
-	}
-#endif
-	if (bTransparent && SetLWA) {
-		mio.fState = MFS_CHECKED;
-		SetMenuItemInfo(hmenu, ID_TRANSPARENT, 0, &mio);
-		SetWindowLongPtr(hwnd, GWL_EXSTYLE, GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
-		SetLWA(hwnd, 0, (BYTE)((255 * (100 - options.nTransparentPct)) / 100), LWA_ALPHA);
-	}
-	if (bShowStatus) {
-		mio.fState = MFS_CHECKED;
-		SetMenuItemInfo(hmenu, ID_SHOWSTATUS, 0, &mio);
+	if (bShowStatus)
 		CreateStatusbar();
-	}
-	if (bShowToolbar) {
-		mio.fState = MFS_CHECKED;
-		SetMenuItemInfo(hmenu, ID_SHOWTOOLBAR, 0, &mio);
+	if (bShowToolbar)
 		CreateToolbar();
-	}
-	if (!bPrimaryFont) {
-		mio.fState = MFS_UNCHECKED;
-		SetMenuItemInfo(hmenu, ID_FONT_PRIMARY, 0, &mio);
-	}
-	if (bAlwaysOnTop) {
-		mio.fState = MFS_CHECKED;
-		SetMenuItemInfo(hmenu, ID_ALWAYSONTOP, 0, &mio);
-		SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-	}
-
 	InitCommonControls();
-	if (options.bRecentOnOwn)
-		FixMRUMenus();
-	if (!options.bReadOnlyMenu)
-		FixReadOnlyMenu();
-	PopulateMRUList();
-
-	if (options.bNoFaves) {
-		DeleteMenu(hmenu, MPOS_FAVE, MF_BYPOSITION);
-		SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-	}
-	else {
-		WIN32_FIND_DATA FindFileData;
-		HANDLE handle;
-		if (SCNUL(options.szFavDir)[0] == _T('\0') || (handle = FindFirstFile(options.szFavDir, &FindFileData)) == INVALID_HANDLE_VALUE) {
-			TCHAR* pch;
-			GetModuleFileName(hInstance, bufFn, MAXFN);
-			SSTRCPYA(szFav, bufFn, lstrlen(GetString(STR_FAV_FILE))+4);
-
-			pch = lstrrchr(szFav, _T('\\'));
-			++pch;
-			*pch = _T('\0');
-		} else {
-			FindClose(handle);
-			SSTRCPYA(szFav, options.szFavDir, lstrlen(GetString(STR_FAV_FILE))+4);
-			lstrcat(szFav, _T("\\"));
-		}
-		lstrcat(szFav, GetString(STR_FAV_FILE));
-		PopulateFavourites();
-	}
-
 	MakeNewFile();
 	if (szCmdLine && *szCmdLine) {
 		FREE(szFile);

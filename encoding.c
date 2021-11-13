@@ -38,6 +38,7 @@
 extern HWND hwnd;
 extern HANDLE globalHeap;
 void ReportLastError(void);
+LPCTSTR GetString(WORD uID);
 LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, WORD* dictidx, WORD* dictofs, LPTSTR dictcache, WORD* ofspop, LPCTSTR def);
 
 static const BYTE bomLut[][4] = {{0x3,0xEF,0xBB,0xBF}, {0x2,0xFF,0xFE}, {0x2,0xFE,0xFF}};

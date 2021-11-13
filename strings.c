@@ -143,13 +143,7 @@ static const CHAR strings[] = ""
 /*		91		IDS_CLIPBOARD_UNLOCK_ERROR		*/	"\0Error unlocking clipboard memory."
 /*		92		IDS_CLIPBOARD_OPEN_ERROR		*/	"\0Error opening clipboard."
 /*		93		IDS_FILE_READ_ERROR				*/	"\0Error reading file."
-#ifdef USE_RICH_EDIT
-/*	R	94		IDS_RESTART_HIDE_SB				*/	"\0The change in \"Hide scrollbars when possible\" will be reflected upon restarting the program."
-#else
-"\0"
-#endif
-/*		95		IDS_RESTART_FAVES				*/	"\0The change in \"Disable Favorites\" will be reflected upon restarting the program."
-/*		96		IDS_RESTART_LANG				*/	"\0Language changes will be reflected upon restarting the program."
+"\0\0\0"
 /*		97		IDS_INVALID_PLUGIN_ERROR		*/	"\0Error loading language plugin DLL. It is probably not a valid metapad language plugin."
 /*		98		IDS_BAD_STRING_PLUGIN_ERROR		*/	"\0Error fetching version string resource from plugin DLL. It is probably not a valid metapad language plugin."
 /*		99		IDS_PLUGIN_MISMATCH_ERROR		*/	"\0Your language plugin is for metapad %s, but you are running metapad %s.\n\nSome menu or dialog texts may not be translated."
@@ -637,6 +631,7 @@ void FindAndLoadLanguagePlugin(void) {
 	WIN32_FIND_DATA FileData;
 	HANDLE hSearch;
 	HINSTANCE hinstTemp;
+	if (hinstLang && hinstLang != hinstThis) FreeLibrary(hinstLang);
 	hinstLang = NULL;
 	if (!SCNUL(options.szLangPlugin)[0])
 		return;
@@ -824,7 +819,6 @@ HMENU LocalizeMenu(WORD mID, HINSTANCE src, HINSTANCE plugin) {
 
 #define MAXDLGCONTROLS 48
 typedef struct {
-	BOOL all;
 	WORD cct, gpos, cgpos[MAXDLGCONTROLS];
 	HWND parent, ctl[MAXDLGCONTROLS];
 	TCHAR tbuf[MAXSTRING];
@@ -832,9 +826,13 @@ typedef struct {
 typedef struct {
 	WORD dID, cnum;
 	HWND parent;
-	LDCList *plist, *clist;
+	LDCList *plist;
 } LDCState;
 
+BOOL CALLBACK LDSetFont(HWND hwnd, LPARAM font){
+	SendMessage(hwnd, WM_SETFONT, font, TRUE);
+	return TRUE;
+}
 BOOL CALLBACK LocalizeDialogGather(HWND hwnd, LPARAM lParam){
 	INT i;
 	TCHAR tbuf[16];
@@ -846,7 +844,7 @@ BOOL CALLBACK LocalizeDialogGather(HWND hwnd, LPARAM lParam){
 	if (i < 0 || i == (WORD)IDC_STATIC) i = 0;
 	else if (i < IDC_BASE) i+= IDC_BASE;
 	GetWindowText(hwnd, tbuf, 2);
-	if (list->all || *tbuf >= _T(' ')) {
+	if (*tbuf >= _T(' ')) {
 		list->cgpos[list->cct] = i ? i : list->gpos;
 		list->ctl[list->cct++] = hwnd;
 	}
@@ -871,20 +869,21 @@ BOOL CALLBACK LocalizeDialogItems(HWND hwnd, LPARAM lParam){
 			if (state->plist->cgpos[j] == i)
 				break;
 		}
-		if ((!i || (BYTE)*tbuf == 2) && (!i || j >= state->plist->cct)) {
+		if ((!i || (BYTE)*tbuf == 2 || (BYTE)*tbuf == 3) && (!i || j >= state->plist->cct)) {
 			for (j = 0; j < state->plist->cct; j++) {
-				if (state->plist->cgpos[j] == state->plist->gpos)
+				if (((BYTE)*tbuf == 3 && state->plist->cgpos[j] != 0xffff) || state->plist->cgpos[j] == state->plist->gpos)
 					break;
 			}
-			if (!i) state->plist->gpos++;
-		}
+			if ((BYTE)*tbuf != 3)
+				state->plist->gpos++;
+		} else if (*tbuf)
+			state->plist->gpos++;
 		if (j < state->plist->cct && state->plist->ctl[j]) {
 			ts = state->plist->tbuf;
 			GetWindowText(state->plist->ctl[j], (LPTSTR)ts, MAXSTRING);
 			state->plist->ctl[j] = NULL;
 			state->plist->cgpos[j] = 0xffff;
 		}
-		if (*tbuf) state->plist->gpos++;
 	}
 	if (*tbuf < _T(' ')) {
 		if (ts && *ts >= _T(' ')) ;
@@ -898,38 +897,19 @@ BOOL CALLBACK LocalizeDialogItems(HWND hwnd, LPARAM lParam){
 }
 
 void LocalizeDialog(WORD dID, HWND dlg, HINSTANCE plugin) {
-	WORD i, j, k;
 	HWND pdlg = NULL;
 	LPCTSTR ts = NULL;
 	TCHAR tbuf[2];
 	LDCState state = {0};
 	state.dID = dID;
 	state.parent = dlg;
+#ifndef USE_RICH_EDIT
+	if (dID == IDD_PROPPAGE_A1) dID = IDD_PROPPAGE_A1_LE;
+#endif
 	if (plugin && (pdlg = CreateDialog(plugin, MAKEINTRESOURCE(dID), dlg, NULL))) {
 		state.plist = (LDCList*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, sizeof(LDCList));
-		state.clist = (LDCList*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, sizeof(LDCList));
 		state.plist->parent = pdlg;
-		state.clist->parent = dlg;
-		state.clist->all = TRUE;
 		EnumChildWindows(pdlg, LocalizeDialogGather, (LPARAM)state.plist);
-		EnumChildWindows(dlg, LocalizeDialogGather, (LPARAM)state.clist);
-		for (i = 0, state.plist->gpos=0; i < state.plist->cct; i++) {
-			if (state.plist->cgpos[i] < IDC_BASE) {
-				state.plist->gpos=state.plist->cgpos[i]+1;
-				continue;
-			}
-			for (j = 0; j < state.clist->cct; j++) {
-				if (state.plist->cgpos[i] == state.clist->cgpos[j])
-					break;
-			}
-			if (j >= state.clist->cct) {
-				state.plist->cgpos[i] = state.plist->gpos++;
-				for (k = i+1; k < state.plist->cct; k++) {
-					if (state.plist->cgpos[k] < IDC_BASE)
-						state.plist->cgpos[k]++;
-				}
-			}
-		}
 		state.plist->gpos = 0;
 	}
 	GetWindowText(dlg, tbuf, 2);
@@ -940,6 +920,7 @@ void LocalizeDialog(WORD dID, HWND dlg, HINSTANCE plugin) {
 		if (ts) SetWindowText(dlg, ts);
 	}
 	EnumChildWindows(dlg, LocalizeDialogItems, (LPARAM)&state);
+	EnumChildWindows(dlg, LDSetFont, (LPARAM)GetStockObject(DEFAULT_GUI_FONT));
 	FREE(state.plist);
 	if (pdlg) DestroyWindow(pdlg);
 }
