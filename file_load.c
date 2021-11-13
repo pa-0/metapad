@@ -177,18 +177,22 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 		cfmt |= (GetLineFmt(szBuffer, lChars, (options.nFormat>>16)&0xfff, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
 		if (b && !textOut) {
 			cfmt = FC_ENC_BIN | (cfmt & 0xfff0000);
-			bLoading = FALSE;
-			tbuf = GetShadowBuffer(NULL);
-			bLoading = TRUE;
-			RestoreClientView(0, FALSE, TRUE, TRUE);
-			SetWindowText(client, szBuffer);
+			if (!insert) {
+				bLoading = FALSE;
+				tbuf = GetShadowBuffer(NULL);
+				bLoading = TRUE;
+				RestoreClientView(0, FALSE, TRUE, TRUE);
+				SetWindowText(client, szBuffer);
+			}
 #ifdef UNICODE
-			if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING_SAFE), GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
+			if (!options.bNoWarningPrompt && MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING_SAFE), GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
 #else
-			if (options.bNoWarningPrompt || MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
+			if (!options.bNoWarningPrompt && MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
 #endif
-				SetWindowText(client, tbuf);
-				RestoreClientView(0, TRUE, TRUE, TRUE);
+				if (!insert) {
+					SetWindowText(client, tbuf);
+					RestoreClientView(0, TRUE, TRUE, TRUE);
+				}
 				bLoading = FALSE;
 				UpdateStatus(TRUE);
 				SetCursor(hcur);
@@ -196,8 +200,15 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 				return FALSE;
 			}
 			ImportBinary(szBuffer, lChars);
-		} else if (((cfmt >> 16) & 0xfff) == FC_LFMT_MIXED && !options.bNoWarningPrompt)
-			ERROROUT(GetString(IDS_LFMT_MIXED));
+		} else if (((cfmt >> 16) & 0xfff) == FC_LFMT_MIXED) {
+			if (insert && ((nFormat >> 16) & 0xfff) != FC_LFMT_MIXED) {
+				cfmt &= 0x8000ffff;
+				cfmt |= nFormat & 0xfff0000;
+				ERROROUT(GetString(IDS_LFMT_FIXED));
+			} else if (!options.bNoWarningPrompt && ((nFormat >> 16) & 0xfff) != FC_LFMT_MIXED) {
+				ERROROUT(GetString(IDS_LFMT_MIXED));
+			}
+		}
 		b = TRUE;
 		ImportLineFmt(&szBuffer, &lChars, (WORD)((cfmt >> 16) & 0xfff), nCR, nLF, nStrays, nSub, &b);
 	}

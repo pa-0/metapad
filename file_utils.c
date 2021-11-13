@@ -228,11 +228,10 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* lin
 	TEXTRANGE tr;
 #endif
 	DWORD l;
-	CHARRANGE lcr;
-	if (max <= min && max >= 0){
-		if (len) *len = 0;
-		return _T("");
-	}
+	CHARRANGE lcr = {0};
+	if (len) *len = 0;
+	if (linecr) *linecr = lcr;
+	if (max <= min && max >= 0) return _T("");
 	if (bLoading) return szShadow;
 	if (bDirtyShadow || !szShadow || !shadowLen || shadowLine >= 0) {
 #ifdef USE_RICH_EDIT
@@ -240,10 +239,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* lin
 #else
 		l = shadowLen = GetWindowTextLength(client);
 #endif
-		if (l < 1) {
-			if (len) *len = 0;
-			return _T("");
-		}
+		if (l < 1) return _T("");
 		if (l+9 > shadowAlloc || (shadowAlloc / 4 > l+9)) {
 			printf("\nA!");
 			shadowAlloc = ((l+9) / 2) * 3;
@@ -274,10 +270,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* lin
 			if (linecr) *linecr = lcr;
 			if (max < min) { min = lcr.cpMin; max = lcr.cpMax; }
 		}
-		if (l < 1) {
-			if (len) *len = 0;
-			return _T("");
-		}
+		if (l < 1) return _T("");
 		if (line >= 0) {
 			if (bDirtyShadow || shadowLine != line) {
 				printf("l");
@@ -506,7 +499,7 @@ BOOL IsSelectionVisible(){
 
 
 void UpdateSavedInfo() {
-	DWORD lChars, l;
+	DWORD lChars, l, m;
 	LPCTSTR buf;
 	bDirtyFile = FALSE;
 	bDirtyShadow = bDirtyStatus = TRUE;
@@ -515,8 +508,9 @@ void UpdateSavedInfo() {
 	savedFormat = nFormat & 0x8fffffff;
 	memset(savedHead, 0, sizeof(savedHead));
 	memset(savedFoot, 0, sizeof(savedFoot));
-	memcpy(savedHead, (LPBYTE)buf, l = MIN(lChars*sizeof(TCHAR), sizeof(savedHead)));
+	memcpy(savedHead, (LPBYTE)buf, l = MIN(m = (lChars*sizeof(TCHAR)), sizeof(savedHead)));
 	memcpy(savedFoot, ((LPBYTE)(buf + lChars)) - l, l);
+	if (m > 64) EvaHash(((LPBYTE)buf)+32, m-64, savedHash);
 }
 
 

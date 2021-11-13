@@ -372,6 +372,7 @@ void UpdateStatus(BOOL refresh) {
 	static TCHAR szPane[48];
 	static CHARRANGE oldcr = {0}, ecr = {0};
 	static int nPaneSizes[NUMSTATPANES] = {0}, txtScale = 0;
+	static BYTE chkhash[32];
 	int tpsz[NUMSTATPANES] = {0};
 	DWORD i, j, st, bytes, chars;
 	LONG lLine = -1, lLines, lCol;
@@ -430,15 +431,17 @@ void UpdateStatus(BOOL refresh) {
 					if (!chars) bDirtyFile = FALSE;
 					else {
 						j = 32 / sizeof(TCHAR);
-						//memset(pbTmp, 0, sizeof(pbTmp));
 						szBuf = GetShadowRange(0, j, -1, &i, NULL);
 						if (!memcmp(szBuf, savedHead, i * sizeof(TCHAR))) {
-							//memset(pbTmp, 0, sizeof(pbTmp));
 							szBuf = GetShadowRange(chars < j ? 0 : chars-j, chars, -1, &i, NULL);
 							if (!memcmp(szBuf, savedFoot, i * sizeof(TCHAR))) {
-								bDirtyFile = FALSE;
-
-
+								if ((chars *= sizeof(TCHAR)) <= 64) bDirtyFile = FALSE;
+								else {
+									szBuf = GetShadowBuffer(&i);
+									EvaHash(((LPBYTE)szBuf)+32, chars-64, chkhash);
+									if (!memcmp(savedHash, chkhash, 32))
+										bDirtyFile = FALSE;
+								}
 							}
 						}
 					}
@@ -541,7 +544,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 	LPTSTR szTmp = gTmpBuf, szBuf = gTmpBuf;
 	LPTSTR szTmp2 = gTmpBuf2, szRepl = gTmpBuf2;
 	DWORD l1, l2;
-	LONG nPos;
+	LONG i, j, k, nPos;
 	//printf("%X %X %X\n", uMsg, wParam, lParam);
 	switch (uMsg) {
 	case WM_INITDIALOG:
@@ -729,12 +732,8 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 							return FALSE;
 					}
 					SSTRCPY(szInsert, szBuf);
-#ifdef USE_RICH_EDIT
-//TODO					FixTextBuffer(szInsert);
-#else
-					//FixTextBufferLE(&szInsert);
-#endif
-					l1 = lstrlen(szInsert);
+					GetLineFmt(szInsert, l1, 0, &i, &j, &k, &nPos, NULL);
+					ImportLineFmt(&szInsert, &l1, lfmt, i, j, k, nPos, &bOkEna);
 					szNew = (LPTSTR)HeapAlloc(globalHeap, 0, ((LONGLONG)l1 * l2 + 1) * sizeof(TCHAR));
 					if (!szNew) {
 						ReportLastError();
@@ -1622,7 +1621,7 @@ void SelectWord(LPTSTR* target, BOOL bSmart, BOOL bAutoSelect)
 	lLine = SendMessage(client, EM_LINEFROMCHAR, (WPARAM)cr.cpMin, 0);
 	if (lLine == SendMessage(client, EM_LINEFROMCHAR, (WPARAM)cr.cpMax, 0)) {
 #endif
-		szBuf = GetShadowLine(lLine, -1, &lLineLen, NULL, &cr2);
+		if (!*(szBuf = GetShadowLine(lLine, -1, &lLineLen, NULL, &cr2))) return;
 		cr.cpMin -= cr2.cpMin;
 		cr.cpMax -= cr2.cpMin;
 		if (cr.cpMin == cr.cpMax && bAutoSelect) {
@@ -3241,22 +3240,8 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						cr = GetSelection();
 						break;
 					case ID_PASTE_MUL:
-						if (!OpenClipboard(NULL)) {
-							ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
-							abort = TRUE;
-							break;
-						}
-						if ( hMem = GetClipboardData(_CF_TEXT) ) {
-							if (!(szTmp = (LPTSTR)GlobalLock(hMem))) {
-								ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
-								abort = TRUE;
-							} else {
-								SSTRCPY(szInsert, szTmp);
-								GlobalUnlock(hMem);
-							}
-						} else
-							abort = TRUE;
-						CloseClipboard();
+						SendMessage(hwnd, WM_COMMAND, ID_INT_GETCLIPBOARD, 0);
+						SSTRCPY(szInsert, szTmp);
 					case ID_INSERT_TEXT:
 						if (!szInsert){
 							SelectWord(&szInsert, TRUE, !options.bNoFindAutoSelect);
@@ -3390,11 +3375,9 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_MYEDIT_COPY:
 			case ID_COPY_B64:
 			case ID_COPY_HEX:
-				szTmp = NULL;
-				l = 0;
 				base = 0;
 				enc = (nFormat >> 31 ? FC_ENC_CODEPAGE : (WORD)nFormat);
-
+				lfmt = (nFormat >> 16) & 0xfff;
 				switch(LOWORD(wParam)){
 					case ID_MYEDIT_CUT:
 						SendMessage(client, WM_CUT, 0, 0); break;
@@ -3403,7 +3386,6 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					default:
 						SendMessage(client, WM_COPY, 0, 0); break;
 				}
-
 				if (!OpenClipboard(NULL)) {
 					//This happens if another window has the clipboard open. [https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-openclipboard]
 					ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
@@ -3413,7 +3395,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					if (!(szOld = (LPCTSTR)GlobalLock(hMem)))
 						ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
 					else {
-						sl =  lstrlen(szOld);
+						sl = 0;
+						sz = (LPTSTR)szOld;
+						ExportLineFmt(&sz, &sl, lfmt, (DWORD)-1, &b);
+						if (enc == FC_ENC_BIN) ExportBinary(sz, sl);	//TODO chk when sz == szold (readonly?)
+						if (base && sl) sl = EncodeText((LPBYTE)&sz, sl, nFormat, &b, NULL)
 						switch (base){
 							case 16: if (!l) l = sl * 2;
 							case 64: if (!l) l = ((sl + 2) / 3) * 4;
@@ -3422,27 +3408,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 							default: if (!l) l = sl; break;
 						}
 						hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (l+1));
-						if (!(szNew = (LPTSTR)GlobalLock(hMem2)))
+						if (!(hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (l+1))) || !(szNew = (LPTSTR)GlobalLock(hMem2)))
 							ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
 						else {
-							if (base) {
-								if (sizeof(TCHAR) >= 2 && enc != FC_ENC_UTF16 && enc != FC_ENC_UTF16BE) {
-#ifdef UNICODE
-									l = WideCharToMultiByte(CP_ACP, 0, szOld, sl, NULL, 0, NULL, NULL);
-									szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, l);
-									WideCharToMultiByte(CP_ACP, 0, szOld, sl, (LPSTR)szTmp, l, NULL, NULL);
-									szOld = szTmp;
-#endif
-								} else if (sizeof(TCHAR) < 2 && (enc == FC_ENC_UTF16 || enc == FC_ENC_UTF16BE)) {
-									l = 2 * MultiByteToWideChar(CP_ACP, 0, (LPCSTR)szOld, sl, NULL, 0);
-									szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, l);
-									MultiByteToWideChar(CP_ACP, 0, (LPCSTR)szOld, sl, (LPWSTR)szTmp, l);
-									szOld = szTmp;
-								} else l = sl * sizeof(TCHAR);
-								if (enc == FC_ENC_UTF16BE)
-									ReverseBytes((LPBYTE)szOld, l);
-								EncodeBase(base, (LPBYTE)szOld, szNew, l, NULL);
-							} else lstrcpy(szNew, szOld);
+							if (base) EncodeBase(base, (LPBYTE)sz, szNew, l, NULL);
+							else lstrcpy(szNew, sz);
 							SetLastError(NO_ERROR);
 							if ((!GlobalUnlock(hMem) && (l = GetLastError())) || (!GlobalUnlock(hMem2) && (l = GetLastError()))) {
 								ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
@@ -3451,58 +3421,54 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 							if (!EmptyClipboard() || !SetClipboardData(_CF_TEXT, hMem2))
 								ReportLastError();
 						}
-					}//TODO test/fix this!
+						if (b) FREE(sz);
+					}
 				}
 				CloseClipboard();
 				QueueUpdateStatus();
-				FREE(szTmp);
 				break;
 			case ID_MYEDIT_PASTE: 
 			case ID_PASTE_B64:
 			case ID_PASTE_HEX:
-				szTmp2 = NULL;
+			case ID_INT_GETCLIPBOARD:
 				base = 0;
 				enc = ((sl = nFormat) >> 31 ? FC_ENC_CODEPAGE : (WORD)nFormat);
-
+				lfmt = (nFormat >> 16) & 0xfff;
 				if (!OpenClipboard(NULL)) {
 					ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
 					break;
 				}
 				if ( hMem = GetClipboardData(_CF_TEXT) ) {
-					if (!(szTmp = (LPTSTR)GlobalLock(hMem)))
+					if (!(szOld = (LPTCSTR)GlobalLock(hMem)))
 						ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
 					else {
 						uni = (enc == FC_ENC_UTF16 || enc == FC_ENC_UTF16BE);
+						l = lstrlen(szOld);
 						switch(LOWORD(wParam)){
-							case ID_PASTE_B64: if (!base) { base = 64; sz = uni ? _T("\\W") : _T("\\S"); }
-							case ID_PASTE_HEX: if (!base) { base = 16; sz = uni ? _T("\\U") : _T("\\X"); }
-								szTmp2 = (LPTSTR)HeapAlloc(globalHeap, 0, ((l = lstrlen(szTmp))+3) * sizeof(TCHAR));
-								lstrcpy(szTmp2, sz);
-								lstrcat(szTmp2, szTmp);
-								if (!ParseForEscapeSeqs(szTmp2, NULL, GetString(IDS_ESCAPE_CTX_CLIPBRD)))
-									FREE(szTmp2);
-								break;
-							default:
-								SSTRCPY(szTmp2, szTmp);
+							case ID_PASTE_B64: if (!base) { base = 64; szNew = uni ? _T("\\W") : _T("\\S"); }
+							case ID_PASTE_HEX: if (!base) { base = 16; szNew = uni ? _T("\\U") : _T("\\X"); }
+								sz = (LPTSTR)HeapAlloc(globalHeap, 0, (l+3) * sizeof(TCHAR));
+								lstrcpy(sz, szNew);
+								lstrcat(sz, szOld);
+								if (!ParseForEscapeSeqs(sz, NULL, GetString(IDS_ESCAPE_CTX_CLIPBRD))) { FREE(sz); }
 								break;
 						}
+						szBuf = sz ? sz : szOld;
+						if (base && l) l = DecodeText((LPBYTE*)&szBuf, l, &sl, &b);
+						GetLineFmt(szBuf, l, 0, &i, &j, &k, &nPos, &uni);
+						if (uni) ImportBinary(szBuf, l);
+						ImportLineFmt(&szBuf, &l, lfmt, i, j, k, nPos, &b);
+						if (LOWORD(wParam) == ID_INT_GETCLIPBOARD)
+							lstrncpy(szTmp, szBuf, ARRLEN(szTmp));
+						else
+							SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szBuf);
 						GlobalUnlock(hMem);
-						if (szTmp2) {
-							l = DecodeText((LPBYTE*)&szTmp2, l, &sl, NULL);
-							if (l) {
-								sl &= 0xf000ffff;
-								sl |= (GetLineFmt(szTmp2, l, 0, &i, &j, &k, &nPos, &b) << 16);
-								if (enc == FC_ENC_BIN)
-									ImportBinary(szTmp2, l);
-								ImportLineFmt(&szTmp2, &l, (WORD)((sl >> 16) & 0xfff), i, j, k, nPos, NULL);
-								SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szTmp2);
-							}
-							FREE(szTmp2);
-						}
+						FREE(sz);
+						if (b) FREE(szBuf);
 					}
 				}
 				CloseClipboard();
-				InvalidateRect(client, NULL, TRUE);
+				InvalidateRect(client, NULL, TRUE);	//TODO need?
 				QueueUpdateStatus();
 				break;
 			case ID_HOME:

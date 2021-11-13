@@ -418,10 +418,16 @@ void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DW
 }
 void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDirty){
 	LPTSTR odst, dst, osz;
-	DWORD len;
-	if (lfmt == FC_LFMT_MAC || !sz || !*sz) return;
+	DWORD len, l;
 	len = (chars && *chars) ? *chars : lstrlen(*sz);
+	if (lfmt == FC_LFMT_MAC || !sz || !*sz) return;
 	odst = dst = osz = *sz;
+	if ((LONG)lines == -1) {	//TODO copy paste linefmt?
+		for (l = len, lines = 0; len--; ) {
+
+		}
+
+	}
 	if (lfmt == FC_LFMT_DOS && lines) odst = dst = (LPTSTR)HeapAlloc(globalHeap, 0, (len+lines+1) * sizeof(TCHAR));
 	for ( ; len--; (*sz)++, *dst++) {
 		*dst = **sz;
@@ -489,8 +495,8 @@ void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DW
 void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDirty){
 	LPTSTR odst, dst, osz;
 	DWORD len;
-	if ((lfmt != FC_LFMT_UNIX && lfmt != FC_LFMT_MAC) || !sz || !*sz || !lines) return;
 	len = (chars && *chars) ? *chars : lstrlen(*sz);
+	if ((lfmt != FC_LFMT_UNIX && lfmt != FC_LFMT_MAC) || !sz || !*sz || !lines) return;
 	odst = dst = osz = *sz;
 	for ( ; len--; dst++) {
 		*dst = *(*sz)++;
@@ -645,3 +651,16 @@ DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* t
 	return bytes;
 }
 
+void EvaHash(LPBYTE buf, DWORD len, LPBYTE hash) {							//Originally by Bob Jenkins, 1996, Public Domain. Variant: 32-byte multiples only!
+	DWORD register a = 0x9e3779b9, b=a, c=a, d=a, e=a, f=a, h=a, g=a, h=a;
+	DWORD* bb = (DWORD*)buf;
+	for (len/=32; len--; ){
+		a+=*bb++; b+=*bb++; c+=*bb++; d+=*bb++; e+=*bb++; f+=*bb++; g+=*bb++; h+=*bb++;
+		a^=b<<11; d+=a; b+=c;	b^=c>>2; e+=b; c+=d;	c^=d<<8; f+=c; d+=e;	d^=e>>16; g+=d; e+=f;	e^=f<<10; h+=e; f+=g;	f^=g>>4; a+=f; g+=h;	g^=h<<8; b+=g; h+=a;	h^=a>>9; c+=h; a+=b;
+		a^=b<<11; d+=a; b+=c;	b^=c>>2; e+=b; c+=d;	c^=d<<8; f+=c; d+=e;	d^=e>>16; g+=d; e+=f;	e^=f<<10; h+=e; f+=g;	f^=g>>4; a+=f; g+=h;	g^=h<<8; b+=g; h+=a;	h^=a>>9; c+=h; a+=b;
+		a^=b<<11; d+=a; b+=c;	b^=c>>2; e+=b; c+=d;	c^=d<<8; f+=c; d+=e;	d^=e>>16; g+=d; e+=f;	e^=f<<10; h+=e; f+=g;	f^=g>>4; a+=f; g+=h;	g^=h<<8; b+=g; h+=a;	h^=a>>9; c+=h; a+=b;
+		a^=b<<11; d+=a; b+=c;	b^=c>>2; e+=b; c+=d;	c^=d<<8; f+=c; d+=e;	d^=e>>16; g+=d; e+=f;	e^=f<<10; h+=e; f+=g;	f^=g>>4; a+=f; g+=h;	g^=h<<8; b+=g; h+=a;	h^=a>>9; c+=h; a+=b;
+	}
+	bb = (DWORD*)hash;
+	*bb++=a; *bb++=b; *bb++=c; *bb++=d; *bb++=e; *bb++=f; *bb++=g; *bb++=h;
+}
