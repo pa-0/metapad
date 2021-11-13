@@ -251,11 +251,11 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
 				szErr3 = szErr2 + MAXSTRING * 2;
 				lstrcpy(szErr3, errContext);
 				switch(l) {
-					case 0: szErr = GetString(IDS_ESCAPE_EXPECTED); break;
-					case -1: szErr = GetString(IDS_ESCAPE_BADCHARS); break;
-					case -2: szErr = GetString(IDS_ESCAPE_BADALIGN); break;
-					case -3: szErr = GetString(IDS_UNICODE_CONV_ERROR); break;
-					default: szErr = GetString(IDS_ERROR); break;
+					case 0: szErr = (LPTSTR)GetString(IDS_ESCAPE_EXPECTED); break;
+					case -1: szErr = (LPTSTR)GetString(IDS_ESCAPE_BADCHARS); break;
+					case -2: szErr = (LPTSTR)GetString(IDS_ESCAPE_BADALIGN); break;
+					case -3: szErr = (LPTSTR)GetString(IDS_UNICODE_CONV_ERROR); break;
+					default: szErr = (LPTSTR)GetString(IDS_ERROR); break;
 				}
 				wsprintf(szErr2, szErr, base, mul);
 				szErr = szErr2 + MAXSTRING;
@@ -1751,10 +1751,8 @@ void PopulateMRUList(void)
 
 	if (g_bIniMode || nPrevSave == REG_OPENED_EXISTING_KEY) {
 		UINT i, num = 1, cnt = 0;
-
-		while (GetMenuItemCount(hsub)) {
+		while (hsub && GetMenuItemCount(hsub))
 			DeleteMenu(hsub, 0, MF_BYPOSITION);
-		}
 
 		LoadOptionNumeric(key, GetString(IDSS_MRUTOP), (LPBYTE)&nMRUTop, sizeof(int));
 		mio.cbSize = sizeof(MENUITEMINFO);
@@ -2050,7 +2048,7 @@ void FixReadOnlyMenu(void)
 		mio.cbSize = sizeof(MENUITEMINFO);
 		mio.fMask = MIIM_TYPE | MIIM_ID | MIIM_STATE;
 		mio.fType = MFT_STRING;
-		mio.dwTypeData = GetString(IDS_READONLY_MENU);
+		mio.dwTypeData = (LPTSTR)GetString(IDS_READONLY_MENU);
 		mio.wID = ID_READONLY;
 		if (bReadOnly)
 			mio.fState = MFS_CHECKED;
@@ -2074,7 +2072,7 @@ void FixMRUMenus(void)
 	mio.hSubMenu = CreateMenu();
 
 	if (options.bRecentOnOwn) {
-		mio.dwTypeData = GetString(IDS_RECENT_MENU);
+		mio.dwTypeData = (LPTSTR)GetString(IDS_RECENT_MENU);
 		InsertMenuItem(hmenu, 1, TRUE, &mio);
 		if (hrecentmenu)
 			DestroyMenu(hrecentmenu);
@@ -2084,7 +2082,7 @@ void FixMRUMenus(void)
 		DeleteMenu(GetSubMenu(hmenu, 0), MPOS_FILE_RECENT, MF_BYPOSITION);
 	}
 	else {
-		mio.dwTypeData = GetString(IDS_RECENT_FILES_MENU);
+		mio.dwTypeData = (LPTSTR)GetString(IDS_RECENT_FILES_MENU);
 		InsertMenuItem(GetSubMenu(hmenu, 0), MPOS_FILE_RECENT, TRUE, &mio);
 		if (hrecentmenu)
 			DestroyMenu(hrecentmenu);
@@ -2561,7 +2559,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BUTTON_BROWSE), TRUE);
 			break;
 		case IDC_BUTTON_BROWSE:
-			if (BrowseFile(hwndDlg, _T("dll"), NULL, FixFilterString(GetString(IDS_FILTER_PLUGIN)), FALSE, FALSE, FALSE, &sz)){
+			if (BrowseFile(hwndDlg, _T("dll"), NULL, FixFilterString((LPTSTR)GetString(IDS_FILTER_PLUGIN)), FALSE, FALSE, FALSE, &sz)){
 				if (g_bDisablePluginVersionChecking) {
 					SetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, sz);
 				}
@@ -2578,6 +2576,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 					}
 				}
 			}
+			FREE(sz);
 		}
 		break;
 	default:
@@ -3005,8 +3004,9 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		switch (LOWORD(wParam)) {
 		case IDC_BUTTON_BROWSE:
 		case IDC_BUTTON_BROWSE2:
-			if (BrowseFile(hwndDlg, _T("exe"), NULL, FixFilterString(GetString(IDS_FILTER_EXEC)), FALSE, FALSE, FALSE, &sz))
+			if (BrowseFile(hwndDlg, _T("exe"), NULL, FixFilterString((LPTSTR)GetString(IDS_FILTER_EXEC)), FALSE, FALSE, FALSE, &sz))
 				SetDlgItemText(hwndDlg, LOWORD(wParam) == IDC_BUTTON_BROWSE ? IDC_EDIT_BROWSER : IDC_EDIT_BROWSER2, sz);
+			FREE(sz);
 		}
 		break;
 	default:
@@ -3058,7 +3058,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 	HMENU hMenu;
 	LPTOOLTIPTEXT lpttt;
 	LPCTSTR szOld;
-	LPTSTR sz, szNew, szBuf;
+	LPTSTR sz = NULL, szNew, szBuf;
 	LPTSTR szTmp = gTmpBuf, szFileName = gTmpBuf;
 	LPTSTR szTmp2 = gTmpBuf2;
 	BOOL b = FALSE, abort, uni;
@@ -3187,26 +3187,26 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					/*
 					case ID_NEW_INSTANCE: lpttt->lpszText = GetString(IDS_NEW_INSTANCE); break;
 					*/
-					case ID_MYFILE_NEW: lpttt->lpszText = GetString(IDS_TB_NEWFILE); break;
-					case ID_MYFILE_OPEN: lpttt->lpszText = GetString(IDS_TB_OPENFILE); break;
-					case ID_MYFILE_SAVE: lpttt->lpszText = GetString(IDS_TB_SAVEFILE); break;
-					case ID_PRINT: lpttt->lpszText = GetString(IDS_TB_PRINT); break;
-					case ID_FIND: lpttt->lpszText = GetString(IDS_TB_FIND); break;
-					case ID_REPLACE: lpttt->lpszText = GetString(IDS_TB_REPLACE); break;
-					case ID_MYEDIT_CUT: lpttt->lpszText = GetString(IDS_TB_CUT); break;
-					case ID_MYEDIT_COPY: lpttt->lpszText = GetString(IDS_TB_COPY); break;
-					case ID_MYEDIT_PASTE: lpttt->lpszText = GetString(IDS_TB_PASTE); break;
-					case ID_MYEDIT_UNDO: lpttt->lpszText = GetString(IDS_TB_UNDO); break;
+					case ID_MYFILE_NEW: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_NEWFILE); break;
+					case ID_MYFILE_OPEN: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_OPENFILE); break;
+					case ID_MYFILE_SAVE: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_SAVEFILE); break;
+					case ID_PRINT: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_PRINT); break;
+					case ID_FIND: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_FIND); break;
+					case ID_REPLACE: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_REPLACE); break;
+					case ID_MYEDIT_CUT: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_CUT); break;
+					case ID_MYEDIT_COPY: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_COPY); break;
+					case ID_MYEDIT_PASTE: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_PASTE); break;
+					case ID_MYEDIT_UNDO: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_UNDO); break;
 #ifdef USE_RICH_EDIT
-					case ID_MYEDIT_REDO: lpttt->lpszText = GetString(IDS_TB_REDO); break;
+					case ID_MYEDIT_REDO: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_REDO); break;
 #endif
-					case ID_VIEW_OPTIONS: lpttt->lpszText = GetString(IDS_TB_SETTINGS); break;
-					case ID_RELOAD_CURRENT: lpttt->lpszText = GetString(IDS_TB_REFRESH); break;
-					case ID_EDIT_WORDWRAP: lpttt->lpszText = GetString(IDS_TB_WORDWRAP); break;
-					case ID_FONT_PRIMARY: lpttt->lpszText = GetString(IDS_TB_PRIMARYFONT); break;
-					case ID_ALWAYSONTOP: lpttt->lpszText = GetString(IDS_TB_ONTOP); break;
-					case ID_FILE_LAUNCHVIEWER: lpttt->lpszText = GetString(IDS_TB_PRIMARYVIEWER); break;
-					case ID_LAUNCH_SECONDARY_VIEWER: lpttt->lpszText = GetString(IDS_TB_SECONDARYVIEWER); break;
+					case ID_VIEW_OPTIONS: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_SETTINGS); break;
+					case ID_RELOAD_CURRENT: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_REFRESH); break;
+					case ID_EDIT_WORDWRAP: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_WORDWRAP); break;
+					case ID_FONT_PRIMARY: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_PRIMARYFONT); break;
+					case ID_ALWAYSONTOP: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_ONTOP); break;
+					case ID_FILE_LAUNCHVIEWER: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_PRIMARYVIEWER); break;
+					case ID_LAUNCH_SECONDARY_VIEWER: lpttt->lpszText = (LPTSTR)GetString(IDS_TB_SECONDARYVIEWER); break;
 				}
 				break;
 #ifdef USE_RICH_EDIT
@@ -4687,6 +4687,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	__stktop = (size_t)&_x;
 #endif
 
+	globalHeap = GetProcessHeap();
+	hinstThis = hinstLang = hInstance;
 	if (!hPrevInstance) {
 		wc.hbrBackground = (HBRUSH)(COLOR_WINDOW);
 		wc.style = /*CS_BYTEALIGNWINDOW CS_VREDRAW | CS_HREDRAW;*/ 0;
@@ -4705,8 +4707,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	}
 
 	bLoading = bStarted = bQuit = FALSE;
-	hinstThis = hInstance;
-	globalHeap = GetProcessHeap();
 	ZeroMemory(&options, sizeof(options));
 	hwnd = client = status = toolbar = hdlgCancel = hdlgFind = NULL;
 	hrecentmenu = NULL;
@@ -4861,7 +4861,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 			mio.fMask = MIIM_TYPE | MIIM_ID;
 			mio.fType = MFT_STRING;
 			mio.wID = ID_ABOUT_PLUGIN;
-			mio.dwTypeData = GetString(IDS_MENU_LANGUAGE_PLUGIN);
+			mio.dwTypeData = (LPTSTR)GetString(IDS_MENU_LANGUAGE_PLUGIN);
 			InsertMenuItem(hsub, 1, TRUE, &mio);
 		}
 	}

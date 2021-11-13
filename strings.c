@@ -34,9 +34,10 @@
 
 #include "include/resource.h"
 #include "include/globals.h"
+#include "include/macros.h"
 
 #define NUMSTRINGS 246
-static const LPSTR strings = ""
+static const CHAR strings[] = ""
 /*	`	1	`	IDS_STATFMT_BYTES				*/	"\0 Bytes: %d "
 /*	`	2	`	IDS_STATFMT_SEL					*/	"\0 Selected %d:%d  ->  %d:%d  %s"
 /*	`	3	`	IDS_STATFMT_LINE				*/	"\0 Line: %d/%d"
@@ -49,8 +50,8 @@ static const LPSTR strings = ""
 #endif
 /*	`	7	`	IDS_FILTER_EXEC					*/	"\0Executable Files (*.exe)|*.exe|All Files (*.*)|*.*|"
 /*	`	8	`	IDS_FILTER_PLUGIN				*/	"\0metapad language plugins (*.dll)|*.dll|All Files (*.*)|*.*|"
-/*	`	9	`	IDS_DEFAULT_FILTER				*/	"\0All Textual File Types|*.txt;*.htm;*.html;*.c;*.cpp;*.h;*.java|Text Files (*.txt)|*.txt|HTML (*.html; *.htm)|*.html;*.htm|Source Code (*.c; *.cpp; *.h; *.java)|*.c;*.cpp;*.h;*.java|All Files (*.*)|*.*"
-/*	`	10	`	IDS_DEFAULT_FILTER_TEXT			*/	"\0Text (*.*)|*.*"
+/*	`	9	`	IDS_DEFAULT_FILTER				*/	"\0All Textual File Types|*.txt;*.htm;*.html;*.c;*.cpp;*.h;*.java|Text Files (*.txt)|*.txt|HTML (*.html; *.htm)|*.html;*.htm|Source Code (*.c; *.cpp; *.h; *.java)|*.c;*.cpp;*.h;*.java|All Files (*.*)|*.*|"
+/*	`	10	`	IDS_DEFAULT_FILTER_TEXT			*/	"\0Text (*.*)|*.*|"
 /*	`	11	`	STR_METAPAD						*/	"\0metapad"
 /*	`	12	`	STR_CAPTION_FILE				*/	"\0 - metapad "
 #ifdef UNICODE
@@ -191,11 +192,11 @@ static const LPSTR strings = ""
 /*	`	122	`	IDSD_CUSTOMDATE					*/	"\0yyyyMMdd-HHmmss "
 /*	`	123	`									*/	"\0"
 /*	`	124	`									*/	"\0"
-/*	`	125	`	IDS_VERSION_SYNCH				*/	"\03.6"
-/*	`	126	`	IDS_PLUGIN_LANGUAGE				*/	"\0English (Plugin Template)"
-/*	`	127	`	IDS_PLUGIN_RELEASE				*/	"\01"
-/*	`	128	`	IDS_PLUGIN_TRANSLATOR			*/	"\0Alex Davidson"
-/*	`	129	`	IDS_PLUGIN_EMAIL				*/	"\0metapad-feedback@liquidninja.com"
+/*	`	125	`	IDS_VERSION_SYNCH				*/	"\0""3.7"
+/*	`	126	`	IDS_PLUGIN_LANGUAGE				*/	"\0"
+/*	`	127	`	IDS_PLUGIN_RELEASE				*/	"\0"
+/*	`	128	`	IDS_PLUGIN_TRANSLATOR			*/	"\0"
+/*	`	129	`	IDS_PLUGIN_EMAIL				*/	"\0"
 /*	`	130	`	IDS_DIRTYFILE					*/	"\0Save changes to %s?"
 /*	`	131	`	IDS_ERROR_LOCKED				*/	"\0Error writing to file - it may be locked or read only."
 /*	`	132	`	IDS_ERROR_SEARCH				*/	"\0Search string not found."
@@ -322,6 +323,11 @@ static const LPSTR strings = ""
 /*	`	244	`									*/	"\0"
 /*	`	245	`									*/	"\0"
 "";
+/* Excel:
+	Import: '\n#'->'~#'  '\n"'->'~"'
+	Export:
+*/
+
 
 static WORD stringsidx[NUMSTRINGS] = {
 0,
@@ -573,23 +579,34 @@ IDS_ENC_FAILED,
 };
 
 
-LPTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, const WORD* dictidx, WORD* dictofs, WORD* ofspop){
-	WORD i, idx;
+LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, const WORD* dictidx, WORD* dictofs, LPTSTR dictcache, WORD* ofspop, LPCTSTR def){
+	WORD i, j, idx;
+	LPSTR sp;
+	LPTSTR cp;
 	for (idx = 0; idx < total; idx++) {
 		if (dictidx[idx] == uID)
 			break;
 	}
-	if (idx >= total) return _T("");
-	for (i = *ofspop; i < idx; i++)
-		dictofs[i+1] = dictofs[i] + strlen(dict+dictofs[i])+1;
-	*ofspop = idx;
-	MultiByteToWideChar(CP_ACP, 0, dict+dictofs[idx], strlen(dict+dictofs[idx])+1, _szString, MAXSTRING);
-	return _szString;
+	if (idx >= total) return def;
+	for (i = *ofspop, j = dictofs[i], sp = dict+j, cp = dictcache+j; i <= idx; i++) {
+		for (j=1; *sp; j++)
+			*cp++ = *sp++;
+		*cp++ = *sp++;
+		dictofs[i+1] = dictofs[i] + j;
+	}
+	*ofspop = MAX(*ofspop, idx+1);
+	return dictcache + dictofs[idx];
 }
 
-LPTSTR GetString(WORD uID) {
+LPCTSTR GetString(WORD uID) {
 	static WORD ofs[NUMSTRINGS] = {0}, ofspop = 0;
-	LoadString(hinstLang, uID, _szString, MAXSTRING);
-	if (!*_szString) return GetStringEx(uID, NUMSTRINGS, strings, stringsidx, ofs, &ofspop);
-	return _szString;
+	static TCHAR strcache[sizeof(strings)];
+	static LPTSTR szRsrc = NULL;
+	LPTSTR sz = NULL;
+	if (hinstThis != hinstLang && uID > IDS_VERSION_SYNCH && (uID < NONLOCALIZED_START || uID > NONLOCALIZED_END) && LoadString(hinstLang, uID, (LPTSTR)&sz, 0)) {
+		if (!szRsrc) szRsrc = (LPTSTR)HeapAlloc(globalHeap, 0, MAXSTRING * sizeof(TCHAR));
+		LoadString(hinstLang, uID, szRsrc, MAXSTRING);
+		return szRsrc;
+	}
+	return GetStringEx(uID, NUMSTRINGS, (LPSTR)strings, stringsidx, ofs, strcache, &ofspop, _T(""));
 }

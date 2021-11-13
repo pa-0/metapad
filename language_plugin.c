@@ -44,33 +44,24 @@
  * @param szPlugin Path to language plugin.
  * @return NULL if unable to load the plugin, an instance to the plugin otherwise.
  */
-HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin)
-{
+HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin){
 	HINSTANCE hinstTemp;
-
+	TCHAR plugVer[16], szErr[MAXSTRING];
+	LPCTSTR thisVer;
 	hinstTemp = LoadLibrary(szPlugin);
 	if (hinstTemp == NULL) {
 		ERROROUT(GetString(IDS_INVALID_PLUGIN_ERROR));
 		return NULL;
 	}
-
-	{
-		TCHAR szVersionThis[25];
-		TCHAR szVersionPlug[25];
-
-		if (LoadString(hinstTemp, IDS_VERSION_SYNCH, szVersionPlug, 25) == 0) {
-			ERROROUT(GetString(IDS_BAD_STRING_PLUGIN_ERROR));
-			FreeLibrary(hinstTemp);
-			return NULL;
-		}
-		LoadString(hinstThis, IDS_VERSION_SYNCH, szVersionThis, 25);
-		if (!g_bDisablePluginVersionChecking && lstrcmpi(szVersionThis, szVersionPlug) != 0) {
-			TCHAR szVersionError[550];
-			wsprintf(szVersionError, GetString(IDS_PLUGIN_MISMATCH_ERROR), szVersionPlug, szVersionThis);
-			ERROROUT(szVersionError);
-		}
+	if (LoadString(hinstTemp, IDS_VERSION_SYNCH, plugVer, 16) == 0) {
+		ERROROUT(GetString(IDS_BAD_STRING_PLUGIN_ERROR));
+		FreeLibrary(hinstTemp);
+		return NULL;
 	}
-
+	if (!g_bDisablePluginVersionChecking && lstrcmpi((thisVer = GetString(IDS_VERSION_SYNCH)), plugVer) != 0) {
+		wsprintf(szErr, GetString(IDS_PLUGIN_MISMATCH_ERROR), plugVer, thisVer);
+		ERROROUT(szErr);
+	}
 	return hinstTemp;
 }
 

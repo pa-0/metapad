@@ -298,7 +298,7 @@ BOOL BrowseFile(HWND owner, LPCTSTR defExt, LPCTSTR defDir, LPCTSTR filter, BOOL
 	ofn.nFileExtension = 0;
 	ofn.lpstrDefExt = defExt;
 	if (!GetOpenFileName(&ofn)) return FALSE;
-	if (fileName && *fileName) SSTRCPY(*fileName, fn);
+	if (fileName) SSTRCPY(*fileName, fn);
 	if (load) return LoadFile(fn, FALSE, bMRU, insert);
 	return TRUE;
 }

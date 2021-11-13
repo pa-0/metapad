@@ -754,7 +754,7 @@ END
 
 IDR_POPUP MENU DISCARDABLE
 BEGIN
-    POPUP "Popup"
+    POPUP ""
     BEGIN
         MENUITEM "&Undo",                       ID_MYEDIT_UNDO
 #ifdef USE_RICH_EDIT
@@ -785,6 +785,8 @@ BEGIN
         BEGIN
             MENUITEM "&Short Format",               ID_DATE_TIME
             MENUITEM "&Long Format",                ID_DATE_TIME_LONG
+			MENUITEM "Custom Format &1\tF12",       ID_DATE_TIME_CUSTOM
+			MENUITEM "Custom Format &2\tCtrl+F12",  ID_DATE_TIME_CUSTOM2
         END
         MENUITEM SEPARATOR
         MENUITEM "&Find...",                    ID_FIND
@@ -959,8 +961,6 @@ END
 //
 // String Table
 //
-
-
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////

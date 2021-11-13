@@ -135,11 +135,15 @@ void MakeNewFile(void) {
  */
 LPTSTR FixFilterString(LPTSTR szIn) {
 	LPTSTR sz = szIn;
-	while (*++sz) {
-		if (*sz == _T('|'))
+	INT i = 0;
+	while (*++sz)
+		if (*sz == _T('|')) {
 			*sz = _T('\0');
-	}
-	*++sz = _T('\0');
+			i = 1;
+		}
+	if (!i) return szIn;
+	*sz = _T('\0');
+	if (*(sz-1)) *++sz = _T('\0');
 	return szIn;
 }
 

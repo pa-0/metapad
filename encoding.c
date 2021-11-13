@@ -38,14 +38,13 @@
 
 extern HWND hwnd;
 extern HANDLE globalHeap;
-LPTSTR GetString(UINT uID);
 void ReportLastError(void);
 
 #define NUMBOMS 3
 static const BYTE bomLut[NUMBOMS][4] = {{0x3,0xEF,0xBB,0xBF}, {0x2,0xFF,0xFE}, {0x2,0xFE,0xFF}};
 
 #define NUMKNOWNCPS 144
-static const LPSTR knownCPT = "Latin2 / Central European\0Cyrillic\0Latin1 / Western European\0Greek\0Turkish\0Hebrew\0Arabic\0Baltic\0Vietnamese\0Russian KOI8-R\0Ukrainian KOI8-U\0Thai\0Japanese Shift-JIS\0Simplified Chinese GB2312\0Korean Hangul\0Traditional Chinese Big5\0UTF-7\0UTF-8\0Local DOS\0MacOS\0Symbol\0DOS USA / OEM-US\0DOS Arabic ASMO-708\0DOS Arabic\0DOS Greek\0DOS Baltic\0DOS Latin1 / Western European\0DOS Latin2 / Central European \0DOS Cyrillic\0DOS Turkish\0DOS Latin1 Multilingual\0DOS Portuguese\0DOS Icelandic\0DOS Hebrew\0DOS French Canadian\0DOS Arabic\0DOS Nordic\0DOS Russian\0DOS Modern Greek\0Traditional Chinese Big5-HKSCS\0Korean Johab\0MAC Roman / Western European\0MAC Japanese\0MAC Traditional Chinese Big5\0MAC Korean\0MAC Arabic\0MAC Hebrew\0MAC Greek\0MAC Cyrillic\0MAC Simplified Chinese GB2312\0MAC Romanian\0MAC Ukrainian\0MAC Thai\0MAC Roman2 / Central European\0MAC Icelandic\0MAC Turkish\0MAC Croatian\0CNS-11643 Taiwan\0TCA Taiwan\0ETEN Taiwan\0IBM5550 Taiwan\0TeleText Taiwan\0Wang Taiwan\0IA5 IRV Western European 7-bit\0IA5 German 7-bit\0IA5 Swedish 7-bit\0IA5 Norwegian 7-bit\0US-ASCII 7-bit\0T.61\0ISO-6937\0Japanese EUC / JIS 0208-1990\0Simplified Chinese GB2312-80\0Korean Wansung\0ISO8859-1 Latin1 / Western European\0ISO8859-2 Latin2 / Central European\0ISO8859-3 Latin3 / South European\0ISO8859-4 Baltic\0ISO8859-5 Cyrillic\0ISO8859-6 Arabic\0ISO8859-7 Greek\0ISO8859-8 Hebrew Visual\0ISO8859-9 Turkish\0ISO8859-11 Thai\0ISO8859-13 Estonian\0ISO8859-14 Celtic\0ISO8859-15 Latin9\0ISO8859-8 Hebrew Logical\0ISO2022 Japanese JIS\0ISO2022 Japanese halfwidth Katakana\0ISO2022 Japanese JIS X 0201-1989\0ISO2022 Korean\0ISO2022 Simplified Chinese\0ISO2022 Traditional Chinese\0EUC Japanese\0EUC Simplified Chinese\0EUC Korean\0EUC Traditional Chinese\0HZ-GB2312 Simplified Chinese \0GB18030 Simplified Chinese\0ISCII Devanagari\0ISCII Bangla\0ISCII Tamil\0ISCII Telugu\0ISCII Assamese\0ISCII Odia\0ISCII Kannada\0ISCII Malayalam\0ISCII Gujarati\0ISCII Punjabi\0EBCDIC US-Canada\0EBCDIC International\0EBCDIC Latin2 Multilingual\0EBCDIC Greek Modern\0EBCDIC Turkish\0EBCDIC Latin1\0EBCDIC US-Canada\0EBCDIC Germany\0EBCDIC Denmark-Norway\0EBCDIC Finland-Sweden\0EBCDIC Italy\0EBCDIC Latin America-Spain\0EBCDIC UK\0EBCDIC France\0EBCDIC International\0EBCDIC Icelandic\0EBCDIC Germany\0EBCDIC Denmark-Norway\0EBCDIC Finland-Sweden\0EBCDIC Italy\0EBCDIC Latin America-Spain\0EBCDIC UK\0EBCDIC Japanese Katakana\0EBCDIC France\0EBCDIC Arabic\0EBCDIC Greek\0EBCDIC Hebrew\0EBCDIC Korean\0EBCDIC Thai\0EBCDIC Icelandic\0EBCDIC Cyrillic\0EBCDIC Turkish\0EBCDIC Latin1\0EBCDIC Serbian-Bulgarian\0EBCDIC Japanese\0";
+static const CHAR knownCPT[] = "Latin2 / Central European\0Cyrillic\0Latin1 / Western European\0Greek\0Turkish\0Hebrew\0Arabic\0Baltic\0Vietnamese\0Russian KOI8-R\0Ukrainian KOI8-U\0Thai\0Japanese Shift-JIS\0Simplified Chinese GB2312\0Korean Hangul\0Traditional Chinese Big5\0UTF-7\0UTF-8\0Local DOS\0MacOS\0Symbol\0DOS USA / OEM-US\0DOS Arabic ASMO-708\0DOS Arabic\0DOS Greek\0DOS Baltic\0DOS Latin1 / Western European\0DOS Latin2 / Central European \0DOS Cyrillic\0DOS Turkish\0DOS Latin1 Multilingual\0DOS Portuguese\0DOS Icelandic\0DOS Hebrew\0DOS French Canadian\0DOS Arabic\0DOS Nordic\0DOS Russian\0DOS Modern Greek\0Traditional Chinese Big5-HKSCS\0Korean Johab\0MAC Roman / Western European\0MAC Japanese\0MAC Traditional Chinese Big5\0MAC Korean\0MAC Arabic\0MAC Hebrew\0MAC Greek\0MAC Cyrillic\0MAC Simplified Chinese GB2312\0MAC Romanian\0MAC Ukrainian\0MAC Thai\0MAC Roman2 / Central European\0MAC Icelandic\0MAC Turkish\0MAC Croatian\0CNS-11643 Taiwan\0TCA Taiwan\0ETEN Taiwan\0IBM5550 Taiwan\0TeleText Taiwan\0Wang Taiwan\0IA5 IRV Western European 7-bit\0IA5 German 7-bit\0IA5 Swedish 7-bit\0IA5 Norwegian 7-bit\0US-ASCII 7-bit\0T.61\0ISO-6937\0Japanese EUC / JIS 0208-1990\0Simplified Chinese GB2312-80\0Korean Wansung\0ISO8859-1 Latin1 / Western European\0ISO8859-2 Latin2 / Central European\0ISO8859-3 Latin3 / South European\0ISO8859-4 Baltic\0ISO8859-5 Cyrillic\0ISO8859-6 Arabic\0ISO8859-7 Greek\0ISO8859-8 Hebrew Visual\0ISO8859-9 Turkish\0ISO8859-11 Thai\0ISO8859-13 Estonian\0ISO8859-14 Celtic\0ISO8859-15 Latin9\0ISO8859-8 Hebrew Logical\0ISO2022 Japanese JIS\0ISO2022 Japanese halfwidth Katakana\0ISO2022 Japanese JIS X 0201-1989\0ISO2022 Korean\0ISO2022 Simplified Chinese\0ISO2022 Traditional Chinese\0EUC Japanese\0EUC Simplified Chinese\0EUC Korean\0EUC Traditional Chinese\0HZ-GB2312 Simplified Chinese \0GB18030 Simplified Chinese\0ISCII Devanagari\0ISCII Bangla\0ISCII Tamil\0ISCII Telugu\0ISCII Assamese\0ISCII Odia\0ISCII Kannada\0ISCII Malayalam\0ISCII Gujarati\0ISCII Punjabi\0EBCDIC US-Canada\0EBCDIC International\0EBCDIC Latin2 Multilingual\0EBCDIC Greek Modern\0EBCDIC Turkish\0EBCDIC Latin1\0EBCDIC US-Canada\0EBCDIC Germany\0EBCDIC Denmark-Norway\0EBCDIC Finland-Sweden\0EBCDIC Italy\0EBCDIC Latin America-Spain\0EBCDIC UK\0EBCDIC France\0EBCDIC International\0EBCDIC Icelandic\0EBCDIC Germany\0EBCDIC Denmark-Norway\0EBCDIC Finland-Sweden\0EBCDIC Italy\0EBCDIC Latin America-Spain\0EBCDIC UK\0EBCDIC Japanese Katakana\0EBCDIC France\0EBCDIC Arabic\0EBCDIC Greek\0EBCDIC Hebrew\0EBCDIC Korean\0EBCDIC Thai\0EBCDIC Icelandic\0EBCDIC Cyrillic\0EBCDIC Turkish\0EBCDIC Latin1\0EBCDIC Serbian-Bulgarian\0EBCDIC Japanese\0";
 static const WORD knownCPN[NUMKNOWNCPS] = {1250,1251,1252,1253,1254,1255,1256,1257,1258,20866,21866,874,932,936,949,950,65000,65001,1,2,42,437,708,720,737,775,850,852,855,857,858,860,861,862,863,864,865,866,869,951,1361,10000,10001,10002,10003,10004,10005,10006,10007,10008,10010,10017,10021,10029,10079,10081,10082,20000,20001,20002,20003,20004,20005,20105,20106,20107,20108,20127,20261,20269,20932,20936,20949,28591,28592,28593,28594,28595,28596,28597,28598,28599,28601,28603,28604,28605,38598,50220,50221,50222,50225,50227,50229,51932,51936,51949,51950,52936,54936,57002,57003,57004,57005,57006,57007,57008,57009,57010,57011,37,500,870,875,1026,1047,1140,1141,1142,1143,1144,1145,1146,1147,1148,1149,20273,20277,20278,20280,20284,20285,20290,20297,20420,20423,20424,20833,20838,20871,20880,20905,20924,21025,21027};
 
 static const unsigned short decLut[] = {
@@ -278,37 +277,20 @@ WORD GetBOM(LPBYTE* bom, WORD enc){
 WORD GetKnownCP(WORD idx) {
 	return knownCPN[idx];
 }
-LPSTR GetCPName(WORD cp){
+LPCTSTR GetCPName(WORD cp){
 	static WORD ofs[NUMKNOWNCPS] = {0}, ofspop = 0;
-	WORD i, idx;
-	if (cp >= 100 && cp < 300) idx = cp - 100;
-	else {
-		for (idx = 0; idx < NUMKNOWNCPS; idx++)
-			if (knownCPN[idx] == cp)
-				break;
-	}
-	if (idx >= NUMKNOWNCPS) return NULL;
-	for (i = ofspop; i < idx; i++)
-		ofs[i+1] = ofs[i] + strlen(knownCPT+ofs[i])+1;
-	ofspop = idx;
-	return knownCPT+ofs[idx];
+	static TCHAR strcache[sizeof(knownCPT)];
+	if (cp >= 100 && cp < 300) cp = knownCPN[cp-100];
+	return GetStringEx(cp, NUMKNOWNCPS, (LPSTR)knownCPT, knownCPN, ofs, strcache, &ofspop, NULL);
 }
 void PrintCPName(WORD cp, LPTSTR buf, LPCTSTR format) {
-	TCHAR t[40];
-	LPSTR asz = GetCPName(cp);
-	LPTSTR tp = t;
+	LPCTSTR asz;
 	if (cp >= 100 && cp < 300) cp = knownCPN[cp-100];
-	if (asz) {
-#ifdef UNICODE
-		MultiByteToWideChar(CP_ACP, 0, asz, strlen(asz)+1, t, sizeof(t));
-#else
-		tp = asz;
-#endif
-	}
+	asz = GetCPName(cp);
 	wsprintf(buf, format, cp);
 	if (asz) {
 		lstrcat(buf, _T(" - "));
-		lstrcat(buf, tp);
+		lstrcat(buf, asz);
 	}
 }
 
