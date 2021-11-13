@@ -34,10 +34,19 @@
 #define HEIGHT(x)		(x.bottom - x.top + 1)
 //#define ARRLEN(X)		sizeof(X)/sizeof(X[0])
 
+#ifdef _DEBUG
 #define FREE(x) {\
+	{ DWORD __v; LPVOID __x = (LPVOID)x; if (__x) __v = *((DWORD*)__x);\
 	/*if (x) printf("FREE %08X : %.32ls\n", x, x);*/\
 	if (x) HeapFree(globalHeap, 0, (HGLOBAL)x);\
+	if (__x && __v == *((DWORD*)__x)) { ERROROUT(_T("BAD FREE!")); } }\
 	x = NULL; }
+#else
+#define FREE(x) {\
+	if (x) HeapFree(globalHeap, 0, (HGLOBAL)x);\
+	x = NULL; }
+#endif
+
 #define SSTRCPY(tgt, src) SSTRCPYAO(tgt, src, 1, 0)
 #define SSTRCPYA(tgt, src, add) SSTRCPYAO(tgt, src, add, 0)
 #define SSTRCPYO(tgt, src, ofs) SSTRCPYAO(tgt, src, 1, ofs)

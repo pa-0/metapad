@@ -47,14 +47,14 @@ LPSTR GetCPName(WORD cp);
 void PrintCPName(WORD cp, LPTSTR buf, LPCTSTR format);
 BOOL IsTextUTF8(LPBYTE buf);
 
-WORD GetLineFmt(LPCTSTR sz, DWORD len, DWORD* nCR, DWORD* nLF, DWORD* nStrays, DWORD* nSub, BOOL* binary);
+WORD GetLineFmt(LPCTSTR sz, DWORD len, WORD preferred, DWORD* nCR, DWORD* nLF, DWORD* nStrays, DWORD* nSub, BOOL* binary);
 void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DWORD nStrays, DWORD nSub, BOOL* bufDirty);
 void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDirty);
 LONG ExportLineFmtDelta(LPCTSTR sz, DWORD* chars, WORD lfmt);
 void ImportBinary(LPTSTR sz, DWORD len);
 void ExportBinary(LPTSTR sz, DWORD len);
 
-DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty);
+DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty, LPBYTE* origBuf);
 DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* truncated);
 
 #endif

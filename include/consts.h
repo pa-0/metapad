@@ -61,6 +61,7 @@
 #define IDT_UPDATE 1
 
 #define MPOS_FILE_READONLY 4
+#define MPOS_FILE_FORMAT_STATIC 8
 #define MPOS_FILE_FORMAT (options.bReadOnlyMenu ? 8 : 7)
 #define MPOS_FILE_RECENT (options.bReadOnlyMenu ? 14 : 13)
 #define MPOS_EDIT (options.bRecentOnOwn ? 2 : 1)
