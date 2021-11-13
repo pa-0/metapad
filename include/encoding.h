@@ -60,4 +60,6 @@ void ExpandDifMap(LPVOID map, WORD width, DWORD len);
 
 void EvaHash(LPBYTE buf, DWORD len, LPBYTE hash);
 
+LPTSTR FormatNumber(LONGLONG num, BOOL group, TCHAR sep, WORD buffer);
+
 #endif

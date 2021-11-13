@@ -131,6 +131,7 @@ typedef struct tag_options {
 	BOOL bPrintWithSecondaryFont;
 	BOOL bNoSaveHistory;
 	BOOL bNoFindAutoSelect;
+	BOOL bDigitGrp;
 	LPTSTR szLangPlugin;
 	LPTSTR MacroArray[10];
 	LPTSTR szFavDir;
