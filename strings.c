@@ -26,6 +26,7 @@
 #define _WIN32_WINNT 0x0400
 
 #include <windows.h>
+#include <commctrl.h>
 #include <tchar.h>
 
 #ifdef UNICODE
@@ -151,7 +152,7 @@ static const CHAR strings[] = ""
 /*		96		IDS_RESTART_LANG				*/	"\0Language changes will be reflected upon restarting the program."
 /*		97		IDS_INVALID_PLUGIN_ERROR		*/	"\0Error loading language plugin DLL. It is probably not a valid metapad language plugin."
 /*		98		IDS_BAD_STRING_PLUGIN_ERROR		*/	"\0Error fetching version string resource from plugin DLL. It is probably not a valid metapad language plugin."
-/*		99		IDS_PLUGIN_MISMATCH_ERROR		*/	"\0Your language plugin is for metapad %s, but you are running metapad %s.\n\nSome menu or dialog texts may not be localized."
+/*		99		IDS_PLUGIN_MISMATCH_ERROR		*/	"\0Your language plugin is for metapad %s, but you are running metapad %s.\n\nSome menu or dialog texts may not be translated."
 /*		100		IDS_ALLRIGHTS					*/	"\0All Rights Reserved"
 /*		102		IDS_DEFAULT_FILTER_TEXT			*/	"\0Text (*.*)|*.*|"
 /*		103		IDS_NEW_FILE					*/	"\0new file"
@@ -457,10 +458,10 @@ static const CHAR strings[] = ""
 /*		32419	IDDP_PROPPAGE_VIEW_BASE+19		*/	"\0&Selection margin width:"
 /*		34109	IDDP_REPLACE_BASE+9				*/	"\0Replace all in"
 /*		34900	IDDP_PROPPAGE_A2_BASE+0			*/	"\0Quick buffers (select text and set with Alt + Shift + number)"
-/*		34922	IDDP_PROPPAGE_A2_BASE+22		*/	"\0Language for menus, dialogs and messages"
-/*		34927	IDDP_PROPPAGE_A2_BASE+27		*/	"\0Custom date formats:"
-/*		34928	IDDP_PROPPAGE_A2_BASE+28		*/	"\0&F12:"
-/*		34930	IDDP_PROPPAGE_A2_BASE+30		*/	"\0&Ctrl+F12:"
+/*		34921	IDDP_PROPPAGE_A2_BASE+21		*/	"\0Language for menus, dialogs and messages"
+/*		34926	IDDP_PROPPAGE_A2_BASE+26		*/	"\0Custom date formats:"
+/*		34927	IDDP_PROPPAGE_A2_BASE+27		*/	"\0&F12:"
+/*		34929	IDDP_PROPPAGE_A2_BASE+29		*/	"\0&Ctrl+F12:"
 /*		35001	IDDP_ABOUT_PLUGIN_BASE+1		*/	"\0Language:"
 /*		35003	IDDP_ABOUT_PLUGIN_BASE+3		*/	"\0Release:"
 /*		35005	IDDP_ABOUT_PLUGIN_BASE+5		*/	"\0Translator:"
@@ -595,7 +596,7 @@ static const CHAR strings[] = ""
 	Import:	\n->\n/*\t		(~A->\t~A)		~A\t->		~B\t->\t\t\t*\/\t"\\0		\n->"\n		`->		(*\/->\t*\/)	(\t*\/->*\/)
 	Export:
 */
-static WORD stringsidx[] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,7,1,9,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,216,0,47,0,0,0,0,0,0,3,0,0,3,0,0,0,0,0,0,0,0,3,0,80,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,74,0,243,0,10,1,21,2,0,1,1,0,29,1,7,0,0,0,0,0,0,447,0,4,0,1,0,0,0,486,0,7,0,39,0,18,1,0,5,19091,0,4,13,0,0,0,0,0,0,1,2,1176,0,0,0,1,0,25,2,2,0,0,0,6,14,1519,0,53,0,14,28,0,21,0,0,475,0,0,0,69,60,4,0,0,0,0,0,0,0,0,9,0,6,0,0,0,0,0,0,0,0,0,0,0,322,0,6105,1,1,2,1,2,1,78,98,999,8,8,0,1689,790,21,4,0,1,70,1,1,1,92,2,1,4896,0,0,4,1,0,0,3,2,0,1,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,4,0,1,0,0,0,0,1,0,0,2,0,0,0,1,3,0,0,0,0,2,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,0,5,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,881,0,0,0,6,0,0,0,0,5,9,9,60,0,2987};
+static WORD stringsidx[] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,7,1,9,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,216,0,47,0,0,0,0,0,0,3,0,0,3,0,0,0,0,0,0,0,0,3,0,80,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,74,0,243,0,10,1,21,2,0,1,1,0,29,1,7,0,0,0,0,0,0,447,0,4,0,1,0,0,0,486,0,7,0,39,0,18,1,0,5,19091,0,4,13,0,0,0,0,0,0,1,2,1176,0,0,0,1,0,25,2,2,0,0,0,6,14,1519,0,53,0,14,28,0,21,0,0,475,0,0,0,69,60,4,0,0,0,0,0,0,0,0,9,0,6,0,0,0,0,0,0,0,0,0,0,0,322,0,6105,1,1,2,1,2,1,78,98,999,8,8,0,1689,790,20,4,0,1,71,1,1,1,92,2,1,4896,0,0,4,1,0,0,3,2,0,1,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,4,0,1,0,0,0,0,1,0,0,2,0,0,0,1,3,0,0,0,0,2,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,0,5,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,881,0,0,0,6,0,0,0,0,5,9,9,60,0,2987};
 
 
 
@@ -636,7 +637,7 @@ void FindAndLoadLanguagePlugin(void) {
 	WIN32_FIND_DATA FileData;
 	HANDLE hSearch;
 	HINSTANCE hinstTemp;
-	hinstLang = hinstThis;
+	hinstLang = NULL;
 	if (!SCNUL(options.szLangPlugin)[0])
 		return;
 
@@ -694,7 +695,7 @@ LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, WORD* dictidx, WORD*
 			dictofs[i+1] = dictofs[i] + j;
 		}
 		*ofspop = MAX(*ofspop, idx+1);
-		if (*(dict + dictofs[idx]) && (BYTE)*(dict + dictofs[idx]) < ' '){
+		if (*(dict + dictofs[idx]) && (BYTE)*(dict + dictofs[idx]) < ' ' && !*(dict + dictofs[idx] + 1)){
 			idx += *(dict + dictofs[idx]);
 			continue;
 		}
@@ -707,7 +708,7 @@ LPCTSTR GetString(WORD uID) {
 	static TCHAR strcache[sizeof(strings)];
 	static LPTSTR szRsrc = NULL;
 	LPTSTR sz = NULL;
-	if (hinstThis != hinstLang && uID > IDS_VERSION_SYNCH && (uID < NONLOCALIZED_BASE || uID > NONLOCALIZED_END) && LoadString(hinstLang, uID, (LPTSTR)&sz, 0)) {
+	if (hinstLang && hinstThis != hinstLang && uID > IDS_VERSION_SYNCH && (uID < NONLOCALIZED_BASE || uID > NONLOCALIZED_END) && LoadString(hinstLang, uID, (LPTSTR)&sz, 0)) {
 		if (!szRsrc) szRsrc = (LPTSTR)HeapAlloc(globalHeap, 0, MAXSTRING * sizeof(TCHAR));
 		LoadString(hinstLang, uID, szRsrc, MAXSTRING);
 		return szRsrc;
@@ -823,58 +824,122 @@ HMENU LocalizeMenu(WORD mID, HINSTANCE src, HINSTANCE plugin) {
 
 #define MAXDLGCONTROLS 48
 typedef struct {
-	WORD dID, cnum, pcct, _pad;
-	HWND parent, pctl[MAXDLGCONTROLS];
-	DWORD gpos, pgpos[MAXDLGCONTROLS];
-
+	BOOL all;
+	WORD cct, gpos, cgpos[MAXDLGCONTROLS];
+	HWND parent, ctl[MAXDLGCONTROLS];
+	TCHAR tbuf[MAXSTRING];
 } LDCList;
 typedef struct {
 	WORD dID, cnum;
 	HWND parent;
-	LDCList *plist;
+	LDCList *plist, *clist;
 } LDCState;
 
-BOOL CALLBACK LocalizeDialogItems(HWND hwnd, LPARAM lParam){
+BOOL CALLBACK LocalizeDialogGather(HWND hwnd, LPARAM lParam){
 	INT i;
+	TCHAR tbuf[16];
+	LDCList *list = (LDCList*)lParam;
+	if (!list || GetParent(hwnd) != list->parent || list->cct >= MAXDLGCONTROLS) return TRUE;
+	GetClassName(hwnd, tbuf, 16);
+	if (!lstrcmpi(tbuf, WC_COMBOBOX) || !lstrcmpi(tbuf, WC_EDIT)) return TRUE;
+	i = GetDlgCtrlID(hwnd);
+	if (i < 0 || i == (WORD)IDC_STATIC) i = 0;
+	else if (i < IDC_BASE) i+= IDC_BASE;
+	GetWindowText(hwnd, tbuf, 2);
+	if (list->all || *tbuf >= _T(' ')) {
+		list->cgpos[list->cct] = i ? i : list->gpos;
+		list->ctl[list->cct++] = hwnd;
+	}
+	if (!i) list->gpos++;
+	return TRUE;
+}
+BOOL CALLBACK LocalizeDialogItems(HWND hwnd, LPARAM lParam){
+	INT i, j;
 	LPCTSTR ts=NULL;
-	TCHAR tbuf[2];
+	TCHAR tbuf[16];
 	LDCState *state = (LDCState*)lParam;
 	if (!state || GetParent(hwnd) != state->parent) return TRUE;
+	state->cnum++;
+	GetClassName(hwnd, tbuf, 16);
+	if (!lstrcmpi(tbuf, WC_COMBOBOX) || !lstrcmpi(tbuf, WC_EDIT)) return TRUE;
+	i = GetDlgCtrlID(hwnd);
+	if (i < 0 || i == (WORD)IDC_STATIC) i = 0;
+	else if (i < IDC_BASE) i+= IDC_BASE;
 	GetWindowText(hwnd, tbuf, 2);
+	if (state->plist) {
+		for (j = 0; i && j < state->plist->cct; j++) {
+			if (state->plist->cgpos[j] == i)
+				break;
+		}
+		if ((!i || (BYTE)*tbuf == 2) && (!i || j >= state->plist->cct)) {
+			for (j = 0; j < state->plist->cct; j++) {
+				if (state->plist->cgpos[j] == state->plist->gpos)
+					break;
+			}
+			if (!i) state->plist->gpos++;
+		}
+		if (j < state->plist->cct && state->plist->ctl[j]) {
+			ts = state->plist->tbuf;
+			GetWindowText(state->plist->ctl[j], (LPTSTR)ts, MAXSTRING);
+			state->plist->ctl[j] = NULL;
+			state->plist->cgpos[j] = 0xffff;
+		}
+		if (*tbuf) state->plist->gpos++;
+	}
 	if (*tbuf < _T(' ')) {
-		i = GetDlgCtrlID(hwnd);
-		if (i < IDC_BASE) i+= IDC_BASE;
-		else if (i == (WORD)IDC_STATIC) i = 0;
-		if ((BYTE)*tbuf != 1 && (ts = GetString(IDDC_BASE + (state->dID%100)*100 + i%100)) && *ts) ;
-		else if ((ts = GetString(IDDP_BASE + (state->dID%100)*100 + state->cnum)) && *ts) ;
+		if (ts && *ts >= _T(' ')) ;
+		else if ((BYTE)*tbuf != 1 && (ts = GetString(IDDC_BASE + (state->dID%100)*100 + i%100)) && *ts) ;
+		else if ((ts = GetString(IDDP_BASE + (state->dID%100)*100 + state->cnum-1)) && *ts) ;
 		else if ((ts = GetString(i)) && *ts) ;
 		if (ts && *ts)
 			SetWindowText(hwnd, ts);
 	}
-	state->cnum++;
 	return TRUE;
-	//if (!list || list->pcct >= MAXDLGCONTROLS) return FALSE;
-
-/*	TCHAR szLine[12]={0};
-	//GetDlgItemText(GetParent(hwnd), IDC_LINE, szLine, 12);
-	GetWindowText(hwnd, szLine, 12);
-	MSGOUT(szLine);
-	return TRUE;*/
 }
 
 void LocalizeDialog(WORD dID, HWND dlg, HINSTANCE plugin) {
-
-
-	//return CreateDialog(src, MAKEINTRESOURCE(dID), dlg, NULL);
-	LPCTSTR ts;
+	WORD i, j, k;
+	HWND pdlg = NULL;
+	LPCTSTR ts = NULL;
 	TCHAR tbuf[2];
 	LDCState state = {0};
 	state.dID = dID;
-	//list.pcct = 0xffff;
 	state.parent = dlg;
+	if (plugin && (pdlg = CreateDialog(plugin, MAKEINTRESOURCE(dID), dlg, NULL))) {
+		state.plist = (LDCList*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, sizeof(LDCList));
+		state.clist = (LDCList*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, sizeof(LDCList));
+		state.plist->parent = pdlg;
+		state.clist->parent = dlg;
+		state.clist->all = TRUE;
+		EnumChildWindows(pdlg, LocalizeDialogGather, (LPARAM)state.plist);
+		EnumChildWindows(dlg, LocalizeDialogGather, (LPARAM)state.clist);
+		for (i = 0, state.plist->gpos=0; i < state.plist->cct; i++) {
+			if (state.plist->cgpos[i] < IDC_BASE) {
+				state.plist->gpos=state.plist->cgpos[i]+1;
+				continue;
+			}
+			for (j = 0; j < state.clist->cct; j++) {
+				if (state.plist->cgpos[i] == state.clist->cgpos[j])
+					break;
+			}
+			if (j >= state.clist->cct) {
+				state.plist->cgpos[i] = state.plist->gpos++;
+				for (k = i+1; k < state.plist->cct; k++) {
+					if (state.plist->cgpos[k] < IDC_BASE)
+						state.plist->cgpos[k]++;
+				}
+			}
+		}
+		state.plist->gpos = 0;
+	}
 	GetWindowText(dlg, tbuf, 2);
-	if (*tbuf < _T(' ') && (ts = GetString(dID)) && *ts) ;
-	else ts = GetString(STR_METAPAD);
-	SetWindowText(dlg, ts);
+	if (*tbuf < _T(' ')) {
+		if (pdlg && GetWindowText(pdlg, state.plist->tbuf, MAXSTRING) && *state.plist->tbuf >= _T(' ')) ts = state.plist->tbuf;
+		else if ((ts = GetString(dID)) && *ts) ;
+		else ts = GetString(STR_METAPAD);
+		if (ts) SetWindowText(dlg, ts);
+	}
 	EnumChildWindows(dlg, LocalizeDialogItems, (LPARAM)&state);
+	FREE(state.plist);
+	if (pdlg) DestroyWindow(pdlg);
 }

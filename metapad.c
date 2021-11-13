@@ -294,8 +294,7 @@ void CleanUp(void)
 	if (hfontmain) DeleteObject(hfontmain);
 	if (hfontfind) DeleteObject(hfontfind);
 	if (hthread) CloseHandle(hthread);
-
-	if (hinstLang != hinstThis) FreeLibrary(hinstLang);
+	if (hinstLang && hinstLang != hinstThis) FreeLibrary(hinstLang);
 
 #ifdef USE_RICH_EDIT
 	DestroyWindow(client);
@@ -1023,8 +1022,8 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 #ifdef USE_RICH_EDIT
 			case 'Y': SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_MYEDIT_REDO, 0); return TRUE;
 #endif
-			case SC_KEYMENU:
 			case VK_F3: SendMessage(hwnd, WM_COMMAND, (WPARAM)(GetKeyState(VK_SHIFT) & 0x8000 ? ID_FIND_PREV : ID_FIND_NEXT), 0); return TRUE;
+			case SC_KEYMENU:
 			case VK_F10: SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_INSERT_TEXT, 0); return TRUE;
 			case VK_F12: SendMessage(hdlgFind, WM_COMMAND, MAKEWPARAM(IDC_ESCAPE, BN_CLICKED), 0); return TRUE;
 			case VK_F1:
@@ -1276,7 +1275,7 @@ LRESULT CALLBACK AbortPrintJob(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 	switch (message) {
 		case WM_INITDIALOG:
 			CenterWindow(hwndDlg);
-			SetDlgItemText(hwndDlg, IDC_STATIC, SCNUL8(szCaptionFile)+8);
+			SetDlgItemText(hwndDlg, IDD_ABORT_PRINT+2, SCNUL8(szCaptionFile)+8);
 			LocalizeDialog(IDD_ABORT_PRINT, hwndDlg, hinstLang);
 			return TRUE;
 		case WM_COMMAND:
@@ -2142,7 +2141,7 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 			SetDlgItemText(hwndDlg, IDOK, GetString(IDC_OK));
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT, GetString(STR_COPYRIGHT));
 			SetDlgItemText(hwndDlg, IDC_STATIC_COPYRIGHT2, GetString(IDS_ALLRIGHTS));
-			LocalizeDialog(IDD_ABOUT, hwndDlg, hinstLang);
+			SetWindowText(hwndDlg, GetString(STR_METAPAD));
 			break;
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
@@ -2489,37 +2488,22 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 }
 
 BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	INT i;
 	LPTSTR sz = NULL, buf = gTmpBuf;
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		SendDlgItemMessage(hwndDlg, IDC_EDIT_LANG_PLUGIN, EM_LIMITTEXT, (WPARAM)MAXFN-1, 0);
-		SendDlgItemMessage(hwndDlg, IDC_MACRO_1, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
-		SendDlgItemMessage(hwndDlg, IDC_MACRO_2, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
-		SendDlgItemMessage(hwndDlg, IDC_MACRO_3, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
-		SendDlgItemMessage(hwndDlg, IDC_MACRO_4, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
-		SendDlgItemMessage(hwndDlg, IDC_MACRO_5, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
-		SendDlgItemMessage(hwndDlg, IDC_MACRO_6, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
-		SendDlgItemMessage(hwndDlg, IDC_MACRO_7, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
-		SendDlgItemMessage(hwndDlg, IDC_MACRO_8, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
-		SendDlgItemMessage(hwndDlg, IDC_MACRO_9, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
-		SendDlgItemMessage(hwndDlg, IDC_MACRO_10, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
 		SendDlgItemMessage(hwndDlg, IDC_CUSTOMDATE, EM_LIMITTEXT, (WPARAM)MAXDATEFORMAT-1, 0);
 		SendDlgItemMessage(hwndDlg, IDC_CUSTOMDATE2, EM_LIMITTEXT, (WPARAM)MAXDATEFORMAT-1, 0);
-
 		SetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, SCNUL(options.szLangPlugin));
-		SetDlgItemText(hwndDlg, IDC_MACRO_1, SCNUL(options.MacroArray[0]));
-		SetDlgItemText(hwndDlg, IDC_MACRO_2, SCNUL(options.MacroArray[1]));
-		SetDlgItemText(hwndDlg, IDC_MACRO_3, SCNUL(options.MacroArray[2]));
-		SetDlgItemText(hwndDlg, IDC_MACRO_4, SCNUL(options.MacroArray[3]));
-		SetDlgItemText(hwndDlg, IDC_MACRO_5, SCNUL(options.MacroArray[4]));
-		SetDlgItemText(hwndDlg, IDC_MACRO_6, SCNUL(options.MacroArray[5]));
-		SetDlgItemText(hwndDlg, IDC_MACRO_7, SCNUL(options.MacroArray[6]));
-		SetDlgItemText(hwndDlg, IDC_MACRO_8, SCNUL(options.MacroArray[7]));
-		SetDlgItemText(hwndDlg, IDC_MACRO_9, SCNUL(options.MacroArray[8]));
-		SetDlgItemText(hwndDlg, IDC_MACRO_10, SCNUL(options.MacroArray[9]));
 		SetDlgItemText(hwndDlg, IDC_CUSTOMDATE, SCNUL(options.szCustomDate));
 		SetDlgItemText(hwndDlg, IDC_CUSTOMDATE2, SCNUL(options.szCustomDate2));
-
+		for (i = 0; i < 10; i++) {
+			SendDlgItemMessage(hwndDlg, IDC_MACRO_1+i, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
+			SetDlgItemText(hwndDlg, IDC_MACRO_1+1, SCNUL(options.MacroArray[i]));
+			wsprintf(buf, GetString(IDC_TEXT_MACRO), (i+1)%10);
+			SetDlgItemText(hwndDlg, IDC_TEXT_MACRO+i, buf);
+		}
 		if (!SCNUL(options.szLangPlugin)[0]) {
 			SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_DEFAULT, BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
 			SendMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_RADIO_LANG_DEFAULT, 0), 0);
@@ -2544,16 +2528,9 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 			}
 			return TRUE;
 		case PSN_APPLY:
-			GetDlgItemText(hwndDlg, IDC_MACRO_1, buf, MAXMACRO);	SSTRCPY(options.MacroArray[0], buf);
-			GetDlgItemText(hwndDlg, IDC_MACRO_2, buf, MAXMACRO);	SSTRCPY(options.MacroArray[1], buf);
-			GetDlgItemText(hwndDlg, IDC_MACRO_3, buf, MAXMACRO);	SSTRCPY(options.MacroArray[2], buf);
-			GetDlgItemText(hwndDlg, IDC_MACRO_4, buf, MAXMACRO);	SSTRCPY(options.MacroArray[3], buf);
-			GetDlgItemText(hwndDlg, IDC_MACRO_5, buf, MAXMACRO);	SSTRCPY(options.MacroArray[4], buf);
-			GetDlgItemText(hwndDlg, IDC_MACRO_6, buf, MAXMACRO);	SSTRCPY(options.MacroArray[5], buf);
-			GetDlgItemText(hwndDlg, IDC_MACRO_7, buf, MAXMACRO);	SSTRCPY(options.MacroArray[6], buf);
-			GetDlgItemText(hwndDlg, IDC_MACRO_8, buf, MAXMACRO);	SSTRCPY(options.MacroArray[7], buf);
-			GetDlgItemText(hwndDlg, IDC_MACRO_9, buf, MAXMACRO);	SSTRCPY(options.MacroArray[8], buf);
-			GetDlgItemText(hwndDlg, IDC_MACRO_10, buf, MAXMACRO);	SSTRCPY(options.MacroArray[9], buf);
+			for (i = 0; i < 10; i++) {
+				GetDlgItemText(hwndDlg, IDC_MACRO_1+i, buf, MAXMACRO);	SSTRCPY(options.MacroArray[i], buf);
+			}
 			GetDlgItemText(hwndDlg, IDC_CUSTOMDATE, buf, MAXDATEFORMAT);	SSTRCPY(options.szCustomDate, buf);
 			GetDlgItemText(hwndDlg, IDC_CUSTOMDATE2, buf, MAXDATEFORMAT);	SSTRCPY(options.szCustomDate2, buf);
 
@@ -2948,7 +2925,7 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 	int nTmp;
 	switch (uMsg) {
 	case WM_INITDIALOG:
-		CenterWindow(hwndSheet);
+		CenterWindow(GetParent(hwndDlg));
 		SendDlgItemMessage(hwndDlg, IDC_EDIT_BROWSER, EM_LIMITTEXT, (WPARAM)MAXFN-1, 0);
 		SendDlgItemMessage(hwndDlg, IDC_EDIT_ARGS, EM_LIMITTEXT, (WPARAM)MAXARGS-1, 0);
 		SendDlgItemMessage(hwndDlg, IDC_EDIT_QUOTE, EM_LIMITTEXT, (WPARAM)MAXQUOTE-1, 0);
@@ -3034,18 +3011,12 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 	return TRUE;
 }
 
-int CALLBACK SheetInitProc(HWND hwndDlg, UINT uMsg, LPARAM lParam)
-{
+int CALLBACK SheetInitProc(HWND hwndDlg, UINT uMsg, LPARAM lParam) {
 	if (uMsg == PSCB_PRECREATE) {
-		if (((LPDLGTEMPLATEEX)lParam)->signature == 0xFFFF) {
+		if (((LPDLGTEMPLATEEX)lParam)->signature == 0xFFFF)
 			((LPDLGTEMPLATEEX)lParam)->style &= ~DS_CONTEXTHELP;
-		}
-		else {
+		else
 			((LPDLGTEMPLATE)lParam)->style &= ~DS_CONTEXTHELP;
-		}
-	}
-	else if (hwndDlg) {
-		hwndSheet = hwndDlg;
 	}
 	return TRUE;
 }
@@ -3782,103 +3753,58 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_VIEW_OPTIONS:
 				ZeroMemory(&pages[0], sizeof(pages[0]));
 				pages[0].dwSize = sizeof(PROPSHEETPAGE);
-				//pages[0].dwSize = PROPSHEETPAGE_V1_SIZE;
-
-				pages[0].dwFlags = PSP_DEFAULT;
+				pages[0].dwFlags = PSP_DEFAULT | PSP_USETITLE;
 				pages[0].hInstance = hinstThis;
 				pages[0].pszTemplate = MAKEINTRESOURCE(IDD_PROPPAGE_GENERAL);
+				pages[0].pszTitle = GetString(IDD_PROPPAGE_GENERAL);
 				pages[0].pfnDlgProc = (DLGPROC)GeneralPageProc;
-
 				ZeroMemory(&pages[1], sizeof(pages[1]));
 				pages[1].dwSize = sizeof(PROPSHEETPAGE);
-				//pages[1].dwSize = PROPSHEETPAGE_V1_SIZE;
-
 				pages[1].hInstance = hinstThis;
-				pages[1].dwFlags = PSP_DEFAULT;
+				pages[1].dwFlags = PSP_DEFAULT | PSP_USETITLE;
 				pages[1].pszTemplate = MAKEINTRESOURCE(IDD_PROPPAGE_VIEW);
+				pages[1].pszTitle = GetString(IDD_PROPPAGE_VIEW);
 				pages[1].pfnDlgProc = (DLGPROC)ViewPageProc;
-
 				ZeroMemory(&pages[2], sizeof(pages[2]));
 				pages[2].dwSize = sizeof(PROPSHEETPAGE);
-				//pages[2].dwSize = PROPSHEETPAGE_V1_SIZE;
-
 				pages[2].hInstance = hinstThis;
-				pages[2].dwFlags = PSP_DEFAULT;
+				pages[2].dwFlags = PSP_DEFAULT | PSP_USETITLE;
 				pages[2].pszTemplate = MAKEINTRESOURCE(IDD_PROPPAGE_A2);
+				pages[2].pszTitle = GetString(IDD_PROPPAGE_A2);
 				pages[2].pfnDlgProc = (DLGPROC)Advanced2PageProc;
-
 				ZeroMemory(&pages[3], sizeof(pages[3]));
 				pages[3].dwSize = sizeof(PROPSHEETPAGE);
-				//pages[3].dwSize = PROPSHEETPAGE_V1_SIZE;
-
 				pages[3].hInstance = hinstThis;
-				pages[3].dwFlags = PSP_DEFAULT;
+				pages[3].dwFlags = PSP_DEFAULT | PSP_USETITLE;
 				pages[3].pszTemplate = MAKEINTRESOURCE(IDD_PROPPAGE_A1);
+				pages[3].pszTitle = GetString(IDD_PROPPAGE_A1);
 				pages[3].pfnDlgProc = (DLGPROC)AdvancedPageProc;
 
 				ZeroMemory(&psh, sizeof(psh));
 				psh.dwSize = sizeof(PROPSHEETHEADER);
-
-				//psh.dwSize = PROPSHEETHEADER_V1_SIZE;
-
 				psh.dwFlags = PSH_USECALLBACK | PSH_NOAPPLYNOW | PSH_PROPSHEETPAGE;
 				psh.hwndParent = hwndMain;
 				psh.nPages = 4;
 				psh.pszCaption = GetString(IDS_SETTINGS_TITLE);
 				psh.ppsp = (LPCPROPSHEETPAGE) pages;
 				psh.pfnCallback = SheetInitProc;
-
-/*
-				BOOL bOldMRU = options.bRecentOnOwn;
-				int nOldFontOption, nOldTabs = options.nTabStops;
-				LOGFONT oldFont;
-				BOOL bOldReadOnlyMenu = options.bReadOnlyMenu;
-				BOOL bOldFlatToolbar = options.bUnFlatToolbar;
-				BOOL bOldSystemColours = options.bSystemColours;
-				BOOL bOldSystemColours2 = options.bSystemColours2;
-				BOOL bOldNoFaves = options.bNoFaves;
-#ifdef USE_RICH_EDIT
-				BOOL bOldHideScrollbars = options.bHideScrollbars;
-#endif
-				COLORREF oldBackColour = options.BackColour, oldFontColour = options.FontColour;
-				COLORREF oldBackColour2 = options.BackColour2, oldFontColour2 = options.FontColour2;
-				TCHAR* szOldLangPlugin = gTmpBuf;
-
-				lstrcpy(szOldLangPlugin, SCNUL(options.szLangPlugin));
-*/
 				memcpy(&tmpOptions, &options, sizeof(option_struct));
 				LoadOptions();
-/*
-				if (bPrimaryFont) {
-					nOldFontOption = options.nPrimaryFont;
-					oldFont = options.PrimaryFont;
-				}
-				else {
-					nOldFontOption = options.nSecondaryFont;
-					oldFont = options.SecondaryFont;
-				}
-*/
 				i = PropertySheet(&psh);
 				if (i > 0) {
 					SaveOptions();
-
-					if (options.bLaunchClose && options.nLaunchSave == 2) {
+					if (options.bLaunchClose && options.nLaunchSave == 2)
 						MessageBox(hwndMain, GetString(IDS_LAUNCH_WARNING), GetString(STR_METAPAD), MB_ICONEXCLAMATION);
-					}
-
 					if (options.bReadOnlyMenu != tmpOptions.bReadOnlyMenu)
 						FixReadOnlyMenu();
-
 					if (options.bRecentOnOwn != tmpOptions.bRecentOnOwn) {
 						FixMRUMenus();
 						PopulateMRUList();
 					}
-
 					if (tmpOptions.bUnFlatToolbar != options.bUnFlatToolbar) {
 						DestroyWindow(toolbar);
 						CreateToolbar();
 					}
-
 					if ((memcmp((LPVOID)(LPVOID)(bPrimaryFont ? &tmpOptions.PrimaryFont : &tmpOptions.SecondaryFont), (LPVOID)(bPrimaryFont ? &options.PrimaryFont : &options.SecondaryFont), sizeof(LOGFONT)) != 0) ||
 						(tmpOptions.nTabStops != options.nTabStops) ||
 						((bPrimaryFont && tmpOptions.nPrimaryFont != options.nPrimaryFont) || (!bPrimaryFont && tmpOptions.nSecondaryFont != options.nSecondaryFont)) ||
@@ -3903,7 +3829,6 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						FREE(szCaptionFile);
 						UpdateCaption();
 					}
-
 					SendMessage(client, EM_SETMARGINS, (WPARAM)EC_LEFTMARGIN, MAKELPARAM(options.nSelectionMarginWidth, 0));
 					if (bTransparent) {
 						SetLWA(hwnd, 0, (BYTE)((255 * (100 - options.nTransparentPct)) / 100), LWA_ALPHA);
@@ -3915,10 +3840,8 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 #endif
 					if (tmpOptions.bNoFaves != options.bNoFaves)
 						ERROROUT(GetString(IDS_RESTART_FAVES));
-
 					if (lstrcmp(SCNUL(tmpOptions.szLangPlugin), SCNUL(options.szLangPlugin)) != 0)
 						ERROROUT(GetString(IDS_RESTART_LANG));
-
 					PopulateMRUList();
 					UpdateStatus(TRUE);
 				} else if (i < 0)
@@ -3928,7 +3851,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				DialogBox(hinstThis, MAKEINTRESOURCE(IDD_ABOUT), hwndMain, (DLGPROC)AboutDialogProc);
 				break;
 			case ID_ABOUT_PLUGIN:
-				if (hinstThis != hinstLang)
+				if (hinstLang && hinstThis != hinstLang)
 					DialogBox(hinstThis, MAKEINTRESOURCE(IDD_ABOUT_PLUGIN), hwndMain, (DLGPROC)AboutPluginDialogProc);
 				break;
 			case ID_MYFILE_OPEN:
@@ -4705,7 +4628,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 #endif
 
 	globalHeap = GetProcessHeap();
-	hinstThis = hinstLang = hInstance;
+	hinstThis = hInstance;
 	if (!hPrevInstance) {
 		wc.hbrBackground = (HBRUSH)(COLOR_WINDOW);
 		wc.style = /*CS_BYTEALIGNWINDOW CS_VREDRAW | CS_HREDRAW;*/ 0;
@@ -4865,7 +4788,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		return FALSE;
 	}
 	SetMenu(hwnd, hmenu);
-	if (hinstLang != hinstThis) {
+	if (hinstLang && hinstLang != hinstThis) {
 		hsub = GetSubMenu(hmenu, 4);
 		mio.cbSize = sizeof(MENUITEMINFO);
 		mio.fMask = MIIM_TYPE | MIIM_ID;
