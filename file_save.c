@@ -56,7 +56,7 @@ BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
 	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 	UINT nonansi = 0, cp = CP_ACP;
 	BOOL bufDirty = FALSE, fail = FALSE;
-	WORD enc = (nFormat >> 31) ? ID_ENC_CUSTOM : (WORD)nFormat;
+	WORD enc = (nFormat >> 31) ? FC_ENC_CUSTOM : (WORD)nFormat;
 	WORD lfmt = (nFormat >> 16) & 0xfff;
 	DWORD lines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
 
@@ -64,16 +64,16 @@ BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
 	nBytes = nChars;
 	if (nChars) {
 		ExportLineFmt(&szBuffer, &nChars, lfmt, lines, &bufDirty);
-		if (enc == ID_ENC_BIN)
+		if (enc == FC_ENC_BIN)
 			ExportBinary(szBuffer, nChars);
 		for ( ; 1; fail = FALSE) {
 			if (szEncd != szBuffer) FREE(szEncd);
 			szEncd = szBuffer;
 			nBytes = EncodeText((LPBYTE*)&szEncd, nChars, nFormat, NULL, &fail);
-			if (enc != ID_ENC_UTF8 && fail) {
+			if (enc != FC_ENC_UTF8 && fail) {
 				switch (MessageBox(hwnd, GetString(IDS_UNICODE_SAVE_TRUNCATION), GetString(STR_METAPAD), MB_YESNOCANCEL | MB_ICONEXCLAMATION)) {
 					case IDYES:
-						SetFileFormat(enc = ID_ENC_UTF8, 0);
+						SetFileFormat(enc = FC_ENC_UTF8, 0);
 						continue;
 					case IDNO:
 						fail = FALSE;

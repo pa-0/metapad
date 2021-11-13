@@ -115,7 +115,7 @@ void LoadOptions(void)
 	//options.nStatusFontWidth = 16;
 	options.nSelectionMarginWidth = 10;
 	options.nMaxMRU = 8;
-	options.nFormat = ID_ENC_ANSI | (ID_LFMT_DOS << 16);
+	options.nFormat = FC_ENC_ANSI | (FC_LFMT_DOS << 16);
 	options.nTransparentPct = 25;
 	options.BackColour = GetSysColor(COLOR_WINDOW);
 	options.FontColour = GetSysColor(COLOR_WINDOWTEXT);
@@ -235,7 +235,7 @@ void LoadOptions(void)
 	}
 #endif
 	if (options.nFormat < (1<<16))
-		options.nFormat = ID_ENC_ANSI | (ID_LFMT_DOS << 16);
+		options.nFormat = FC_ENC_ANSI | (FC_LFMT_DOS << 16);
 }
 
 /**

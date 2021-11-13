@@ -66,14 +66,14 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, LPBYTE* origBuffer, DWO
 
 	if (!cp) {
 		// check if UTF-8 even if no bom
-		if (enc == ID_ENC_UNKNOWN && buflen > 1 && IsTextUTF8(*ppBuffer))
-			enc = ID_ENC_UTF8;
+		if (enc == FC_ENC_UNKNOWN && buflen > 1 && IsTextUTF8(*ppBuffer))
+			enc = FC_ENC_UTF8;
 		// check if unicode even if no bom
-		if (enc == ID_ENC_UNKNOWN && buflen > 2 && (IsTextUnicode(*ppBuffer, buflen, lpiResult) || 
+		if (enc == FC_ENC_UNKNOWN && buflen > 2 && (IsTextUnicode(*ppBuffer, buflen, lpiResult) || 
 			(!(*lpiResult & IS_TEXT_UNICODE_NOT_UNICODE_MASK) && (*lpiResult & IS_TEXT_UNICODE_NOT_ASCII_MASK))))
-			enc = ((*lpiResult & IS_TEXT_UNICODE_REVERSE_MASK) ? ID_ENC_UTF16BE : ID_ENC_UTF16);
-		if (enc == ID_ENC_UNKNOWN)
-			enc = ID_ENC_ANSI;
+			enc = ((*lpiResult & IS_TEXT_UNICODE_REVERSE_MASK) ? FC_ENC_UTF16BE : FC_ENC_UTF16);
+		if (enc == FC_ENC_UNKNOWN)
+			enc = FC_ENC_ANSI;
 		*format &= 0xfff0000;
 		*format |= enc;
 	}
@@ -171,7 +171,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 		cfmt &= 0x8000ffff;
 		cfmt |= (GetLineFmt(szBuffer, lChars, (options.nFormat>>16)&0xfff, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
 		if (b) {
-			cfmt = ID_ENC_BIN | ((cfmt >> 16) & 0xfff);
+			cfmt = FC_ENC_BIN | ((cfmt >> 16) & 0xfff);
 			tbuf = GetShadowBuffer(NULL);
 			SetWindowText(client, szBuffer);
 #ifdef UNICODE
@@ -187,7 +187,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert) {
 				return FALSE;
 			}
 			ImportBinary(szBuffer, lChars);
-		} else if (((cfmt >> 16) & 0xfff) == ID_LFMT_MIXED && !options.bNoWarningPrompt)
+		} else if (((cfmt >> 16) & 0xfff) == FC_LFMT_MIXED && !options.bNoWarningPrompt)
 			ERROROUT(GetString(IDS_LFMT_MIXED));
 		b = TRUE;
 		ImportLineFmt(&szBuffer, &lChars, (WORD)((cfmt >> 16) & 0xfff), nCR, nLF, nStrays, nSub, &b);

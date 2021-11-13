@@ -578,6 +578,16 @@ IDS_ENC_FAILED,
 0,
 };
 
+#ifdef _DEBUG
+void _printids(){
+	WORD i;
+	TCHAR s[16];
+	for (i = 0; i < NUMSTRINGS; i++){
+		wsprintf(s, _T("\n%d"), stringsidx[i]);
+		SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)s);
+	}
+}
+#endif
 
 LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, const WORD* dictidx, WORD* dictofs, LPTSTR dictcache, WORD* ofspop, LPCTSTR def){
 	WORD i, j, idx;
@@ -587,6 +597,7 @@ LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, const WORD* dictidx,
 		if (dictidx[idx] == uID)
 			break;
 	}
+	//if (idx == 240) _printids();
 	if (idx >= total) return def;
 	for (i = *ofspop, j = dictofs[i], sp = dict+j, cp = dictcache+j; i <= idx; i++) {
 		for (j=1; *sp; j++)
@@ -603,7 +614,7 @@ LPCTSTR GetString(WORD uID) {
 	static TCHAR strcache[sizeof(strings)];
 	static LPTSTR szRsrc = NULL;
 	LPTSTR sz = NULL;
-	if (hinstThis != hinstLang && uID > IDS_VERSION_SYNCH && (uID < NONLOCALIZED_START || uID > NONLOCALIZED_END) && LoadString(hinstLang, uID, (LPTSTR)&sz, 0)) {
+	if (hinstThis != hinstLang && uID > IDS_VERSION_SYNCH && (uID < NONLOCALIZED_BASE || uID > NONLOCALIZED_END) && LoadString(hinstLang, uID, (LPTSTR)&sz, 0)) {
 		if (!szRsrc) szRsrc = (LPTSTR)HeapAlloc(globalHeap, 0, MAXSTRING * sizeof(TCHAR));
 		LoadString(hinstLang, uID, szRsrc, MAXSTRING);
 		return szRsrc;

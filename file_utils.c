@@ -48,7 +48,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	BOOL bufDirty = FALSE, b;
 
 	if (!hMenu || !format) return;
-	if (format < 0xffff && format > ID_LFMT_UNKNOWN && format <= ID_LFMT_MIXED) format <<= 16;
+	if (format < 0xffff && format > FC_LFMT_UNKNOWN && format <= FC_LFMT_MIXED) format <<= 16;
 	if (!(format & 0x8000ffff)) format |= nFormat & 0x8000ffff;
 	if (!(format & 0xfff0000)) format |= nFormat & 0xfff0000;
 	if (format == nFormat) return;
@@ -56,12 +56,12 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	nenc = ncp = (WORD)format;
 	lfmt = (nFormat >> 16) & 0xfff;
 	nlfmt = (format >> 16) & 0xfff;
-	if (nFormat >> 31) enc = ID_ENC_CUSTOM;
-	if (format >> 31) nenc = ID_ENC_CUSTOM;
-	if (!GetTextChars(NULL) || !((enc == ID_ENC_CUSTOM || nenc == ID_ENC_CUSTOM) && cp != ncp && reinterp)) reinterp = 0;
+	if (nFormat >> 31) enc = FC_ENC_CUSTOM;
+	if (format >> 31) nenc = FC_ENC_CUSTOM;
+	if (!GetTextChars(NULL) || !((enc == FC_ENC_CUSTOM || nenc == FC_ENC_CUSTOM) && cp != ncp && reinterp)) reinterp = 0;
 	if (reinterp == 1) {
-		if (nenc == ID_ENC_CUSTOM)
-			PrintCPName(ncp, mbuf, GetString(IDS_ENC_CUSTOM_CAPTION));
+		if (nenc == FC_ENC_CUSTOM)
+			PrintCPName(ncp, mbuf, GetString(ID_ENC_CODEPAGE));
 		else
 			lstrcpy(mbuf, GetString(nenc));
 		wsprintf(mbuf2, GetString(IDS_ENC_REINTERPRET), mbuf);
@@ -77,17 +77,17 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 		buf = (LPTSTR)GetShadowBuffer(&len);
 		lines = SendMessage(client, EM_GETLINECOUNT, 0, 0);
 		ExportLineFmt(&buf, &len, lfmt, lines, &bufDirty);
-		if (enc == ID_ENC_BIN)
+		if (enc == FC_ENC_BIN)
 			ExportBinary(buf, len);
-		if (enc == ID_ENC_CUSTOM)
+		if (enc == FC_ENC_CUSTOM)
 			len = EncodeText((LPBYTE*)&buf, len, nFormat, &bufDirty, NULL);
 		if (len) {
-			if (nenc == ID_ENC_CUSTOM)
+			if (nenc == FC_ENC_CUSTOM)
 				len = DecodeText((LPBYTE*)&buf, len, &format, &bufDirty, NULL);
 			if (len) {
 				format &= 0x8000ffff;
 				format |= (GetLineFmt(buf, len, lfmt, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
-				if (nenc == ID_ENC_BIN)
+				if (nenc == FC_ENC_BIN)
 					ImportBinary(buf, len);
 				ImportLineFmt(&buf, &len, nlfmt, nCR, nLF, nStrays, nSub, &bufDirty);
 				SetWindowText(client, buf);
@@ -99,18 +99,18 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 		FREE(buf);
 
 	nFormat = format;
-	DeleteMenu(hMenu, ID_ENC_CUSTOM-1, MF_BYCOMMAND);
-	if (nenc == ID_ENC_CUSTOM){
-		PrintCPName(ncp, mbuf, GetString(IDS_ENC_CUSTOM_CAPTION));
+	DeleteMenu(hMenu, FC_ENC_CUSTOM-1, MF_BYCOMMAND);
+	if (nenc == FC_ENC_CUSTOM){
+		PrintCPName(ncp, mbuf, GetString(ID_ENC_CODEPAGE));
 		mio.cbSize = sizeof(MENUITEMINFO);
 		mio.fMask = MIIM_TYPE | MIIM_ID;
 		mio.fType = MFT_STRING;
 		mio.dwTypeData = mbuf;
-		mio.wID = nenc = ID_ENC_CUSTOM-1;
+		mio.wID = nenc = ID_ENC_CODEPAGE;
 		InsertMenuItem(hMenu, GetMenuItemCount(hMenu), TRUE, &mio);
 	}
-	CheckMenuRadioItem(hMenu, nenc/10*10, (nenc/10+1)*10, nenc, MF_BYCOMMAND);
-	CheckMenuRadioItem(hMenu, nlfmt/10*10, (nlfmt/10+1)*10, nlfmt, MF_BYCOMMAND);
+	CheckMenuRadioItem(hsub, ID_ENC_BASE, ID_ENC_END, nenc % 1000 + ID_MENUCMD_BASE, MF_BYCOMMAND);
+	CheckMenuRadioItem(hsub, ID_LFMT_BASE, ID_LFMT_END, nlfmt % 1000 + ID_MENUCMD_BASE, MF_BYCOMMAND);
 	bDirtyShadow = bDirtyStatus = TRUE;
 	QueueUpdateStatus();
 	SetCursor(hcur);
@@ -381,7 +381,7 @@ DWORD GetTextChars(LPCTSTR szText){
 	//This must exactly mirror the text length calculation in GetShadowRange() 
 #ifdef USE_RICH_EDIT
 	GETTEXTLENGTHEX gtl = {0};
-	//if (lfmt != ID_LFMT_UNIX && lfmt != ID_LFMT_MAC) gtl.flags = GTL_USECRLF;
+	//if (lfmt != FC_LFMT_UNIX && lfmt != FC_LFMT_MAC) gtl.flags = GTL_USECRLF;
 	if (!szText) return SendMessage(client, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
 #else
 	if (!szText) return GetWindowTextLength(client);
@@ -399,12 +399,12 @@ DWORD CalcTextSize(LPCTSTR* szText, CHARRANGE* range, DWORD estBytes, DWORD form
 	WORD enc, cp = CP_ACP;
 	BOOL deep = FALSE, urange = FALSE;
 	if (format >> 31) {
-		enc = ID_ENC_CUSTOM;
+		enc = FC_ENC_CUSTOM;
 		cp = (WORD)format;
 	} else enc = (WORD)format;
 	if (range && range->cpMin <= range->cpMax && range->cpMin > 0 && range->cpMax > 0) urange = TRUE;
 	if (!estBytes && urange) estBytes = range->cpMax - range->cpMin;
-	if (enc == ID_ENC_UTF8 || enc == ID_ENC_CUSTOM || ExportLineFmtDelta(NULL, NULL, (format >> 16) & 0xfff)){
+	if (enc == FC_ENC_UTF8 || enc == FC_ENC_CUSTOM || ExportLineFmtDelta(NULL, NULL, (format >> 16) & 0xfff)){
 		deep = TRUE;
 		if (!szBuffer) {
 			if (urange) szBuffer = GetShadowRange(range->cpMin, range->cpMax, -1, &estBytes);
@@ -415,10 +415,10 @@ DWORD CalcTextSize(LPCTSTR* szText, CHARRANGE* range, DWORD estBytes, DWORD form
 	chars = estBytes;
 	if (deep && estBytes)
 		ExportLineFmtDelta(szBuffer, &estBytes, (format >> 16) & 0xfff);
-	if (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE) {
+	if (enc == FC_ENC_UTF16 || enc == FC_ENC_UTF16BE) {
 		mul = bom = 2;
-	} else if (enc == ID_ENC_UTF8 || enc == ID_ENC_CUSTOM) {
-		if (enc == ID_ENC_UTF8) {
+	} else if (enc == FC_ENC_UTF8 || enc == FC_ENC_CUSTOM) {
+		if (enc == FC_ENC_UTF8) {
 			bom = 3;
 			cp = CP_UTF8;
 		}
@@ -570,7 +570,7 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 	//0123456
 	// _?*-+$
 	DWORD k, m = 1, len, alen, ilen, lf, lr, ct = 0, cf = 0, cg = 0, lg = 0, nglob[6] = {0}, cglob[6] = {0}, sglob[6], gu = 0;
-	WORD enc = (nFormat >> 31 ? ID_ENC_CUSTOM : (WORD)nFormat);
+	WORD enc = (nFormat >> 31 ? FC_ENC_CUSTOM : (WORD)nFormat);
 	LPTSTR dst, odst, pd = NULL;
 	LPCTSTR *globs[6], *globe[6];
 	TCHAR gc;
@@ -643,7 +643,7 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 								pd += cg;
 							} else if (pbReplSpec[cf] == 6) {
 #ifdef UNICODE
-								if (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE)
+								if (enc == FC_ENC_UTF16 || enc == FC_ENC_UTF16BE)
 									*pd++ = RAND()%0xffe0+0x20;
 								else
 #endif

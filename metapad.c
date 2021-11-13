@@ -134,7 +134,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
 	LPTSTR op = buf, bout, end, szErr, szErr2, szErr3, dbuf;
 	INT l, m, base = 0, mul = 3, uni = 0, str, expl = 0, dbufalloc = 0, spi = 0;
 	DWORD p = 0;
-	WORD enc = (nFormat >> 31 ? ID_ENC_CUSTOM : (WORD)nFormat);
+	WORD enc = (nFormat >> 31 ? FC_ENC_CUSTOM : (WORD)nFormat);
 #ifdef UNICODE
 	const TCHAR spsub[] = {_T('\x332'), _T('\xFFFD'), _T('\xD7'), _T('\x2014'), _T('\x2026'), _T('\xFFFC')};
 #endif
@@ -172,7 +172,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
 				}
 				if (spi == 6){
 #ifdef UNICODE
-					if (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE)
+					if (enc == FC_ENC_UTF16 || enc == FC_ENC_UTF16BE)
 						*bout++ = RAND()%0xffe0+0x20;
 					else
 #endif
@@ -227,7 +227,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
 					else if (str && uni == 1 && l % sizeof(TCHAR))
 						l = -2;
 #ifdef UNICODE
-					else if (uni == 1 && l >= 2 && enc != ID_ENC_UTF16BE)
+					else if (uni == 1 && l >= 2 && enc != FC_ENC_UTF16BE)
 						ReverseBytes((LPBYTE)bout, l * 2);
 #endif
 					if (!str) buf--;
@@ -585,7 +585,7 @@ void UpdateStatus(BOOL refresh) {
 				if (!((nFormat >> 30) & 1)) {
 					lstrcpy(szPane, _T("  "));
 					if (nFormat >> 31)
-						wsprintf(szPane+2, GetString(ID_ENC_CUSTOM), (WORD)nFormat);
+						wsprintf(szPane+2, GetString(FC_ENC_CODEPAGE), (WORD)nFormat);
 					else
 						lstrcpy(szPane+2, GetString((WORD)nFormat));
 					lstrcat(szPane+3, _T(" "));
@@ -1263,7 +1263,7 @@ LRESULT CALLBACK AbortPrintJob(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 	switch (message) {
 		case WM_INITDIALOG:
 			CenterWindow(hwndDlg);
-			SetDlgItemText(hwndDlg, IDD_FILE, SCNUL8(szCaptionFile)+8);
+			SetDlgItemText(hwndDlg, IDC_STATIC, SCNUL8(szCaptionFile)+8);
 			return TRUE;
 		case WM_COMMAND:
 			bPrint = FALSE;
@@ -2265,7 +2265,7 @@ BOOL CALLBACK CPDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 					}
 					if (newFormat) {
 						newFormat = (1<<31) | (newFormat & 0xfff0000) | (WORD)i;
-						PrintCPName((WORD)i, buf, GetString(IDS_ENC_CUSTOM_CAPTION));
+						PrintCPName((WORD)i, buf, GetString(ID_ENC_CODEPAGE));
 						wsprintf(buf2, GetString(IDS_SETDEF_FORMAT_WARN), buf);
 						MSGOUT(buf2);
 					} else SetFileFormat((WORD)i | (1<<31), 1);
@@ -2429,7 +2429,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			GetWindowRect(GetDlgItem(hwndDlg, IDC_BUTTON_FORMAT), &rc);
 			enc = cp = (WORD)newFormat;
 			lfmt = (newFormat >> 16) & 0xfff;
-			if (newFormat >> 31) enc = ID_ENC_CUSTOM;
+			if (newFormat >> 31) enc = FC_ENC_CUSTOM;
 
 			mio.cbSize = sizeof(MENUITEMINFO);
 			mio.fMask = MIIM_TYPE | MIIM_ID;
@@ -2443,22 +2443,23 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 					SetMenuItemInfo(hsub, u, TRUE, &mio);
 				}
 			}
-			if (enc == ID_ENC_CUSTOM){
-				PrintCPName(cp, szInt, GetString(IDS_ENC_CUSTOM_CAPTION));
+			if (enc == FC_ENC_CUSTOM){
+				PrintCPName(cp, szInt, GetString(ID_ENC_CODEPAGE));
 				mio.fType = MFT_STRING;
 				mio.dwTypeData = szInt;
-				mio.wID = enc = ID_ENC_CUSTOM-1;
+				mio.wID = enc = ID_ENC_CODEPAGE;
 				InsertMenuItem(hsub, v, TRUE, &mio);
 			}
-			CheckMenuRadioItem(hsub, enc/10*10, (enc/10+1)*10, enc, MF_BYCOMMAND);
-			CheckMenuRadioItem(hsub, lfmt/10*10, (lfmt/10+1)*10, lfmt, MF_BYCOMMAND);
+			CheckMenuRadioItem(hsub, ID_ENC_BASE, ID_ENC_END, enc % 1000 + ID_MENUCMD_BASE, MF_BYCOMMAND);
+			CheckMenuRadioItem(hsub, ID_LFMT_BASE, ID_LFMT_END, lfmt % 1000 + ID_MENUCMD_BASE, MF_BYCOMMAND);
 			switch (v = TrackPopupMenuEx(hsub, TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rc.left, rc.bottom, hwnd, NULL)) {
-				case ID_ENC_CUSTOM-1: break;
+				case ID_ENC_CODEPAGE: break;
 				case ID_ENC_CUSTOM:
 					DialogBox(hinstLang, MAKEINTRESOURCE(IDD_CP), hwndDlg, (DLGPROC)CPDialogProc);
 					break;
 				default:
-					if (v > ID_LFMT_UNKNOWN && v <= ID_LFMT_MIXED) v <<= 16;
+					v = v % 1000 + FC_BASE;
+					if (v > FC_LFMT_UNKNOWN && v <= FC_LFMT_MIXED) v <<= 16;
 					if (!(v & 0x8000ffff)) v |= newFormat & 0x8000ffff;
 					if (!(v & 0xfff0000)) v |= newFormat & 0xfff0000;
 					newFormat = v;
@@ -3518,7 +3519,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				szTmp = NULL;
 				l = 0;
 				base = 0;
-				enc = (nFormat >> 31 ? ID_ENC_CUSTOM : (WORD)nFormat);
+				enc = (nFormat >> 31 ? FC_ENC_CUSTOM : (WORD)nFormat);
 
 				switch(LOWORD(wParam)){
 					case ID_MYEDIT_CUT:
@@ -3542,7 +3543,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						switch (base){
 							case 16: if (!l) l = sl * 2;
 							case 64: if (!l) l = ((sl + 2) / 3) * 4;
-								if (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE)
+								if (enc == FC_ENC_UTF16 || enc == FC_ENC_UTF16BE)
 									l *= 2;
 							default: if (!l) l = sl; break;
 						}
@@ -3551,20 +3552,20 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 							ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
 						else {
 							if (base) {
-								if (sizeof(TCHAR) >= 2 && enc != ID_ENC_UTF16 && enc != ID_ENC_UTF16BE) {
+								if (sizeof(TCHAR) >= 2 && enc != FC_ENC_UTF16 && enc != FC_ENC_UTF16BE) {
 #ifdef UNICODE
 									l = WideCharToMultiByte(CP_ACP, 0, szOld, sl, NULL, 0, NULL, NULL);
 									szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, l);
 									WideCharToMultiByte(CP_ACP, 0, szOld, sl, (LPSTR)szTmp, l, NULL, NULL);
 									szOld = szTmp;
 #endif
-								} else if (sizeof(TCHAR) < 2 && (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE)) {
+								} else if (sizeof(TCHAR) < 2 && (enc == FC_ENC_UTF16 || enc == FC_ENC_UTF16BE)) {
 									l = 2 * MultiByteToWideChar(CP_ACP, 0, (LPCSTR)szOld, sl, NULL, 0);
 									szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, l);
 									MultiByteToWideChar(CP_ACP, 0, (LPCSTR)szOld, sl, (LPWSTR)szTmp, l);
 									szOld = szTmp;
 								} else l = sl * sizeof(TCHAR);
-								if (enc == ID_ENC_UTF16BE)
+								if (enc == FC_ENC_UTF16BE)
 									ReverseBytes((LPBYTE)szOld, l);
 								EncodeBase(base, (LPBYTE)szOld, szNew, l, NULL);
 							} else lstrcpy(szNew, szOld);
@@ -3587,7 +3588,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_PASTE_HEX:
 				szTmp2 = NULL;
 				base = 0;
-				enc = ((sl = nFormat) >> 31 ? ID_ENC_CUSTOM : (WORD)nFormat);
+				enc = ((sl = nFormat) >> 31 ? FC_ENC_CUSTOM : (WORD)nFormat);
 
 				if (!OpenClipboard(NULL)) {
 					ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
@@ -3597,7 +3598,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					if (!(szTmp = (LPTSTR)GlobalLock(hMem)))
 						ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
 					else {
-						uni = (enc == ID_ENC_UTF16 || enc == ID_ENC_UTF16BE);
+						uni = (enc == FC_ENC_UTF16 || enc == FC_ENC_UTF16BE);
 						switch(LOWORD(wParam)){
 							case ID_PASTE_B64: if (!base) { base = 64; sz = uni ? _T("\\W") : _T("\\S"); }
 							case ID_PASTE_HEX: if (!base) { base = 16; sz = uni ? _T("\\U") : _T("\\X"); }
@@ -3617,7 +3618,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 							if (l) {
 								sl &= 0xf000ffff;
 								sl |= (GetLineFmt(szTmp2, l, 0, &i, &j, &k, &nPos, &b) << 16);
-								if (enc == ID_ENC_BIN)
+								if (enc == FC_ENC_BIN)
 									ImportBinary(szTmp2, l);
 								ImportLineFmt(&szTmp2, &l, (WORD)((sl >> 16) & 0xfff), i, j, k, nPos, NULL);
 								SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szTmp2);
@@ -3794,11 +3795,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 
 				pages[3].hInstance = hinstLang;
 				pages[3].dwFlags = PSP_DEFAULT;
-#ifdef USE_RICH_EDIT
 				pages[3].pszTemplate = MAKEINTRESOURCE(IDD_PROPPAGE_A1);
-#else
-				pages[3].pszTemplate = MAKEINTRESOURCE(IDD_PROPPAGE_A1_LE);
-#endif
 				pages[3].pfnDlgProc = (DLGPROC)AdvancedPageProc;
 
 				ZeroMemory(&psh, sizeof(psh));
@@ -4441,7 +4438,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_ENC_UTF16:
 			case ID_ENC_UTF16BE:
 			case ID_ENC_BIN:
-				SetFileFormat(LOWORD(wParam), 1);
+				SetFileFormat(LOWORD(wParam) % 1000 + FC_BASE, 1);
 				break;
 			case ID_RELOAD_CURRENT:
 				if (SCNUL(szFile)[0]) {
