@@ -51,7 +51,6 @@ LPTSTR szFav, szMetapadIni;
 LPTSTR szFindText, szReplaceText, szInsert;
 LPBYTE pbFindTextSpec, pbReplaceTextSpec;
 TCHAR szStatusMessage[96];
-TCHAR _szString[MAXSTRING];
 LPTSTR szShadow;
 TCHAR shadowHold;
 DWORD shadowLen, shadowAlloc, shadowRngEnd;

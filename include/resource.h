@@ -154,6 +154,8 @@
 #define IDS_ENC_BAD						223
 #define IDS_ENC_FAILED					224
 #define IDS_ENC_CUSTOM_CAPTION			225
+#define NONLOCALIZED_START				300
+#define NONLOCALIZED_END				320
 #define	STR_METAPAD						300
 #define	STR_CAPTION_FILE				301
 #define	STR_ABOUT						302

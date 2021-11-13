@@ -43,7 +43,7 @@ void ReverseBytes(LPBYTE buffer, ULONG len);
 WORD CheckBOM(LPBYTE *pb, DWORD* pbLen);
 WORD GetBOM(LPBYTE* bom, WORD enc);
 WORD GetKnownCP(WORD idx);
-LPSTR GetCPName(WORD cp);
+LPCTSTR GetCPName(WORD cp);
 void PrintCPName(WORD cp, LPTSTR buf, LPCTSTR format);
 BOOL IsTextUTF8(LPBYTE buf);
 
