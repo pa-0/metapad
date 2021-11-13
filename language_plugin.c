@@ -44,7 +44,7 @@
  * @param szPlugin Path to language plugin.
  * @return NULL if unable to load the plugin, an instance to the plugin otherwise.
  */
-HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin){
+HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin, BOOL checkver){
 	HINSTANCE hinstTemp;
 	TCHAR plugVer[16], szErr[MAXSTRING];
 	LPCTSTR thisVer;
@@ -58,7 +58,7 @@ HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin){
 		FreeLibrary(hinstTemp);
 		return NULL;
 	}
-	if (!g_bDisablePluginVersionChecking && lstrcmpi((thisVer = GetString(IDS_VERSION_SYNCH)), plugVer) != 0) {
+	if (checkver && !g_bDisablePluginVersionChecking && lstrcmpi((thisVer = GetString(IDS_VERSION_SYNCH)), plugVer) != 0) {
 		wsprintf(szErr, GetString(IDS_PLUGIN_MISMATCH_ERROR), plugVer, thisVer);
 		ERROROUT(szErr);
 	}
@@ -71,35 +71,25 @@ HINSTANCE LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin){
  * @note Plugin's path is stored in options.szLangPlugin.
  * @note Default to english if unable to load a plugin.
  */
-void FindAndLoadLanguagePlugin(void)
-{
+void FindAndLoadLanguagePlugin(void) {
+	WIN32_FIND_DATA FileData;
+	HANDLE hSearch;
 	HINSTANCE hinstTemp;
-
 	hinstLang = hinstThis;
-
 	if (!SCNUL(options.szLangPlugin)[0])
 		return;
 
-	{
-		WIN32_FIND_DATA FileData;
-		HANDLE hSearch;
-
-		hSearch = FindFirstFile(options.szLangPlugin, &FileData);
-		if (hSearch == INVALID_HANDLE_VALUE) {
-			ERROROUT(GetString(IDS_PLUGIN_ERRFIND));
-			goto badplugin;
-		}
-		else {
-			FindClose(hSearch);
-		}
-	}
-
-	hinstTemp = LoadAndVerifyLanguagePlugin(options.szLangPlugin);
+	hSearch = FindFirstFile(options.szLangPlugin, &FileData);
+	if (hSearch == INVALID_HANDLE_VALUE) {
+		ERROROUT(GetString(IDS_PLUGIN_ERRFIND));
+		goto badplugin;
+	} else
+		FindClose(hSearch);
+	hinstTemp = LoadAndVerifyLanguagePlugin(options.szLangPlugin, FALSE);
 	if (hinstTemp) {
 		hinstLang = hinstTemp;
 		return;
 	}
-
 badplugin:
 	ERROROUT(GetString(IDS_PLUGIN_ERR));
 }

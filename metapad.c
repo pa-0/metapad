@@ -702,6 +702,15 @@ void UpdateStatus(BOOL refresh) {
 		SetTimer(hwnd, IDT_UPDATE, 64, NULL);
 }
 
+LRESULT APIENTRY PageSetupProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	switch (uMsg) {
+	case WM_INITDIALOG:
+		LocalizeDialog(IDD_PAGE_SETUP, hwndDlg, hinstLang);
+		break;
+	}
+	return FALSE;
+}
+
 LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	HMENU hmenu, hsub;
 	CHARRANGE cr;
@@ -715,6 +724,14 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 	LONG nPos;
 	//printf("%X %X %X\n", uMsg, wParam, lParam);
 	switch (uMsg) {
+	case WM_INITDIALOG:
+		switch(frDlgId) {
+			case ID_FIND: LocalizeDialog(IDD_FIND, hwndFind, hinstLang); break;
+			case ID_REPLACE: LocalizeDialog(IDD_REPLACE, hwndFind, hinstLang); break;
+			case ID_INSERT_TEXT:
+			case ID_PASTE_MUL: LocalizeDialog(IDD_INSERT, hwndFind, hinstLang); break;
+		}
+		break;
 	case WM_COMMAND:
 		switch(LOWORD(wParam)){
 		case IDC_ESCAPE:
@@ -722,7 +739,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			TCHAR* szText = gTmpBuf;
 			DWORD i, j = 0;
 			if (HIWORD(wParam) != BN_CLICKED) break;
-			hmenu = LoadMenu(hinstLang, (LPCTSTR)IDR_ESCAPE_SEQUENCES);
+			hmenu = LocalizeMenu(IDR_ESCAPE_SEQUENCES, hinstThis, hinstLang);
 			hsub = GetSubMenu(hmenu, 0);
 
 			SendMessage(hwnd, WM_INITMENUPOPUP, (WPARAM)hsub, MAKELPARAM(1, FALSE));
@@ -1147,7 +1164,7 @@ LRESULT APIENTRY EditProc(HWND hwndEdit, UINT uMsg, WPARAM wParam, LPARAM lParam
 #endif
 	case WM_RBUTTONUP:
 		{
-			HMENU hmenu = LoadMenu(hinstLang, MAKEINTRESOURCE(IDR_POPUP));
+			HMENU hmenu = LocalizeMenu(IDR_POPUP, hinstThis, hinstLang);
 			HMENU hsub = GetSubMenu(hmenu, 0);
 			POINT pt;
 			UINT id;
@@ -1258,12 +1275,13 @@ BOOL CALLBACK AbortDlgProc(HDC hdc, int nCode)
 	return bPrint;
 }
 
-LRESULT CALLBACK AbortPrintJob(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
+LRESULT CALLBACK AbortPrintJob(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 		case WM_INITDIALOG:
 			CenterWindow(hwndDlg);
+			//TODO set caption
 			SetDlgItemText(hwndDlg, IDC_STATIC, SCNUL8(szCaptionFile)+8);
+			LocalizeDialog(IDD_ABORT_PRINT, hwndDlg, hinstLang);
 			return TRUE;
 		case WM_COMMAND:
 			bPrint = FALSE;
@@ -1336,7 +1354,7 @@ void PrintContents()
 		return;
 	}
 
-	hdlgCancel = CreateDialog(hinstLang, MAKEINTRESOURCE(IDD_ABORT_PRINT), hwnd, (DLGPROC) AbortPrintJob);
+	hdlgCancel = CreateDialog(hinstThis, MAKEINTRESOURCE(IDD_ABORT_PRINT), hwnd, (DLGPROC) AbortPrintJob);
 	ShowWindow(hdlgCancel, SW_SHOW);
 
 	EnableWindow(hwnd, FALSE);
@@ -1533,7 +1551,7 @@ void PrintContents(void)
 		return;
 	}
 
-	hdlgCancel = CreateDialog(hinstLang, MAKEINTRESOURCE(IDD_ABORT_PRINT), hwnd, (DLGPROC) AbortPrintJob);
+	hdlgCancel = CreateDialog(hinstThis, MAKEINTRESOURCE(IDD_ABORT_PRINT), hwnd, (DLGPROC) AbortPrintJob);
 	ShowWindow(hdlgCancel, SW_SHOW);
 
 	EnableWindow(hwnd, FALSE);
@@ -2119,6 +2137,7 @@ BOOL CALLBACK AboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 	static BOOL bIcon = FALSE;
 	switch (uMsg) {
 		case WM_INITDIALOG:
+			//TODO set text
 			if (bIcon)
 				SendDlgItemMessage(hwndDlg, IDC_DLGICON, STM_SETICON, (WPARAM)LoadIcon(hinstThis, MAKEINTRESOURCE(IDI_EYE)), 0);
 			CenterWindow(hwndDlg);
@@ -2164,6 +2183,7 @@ BOOL CALLBACK AboutPluginDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 			SetDlgItemText(hwndDlg, IDC_EDIT_PLUGIN_RELEASE, GetString(IDS_PLUGIN_RELEASE));
 			SetDlgItemText(hwndDlg, IDC_EDIT_PLUGIN_TRANSLATOR, GetString(IDS_PLUGIN_TRANSLATOR));
 			SetDlgItemText(hwndDlg, IDC_EDIT_PLUGIN_EMAIL, GetString(IDS_PLUGIN_EMAIL));
+			LocalizeDialog(IDD_ABOUT_PLUGIN, hwndDlg, hinstLang);
 			CenterWindow(hwndDlg);
 			return TRUE;
 		case WM_COMMAND:
@@ -2188,7 +2208,6 @@ BOOL CALLBACK GotoDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			lCol = GetColNum(-1, -1, NULL, &lLine, NULL);
 			wsprintf(szLine, _T("%d"), lLine+1);
 			SetDlgItemText(hwndDlg, IDC_LINE, szLine);
-
 			if (options.bHideGotoOffset) {
 				HWND hwndItem = GetDlgItem(hwndDlg, IDC_OFFSET);
 				ShowWindow(hwndItem, SW_HIDE);
@@ -2199,6 +2218,7 @@ BOOL CALLBACK GotoDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 				SetDlgItemText(hwndDlg, IDC_OFFSET, szLine);
 				SendDlgItemMessage(hwndDlg, IDC_LINE, EM_SETSEL, 0, (LPARAM)-1);
 			}
+			LocalizeDialog(IDD_GOTO, hwndDlg, hinstLang);
 			return TRUE;
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
@@ -2225,6 +2245,7 @@ BOOL CALLBACK AddFavDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		case WM_INITDIALOG: {
 			SetDlgItemText(hwndDlg, IDC_DATA, SCNUL8(szCaptionFile)+8);
 			CenterWindow(hwndDlg);
+			LocalizeDialog(IDD_FAV_NAME, hwndDlg, hinstLang);
 			return TRUE;
 		}
 		case WM_COMMAND:
@@ -2249,9 +2270,10 @@ BOOL CALLBACK CPDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 		case WM_INITDIALOG:
 			CenterWindow(hwndDlg);
 			for (i=0, j=GetNumKnownCPs(); i < j; i++) {
-				PrintCPName((WORD)i+100, buf, _T("%d"));
+				PrintCPName(GetKnownCP(i), buf, _T("%d"));
 				SendDlgItemMessage(hwndDlg, IDC_DATA, CB_ADDSTRING, 0, (LPARAM)buf);
 			}
+			LocalizeDialog(IDD_CP, hwndDlg, hinstLang);
 			return TRUE;
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
@@ -2287,7 +2309,6 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 	MENUITEMINFO mio;
 	RECT rc;
 	TCHAR szInt[64];
-	LPTSTR sz;
 	INT i, nTmp;
 	DWORD u, v;
 	WORD enc, lfmt, cp;
@@ -2324,7 +2345,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		if (SetWindowTheme) SetWindowTheme(GetDlgItem(hwndDlg, IDC_BUTTON_FORMAT),_T(""),_T(""));
 		SendDlgItemMessage(hwndDlg, IDC_BUTTON_FORMAT, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)CreateMappedBitmap(hinstThis, IDB_DROP_ARROW, 0, NULL, 0));
 		newFormat = options.nFormat;
-
+		LocalizeDialog(IDD_PROPPAGE_A1, hwndDlg, hinstLang);
 		return TRUE;
 	case WM_NOTIFY:
 		switch (((NMHDR FAR *)lParam)->code) {
@@ -2422,7 +2443,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			break;
 		case IDC_BUTTON_FORMAT:
 			if (HIWORD(wParam) != BN_CLICKED) break;
-			hmenu = LoadMenu(hinstLang, (LPCTSTR)IDR_MENU);
+			hmenu = LocalizeMenu(IDR_MENU, hinstThis, hinstLang);
 			hsub = GetSubMenu(hmenu, 0);
 			hsub = GetSubMenu(hsub, MPOS_FILE_FORMAT_STATIC);
 			SendMessage(hwnd, WM_INITMENUPOPUP, (WPARAM)hsub, MAKELPARAM(1, FALSE));
@@ -2438,10 +2459,8 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 				mio.cch = sizeof(szInt)/sizeof(TCHAR);
 				mio.dwTypeData = szInt;
 				GetMenuItemInfo(hsub, u, TRUE, &mio);
-				if (*szInt && (sz = lstrchr(szInt, _T('\t')))) {
-					*sz = _T('\0');
-					SetMenuItemInfo(hsub, u, TRUE, &mio);
-				}
+				AlterMenuAccelText(szInt, NULL, szInt);
+				SetMenuItemInfo(hsub, u, TRUE, &mio);
 			}
 			if (enc == FC_ENC_CODEPAGE){
 				PrintCPName(cp, szInt, GetString(ID_ENC_CODEPAGE));
@@ -2455,7 +2474,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			switch (v = TrackPopupMenuEx(hsub, TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rc.left, rc.bottom, hwnd, NULL)) {
 				case ID_ENC_CODEPAGE: break;
 				case ID_ENC_CUSTOM:
-					DialogBox(hinstLang, MAKEINTRESOURCE(IDD_CP), hwndDlg, (DLGPROC)CPDialogProc);
+					DialogBox(hinstThis, MAKEINTRESOURCE(IDD_CP), hwndDlg, (DLGPROC)CPDialogProc);
 					break;
 				default:
 					v = v % 1000 + FC_BASE;
@@ -2513,6 +2532,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 			SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_PLUGIN, BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
 			SendMessage(hwndDlg, WM_COMMAND, MAKEWPARAM(IDC_RADIO_LANG_PLUGIN, 0), 0);
 		}
+		LocalizeDialog(IDD_PROPPAGE_A2, hwndDlg, hinstLang);
 		return TRUE;
 	case WM_NOTIFY:
 		switch (((NMHDR FAR *)lParam)->code) {
@@ -2565,7 +2585,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 					SetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, sz);
 				}
 				else {
-					HINSTANCE hinstTemp = LoadAndVerifyLanguagePlugin(sz);
+					HINSTANCE hinstTemp = LoadAndVerifyLanguagePlugin(sz, TRUE);
 					if (hinstTemp) {
 						SetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, sz);
 						FreeLibrary(hinstTemp);
@@ -2648,6 +2668,7 @@ BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 			SendDlgItemMessage(hwndDlg, IDC_BTN_FONT1, WM_SETFONT, (WPARAM)hfont, 0);
 			hfont2 = CreateFontIndirect(&TmpSecondaryFont);
 			SendDlgItemMessage(hwndDlg, IDC_BTN_FONT2, WM_SETFONT, (WPARAM)hfont2, 0);
+			LocalizeDialog(IDD_PROPPAGE_VIEW, hwndDlg, hinstLang);
 		}
 		return TRUE;
 	case WM_NOTIFY:
@@ -2959,6 +2980,7 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 			SendDlgItemMessage(hwndDlg, IDC_LAUNCH_SAVE1, BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
 		else
 			SendDlgItemMessage(hwndDlg, IDC_LAUNCH_SAVE2, BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
+		LocalizeDialog(IDD_PROPPAGE_GENERAL, hwndDlg, hinstLang);
 		return TRUE;
 	case WM_NOTIFY:
 		switch (((NMHDR FAR *)lParam)->code) {
@@ -3357,7 +3379,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				gfr.wFindWhatLen = sizeof(TCHAR);
 				gfr.lpstrReplaceWith = gDummyBuf2;
 				gfr.wReplaceWithLen = sizeof(TCHAR);
-				gfr.hInstance = hinstLang;
+				gfr.hInstance = hinstThis;
 				gfr.Flags = FR_ENABLETEMPLATE | FR_ENABLEHOOK;
 				gfr.lpfnHook = (LPFRHOOKPROC)FindProc;
 				hb = CreateMappedBitmap(hinstThis, IDB_DROP_ARROW, 0, NULL, 0);
@@ -3767,7 +3789,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				//pages[0].dwSize = PROPSHEETPAGE_V1_SIZE;
 
 				pages[0].dwFlags = PSP_DEFAULT;
-				pages[0].hInstance = hinstLang;
+				pages[0].hInstance = hinstThis;
 				pages[0].pszTemplate = MAKEINTRESOURCE(IDD_PROPPAGE_GENERAL);
 				pages[0].pfnDlgProc = (DLGPROC)GeneralPageProc;
 
@@ -3775,7 +3797,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				pages[1].dwSize = sizeof(PROPSHEETPAGE);
 				//pages[1].dwSize = PROPSHEETPAGE_V1_SIZE;
 
-				pages[1].hInstance = hinstLang;
+				pages[1].hInstance = hinstThis;
 				pages[1].dwFlags = PSP_DEFAULT;
 				pages[1].pszTemplate = MAKEINTRESOURCE(IDD_PROPPAGE_VIEW);
 				pages[1].pfnDlgProc = (DLGPROC)ViewPageProc;
@@ -3784,7 +3806,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				pages[2].dwSize = sizeof(PROPSHEETPAGE);
 				//pages[2].dwSize = PROPSHEETPAGE_V1_SIZE;
 
-				pages[2].hInstance = hinstLang;
+				pages[2].hInstance = hinstThis;
 				pages[2].dwFlags = PSP_DEFAULT;
 				pages[2].pszTemplate = MAKEINTRESOURCE(IDD_PROPPAGE_A2);
 				pages[2].pfnDlgProc = (DLGPROC)Advanced2PageProc;
@@ -3793,7 +3815,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				pages[3].dwSize = sizeof(PROPSHEETPAGE);
 				//pages[3].dwSize = PROPSHEETPAGE_V1_SIZE;
 
-				pages[3].hInstance = hinstLang;
+				pages[3].hInstance = hinstThis;
 				pages[3].dwFlags = PSP_DEFAULT;
 				pages[3].pszTemplate = MAKEINTRESOURCE(IDD_PROPPAGE_A1);
 				pages[3].pfnDlgProc = (DLGPROC)AdvancedPageProc;
@@ -3911,7 +3933,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 			case ID_ABOUT_PLUGIN:
 				if (hinstThis != hinstLang)
-					DialogBox(hinstLang, MAKEINTRESOURCE(IDD_ABOUT_PLUGIN), hwndMain, (DLGPROC)AboutPluginDialogProc);
+					DialogBox(hinstThis, MAKEINTRESOURCE(IDD_ABOUT_PLUGIN), hwndMain, (DLGPROC)AboutPluginDialogProc);
 				break;
 			case ID_MYFILE_OPEN:
 				//SetCurrentDirectory(SCNUL(szDir));
@@ -3940,7 +3962,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				SelectWord(NULL, bSmartSelect, TRUE);
 				break;
 			case ID_GOTOLINE:
-				DialogBox(hinstLang, MAKEINTRESOURCE(IDD_GOTO), hwndMain, (DLGPROC)GotoDialogProc);
+				DialogBox(hinstThis, MAKEINTRESOURCE(IDD_GOTO), hwndMain, (DLGPROC)GotoDialogProc);
 				break;
 			case ID_EDIT_WORDWRAP:
 				hCur = SetCursor(LoadCursor(NULL, IDC_WAIT));
@@ -4206,10 +4228,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_PAGESETUP:
 				ZeroMemory(&psd, sizeof(PAGESETUPDLG));
 				psd.lStructSize = sizeof(PAGESETUPDLG);
-				psd.Flags |= /*PSD_INTHOUSANDTHSOFINCHES | */PSD_DISABLEORIENTATION | PSD_DISABLEPAPER | PSD_DISABLEPRINTER | PSD_ENABLEPAGESETUPTEMPLATE | PSD_MARGINS;
+				psd.Flags |= /*PSD_INTHOUSANDTHSOFINCHES | */PSD_DISABLEORIENTATION | PSD_DISABLEPAPER | PSD_DISABLEPRINTER | PSD_ENABLEPAGESETUPTEMPLATE | PSD_MARGINS | PSD_ENABLEPAGESETUPHOOK;
 				psd.hwndOwner = hwndMain;
-				psd.hInstance = hinstLang;
+				psd.hInstance = hinstThis;
 				psd.rtMargin = options.rMargins;
+				psd.lpfnPageSetupHook = (LPPAGESETUPHOOK)PageSetupProc;
 				psd.lpPageSetupTemplateName = MAKEINTRESOURCE(IDD_PAGE_SETUP);
 
 				if (!GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IMEASURE, szTmp, 8))
@@ -4427,7 +4450,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				LaunchInViewer(FALSE, FALSE);
 				break;
 			case ID_ENC_CUSTOM:
-				DialogBox(hinstLang, MAKEINTRESOURCE(IDD_CP), hwndMain, (DLGPROC)CPDialogProc);
+				DialogBox(hinstThis, MAKEINTRESOURCE(IDD_CP), hwndMain, (DLGPROC)CPDialogProc);
 				break;
 			case ID_LFMT_DOS:
 			case ID_LFMT_UNIX:
@@ -4607,7 +4630,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 //				SendMessage(client, WM_CHAR, (WPARAM)VK_MENU, (LPARAM)0);
 				break;
 			case ID_FAV_ADD:
-				DialogBox(hinstLang, MAKEINTRESOURCE(IDD_FAV_NAME), hwndMain, (DLGPROC)AddFavDialogProc);
+				DialogBox(hinstThis, MAKEINTRESOURCE(IDD_FAV_NAME), hwndMain, (DLGPROC)AddFavDialogProc);
 				break;
 			case ID_FAV_EDIT:
 				GetModuleFileName(hinstThis, szTmp, MAXFN);

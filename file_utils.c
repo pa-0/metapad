@@ -99,7 +99,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 		FREE(buf);
 
 	nFormat = format;
-	DeleteMenu(hMenu, FC_ENC_CODEPAGE, MF_BYCOMMAND);
+	DeleteMenu(hMenu, ID_ENC_CODEPAGE, MF_BYCOMMAND);
 	if (nenc == FC_ENC_CODEPAGE){
 		PrintCPName(ncp, mbuf, GetString(ID_ENC_CODEPAGE));
 		mio.cbSize = sizeof(MENUITEMINFO);

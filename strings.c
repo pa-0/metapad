@@ -37,7 +37,7 @@
 #include "include/macros.h"
 #include "include/encoding.h"
 
-//#define NUMSTRINGS 475
+
 static const CHAR strings[] = ""
 /*		1		IDS_VERSION_SYNCH				*/	"\0""3.7"
 /*		2		IDS_PLUGIN_LANGUAGE				*/	"\0"
@@ -151,7 +151,7 @@ static const CHAR strings[] = ""
 /*		96		IDS_RESTART_LANG				*/	"\0Language changes will be reflected upon restarting the program."
 /*		97		IDS_INVALID_PLUGIN_ERROR		*/	"\0Error loading language plugin DLL. It is probably not a valid metapad language plugin."
 /*		98		IDS_BAD_STRING_PLUGIN_ERROR		*/	"\0Error fetching version string resource from plugin DLL. It is probably not a valid metapad language plugin."
-/*		99		IDS_PLUGIN_MISMATCH_ERROR		*/	"\0Your language plugin is for metapad %s, but you are running metapad %s.\n\nSome menu or dialog features may be missing or not work correctly.\n\nRun metapad /v to skip this message."
+/*		99		IDS_PLUGIN_MISMATCH_ERROR		*/	"\0Your language plugin is for metapad %s, but you are running metapad %s.\n\nSome menu or dialog texts may not be localized."
 /*		100		IDS_ALLRIGHTS					*/	"\0All Rights Reserved"
 /*		102		IDS_DEFAULT_FILTER_TEXT			*/	"\0Text (*.*)|*.*|"
 /*		103		IDS_NEW_FILE					*/	"\0new file"
@@ -355,8 +355,8 @@ static const CHAR strings[] = ""
 /*		2089	FC_ENC_UTF16					*/	"\0Unicode"
 /*		2090	FC_ENC_UTF16BE					*/	"\0Unicode BE"
 /*		2109	FC_ENC_UTF8						*/	"\0UTF-8"
-/*		2110	FC_ENC_ANSI						*/	"\0ANSI"
-/*		2111	FC_ENC_BIN						*/	"\0Binary"
+/*		2111	FC_ENC_ANSI						*/	"\0ANSI"
+/*		2112	FC_ENC_BIN						*/	"\0Binary"
 /*		2118	FC_ENC_CODEPAGE					*/	"\0CP%d"
 /*		21210	IDDC_PROPPAGE_GENERAL_BASE+IDC_CHECK_QUICKEXIT%100				*/	"\0&Enable quick exit (Esc key)"
 /*		21211	IDDC_PROPPAGE_GENERAL_BASE+IDC_CHECK_SAVEWINDOWPLACEMENT%100	*/	"\0Save &window placement"
@@ -518,7 +518,7 @@ static const CHAR strings[] = ""
 #else
 "\0"
 #endif
-/*		40071	ID_PAGESETUP					*/	"\0Page Se&tup…"
+/*		40071	ID_PAGESETUP					*/	"\0Page Se&tup..."
 /*		40072	ID_MAKE_UPPER					*/	"\0&Uppercase\tAlt+U"
 /*		40073	ID_MAKE_LOWER					*/	"\0&Lowercase\tAlt+L"
 /*		40074	ID_STRIP_CR						*/	"\0Un&wrap Lines\tF9"
@@ -595,7 +595,7 @@ static const CHAR strings[] = ""
 	Import:	\n->\n/*\t		(~A->\t~A)		~A\t->		~B\t->\t\t\t*\/\t"\\0		\n->"\n		`->		(*\/->\t*\/)	(\t*\/->*\/)
 	Export:
 */
-static WORD stringsidx[] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,7,1,9,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,216,0,47,0,0,0,0,0,0,3,0,0,3,0,0,0,0,0,0,0,0,3,0,80,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,74,0,243,0,10,1,21,2,0,1,1,0,29,1,7,0,0,0,0,0,0,447,0,4,0,1,0,0,0,486,0,7,0,39,0,18,0,0,6,19091,0,4,13,0,0,0,0,0,0,1,2,1176,0,0,0,1,0,25,2,2,0,0,0,6,14,1519,0,53,0,14,28,0,21,0,0,475,0,0,0,69,60,4,0,0,0,0,0,0,0,0,9,0,6,0,0,0,0,0,0,0,0,0,0,0,322,0,6105,1,1,2,1,2,1,78,98,999,8,8,0,1689,790,21,4,0,1,70,1,1,1,92,2,1,4896,0,0,4,1,0,0,3,2,0,1,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,4,0,1,0,0,0,0,1,0,0,2,0,0,0,1,3,0,0,0,0,2,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,0,5,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,881,0,0,0,6,0,0,0,0,5,9,9,60,0,2987};
+static WORD stringsidx[] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,7,1,9,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,216,0,47,0,0,0,0,0,0,3,0,0,3,0,0,0,0,0,0,0,0,3,0,80,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,74,0,243,0,10,1,21,2,0,1,1,0,29,1,7,0,0,0,0,0,0,447,0,4,0,1,0,0,0,486,0,7,0,39,0,18,1,0,5,19091,0,4,13,0,0,0,0,0,0,1,2,1176,0,0,0,1,0,25,2,2,0,0,0,6,14,1519,0,53,0,14,28,0,21,0,0,475,0,0,0,69,60,4,0,0,0,0,0,0,0,0,9,0,6,0,0,0,0,0,0,0,0,0,0,0,322,0,6105,1,1,2,1,2,1,78,98,999,8,8,0,1689,790,21,4,0,1,70,1,1,1,92,2,1,4896,0,0,4,1,0,0,3,2,0,1,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,4,0,1,0,0,0,0,1,0,0,2,0,0,0,1,3,0,0,0,0,2,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,0,5,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,881,0,0,0,6,0,0,0,0,5,9,9,60,0,2987};
 
 
 #ifdef _DEBUG
@@ -627,14 +627,20 @@ LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, WORD* dictidx, WORD*
 		else break;
 	}
 	if (i >= j) return def;
-	for (i = *ofspop, j = dictofs[i], sp = dict+j, cp = dictcache+j; i <= idx; i++) {
-		for (j=1; *sp; j++)
+	while(1) {
+		for (i = *ofspop, j = dictofs[i], sp = dict+j, cp = dictcache+j; i <= idx; i++) {
+			for (j=1; *sp; j++)
+				*cp++ = (BYTE)*sp++;
 			*cp++ = *sp++;
-		*cp++ = *sp++;
-		dictofs[i+1] = dictofs[i] + j;
+			dictofs[i+1] = dictofs[i] + j;
+		}
+		*ofspop = MAX(*ofspop, idx+1);
+		if ((BYTE)*(dict + dictofs[idx]) < ' '){
+			idx += *(dict + dictofs[idx]);
+			continue;
+		}
+		return dictcache + dictofs[idx];
 	}
-	*ofspop = MAX(*ofspop, idx+1);
-	return dictcache + dictofs[idx];
 }
 
 LPCTSTR GetString(WORD uID) {
@@ -651,14 +657,113 @@ LPCTSTR GetString(WORD uID) {
 }
 
 
+void AlterMenuAccelText(LPCTSTR src, LPCTSTR tgt, LPTSTR buf){
+	LPTSTR pch;
+	if (src != buf) lstrcpy(buf, src);
+	pch = lstrchr(buf, _T('\t'));
+	if (pch) *pch = '\0';
+	if (tgt && *tgt) pch = lstrchr(tgt, _T('\t'));
+	if (pch) lstrcat(buf, pch);
+}
+
+
+void LocalizeMenuItems(HMENU m, HMENU pm, WORD pos, WORD depth, LPTSTR tpbuf){
+	MENUITEMINFO mio;
+	LPCTSTR ts = NULL, pts = NULL;
+	TCHAR tbuf[1];
+	LPVOID *psub = NULL;
+	WORD cmd=0, gpos, *pgpos = NULL;
+	INT i, j, ct, pct=0;
+	BOOL popup = FALSE;
+	mio.cbSize = sizeof(MENUITEMINFO);
+	if (pm && IsMenu(pm) && (pct = GetMenuItemCount(pm)) > 0) {
+		psub = (LPVOID*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, pct * sizeof(LPVOID));
+		pgpos = (WORD*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, pct * sizeof(WORD));
+		for (j=0, gpos=0; j<pct; j++) {
+			mio.fMask = MIIM_TYPE | MIIM_ID | MIIM_SUBMENU;
+			mio.fType = MFT_STRING;
+			mio.cch = 2;
+			mio.dwTypeData = tbuf;
+			GetMenuItemInfo(pm, j, TRUE, &mio);
+			if (mio.hSubMenu && IsMenu(mio.hSubMenu)) {
+				psub[j] = mio.hSubMenu;
+				pgpos[j] = gpos;
+				gpos++;
+			} else if (mio.wID <= 0xffff && (LPVOID)mio.wID != (LPVOID)mio.hSubMenu)
+				pgpos[j] = mio.wID;
+			else gpos = (gpos & ~0xf) + 0x10;
+		}
+	} else pm=NULL;
+	for (i=0, ct=GetMenuItemCount(m), gpos=0; i<ct; i++, popup=FALSE, cmd=0, ts=pts=NULL) {
+		mio.fMask = MIIM_TYPE | MIIM_ID | MIIM_SUBMENU;
+		mio.fType = MFT_STRING;
+		mio.cch = 2;
+		mio.dwTypeData = tbuf;
+		GetMenuItemInfo(m, i, TRUE, &mio);
+		if (mio.hSubMenu && IsMenu(mio.hSubMenu)) {
+			popup = TRUE;
+			cmd = pos;
+		} else if (mio.wID <= 0xffff && (LPVOID)mio.wID != (LPVOID)mio.hSubMenu)
+			cmd = (WORD)mio.wID;
+		else gpos = (gpos & ~0xf) + 0x10;
+		if (pm && cmd) {
+			for (j=0; j<pct; j++)
+				if (pgpos[j] == (popup ? gpos : cmd))
+					break;
+		} else j = pct;
+		if (popup) {
+			LocalizeMenuItems(mio.hSubMenu, j<pct ? psub[j] : NULL, pos+depth/10, depth/10, tpbuf);
+			pos += depth;
+			gpos++;
+		}
+		if (!mio.dwTypeData || *mio.dwTypeData < _T(' ')) {
+			if (cmd) ts = GetString(cmd);
+			if (j<pct) {
+				mio.fMask = MIIM_TYPE;
+				mio.fType = MFT_STRING;
+				mio.cch = MAXSTRING;
+				mio.dwTypeData = tpbuf;
+				GetMenuItemInfo(pm, j, TRUE, &mio);
+				if (mio.dwTypeData && *mio.dwTypeData)
+					pts = mio.dwTypeData;
+			}
+			if (ts && *ts) {
+				if (pts) {
+					AlterMenuAccelText(pts, ts, tpbuf);
+					ts = pts;
+				}
+				mio.fMask = MIIM_TYPE | MIIM_STATE;
+				mio.fType = MFT_STRING;
+				mio.fState = (mio.dwTypeData && *mio.dwTypeData < _T(' ') ? *mio.dwTypeData : MFS_ENABLED);
+				mio.dwTypeData = (LPTSTR)ts;
+				SetMenuItemInfo(m, i, TRUE, &mio);
+			}
+		}
+	}
+	FREE(psub);
+	FREE(pgpos);
+}
+
 HMENU LocalizeMenu(WORD mID, HINSTANCE src, HINSTANCE plugin) {
-	HMENU menu, pmenu;
+	HMENU menu, pmenu = NULL;
+	LPTSTR pbuf = NULL;
 	if (!(menu = LoadMenu(src, MAKEINTRESOURCE(mID))))
 		return menu;
-	if (plugin && src != plugin && (pmenu = LoadMenu(plugin, MAKEINTRESOURCE(mID)))){
-
-
+	if (plugin && src != plugin) {
+		pmenu = LoadMenu(plugin, MAKEINTRESOURCE(mID));
+		pbuf = (LPTSTR)HeapAlloc(globalHeap, 0, MAXSTRING * sizeof(TCHAR));
 	}
-
+	LocalizeMenuItems(menu, pmenu, IDM_BASE+(mID-IDR_BASE)*100+10, 10, pbuf);
+	if (pmenu) {
+		FREE(pbuf);
+		DestroyMenu(pmenu);
+	}
 	return menu;
+}
+
+
+
+void LocalizeDialog(WORD dID, HWND dlg, HINSTANCE plugin) {
+
+	//return CreateDialog(src, MAKEINTRESOURCE(dID), dlg, NULL);
 }
