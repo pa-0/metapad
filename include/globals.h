@@ -24,6 +24,7 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
+#include <commdlg.h>
 #include "consts.h"
 #include "metapad.h"
 
@@ -44,7 +45,8 @@ HMENU hrecentmenu;
 HFONT hfontmain;
 HFONT hfontfind;
 WNDPROC wpOrigEditProc;
-//WNDPROC wpOrigFindProc;
+WNDPROC wpOrigFindProc;
+FINDREPLACE gfr;
 UINT_PTR tmrUpdate;
 LPTSTR szCaptionFile, szFile, szDir;
 LPTSTR szFav, szMetapadIni;
@@ -62,6 +64,7 @@ BOOL bWordWrap, bPrimaryFont, bPrint, bSmartSelect, bShowStatus;
 BOOL bShowToolbar, bAlwaysOnTop, bCloseAfterFind, bHasFaves, bNoFindHidden;
 BOOL bCloseAfterReplace, bCloseAfterInsert;
 BOOL bTransparent, bInsertMode;
+BOOL gbLFN;
 //BOOL bLinkMenu;
 UINT nMRUTop;
 //UINT uFindReplaceMsg;

@@ -46,7 +46,12 @@ ID mapping:
 *s	 2000- 2999		FC_ - constants for various operational flags which are also associated with a string. Currently used by:
 *s						Line format and encoding ids - associated with a string and ID_ menu commands in the 40xxx range
 
-	 3000-19999		 (unused - rsvd)
+	 3000- 7999		 (unused - rsvd)
+	 8000- 8999		nonlocalized object IDs
+	 		8000			IDR_ACCELERATOR - not localized starting 3.7+
+			8100- 8999		IDI_/IDC_/IDB_ graphics - not localized
+
+	 9000-19999		 (unused - rsvd)
  s	20000-29999		IDDC_ - per-dialog by-command text (preferred, unless the text has already been manually assigned by program code)
 						Matched by ((parent dialog IDD_ id modulo 100) times 100 plus IDDC_BASE) plus (IDC_ command/control id modulo 100)
 
@@ -74,12 +79,7 @@ ID mapping:
 			44900-44999		3.7 remapped
 
 	45000-45999		internal commands (non-menu && non-accel) 3.7+
-	46000-59999		 (unused - rsvd)
-	60000-64999		nonlocalized object IDs
-			60000			IDR_ACCELERATOR - not localized starting 3.7+
-			61000-61999		IDI_/IDC_/IDB_ graphics - not localized
-
-	65000-65535		 (unused - rsvd)
+	46000-65535		 (unused - rsvd)
 
 */
 
@@ -691,13 +691,16 @@ ID mapping:
 #define ID_SCROLLDOWN					44986	//3.7: moved from 40086. not associated with a string. used as ID for function inserted into main menu dynamically
 #define ID_INT_GETCLIPBOARD				45001
 
+
+/* Object IDs only below - Not localizeable - Must be below 32767 */
+
 /* nonlocalized object IDs */
-#define IDR_ACCELERATOR					60000	//3.7: moved from 104. Starting 3.7+ accelerators are not localized!
-#define IDI_PAD							61109	//3.7: moved from 109. Graphics are not localized
-#define IDI_EYE							61110	//3.7: moved from 110. Graphics are not localized
-#define IDC_MYHAND						61122	//3.7: moved from 122. Graphics are not localized
-#define IDB_TOOLBAR						61126	//3.7: moved from 126. Graphics are not localized
-#define IDB_DROP_ARROW					61131	//3.7: moved from 131. Graphics are not localized
+#define IDR_ACCELERATOR					8000	//3.7: moved from 104. Starting 3.7+ accelerators are not localized!
+#define IDI_PAD							8109	//3.7: moved from 109. Graphics are not localized
+#define IDI_EYE							8110	//3.7: moved from 110. Graphics are not localized
+#define IDC_MYHAND						8122	//3.7: moved from 122. Graphics are not localized
+#define IDB_TOOLBAR						8126	//3.7: moved from 126. Graphics are not localized
+#define IDB_DROP_ARROW					8131	//3.7: moved from 131. Graphics are not localized
 
 
 
