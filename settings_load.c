@@ -68,9 +68,11 @@ static void LoadOptionBinary(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbDat
 /**
  * Load metapad's options.
  */
-void LoadOptions(void)
-{
+void LoadOptions(void) {
 	HKEY key = NULL;
+	DWORD dwBufferSize;
+	TCHAR keyname[20];
+	int i;
 
 	options.nTabStops = 4;
 	options.rMargins.top = options.rMargins.bottom = options.rMargins.left = options.rMargins.right = 500;
@@ -132,97 +134,90 @@ void LoadOptions(void)
 
 	if (!g_bIniMode) {
 		if (RegOpenKeyEx(HKEY_CURRENT_USER, GetString(STR_REGKEY), 0, KEY_ALL_ACCESS, &key) != ERROR_SUCCESS) {
-			ReportLastError();
-			return;
+			//ReportLastError();
+			//return;
+			key = NULL;
 		}
 	}
 
-	{
-		DWORD dwBufferSize;
-		TCHAR keyname[20];
-		int i;
-
-		dwBufferSize = sizeof(int);
-		LoadOptionNumeric(key, GetString(IDSS_HIDEGOTOOFFSET), (LPBYTE)&options.bHideGotoOffset, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_SYSTEMCOLOURS), (LPBYTE)&options.bSystemColours, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_SYSTEMCOLOURS2), (LPBYTE)&options.bSystemColours2, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_NOSMARTHOME), (LPBYTE)&options.bNoSmartHome, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_NOAUTOSAVEEXT), (LPBYTE)&options.bNoAutoSaveExt, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_CONTEXTCURSOR), (LPBYTE)&options.bContextCursor, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_CURRENTFINDFONT), (LPBYTE)&options.bCurrentFindFont, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_PRINTWITHSECONDARYFONT), (LPBYTE)&options.bPrintWithSecondaryFont, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_NOSAVEHISTORY), (LPBYTE)&options.bNoSaveHistory, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_NOFINDAUTOSELECT), (LPBYTE)&options.bNoFindAutoSelect, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_RECENTONOWN), (LPBYTE)&options.bRecentOnOwn, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_DONTINSERTTIME), (LPBYTE)&options.bDontInsertTime, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_NOWARNINGPROMPT), (LPBYTE)&options.bNoWarningPrompt, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_UNFLATTOOLBAR), (LPBYTE)&options.bUnFlatToolbar, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_DIGITGRP), (LPBYTE)&options.bDigitGrp, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_STICKYWINDOW), (LPBYTE)&options.bStickyWindow, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_READONLYMENU), (LPBYTE)&options.bReadOnlyMenu, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_SELECTIONMARGINWIDTH), (LPBYTE)&options.nSelectionMarginWidth, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_MAXMRU), (LPBYTE)&options.nMaxMRU, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_FORMAT), (LPBYTE)&options.nFormat, sizeof(DWORD));
-		LoadOptionNumeric(key, GetString(IDSS_TRANSPARENTPCT), (LPBYTE)&options.nTransparentPct, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_NOCAPTIONDIR), (LPBYTE)&options.bNoCaptionDir, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_AUTOINDENT), (LPBYTE)&options.bAutoIndent, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_INSERTSPACES), (LPBYTE)&options.bInsertSpaces, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_FINDAUTOWRAP), (LPBYTE)&options.bFindAutoWrap, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_QUICKEXIT), (LPBYTE)&options.bQuickExit, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_SAVEWINDOWPLACEMENT), (LPBYTE)&options.bSaveWindowPlacement, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_SAVEMENUSETTINGS), (LPBYTE)&options.bSaveMenuSettings, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_SAVEDIRECTORY), (LPBYTE)&options.bSaveDirectory, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_LAUNCHCLOSE), (LPBYTE)&options.bLaunchClose, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_NOFAVES), (LPBYTE)&options.bNoFaves, dwBufferSize);
+	dwBufferSize = sizeof(int);
+	LoadOptionNumeric(key, GetString(IDSS_HIDEGOTOOFFSET), (LPBYTE)&options.bHideGotoOffset, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_SYSTEMCOLOURS), (LPBYTE)&options.bSystemColours, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_SYSTEMCOLOURS2), (LPBYTE)&options.bSystemColours2, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_NOSMARTHOME), (LPBYTE)&options.bNoSmartHome, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_NOAUTOSAVEEXT), (LPBYTE)&options.bNoAutoSaveExt, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_CONTEXTCURSOR), (LPBYTE)&options.bContextCursor, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_CURRENTFINDFONT), (LPBYTE)&options.bCurrentFindFont, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_PRINTWITHSECONDARYFONT), (LPBYTE)&options.bPrintWithSecondaryFont, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_NOSAVEHISTORY), (LPBYTE)&options.bNoSaveHistory, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_NOFINDAUTOSELECT), (LPBYTE)&options.bNoFindAutoSelect, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_RECENTONOWN), (LPBYTE)&options.bRecentOnOwn, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_DONTINSERTTIME), (LPBYTE)&options.bDontInsertTime, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_NOWARNINGPROMPT), (LPBYTE)&options.bNoWarningPrompt, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_UNFLATTOOLBAR), (LPBYTE)&options.bUnFlatToolbar, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_DIGITGRP), (LPBYTE)&options.bDigitGrp, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_STICKYWINDOW), (LPBYTE)&options.bStickyWindow, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_READONLYMENU), (LPBYTE)&options.bReadOnlyMenu, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_SELECTIONMARGINWIDTH), (LPBYTE)&options.nSelectionMarginWidth, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_MAXMRU), (LPBYTE)&options.nMaxMRU, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_FORMAT), (LPBYTE)&options.nFormat, sizeof(DWORD));
+	LoadOptionNumeric(key, GetString(IDSS_TRANSPARENTPCT), (LPBYTE)&options.nTransparentPct, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_NOCAPTIONDIR), (LPBYTE)&options.bNoCaptionDir, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_AUTOINDENT), (LPBYTE)&options.bAutoIndent, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_INSERTSPACES), (LPBYTE)&options.bInsertSpaces, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_FINDAUTOWRAP), (LPBYTE)&options.bFindAutoWrap, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_QUICKEXIT), (LPBYTE)&options.bQuickExit, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_SAVEWINDOWPLACEMENT), (LPBYTE)&options.bSaveWindowPlacement, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_SAVEMENUSETTINGS), (LPBYTE)&options.bSaveMenuSettings, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_SAVEDIRECTORY), (LPBYTE)&options.bSaveDirectory, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_LAUNCHCLOSE), (LPBYTE)&options.bLaunchClose, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_NOFAVES), (LPBYTE)&options.bNoFaves, dwBufferSize);
 #ifndef USE_RICH_EDIT
-		LoadOptionNumeric(key, GetString(IDSS_DEFAULTPRINTFONT), (LPBYTE)&options.bDefaultPrintFont, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_ALWAYSLAUNCH), (LPBYTE)&options.bAlwaysLaunch, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_DEFAULTPRINTFONT), (LPBYTE)&options.bDefaultPrintFont, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_ALWAYSLAUNCH), (LPBYTE)&options.bAlwaysLaunch, dwBufferSize);
 #else
-		LoadOptionNumeric(key, GetString(IDSS_LINKDOUBLECLICK), (LPBYTE)&options.bLinkDoubleClick, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_HIDESCROLLBARS), (LPBYTE)&options.bHideScrollbars, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_SUPPRESSUNDOBUFFERPROMPT), (LPBYTE)&options.bSuppressUndoBufferPrompt, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_LINKDOUBLECLICK), (LPBYTE)&options.bLinkDoubleClick, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_HIDESCROLLBARS), (LPBYTE)&options.bHideScrollbars, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_SUPPRESSUNDOBUFFERPROMPT), (LPBYTE)&options.bSuppressUndoBufferPrompt, dwBufferSize);
 #endif
-		LoadOptionNumeric(key, GetString(IDSS_LAUNCHSAVE), (LPBYTE)&options.nLaunchSave, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_TABSTOPS), (LPBYTE)&options.nTabStops, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_NPRIMARYFONT), (LPBYTE)&options.nPrimaryFont, dwBufferSize);
-		LoadOptionNumeric(key, GetString(IDSS_NSECONDARYFONT), (LPBYTE)&options.nSecondaryFont, dwBufferSize);
-		dwBufferSize = sizeof(LOGFONT);
+	LoadOptionNumeric(key, GetString(IDSS_LAUNCHSAVE), (LPBYTE)&options.nLaunchSave, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_TABSTOPS), (LPBYTE)&options.nTabStops, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_NPRIMARYFONT), (LPBYTE)&options.nPrimaryFont, dwBufferSize);
+	LoadOptionNumeric(key, GetString(IDSS_NSECONDARYFONT), (LPBYTE)&options.nSecondaryFont, dwBufferSize);
+	dwBufferSize = sizeof(LOGFONT);
 #ifdef UNICODE
-		LoadOptionBinary(key, GetString(IDSS_PRIMARYFONT), (LPBYTE)&options.PrimaryFont, dwBufferSize);
-		LoadOptionBinary(key, GetString(IDSS_SECONDARYFONT), (LPBYTE)&options.SecondaryFont, dwBufferSize);
+	LoadOptionBinary(key, GetString(IDSS_PRIMARYFONT), (LPBYTE)&options.PrimaryFont, dwBufferSize);
+	LoadOptionBinary(key, GetString(IDSS_SECONDARYFONT), (LPBYTE)&options.SecondaryFont, dwBufferSize);
 #else
-		LoadOptionBinary(key, GetString(IDSS_PRIMARYFONT), (LPBYTE)&options.PrimaryFont, dwBufferSize);
-		LoadOptionBinary(key, GetString(IDSS_SECONDARYFONT), (LPBYTE)&options.SecondaryFont, dwBufferSize);
+	LoadOptionBinary(key, GetString(IDSS_PRIMARYFONT), (LPBYTE)&options.PrimaryFont, dwBufferSize);
+	LoadOptionBinary(key, GetString(IDSS_SECONDARYFONT), (LPBYTE)&options.SecondaryFont, dwBufferSize);
 #endif
-		LoadOptionString(key, GetString(IDSS_BROWSER), &options.szBrowser, MAXFN);
-		LoadOptionString(key, GetString(IDSS_BROWSER2), &options.szBrowser2, MAXFN);
-		LoadOptionString(key, GetString(IDSS_LANGPLUGIN), &options.szLangPlugin, MAXFN);
-		LoadOptionString(key, GetString(IDSS_FAVDIR), &options.szFavDir, MAXFN);
-		LoadOptionString(key, GetString(IDSS_ARGS), &options.szArgs, MAXARGS);
-		LoadOptionString(key, GetString(IDSS_ARGS2), &options.szArgs2, MAXARGS);
-		LoadOptionStringDefault(key, GetString(IDSS_QUOTE), &options.szQuote, MAXQUOTE, GetString(IDSD_QUOTE));
+	LoadOptionString(key, GetString(IDSS_BROWSER), &options.szBrowser, MAXFN);
+	LoadOptionString(key, GetString(IDSS_BROWSER2), &options.szBrowser2, MAXFN);
+	LoadOptionString(key, GetString(IDSS_LANGPLUGIN), &options.szLangPlugin, MAXFN);
+	LoadOptionString(key, GetString(IDSS_FAVDIR), &options.szFavDir, MAXFN);
+	LoadOptionString(key, GetString(IDSS_ARGS), &options.szArgs, MAXARGS);
+	LoadOptionString(key, GetString(IDSS_ARGS2), &options.szArgs2, MAXARGS);
+	LoadOptionStringDefault(key, GetString(IDSS_QUOTE), &options.szQuote, MAXQUOTE, GetString(IDSD_QUOTE));
 
-		LoadOptionStringDefault(key, GetString(IDSS_CUSTOMDATE), &options.szCustomDate, MAXDATEFORMAT, GetString(IDSD_CUSTOMDATE));
-		LoadOptionString(key, GetString(IDSS_CUSTOMDATE2), &options.szCustomDate2, MAXDATEFORMAT);
+	LoadOptionStringDefault(key, GetString(IDSS_CUSTOMDATE), &options.szCustomDate, MAXDATEFORMAT, GetString(IDSD_CUSTOMDATE));
+	LoadOptionString(key, GetString(IDSS_CUSTOMDATE2), &options.szCustomDate2, MAXDATEFORMAT);
 
-		for (i = 0; i < 10; ++i) {
-			wsprintf(keyname, GetString(IDSS_MACROARRAY), i);
-			LoadOptionString(key, keyname, &options.MacroArray[i], MAXMACRO);
-		}
-
-		dwBufferSize = sizeof(COLORREF);
-		LoadOptionBinary(key, GetString(IDSS_BACKCOLOUR), (LPBYTE)&options.BackColour, dwBufferSize);
-		LoadOptionBinary(key, GetString(IDSS_FONTCOLOUR), (LPBYTE)&options.FontColour, dwBufferSize);
-		LoadOptionBinary(key, GetString(IDSS_BACKCOLOUR2), (LPBYTE)&options.BackColour2, dwBufferSize);
-		LoadOptionBinary(key, GetString(IDSS_FONTCOLOUR2), (LPBYTE)&options.FontColour2, dwBufferSize);
-
-		dwBufferSize = sizeof(RECT);
-		LoadOptionBinary(key, GetString(IDSS_MARGINS), (LPBYTE)&options.rMargins, dwBufferSize);
-
-		if (key != NULL) {
-			RegCloseKey(key);
-		}
+	for (i = 0; i < 10; ++i) {
+		wsprintf(keyname, GetString(IDSS_MACROARRAY), i);
+		LoadOptionString(key, keyname, &options.MacroArray[i], MAXMACRO);
 	}
+
+	dwBufferSize = sizeof(COLORREF);
+	LoadOptionBinary(key, GetString(IDSS_BACKCOLOUR), (LPBYTE)&options.BackColour, dwBufferSize);
+	LoadOptionBinary(key, GetString(IDSS_FONTCOLOUR), (LPBYTE)&options.FontColour, dwBufferSize);
+	LoadOptionBinary(key, GetString(IDSS_BACKCOLOUR2), (LPBYTE)&options.BackColour2, dwBufferSize);
+	LoadOptionBinary(key, GetString(IDSS_FONTCOLOUR2), (LPBYTE)&options.FontColour2, dwBufferSize);
+
+	dwBufferSize = sizeof(RECT);
+	LoadOptionBinary(key, GetString(IDSS_MARGINS), (LPBYTE)&options.rMargins, dwBufferSize);
+
+	if (key) RegCloseKey(key);
 
 #ifndef USE_RICH_EDIT
 	if (options.bSystemColours) {
@@ -331,57 +326,54 @@ void LoadWindowPlacement(int* left, int* top, int* width, int* height, int* nSho
 /**
  * Load metapad's menus and data.
  */
-void LoadMenusAndData(void)
-{
+void LoadMenusAndData(void) {
 	HKEY key = NULL;
-	BOOL bLoad = TRUE;
 	TCHAR keyname[20];
 	int i;
 
 	if (!g_bIniMode) {
 		if (RegOpenKeyEx(HKEY_CURRENT_USER, GetString(STR_REGKEY), 0, KEY_ALL_ACCESS, &key) != ERROR_SUCCESS) {
-			bLoad = FALSE;
+			//bLoad = FALSE;
+			key = NULL;
 		}
 	}
 
-	if (bLoad) {
-		if (options.bSaveMenuSettings) {
-			LoadOptionNumeric(key, GetString(IDSS_WORDWRAP), (LPBYTE)&bWordWrap, sizeof(BOOL));
-			LoadOptionNumeric(key, GetString(IDSS_FONTIDX), (LPBYTE)&bPrimaryFont, sizeof(BOOL));
-			LoadOptionNumeric(key, GetString(IDSS_SMARTSELECT), (LPBYTE)&bSmartSelect, sizeof(BOOL));
+	if (options.bSaveMenuSettings) {
+		LoadOptionNumeric(key, GetString(IDSS_WORDWRAP), (LPBYTE)&bWordWrap, sizeof(BOOL));
+		LoadOptionNumeric(key, GetString(IDSS_FONTIDX), (LPBYTE)&bPrimaryFont, sizeof(BOOL));
+		LoadOptionNumeric(key, GetString(IDSS_SMARTSELECT), (LPBYTE)&bSmartSelect, sizeof(BOOL));
 #ifdef USE_RICH_EDIT
-			LoadOptionNumeric(key, GetString(IDSS_HYPERLINKS), (LPBYTE)&bHyperlinks, sizeof(BOOL));
+		LoadOptionNumeric(key, GetString(IDSS_HYPERLINKS), (LPBYTE)&bHyperlinks, sizeof(BOOL));
 #endif
-			LoadOptionNumeric(key, GetString(IDSS_SHOWSTATUS), (LPBYTE)&bShowStatus, sizeof(BOOL));
-			LoadOptionNumeric(key, GetString(IDSS_SHOWTOOLBAR), (LPBYTE)&bShowToolbar, sizeof(BOOL));
-			LoadOptionNumeric(key, GetString(IDSS_ALWAYSONTOP), (LPBYTE)&bAlwaysOnTop, sizeof(BOOL));
-			LoadOptionNumeric(key, GetString(IDSS_TRANSPARENT), (LPBYTE)&bTransparent, sizeof(BOOL));
-			LoadOptionNumeric(key, GetString(IDSS_CLOSEAFTERFIND), (LPBYTE)&bCloseAfterFind, sizeof(BOOL));
-			LoadOptionNumeric(key, GetString(IDSS_CLOSEAFTERREPLACE), (LPBYTE)&bCloseAfterReplace, sizeof(BOOL));
-			LoadOptionNumeric(key, GetString(IDSS_CLOSEAFTERINSERT), (LPBYTE)&bCloseAfterInsert, sizeof(BOOL));
-			LoadOptionNumeric(key, GetString(IDSS_NOFINDHIDDEN), (LPBYTE)&bNoFindHidden, sizeof(BOOL));
-		}
-		LoadOptionStringDefault(key, GetString(IDSS_FILEFILTER), &szCustomFilter, MAXMACRO, GetString(IDS_DEFAULT_FILTER));
+		LoadOptionNumeric(key, GetString(IDSS_SHOWSTATUS), (LPBYTE)&bShowStatus, sizeof(BOOL));
+		LoadOptionNumeric(key, GetString(IDSS_SHOWTOOLBAR), (LPBYTE)&bShowToolbar, sizeof(BOOL));
+		LoadOptionNumeric(key, GetString(IDSS_ALWAYSONTOP), (LPBYTE)&bAlwaysOnTop, sizeof(BOOL));
+		LoadOptionNumeric(key, GetString(IDSS_TRANSPARENT), (LPBYTE)&bTransparent, sizeof(BOOL));
+		LoadOptionNumeric(key, GetString(IDSS_CLOSEAFTERFIND), (LPBYTE)&bCloseAfterFind, sizeof(BOOL));
+		LoadOptionNumeric(key, GetString(IDSS_CLOSEAFTERREPLACE), (LPBYTE)&bCloseAfterReplace, sizeof(BOOL));
+		LoadOptionNumeric(key, GetString(IDSS_CLOSEAFTERINSERT), (LPBYTE)&bCloseAfterInsert, sizeof(BOOL));
+		LoadOptionNumeric(key, GetString(IDSS_NOFINDHIDDEN), (LPBYTE)&bNoFindHidden, sizeof(BOOL));
+	}
+	LoadOptionStringDefault(key, GetString(IDSS_FILEFILTER), &szCustomFilter, MAXMACRO, GetString(IDS_DEFAULT_FILTER));
 
-		if (!options.bNoSaveHistory) {
-			for (i = 0; i < NUMFINDS; ++i) {
-				wsprintf(keyname, GetString(IDSS_FINDARRAY), i);
-				LoadOptionString(key, keyname, &FindArray[i], MAXFIND);
-			}
-			for (i = 0; i < NUMFINDS; ++i) {
-				wsprintf(keyname, GetString(IDSS_REPLACEARRAY), i);
-				LoadOptionString(key, keyname, &ReplaceArray[i], MAXFIND);
-				if (i == 0) LoadOptionString(key, keyname, &szReplaceText, MAXFIND);
-			}
-			for (i = 0; i < NUMINSERTS; ++i) {
-				wsprintf(keyname, GetString(IDSS_INSERTARRAY), i);
-				LoadOptionString(key, keyname, &InsertArray[i], MAXINSERT);
-			}
+	if (!options.bNoSaveHistory) {
+		for (i = 0; i < NUMFINDS; ++i) {
+			wsprintf(keyname, GetString(IDSS_FINDARRAY), i);
+			LoadOptionString(key, keyname, &FindArray[i], MAXFIND);
 		}
-
-		if (options.bSaveDirectory)
-			LoadOptionString(key, GetString(IDSS_LASTDIRECTORY), &szDir, MAXFN);
+		for (i = 0; i < NUMFINDS; ++i) {
+			wsprintf(keyname, GetString(IDSS_REPLACEARRAY), i);
+			LoadOptionString(key, keyname, &ReplaceArray[i], MAXFIND);
+			if (i == 0) LoadOptionString(key, keyname, &szReplaceText, MAXFIND);
+		}
+		for (i = 0; i < NUMINSERTS; ++i) {
+			wsprintf(keyname, GetString(IDSS_INSERTARRAY), i);
+			LoadOptionString(key, keyname, &InsertArray[i], MAXINSERT);
+		}
 	}
 
-	RegCloseKey(key);
+	if (options.bSaveDirectory)
+		LoadOptionString(key, GetString(IDSS_LASTDIRECTORY), &szDir, MAXFN);
+
+	if (key) RegCloseKey(key);
 }

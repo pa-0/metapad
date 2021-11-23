@@ -163,7 +163,7 @@ BOOL FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt) {
 
 	if (!szSrc || !szTgt) return FALSE;
 	if (szSrc != *szTgt) alloc = TRUE;
-	if (szSrc[0] && szSrc[1] && szSrc[2] != _T('?')) {
+	if (gbLFN && szSrc[0] && szSrc[1] && szSrc[2] != _T('?')) {
 		lstrcpy(pdst, _T("\\\\?\\"));
 		pdst+=4;
 		if (szSrc[0] == _T('\\') && szSrc[1] == _T('\\')) {
@@ -275,7 +275,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* lin
 			if (bDirtyShadow || shadowLine != line) {
 				//printf("l");
 				shadowRngEnd = 0;
-				*((LPWORD)(szShadow+lcr.cpMin)) = (USHORT)l;
+				*((LPWORD)(szShadow+lcr.cpMin)) = (USHORT)(l+1);
 				l = SendMessage(client, EM_GETLINE, (WPARAM)line, (LPARAM)(LPCTSTR)(szShadow+lcr.cpMin));
 				szShadow[lcr.cpMin+l] = 0;
 			}
@@ -800,7 +800,6 @@ DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* 
 	DWORD l, r = 0, lh = 0, lf = 0, ict = 0, nr, gr, op;
 
 	if (!szFind || !nOps) return 0;
-	if (!owner) owner = hwnd;
 	if (header) lh = lstrlen(header);
 	if (footer) lf = lstrlen(footer);
 	hCur = SetCursor(LoadCursor(NULL, IDC_WAIT));
@@ -851,8 +850,11 @@ DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* 
 	InvalidateRect(client, NULL, TRUE);
 	SetCursor(hCur);
 	if (owner && szMsgBuf) {
-		wsprintf(szMsgBuf, GetString(recur ? IDS_ITEMS_REPLACED_ITER : IDS_ITEMS_REPLACED), FormatNumber(r, options.bDigitGrp, 0, 0), FormatNumber(ict-1, options.bDigitGrp, 0, 1));
-		MessageBox(owner, szMsgBuf, GetString(STR_METAPAD), MB_OK|MB_ICONINFORMATION);
+		if(r) {
+			wsprintf(szMsgBuf, GetString(recur ? IDS_ITEMS_REPLACED_ITER : IDS_ITEMS_REPLACED), FormatNumber(r, options.bDigitGrp, 0, 0), FormatNumber(ict-1, options.bDigitGrp, 0, 1));
+			MessageBox(owner, szMsgBuf, GetString(STR_METAPAD), MB_OK|MB_ICONINFORMATION);
+		} else
+			MessageBox(owner, GetString(IDS_ERROR_SEARCH), GetString(STR_METAPAD), MB_OK|MB_ICONINFORMATION);
 	}
 	return r;
 }

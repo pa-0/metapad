@@ -75,6 +75,7 @@ SLWA SetLWA = NULL;
 HANDLE globalHeap = NULL;
 HINSTANCE hinstThis = NULL;
 UINT_PTR tmrUpdate = 0;
+WNDPROC wpOrigFindProc = NULL;
 int _fltused = 0x9875; // see CMISCDAT.C for more info on this
 
 TCHAR gTmpBuf[MAX(MAX(MAXFN*2+MAXSTRING*2,MAXMACRO),MAX(MAXFIND,MAXINSERT))];
@@ -558,6 +559,11 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			case ID_PASTE_MUL: LocalizeDialog(IDD_INSERT, hwndFind); break;
 		}
 		break;
+	case WM_SHOWWINDOW:
+		return TRUE;
+	}
+	if (!hdlgFind) return FALSE;
+	switch (uMsg) {
 	case WM_COMMAND:
 		switch(LOWORD(wParam)){
 		case IDC_ESCAPE:
@@ -800,14 +806,14 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					}
 					break;
 			}
+			gfr.Flags = FR_ENABLETEMPLATE | FR_ENABLEHOOK;
+			if (wpOrigFindProc) SetWindowLongPtr(hdlgFind, GWLP_WNDPROC, (LONG_PTR)wpOrigFindProc);
 			hdlgFind = NULL;
 			frDlgId = -1;
 			FREE(szInsert);
 			break;
 		}
 		break;
-	case WM_SHOWWINDOW:
-		return TRUE;
 	case WM_KEYDOWN:
 		if ((lParam & 0xffff) > 1) break;
 	case WM_SYSCOMMAND:
@@ -838,6 +844,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 		}
 		break;
 	}
+	if (wpOrigFindProc) return CallWindowProc(wpOrigFindProc, hwndFind, uMsg, wParam, lParam);
 	return FALSE;
 }
 
@@ -2894,7 +2901,6 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 	static BYTE keys[256];
 #endif
 	static CHARRANGE cr, cr2;
-	static FINDREPLACE gfr;
 	static PAGESETUPDLG psd;
 	static PROPSHEETHEADER psh;
 	static PROPSHEETPAGE pages[4];
@@ -3196,11 +3202,13 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						SetFocus(hdlgFind);
 						break;
 					} else {
+						wp.length = sizeof(WINDOWPLACEMENT);
 						GetWindowPlacement(hdlgFind, &wp);
 						SendMessage(hdlgFind, WM_CLOSE, 0, 0);
 					}
 				}
 
+				wpOrigFindProc = NULL;
 				frDlgId = LOWORD(wParam);
 				ZeroMemory(&gfr, sizeof(FINDREPLACE));
 				gfr.lStructSize = sizeof(FINDREPLACE);
@@ -3302,6 +3310,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						break;
 				}
 
+				wp2.length = sizeof(WINDOWPLACEMENT);
 				GetWindowPlacement(hdlgFind, &wp2);
 				if (wp.showCmd){
 					i = WIDTH(wp2.rcNormalPosition);
@@ -3312,6 +3321,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					wp2.rcNormalPosition.bottom = i + wp2.rcNormalPosition.top;
 					SetWindowPlacement(hdlgFind, &wp2);
 				} else {
+					wp.length = sizeof(WINDOWPLACEMENT);
 					GetWindowPlacement(hwnd, &wp);
 					i = WIDTH(wp2.rcNormalPosition);
 					wp2.rcNormalPosition.right = wp.rcNormalPosition.right - 32;
@@ -3321,6 +3331,8 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					wp2.rcNormalPosition.bottom = i + wp2.rcNormalPosition.top;
 				}
 				SetWindowPlacement(hdlgFind, &wp2);
+				gfr.Flags = FR_ENABLETEMPLATE;
+				wpOrigFindProc = (WNDPROC)SetWindowLongPtr(hdlgFind, GWLP_WNDPROC, (LONG_PTR)FindProc);
 				break;
 			case ID_MYEDIT_DELETE:
 				SendMessage(client, WM_CLEAR, 0, 0);
@@ -4464,6 +4476,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	bDirtyShadow = bDirtyStatus = TRUE;
 	nFormat = 0;
 	g_bIniMode = FALSE;
+	gbLFN = TRUE;
 	updateThrottle = updateTime = 0;
 	savedFormat = 0;
 	savedChars = 0;

@@ -108,9 +108,12 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 	
 	while (1) {
 		hFile = (HANDLE)CreateFile(lfn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		if (hFile == INVALID_HANDLE_VALUE) {
+		if (hFile == INVALID_HANDLE_VALUE || GetFileSize(hFile, NULL) == (DWORD)-1) {
 			DWORD dwError = GetLastError();
-			if (dwError == ERROR_FILE_NOT_FOUND && bCreate) {
+			if (dwError == ERROR_INVALID_HANDLE){
+				gbLFN = FALSE;
+				return LoadFile(szFilename, bCreate, bMRU, insert, textOut);
+			} else if (dwError == ERROR_FILE_NOT_FOUND && bCreate) {
 				if (lstrchr(lfn, _T('.')) == NULL) {
 					lstrcat(lfn, _T(".txt"));
 					continue;
@@ -142,14 +145,12 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 				}
 				break;
 			} else {
-				if (dwError == ERROR_FILE_NOT_FOUND) {
+				if (dwError == ERROR_FILE_NOT_FOUND || dwError == ERROR_BAD_NETPATH) {
 					ERROROUT(GetString(IDS_FILE_NOT_FOUND));
 				} else if (dwError == ERROR_SHARING_VIOLATION) {
 					ERROROUT(GetString(IDS_FILE_LOCKED_ERROR));
-				} else {
-					SetLastError(dwError);
-					ReportLastError();
-				}
+				} else
+					ReportError(dwError);
 				bLoading = FALSE;
 				UpdateStatus(TRUE);
 				SetCursor(hcur);
