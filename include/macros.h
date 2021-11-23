@@ -39,7 +39,7 @@
 	{ DWORD __v; LPVOID __x = (LPVOID)x; if (__x) __v = *((DWORD*)__x);\
 	/*if (x) printf("FREE %08X : %.32ls\n", x, x);*/\
 	if (x) HeapFree(globalHeap, 0, (HGLOBAL)x);\
-	if (__x && __v == *((DWORD*)__x)) { ERROROUT(_T("BAD FREE!")); } }\
+	/*if (__x && __v == *((DWORD*)__x)) { printf("BAD FREE!"); }*/ }\
 	x = NULL; }
 #else
 #define FREE(x) {\

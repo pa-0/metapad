@@ -183,7 +183,7 @@ void LaunchExternalViewer(int);
 
 
 // file_load.c //
-BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* textOut);
+BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, DWORD format, LPTSTR* textOut);
 BOOL LoadFileFromMenu(WORD wMenu, BOOL bMRU);
 BOOL BrowseFile(HWND owner, LPCTSTR defExt, LPCTSTR defDir, LPCTSTR filter, BOOL load, BOOL bMRU, BOOL insert, LPTSTR* fileName);
 
@@ -254,3 +254,4 @@ void LocalizeDialog(WORD dID, HWND dlg);
 
 
 #endif
+
