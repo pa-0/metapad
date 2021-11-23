@@ -220,26 +220,29 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 		} else {
 			SetTabStops();
 			SetWindowText(client, lChars ? szBuffer : _T(""));
-			SetFileFormat(cfmt, 0);
-			SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
-			FREE(szDir);
-			FREE(szFile);
-			FREE(szCaptionFile);
-			szDir = dfn;
-			szFile = lfn;
-			lfn = NULL; dfn = NULL;
-			if (lChars >=4 && szBuffer && szBuffer[0] == _T('.') &&
-				szBuffer[1] == _T('L') &&
-				szBuffer[2] == _T('O') &&
-				szBuffer[3] == _T('G')) {
-				CHARRANGE cr;
-				cr.cpMin = cr.cpMax = lChars;
-				SetSelection(cr);
-				SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DATE_TIME_CUSTOM, 0), 0);
-				SendMessage(client, EM_SCROLLCARET, 0, 0);
-			}
-			bLoading = FALSE;
-			UpdateSavedInfo();
+			if (bLoading) {
+				SetFileFormat(cfmt, 0);
+				SendMessage(client, EM_EMPTYUNDOBUFFER, 0, 0);
+				FREE(szDir);
+				FREE(szFile);
+				FREE(szCaptionFile);
+				szDir = dfn;
+				szFile = lfn;
+				lfn = NULL; dfn = NULL;
+				if (lChars >=4 && szBuffer && szBuffer[0] == _T('.') &&
+					szBuffer[1] == _T('L') &&
+					szBuffer[2] == _T('O') &&
+					szBuffer[3] == _T('G')) {
+					CHARRANGE cr;
+					cr.cpMin = cr.cpMax = lChars;
+					SetSelection(cr);
+					SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_DATE_TIME_CUSTOM, 0), 0);
+					SendMessage(client, EM_SCROLLCARET, 0, 0);
+				}
+				bLoading = FALSE;
+				UpdateSavedInfo();
+			} else
+				MakeNewFile();
 		}
 		if (bMRU)
 			SaveMRUInfo(rfn);

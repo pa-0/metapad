@@ -240,9 +240,9 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* lin
 		l = shadowLen = GetWindowTextLength(client);
 #endif
 		if (l < 1) return _T("");
-		if (l+9 > shadowAlloc || (shadowAlloc / 4 > l+9)) {
-			//printf("\nA!");
-			shadowAlloc = ((l+9) / 2) * 3;
+		if (l+10 > shadowAlloc || (shadowAlloc / 4 > l+10)) {
+			//printf("\nA%d!", l);
+			shadowAlloc = ((l+10) / 2) * 3;
 			if (szShadow) {
 				szShadow -= 8;
 				FREE(szShadow);
@@ -273,20 +273,22 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* lin
 		if (l < 1) return _T("");
 		if (line >= 0) {
 			if (bDirtyShadow || shadowLine != line) {
-				//printf("l");
+				//printf("l%d:%d-%d-",line,lcr.cpMin, l);
 				shadowRngEnd = 0;
-				*((LPWORD)(szShadow+lcr.cpMin)) = (USHORT)(l+1);
+				*((LPWORD)(szShadow+lcr.cpMin)) = (USHORT)(l+2);
 				l = SendMessage(client, EM_GETLINE, (WPARAM)line, (LPARAM)(LPCTSTR)(szShadow+lcr.cpMin));
 				szShadow[lcr.cpMin+l] = 0;
+				//wprintf(_T("%d:Er%d:%s#\n\n"), l,GetLastError(),szShadow+lcr.cpMin);
 			}
 		} else {
 			//printf("G");
 			shadowRngEnd = 0;
 #ifdef USE_RICH_EDIT
 			tr.chrg.cpMin = 0;
-			tr.chrg.cpMax = -1;
+			tr.chrg.cpMax = l;
 			tr.lpstrText = szShadow;
 			SendMessage(client, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
+			//printf("ET-%d:Er%d:",l,GetLastError());
 #else
 			GetWindowText(client, szShadow, shadowLen+1);
 #endif

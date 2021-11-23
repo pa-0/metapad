@@ -77,9 +77,7 @@ HINSTANCE hinstThis = NULL;
 UINT_PTR tmrUpdate = 0;
 WNDPROC wpOrigFindProc = NULL;
 int _fltused = 0x9875; // see CMISCDAT.C for more info on this
-
 TCHAR gTmpBuf[MAX(MAX(MAXFN*2+MAXSTRING*2,MAXMACRO),MAX(MAXFIND,MAXINSERT))];
-TCHAR gDummyBuf[1], gDummyBuf2[1];
 
 
 
@@ -250,6 +248,7 @@ void CreateStatusbar(void)
 void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 {
 #ifdef USE_RICH_EDIT
+	LRESULT lres;
 	DWORD dwStyle =
 					ES_AUTOHSCROLL |
 					ES_AUTOVSCROLL |
@@ -282,10 +281,12 @@ void CreateClient(HWND hParent, LPCTSTR szText, BOOL bWrap)
 	SendMessage(client, EM_SETEVENTMASK, 0, (LPARAM)(ENM_LINK | ENM_CHANGE | ENM_SELCHANGE));
 	SendMessage(client, EM_EXLIMITTEXT, 0, (LPARAM)(DWORD)0x7fffffff);
 
-	// sort of fixes font problems but cannot set tab size
-	SendMessage(client, EM_SETTEXTMODE, (WPARAM)TM_PLAINTEXT || (WPARAM)TM_ENCODING, 0);
+	SendMessage(client, EM_SETTEXTMODE, (WPARAM)TM_ENCODING, 0);
 	//SendMessage(client, EM_SETEDITSTYLE, (WPARAM)SES_USECRLF, (LPARAM)SES_USECRLF);	//obsolete, doesn't work
 	SendMessage(client, EM_SETEDITSTYLE, (WPARAM)SES_XLTCRCRLFTOCR, (LPARAM)SES_XLTCRCRLFTOCR);
+	lres = SendMessage(client, EM_GETLANGOPTIONS, 0, 0);	//Fix non-TTF font rendering without quirks that TM_PLAINTEXT causes (e.g. incorrect cursor position at EOF, can't set tab size, etc)
+	lres &= ~IMF_AUTOFONT;									//Credit: archives.miloush.net/michkap/archive/2006/02/13/531110.html
+	SendMessage(client, EM_SETLANGOPTIONS, 0, lres);
 
 	if (!bWordWrap && !options.bHideScrollbars) { // Hack for initially drawing hscrollbar for Richedit
 		SetWindowLongPtr(client, GWL_STYLE, GetWindowLongPtr(client, GWL_STYLE) | WS_HSCROLL);
@@ -1791,9 +1792,7 @@ BOOL SetClientFont(BOOL bPrimary) {
 	SendMessage(client, EM_SETBKGNDCOLOR, (WPARAM)bUseSystem, (LPARAM)(bPrimary ? options.BackColour : options.BackColour2));
 	SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
 	SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
-
 	InvalidateRect(hwnd, NULL, TRUE);
-
 	return TRUE;
 #else
 	SetFont(&hfontmain, bPrimary);
@@ -1835,14 +1834,11 @@ void SetTabStops(void) {
 	for (ct = 0; ct < pf.cTabCount; ct++)
 		pf.rgxTabs[ct] = (ct+1) * nTmp;
 
-	//In RichEdit, Tabstops cannot be set unless in 'RICHTEXT' mode (which breaks non-TTF fonts), so we temporarily set it and then revert to 'PLAINTEXT' mode.
 	ts = GetShadowBuffer(NULL);
 	SendMessage(client, WM_SETTEXT, 0, (LPARAM)_T(""));
-	SendMessage(client, EM_SETTEXTMODE, (WPARAM)TM_RICHTEXT, 0);
 	if (!SendMessage(client, EM_SETPARAFORMAT, 0, (LPARAM)(PARAFORMAT FAR *)&pf))
 		ERROROUT(GetString(IDS_PARA_FORMAT_ERROR));
 	SendMessage(client, WM_SETTEXT, 0, (LPARAM)_T(""));
-	SendMessage(client, EM_SETTEXTMODE, (WPARAM)TM_PLAINTEXT, 0);
 	SendMessage(client, WM_SETTEXT, 0, (LPARAM)ts);
 
 	SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
@@ -2907,6 +2903,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 	static RECT rect;
 	static WINDOWPLACEMENT wp, wp2;
 	static option_struct tmpOptions;
+	static TCHAR gDummyBuf[1], gDummyBuf2[1];
 
 #ifdef USE_RICH_EDIT
 	ENLINK* pLink;
@@ -3135,6 +3132,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						ERROROUT(szTmp);
 #else
 						if (bLoading) {
+							bLoading = FALSE;
 							if (options.bAlwaysLaunch || MessageBox(hwnd, GetString(IDS_QUERY_LAUNCH_VIEWER), GetString(STR_METAPAD), MB_ICONQUESTION | MB_YESNO) == IDYES) {
 								if (!SCNUL(options.szBrowser)[0]) {
 									MessageBox(hwnd, GetString(IDS_VIEWER_MISSING), GetString(STR_METAPAD), MB_OK|MB_ICONEXCLAMATION);
@@ -3144,7 +3142,6 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 								}
 								LaunchExternalViewer(0);
 							}
-							bLoading = FALSE;
 							if (!IsWindowVisible(hwnd))
 								bQuit = TRUE;
 						} else {
@@ -3383,7 +3380,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						SendMessage(client, WM_COPY, 0, 0); break;
 				}
 				if (!OpenClipboard(NULL)) {
-					//This happens if another window has the clipboard open. [https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-openclipboard]
+					//This happens if another program has the clipboard open. [https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-openclipboard]
 					ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
 					break;
 				}
@@ -3403,7 +3400,6 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 									ReverseBytes((LPBYTE)sz, sl);
 							default: if (!l) l = sl; break;
 						}
-						hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (l+1));
 						if (!(hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(TCHAR) * (l+1))) || !(szNew = (LPTSTR)GlobalLock(hMem2)))
 							ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
 						else {
@@ -3412,6 +3408,9 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 								lstrcpy(szNew, sz);
 								if (enc == FC_ENC_BIN) ExportBinary(szNew, sl);
 							}
+#ifdef UNICODE
+							sl = EncodeText((LPBYTE*)&sz, sl, FC_ENC_ANSI, &b, NULL);
+#endif
 							SetLastError(NO_ERROR);
 							if ((!GlobalUnlock(hMem) && (l = GetLastError())) || (!GlobalUnlock(hMem2) && (l = GetLastError()))) {
 								ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
@@ -3419,6 +3418,17 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 							}
 							if (!EmptyClipboard() || !SetClipboardData(_CF_TEXT, hMem2))
 								ReportLastError();
+#ifdef UNICODE
+							if ((hMem2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sl+1)) && (szNew = (LPTSTR)GlobalLock(hMem2))) {
+								memcpy(szNew, sz, sl+1);
+								SetLastError(NO_ERROR);
+								if ((!GlobalUnlock(hMem2) && (l = GetLastError()))) {
+									ERROROUT(GetString(IDS_CLIPBOARD_UNLOCK_ERROR));
+									ReportError(l);
+								}
+								SetClipboardData(CF_TEXT, hMem2);
+							}
+#endif
 						}
 						if (b) FREE(sz);
 					}
@@ -3456,20 +3466,21 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 								}
 								break;
 						}
-						if (base && l && !uni) l = DecodeText((LPBYTE*)&sz, l, &sl, &b);
-						GetLineFmt(sz, l, 0, &i, &j, &k, &nPos, &uni);
-						if (uni) ImportBinary(sz, l);
-						ImportLineFmt(&sz, &l, (nFormat >> 16) & 0xfff, i, j, k, nPos, &b);
-						if (LOWORD(wParam) == ID_INT_GETCLIPBOARD)
-							lstrcpyn(szTmp, sz, MAXINSERT);
-						else
-							SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)sz);
+						if (sz) {
+							if (base && l && !uni) l = DecodeText((LPBYTE*)&sz, l, &sl, &b);
+							GetLineFmt(sz, l, 0, &i, &j, &k, &nPos, &uni);
+							if (uni) ImportBinary(sz, l);
+							ImportLineFmt(&sz, &l, (nFormat >> 16) & 0xfff, i, j, k, nPos, &b);
+							if (LOWORD(wParam) == ID_INT_GETCLIPBOARD)
+								lstrcpyn(szTmp, sz, MAXINSERT);
+							else
+								SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)sz);
+						}
 						GlobalUnlock(hMem);
 						if (b) FREE(sz);
 					}
 				}
 				CloseClipboard();
-				//InvalidateRect(client, NULL, TRUE);	//TODO need?
 				QueueUpdateStatus();
 				break;
 			case ID_HOME:
