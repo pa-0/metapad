@@ -32,6 +32,7 @@
 #include <wchar.h>
 #endif
 
+#include "include/globals.h"
 #include "include/resource.h"
 #include "include/macros.h"
 
@@ -376,10 +377,13 @@ WORD GetLineFmt(LPCTSTR sz, DWORD len, WORD preferred, DWORD* nCR, DWORD* nLF, D
 }
 
 void ImportBinary(LPTSTR sz, DWORD len){
+#ifdef UNICODE
+	TCHAR c = gbNT ? _T('\x2400') : _T(' ');
+#endif
 	for ( ; len--; sz++){
 		if (*sz == _T('\0'))
 #ifdef UNICODE
-			*sz = _T('\x2400');
+			*sz = c;
 #else
 			*sz = _T(' ');
 #endif
@@ -387,6 +391,7 @@ void ImportBinary(LPTSTR sz, DWORD len){
 }
 void ExportBinary(LPTSTR sz, DWORD len){
 #ifdef UNICODE
+	if (!gbNT) return;
 	if (!len) len = lstrlen(sz);
 	for ( ; len--; sz++){
 		if (*sz == _T('\x2400'))

@@ -46,66 +46,72 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	BOOL bufDirty = FALSE, fileDirty = bDirtyFile, b;
 
 	if (!hMenu || !format) return;
-	if (format < 0xffff && format >= FC_LFMT_BASE && format < FC_LFMT_END) format <<= 16;
-	if (!(format & 0x8000ffff)) format |= nFormat & 0x8000ffff;
-	if (!(format & 0xfff0000)) format |= nFormat & 0xfff0000;
-	if (format == nFormat) return;
-	enc = cp = (WORD)nFormat;
-	nenc = ncp = (WORD)format;
-	lfmt = (nFormat >> 16) & 0xfff;
-	nlfmt = (format >> 16) & 0xfff;
-	if (nFormat >> 31) enc = FC_ENC_CODEPAGE;
-	if (format >> 31) nenc = FC_ENC_CODEPAGE;
-	if (!GetTextChars(NULL) || 
-		( !((enc == FC_ENC_ANSI || enc == FC_ENC_CODEPAGE) && (nenc == FC_ENC_ANSI || nenc == FC_ENC_CODEPAGE) && cp != ncp)
-		&& !(lfmt == FC_LFMT_MIXED && nlfmt != lfmt) ) )
-		reinterp = 0;
-	if (reinterp == 1) {
-		if (lfmt != nlfmt)
-			pmbuf2 = (LPTSTR)GetString(IDS_LFMT_NORMALIZE);
-		else {
-			if (nenc == FC_ENC_CODEPAGE)
-				PrintCPName(ncp, mbuf, GetString(ID_ENC_CODEPAGE));
-			else
-				lstrcpy(mbuf, GetString(nenc));
-			wsprintf(mbuf2, GetString(IDS_ENC_REINTERPRET), mbuf);
-		}
-		switch (MessageBox(hwnd, pmbuf2, GetString(STR_METAPAD), MB_YESNOCANCEL | MB_ICONQUESTION)) {
-			case IDCANCEL:
-				return;
-			case IDNO:
-				reinterp = 0;
-		}
+	if (format != -1) {
+		if (format < 0xffff && format >= FC_LFMT_BASE && format < FC_LFMT_END) format <<= 16;
+		if (!(format & 0x8000ffff)) format |= nFormat & 0x8000ffff;
+		if (!(format & 0xfff0000)) format |= nFormat & 0xfff0000;
+		if (format == nFormat) return;
 	}
-	hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
-	if (reinterp) {
-		RestoreClientView(0, FALSE, TRUE, TRUE);
-		buf = (LPTSTR)GetShadowBuffer(&len);
-		bLoading = TRUE;
-		lines = SendMessage(client, EM_GETLINECOUNT, 0, 0)-1;
-		ExportLineFmt(&buf, &len, lfmt, lines, &bufDirty);
-		if (cp != ncp)
-			len = EncodeText((LPBYTE*)&buf, len, nFormat, &bufDirty, NULL);
-		if (len) {
-			if (cp != ncp)
-				len = DecodeText((LPBYTE*)&buf, len, &format, &bufDirty);
-			if (len) {
-				GetLineFmt(buf, len, lfmt, &nCR, &nLF, &nStrays, &nSub, &b);
-				ImportLineFmt(&buf, &len, nlfmt, nCR, nLF, nStrays, nSub, &bufDirty);
-				SetWindowText(client, buf);
-				InvalidateRect(client, NULL, TRUE);
+	enc = cp = (WORD)nFormat;
+	lfmt = (nFormat >> 16) & 0xfff;
+	if (nFormat >> 31) enc = FC_ENC_CODEPAGE;
+	if (format != -1) {
+		nenc = ncp = (WORD)format;
+		nlfmt = (format >> 16) & 0xfff;
+		if (format >> 31) nenc = FC_ENC_CODEPAGE;
+		if (!GetTextChars(NULL) || 
+			( !((enc == FC_ENC_ANSI || enc == FC_ENC_CODEPAGE) && (nenc == FC_ENC_ANSI || nenc == FC_ENC_CODEPAGE) && cp != ncp)
+			&& !(lfmt == FC_LFMT_MIXED && nlfmt != lfmt) ) )
+			reinterp = 0;
+		if (reinterp == 1) {
+			if (lfmt != nlfmt)
+				pmbuf2 = (LPTSTR)GetString(IDS_LFMT_NORMALIZE);
+			else {
+				if (nenc == FC_ENC_CODEPAGE)
+					PrintCPName(ncp, mbuf, GetString(ID_ENC_CODEPAGE));
+				else
+					lstrcpy(mbuf, GetString(nenc));
+				wsprintf(mbuf2, GetString(IDS_ENC_REINTERPRET), mbuf);
+			}
+			switch (MessageBox(hwnd, pmbuf2, GetString(STR_METAPAD), MB_YESNOCANCEL | MB_ICONQUESTION)) {
+				case IDCANCEL:
+					return;
+				case IDNO:
+					reinterp = 0;
 			}
 		}
-		RestoreClientView(0, TRUE, TRUE, TRUE);
-		bLoading = FALSE;
-		nFormat = format;
-		if (!fileDirty && cp != ncp)
-			UpdateSavedInfo();
-	}
-	if (bufDirty)
-		FREE(buf);
+		hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
+		if (reinterp) {
+			RestoreClientView(0, FALSE, TRUE, TRUE);
+			buf = (LPTSTR)GetShadowBuffer(&len);
+			bLoading = TRUE;
+			lines = SendMessage(client, EM_GETLINECOUNT, 0, 0)-1;
+			ExportLineFmt(&buf, &len, lfmt, lines, &bufDirty);
+			if (cp != ncp)
+				len = EncodeText((LPBYTE*)&buf, len, nFormat, &bufDirty, NULL);
+			if (len) {
+				if (cp != ncp)
+					len = DecodeText((LPBYTE*)&buf, len, &format, &bufDirty);
+				if (len) {
+					GetLineFmt(buf, len, lfmt, &nCR, &nLF, &nStrays, &nSub, &b);
+					ImportLineFmt(&buf, &len, nlfmt, nCR, nLF, nStrays, nSub, &bufDirty);
+					SetWindowText(client, buf);
+					InvalidateRect(client, NULL, TRUE);
+				}
+			}
+			RestoreClientView(0, TRUE, TRUE, TRUE);
+			bLoading = FALSE;
+			nFormat = format;
+			if (!fileDirty && cp != ncp)
+				UpdateSavedInfo();
+		}
+		if (bufDirty)
+			FREE(buf);
 
-	nFormat = format;
+		nFormat = format;
+	} else {
+		nenc = enc; nlfmt = lfmt; ncp = cp;
+	}
 	DeleteMenu(hMenu, ID_ENC_CODEPAGE, MF_BYCOMMAND);
 	if (nenc == FC_ENC_CODEPAGE){
 		PrintCPName(ncp, mbuf, GetString(ID_ENC_CODEPAGE));
@@ -118,6 +124,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 	}
 	CheckMenuRadioItem(hMenu, ID_ENC_BASE, ID_ENC_END, nenc % 1000 + ID_MENUCMD_BASE, MF_BYCOMMAND);
 	CheckMenuRadioItem(hMenu, ID_LFMT_BASE, ID_LFMT_END, nlfmt % 1000 + ID_MENUCMD_BASE, MF_BYCOMMAND);
+	if (format == -1) return;
 	bDirtyShadow = bDirtyStatus = TRUE;
 	QueueUpdateStatus();
 	SetCursor(hcur);
@@ -163,7 +170,7 @@ BOOL FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt) {
 
 	if (!szSrc || !szTgt) return FALSE;
 	if (szSrc != *szTgt) alloc = TRUE;
-	if (gbLFN && szSrc[0] && szSrc[1] && szSrc[2] != _T('?')) {
+	if (gbNT && szSrc[0] && szSrc[1] && szSrc[2] != _T('?')) {
 		lstrcpy(pdst, _T("\\\\?\\"));
 		pdst+=4;
 		if (szSrc[0] == _T('\\') && szSrc[1] == _T('\\')) {

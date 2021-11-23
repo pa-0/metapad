@@ -46,6 +46,9 @@ void __cdecl _tWinMainCRTStartup(void)
 
 	lpszCommandLine = (LPTSTR)GetCommandLine();
 
+	while ( *lpszCommandLine && (*lpszCommandLine <= _T(' ') ) )
+        lpszCommandLine++;
+
 	if (*lpszCommandLine == _T('"') ) {
 		lpszCommandLine++;
         while(*lpszCommandLine && (*lpszCommandLine != _T('"') ) )
@@ -53,8 +56,7 @@ void __cdecl _tWinMainCRTStartup(void)
 
         if (*lpszCommandLine == _T('"') )
             lpszCommandLine++;
-	}
-	else {
+	} else {
 		while (*lpszCommandLine > _T(' ') )
 			lpszCommandLine++;
 	}

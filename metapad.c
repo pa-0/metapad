@@ -125,8 +125,7 @@ void CleanUp(void)
  *
  * @return Statusbar's height if bShowStatus, 0 otherwise.
  */
-int GetStatusHeight(void)
-{
+int GetStatusHeight(void){
 	return (bShowStatus ? nStatusHeight : 0);
 }
 
@@ -135,39 +134,27 @@ int GetStatusHeight(void)
  *
  * @return Toolbar's height if bShowToolbar, 0 otherwise.
  */
-int GetToolbarHeight(void)
-{
+int GetToolbarHeight(void){
 	return (bShowToolbar ? nToolbarHeight : 0);
 }
 
-void SwitchReadOnly(BOOL bNewVal)
-{
+void SwitchReadOnly(BOOL bNewVal){
 	bReadOnly = bNewVal;
 	if (GetCheckedState(GetMenu(hwnd), ID_READONLY, FALSE) != bNewVal)
 		GetCheckedState(GetMenu(hwnd), ID_READONLY, TRUE);
 }
 
-BOOL GetCheckedState(HMENU hmenu, UINT nID, BOOL bToggle)
-{
+BOOL GetCheckedState(HMENU hmenu, UINT nID, BOOL bToggle){
 	MENUITEMINFO mio;
-
 	mio.cbSize = sizeof(MENUITEMINFO);
 	mio.fMask = MIIM_STATE;
 	GetMenuItemInfo(hmenu, nID, FALSE, &mio);
-	if (mio.fState == MFS_CHECKED) {
-		if (bToggle) {
-			mio.fState = MFS_UNCHECKED;
-			SetMenuItemInfo(hmenu, nID, FALSE, &mio);
-		}
-		return TRUE;
+	if (bToggle) {
+		mio.fState = mio.fState == MFS_CHECKED ? MFS_UNCHECKED : MFS_CHECKED;
+		SetMenuItemInfo(hmenu, nID, FALSE, &mio);
+		mio.fState = mio.fState == MFS_CHECKED ? MFS_UNCHECKED : MFS_CHECKED;
 	}
-	else {
-		if (bToggle) {
-			mio.fState = MFS_CHECKED;
-			SetMenuItemInfo(hmenu, nID, FALSE, &mio);
-		}
-		return FALSE;
-	}
+	return mio.fState == MFS_CHECKED ? TRUE : FALSE;
 }
 
 void CreateToolbar(void)
@@ -1708,20 +1695,21 @@ DWORD CALLBACK EditStreamIn(DWORD dwCookie, LPBYTE pbBuff, LONG cb, LONG *pcb)
 #endif
 
 void SetFont(HFONT* phfnt, BOOL bPrimary) {
-	LOGFONT logfind;
+	LOGFONT f, logfind;
 	HDC clientdc;
-
 	if (*phfnt) DeleteObject(*phfnt);
 	if (hfontfind) DeleteObject(hfontfind);
 	if ((bPrimary ? options.nPrimaryFont : options.nSecondaryFont) == 0) {
 		*phfnt = GetStockObject(bPrimary ? SYSTEM_FIXED_FONT : ANSI_FIXED_FONT);
 		hfontfind = *phfnt;
+		fontHt = -3;
 	} else {
-		*phfnt = CreateFontIndirect(bPrimary ? &options.PrimaryFont : &options.SecondaryFont);
-		CopyMemory((PVOID)&logfind, (CONST VOID*)(bPrimary ? &options.PrimaryFont : &options.SecondaryFont), sizeof(LOGFONT));
+		f = (bPrimary ? options.PrimaryFont : options.SecondaryFont);
+		*phfnt = CreateFontIndirect(&f);
+		CopyMemory((PVOID)&logfind, (CONST VOID*)(&f), sizeof(LOGFONT));
 		clientdc = GetDC(client);
-		fontmainHt = -options.PrimaryFont.lfHeight;
-		if (fontmainHt < 0) fontmainHt = MulDiv(-fontmainHt, GetDeviceCaps(clientdc, LOGPIXELSY), 72);
+		fontHt = -f.lfHeight;
+		if (fontHt < 0) fontHt = MulDiv(-fontHt, GetDeviceCaps(clientdc, LOGPIXELSY), 72);
 		logfind.lfHeight = -MulDiv(LOWORD(GetDialogBaseUnits())+2, GetDeviceCaps(clientdc, LOGPIXELSY), 72);
 		hfontfind = CreateFontIndirect(&logfind);
 		ReleaseDC(client, clientdc);
@@ -1821,7 +1809,7 @@ void SetTabStops(void) {
 
 	clientDC = GetDC(client);
 	SelectObject (clientDC, hfontmain);
-	if (!GetCharWidth32(clientDC, (UINT)VK_SPACE, (UINT)VK_SPACE, &nWidth))
+	if (!GetCharWidth32(clientDC, (UINT)VK_SPACE, (UINT)VK_SPACE, &nWidth) && !GetCharWidth(clientDC, (UINT)VK_SPACE, (UINT)VK_SPACE, &nWidth))
 		ERROROUT(GetString(IDS_CHAR_WIDTH_ERROR));
 	ReleaseDC(client, clientDC);
 
@@ -1927,46 +1915,27 @@ BOOL CreateMainMenu(HWND hwnd) {
 		InsertMenuItem(hsub, 1, TRUE, &mio);
 	}
 	mio.fMask = MIIM_STATE;
-	if (bWordWrap) {
-		mio.fState = MFS_CHECKED;
-		SetMenuItemInfo(hmenu, ID_EDIT_WORDWRAP, 0, &mio);
-	}
-	if (!bSmartSelect) {
-		mio.fState = MFS_UNCHECKED;
-		SetMenuItemInfo(hmenu, ID_SMARTSELECT, 0, &mio);
-	}
+	mio.fState = bWordWrap ? MFS_CHECKED : MFS_UNCHECKED;
+	SetMenuItemInfo(hmenu, ID_EDIT_WORDWRAP, 0, &mio);
+	mio.fState = bSmartSelect ? MFS_CHECKED : MFS_UNCHECKED;
+	SetMenuItemInfo(hmenu, ID_SMARTSELECT, 0, &mio);
 #ifdef USE_RICH_EDIT
-	if (!bHyperlinks) {
-		mio.fState = MFS_UNCHECKED;
-		SetMenuItemInfo(hmenu, ID_SHOWHYPERLINKS, 0, &mio);
-	}
+	mio.fState = bHyperlinks ? MFS_CHECKED : MFS_UNCHECKED;
+	SetMenuItemInfo(hmenu, ID_SHOWHYPERLINKS, 0, &mio);
 #endif
-	if (bTransparent && SetLWA) {
-		mio.fState = MFS_CHECKED;
-		SetMenuItemInfo(hmenu, ID_TRANSPARENT, 0, &mio);
-		SetWindowLongPtr(hwnd, GWL_EXSTYLE, GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
-		SetLWA(hwnd, 0, (BYTE)((255 * (100 - options.nTransparentPct)) / 100), LWA_ALPHA);
-	} else if (!SetLWA) {
+	if (SetLWA) {
+		if (bTransparent) SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_TRANSPARENT, 0);
+	} else {
 		hsub = GetSubMenu(GetMenu(hwnd), 3);
 		DeleteMenu(hsub, 4, MF_BYPOSITION);
 	}
-	if (bShowStatus) {
-		mio.fState = MFS_CHECKED;
-		SetMenuItemInfo(hmenu, ID_SHOWSTATUS, 0, &mio);
-	}
-	if (bShowToolbar) {
-		mio.fState = MFS_CHECKED;
-		SetMenuItemInfo(hmenu, ID_SHOWTOOLBAR, 0, &mio);
-	}
-	if (!bPrimaryFont) {
-		mio.fState = MFS_UNCHECKED;
-		SetMenuItemInfo(hmenu, ID_FONT_PRIMARY, 0, &mio);
-	}
-	if (bAlwaysOnTop) {
-		mio.fState = MFS_CHECKED;
-		SetMenuItemInfo(hmenu, ID_ALWAYSONTOP, 0, &mio);
-		SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-	}
+	mio.fState = bShowStatus ? MFS_CHECKED : MFS_UNCHECKED;
+	SetMenuItemInfo(hmenu, ID_SHOWSTATUS, 0, &mio);
+	mio.fState = bShowToolbar ? MFS_CHECKED : MFS_UNCHECKED;
+	SetMenuItemInfo(hmenu, ID_SHOWTOOLBAR, 0, &mio);
+	mio.fState = bPrimaryFont ? MFS_CHECKED : MFS_UNCHECKED;
+	SetMenuItemInfo(hmenu, ID_FONT_PRIMARY, 0, &mio);
+	if (bAlwaysOnTop) SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_ALWAYSONTOP, 0);
 	if (options.bRecentOnOwn)
 		FixMRUMenus();
 	if (!options.bReadOnlyMenu)
@@ -1994,6 +1963,7 @@ BOOL CreateMainMenu(HWND hwnd) {
 		PopulateFavourites();
 	}
 	if (hmold) DestroyMenu(hmold);
+	SetFileFormat(-1, 0);
 	return TRUE;
 }
 
@@ -2947,7 +2917,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			break;
 		DragQueryFile(hDrop, 0, szTmp, MAXFN);
 		DragFinish(hDrop);
-		LoadFile(szTmp, FALSE, TRUE, FALSE, NULL);
+		LoadFile(szTmp, FALSE, TRUE, FALSE, 0, NULL);
 		break;
 	case WM_SIZING:
 		InvalidateRect(client, NULL, FALSE); // ML: for decreasing window size, update scroll bar
@@ -3070,10 +3040,10 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				if (!GetCursorPos(&pt) || !ScreenToClient(client, &pt)) break;
 				i = pt.y;
 				k = SendMessage(client, EM_CHARFROMPOS, 0, (LPARAM)&pt);
-				//printf("%d,%d  %08X %d ----- ",pt.x,pt.y,l,l);
+				//printf("%d,%d  %08X %d ----- ",pt.x,pt.y,k,k);
 				SendMessage(client, EM_POSFROMCHAR, (WPARAM)&pt, k);
-				//printf("%08X %d   -> %d,%d\n",l,l,pt.x,pt.y);
-				abort = (k >= (LONG)GetTextChars(NULL) || i-fontmainHt-2 > pt.y);
+				abort = (k >= (LONG)GetTextChars(NULL) || i-(fontHt < 0 ? 15 : fontHt)-2 > pt.y);
+				//printf("%d, %d,  %08X %d   -> %d,%d\n",i, fontHt, abort,(LONG)GetTextChars(NULL),pt.x,pt.y);
 				switch (pLink->msg) {
 					case WM_SETCURSOR:
 						if (abort || options.bLinkDoubleClick)
@@ -3608,7 +3578,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				UpdateCaption();
 				break;
 			case ID_FONT_PRIMARY:
-				bPrimaryFont = !bPrimaryFont;
+				bPrimaryFont = !GetCheckedState(GetMenu(hwndMain), ID_FONT_PRIMARY, TRUE);
 				if (!SetClientFont(bPrimaryFont)) {
 					GetCheckedState(GetMenu(hwndMain), ID_FONT_PRIMARY, TRUE);
 					bPrimaryFont = !bPrimaryFont;
@@ -3658,6 +3628,14 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				memcpy(&tmpOptions, &options, sizeof(option_struct));
 				LoadOptions();
 				i = PropertySheet(&psh);
+#ifdef UNICODE
+				if (i < 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {	//Win95 compat
+					EncodeText((LPBYTE*)&psh.pszCaption, -1, FC_ENC_ANSI, NULL, NULL);
+					for (l = 0; l < psh.nPages; l++)
+						EncodeText((LPBYTE*)&pages[l].pszTitle, -1, FC_ENC_ANSI, NULL, NULL);
+					i = PropertySheetA((PROPSHEETHEADERA*)&psh);
+				}
+#endif
 				if (i > 0) {
 					SaveOptions();
 					if (options.bLaunchClose && options.nLaunchSave == 2)
@@ -4236,7 +4214,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_RELOAD_CURRENT:
 				if (!*SCNUL(szFile) || !SaveIfDirty()) break;
 				RestoreClientView(0, FALSE, TRUE, TRUE);
-				LoadFile(szFile, FALSE, FALSE, FALSE, NULL);
+				LoadFile(szFile, FALSE, FALSE, FALSE, 0, NULL);
 				RestoreClientView(0, TRUE, TRUE, TRUE);
 				break;
 /*#ifdef USE_RICH_EDIT
@@ -4414,7 +4392,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 }
 
 DWORD WINAPI LoadThread(LPVOID lpParameter) {
-	if (LoadFile(SCNUL(szFile), TRUE, TRUE, FALSE, NULL)) {
+	if (LoadFile(SCNUL(szFile), TRUE, TRUE, FALSE, 0, NULL)) {
 #ifdef USE_RICH_EDIT
 		if (lpParameter != NULL) {
 			GotoLine(((CHARRANGE*)lpParameter)->cpMin, ((CHARRANGE*)lpParameter)->cpMax);
@@ -4435,7 +4413,7 @@ DWORD WINAPI LoadThread(LPVOID lpParameter) {
 #if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
 #include "mingw-unicode-gui.c"
 #endif
-int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
+int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR szCmdLine, int nCmdShow)
 {
 	WNDCLASS wc;
 	MSG msg;
@@ -4444,9 +4422,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	int nCmdLen;
 	HMODULE hmod;
 	CHARRANGE crLineCol = {-1, -1};
-	LPTSTR szCmdLine;
 	BOOL bSkipLanguagePlugin = FALSE;
-	TCHAR* bufFn = gTmpBuf;
+	TCHAR *bufFn = gTmpBuf, *pch;
 	TCHAR chOption;
 #ifdef _DEBUG
 	int _x=0;
@@ -4487,35 +4464,24 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	bDirtyShadow = bDirtyStatus = TRUE;
 	nFormat = 0;
 	g_bIniMode = FALSE;
-	gbLFN = TRUE;
+	gbNT = (LOBYTE(LOWORD(GetVersion())) >= 5);
 	updateThrottle = updateTime = 0;
 	savedFormat = 0;
 	savedChars = 0;
-	fontmainHt = -3;
+	fontHt = -3;
 	ZeroMemory(FindArray, sizeof(FindArray));
 	ZeroMemory(ReplaceArray, sizeof(ReplaceArray));
 	ZeroMemory(InsertArray, sizeof(InsertArray));
 	*szStatusMessage = 0;
 	randVal = GetTickCount();
 
-#if defined(UNICODE) && ( !defined(__MINGW32__) || defined(__MINGW64_VERSION_MAJOR) )
-	szCmdLine = GetCommandLine();
-	szCmdLine = lstrchr(szCmdLine, _T(' '));
-#else
-	szCmdLine = lpCmdLine;
-#endif
-	while (szCmdLine && *szCmdLine == _T(' ')) szCmdLine++;
+	GetModuleFileName(hinstThis, bufFn, MAXFN);
+	SSTRCPYA(szMetapadIni, bufFn, 12);
 
-	{
-		TCHAR* pch;
-		GetModuleFileName(hinstThis, bufFn, MAXFN);
-		SSTRCPYA(szMetapadIni, bufFn, 12);
-
-		pch = lstrrchr(szMetapadIni, _T('\\'));
-		++pch;
-		*pch = _T('\0');
-		lstrcat(szMetapadIni, GetString(STR_INI_FILE));
-	}
+	pch = lstrrchr(szMetapadIni, _T('\\'));
+	++pch;
+	*pch = _T('\0');
+	lstrcat(szMetapadIni, GetString(STR_INI_FILE));
 	
 	if (szCmdLine && *szCmdLine) {
 		nCmdLen = lstrlen(szCmdLine);
@@ -4659,7 +4625,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 					lstrcpyn(szFile, szCmdLine + 1, nCmdLen - 1);
 				else
 					lstrcpyn(szFile, szCmdLine, nCmdLen + 1);
-				if (!LoadFile(szFile, FALSE, FALSE, FALSE, NULL))
+				if (!LoadFile(szFile, FALSE, FALSE, FALSE, 0, NULL))
 					return FALSE;
 				UpdateCaption();
 				PrintContents();

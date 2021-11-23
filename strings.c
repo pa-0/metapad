@@ -75,11 +75,15 @@ static const CHAR strings[] = ""
 /*		35		IDS_FILE_NOT_FOUND				*/	"\0File not found."
 /*		36		IDS_FILE_LOCKED_ERROR			*/	"\0File is locked by another process."
 #ifdef UNICODE
-"\0\0\0\0"
+"\0\0"
 #else
 /*	A	37		IDS_UNICODE_CONVERT_ERROR		*/	"\0Error converting from Unicode file"
 /*	A	38		IDS_UNICODE_CHARS_WARNING		*/	"\0Detected non-ANSI characters in this Unicode file.\n\nData will be lost if this file is saved!"
-/*	A	39		IDS_BINARY_FILE_WARNING			*/	"\0This is a binary file.\nConvert any NULL terminators to spaces and load anyway?"
+#endif
+/*		39		IDS_BINARY_FILE_WARNING			*/	"\0This is a binary file.\nConvert any NULL terminators to spaces and load anyway?"
+#ifdef UNICODE
+"\0"
+#else
 /*	A	40		IDS_UNICODE_STRING_ERROR		*/	"\0Error converting to Unicode string"
 #endif
 /*		41		IDS_WRITE_BOM_ERROR				*/	"\0Error writing BOM"
@@ -812,7 +816,7 @@ BOOL LoadLng(LPTSTR filename, LPTSTR* str, WORD** stridx, WORD** strofs){
 	FREE(*str);
 	FREE(*stridx);
 	FREE(*strofs);
-	if (!LoadFile(filename, FALSE, FALSE, FALSE, str) || !*str || !**str) return FALSE;
+	if (!LoadFile(filename, FALSE, FALSE, FALSE, 0, str) || !*str || !**str) return FALSE;
 	*stridx = (WORD*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, smax * sizeof(WORD));
 	*strofs = (WORD*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, smax * sizeof(WORD));
 	for (st=0, os=ds=*str; *os && ct < smax; os++, pc=c) {

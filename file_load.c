@@ -87,12 +87,12 @@ DWORD LoadFileIntoBuffer(HANDLE hFile, LPBYTE* ppBuffer, DWORD* format) {
 	return DecodeText(ppBuffer, buflen, format, &bResult);
 }
 
-BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* textOut) {
+BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, DWORD format, LPTSTR* textOut) {
 	HANDLE hFile = NULL;
 	LPTSTR szBuffer, lfn = NULL, dfn = NULL, rfn = NULL;
 	LPCTSTR tbuf;
 	TCHAR cPad = _T(' '), msgbuf[MAXFN + 40];
-	DWORD lChars, nCR, nLF, nStrays, nSub, cfmt = nFormat;
+	DWORD lChars, nCR, nLF, nStrays, nSub, cfmt = format ? format : nFormat;
 	BOOL b;
 	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 
@@ -110,9 +110,11 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 		hFile = (HANDLE)CreateFile(lfn, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hFile == INVALID_HANDLE_VALUE || GetFileSize(hFile, NULL) == (DWORD)-1) {
 			DWORD dwError = GetLastError();
-			if (dwError == ERROR_INVALID_HANDLE){
-				gbLFN = FALSE;
-				return LoadFile(szFilename, bCreate, bMRU, insert, textOut);
+			if (gbNT && dwError == ERROR_INVALID_HANDLE){
+				gbNT = FALSE;
+				SetCursor(hcur);
+				FREE(lfn); FREE(dfn); FREE(rfn);
+				return LoadFile(szFilename, bCreate, bMRU, insert, format, textOut);
 			} else if (dwError == ERROR_FILE_NOT_FOUND && bCreate) {
 				if (lstrchr(lfn, _T('.')) == NULL) {
 					lstrcat(lfn, _T(".txt"));
@@ -169,6 +171,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 		UpdateStatus(TRUE);
 		SetCursor(hcur);
 		FREE(lfn); FREE(dfn); FREE(rfn);
+		FREE(szBuffer);
 		return FALSE;
 	}
 	CloseHandle(hFile);
@@ -177,6 +180,12 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 		cfmt &= 0x8000ffff;
 		cfmt |= (GetLineFmt(szBuffer, lChars, (options.nFormat>>16)&0xfff, &nCR, &nLF, &nStrays, &nSub, &b) << 16);
 		if (b && !textOut) {
+			if (cfmt >> 31) {	//A codepage was active, and likely ruined the binary file during decoding, disable it and try again
+				SetCursor(hcur);
+				FREE(lfn); FREE(dfn); FREE(rfn);
+				FREE(szBuffer);
+				return LoadFile(szFilename, bCreate, bMRU, insert, FC_ENC_ANSI, textOut);
+			}
 			cfmt = FC_ENC_BIN | (cfmt & 0xfff0000);
 			if (!insert) {
 				bLoading = FALSE;
@@ -186,7 +195,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 				SetWindowText(client, szBuffer);
 			}
 #ifdef UNICODE
-			if (!options.bNoWarningPrompt && MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING_SAFE), GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
+			if (!options.bNoWarningPrompt && MessageBox(hwnd, GetString(gbNT ? IDS_BINARY_FILE_WARNING_SAFE : IDS_BINARY_FILE_WARNING), GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
 #else
 			if (!options.bNoWarningPrompt && MessageBox(hwnd, GetString(IDS_BINARY_FILE_WARNING), GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL) != IDOK) {
 #endif
@@ -198,6 +207,7 @@ BOOL LoadFile(LPTSTR szFilename, BOOL bCreate, BOOL bMRU, BOOL insert, LPTSTR* t
 				UpdateStatus(TRUE);
 				SetCursor(hcur);
 				FREE(lfn); FREE(dfn); FREE(rfn);
+				FREE(szBuffer);
 				return FALSE;
 			}
 			ImportBinary(szBuffer, lChars);
@@ -291,7 +301,7 @@ BOOL LoadFileFromMenu(WORD wMenu, BOOL bMRU) {
 				return FALSE;
 			}
 		}
-		return LoadFile(pbuf, FALSE, TRUE, FALSE, NULL);
+		return LoadFile(pbuf, FALSE, TRUE, FALSE, 0, NULL);
 	}
 	return FALSE;
 }
@@ -317,6 +327,6 @@ BOOL BrowseFile(HWND owner, LPCTSTR defExt, LPCTSTR defDir, LPCTSTR filter, BOOL
 	ofn.lpstrDefExt = defExt;
 	if (!GetOpenFileName(&ofn)) return FALSE;
 	if (fileName) SSTRCPY(*fileName, fn);
-	if (load) return LoadFile(fn, FALSE, bMRU, insert, NULL);
+	if (load) return LoadFile(fn, FALSE, bMRU, insert, 0, NULL);
 	return TRUE;
 }
