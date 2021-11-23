@@ -67,21 +67,22 @@
 75		Launch Primary Viewer
 76		Launch Secondary Viewer
 77		Can't undo this action!
-78		Reached memory limit at %d bytes!
+78		Reached memory limit at %s bytes!
 79		This version of Windows does not support loading files this large into an Edit window.\nLaunch in external viewer?
 80		Reached memory limit!\nSave file now and use another editor (metapad full not LE)!
 81		Updating hyperlinks. This action will empty the undo buffer.
 82		Unable to change the readonly attribute for this file.
 83		Settings
 84		No selected text.
-86		Replaced %d item(s).
+86		Replaced %s item(s).
 87		&Language Plugin...
 88		metapad requires RICHED20.DLL to be installed on your system.\n\nSee the FAQ on the website for further information.
-89		Usage: metapad [/i | /m | /v | /s] [/p | /g row:col | /e] [filename]\n\nOption descriptions:\n\n~/i - force INI mode for settings\n~/m - migrate all registry settings to INI file\n~/g row:col - goto position at row and column\n~/e - goto end of file\n~/p - print file\n~/v - disable plugin version checking\n~/s - skip loading language plugin
+89		Usage: metapad [/i | /m | /v | /s] [/p | /g row:col | /e] [filename]\n\nOption descriptions:\n\n\t/i - force INI mode for settings\n\t/m - migrate all registry settings to INI file\n\t/g row:col - goto position at row and column\n\t/e - goto end of file\n\t/p - print file\n\t/v - disable plugin version checking\n\t/s - skip loading language plugin
 90		GlobalLock failed
 91		Error unlocking clipboard memory.
 92		Error opening clipboard.
 93		Error reading file.
+94		The change in \"Hide scrollbars when possible\" will be reflected upon restarting the program.
 100		All Rights Reserved
 102		Text (*.*)|*.*|
 103		new file
@@ -108,23 +109,26 @@
 214		Clipboard
 215		Macro
 216		Quote string
-217		About to insert %I64u characters of text.\nThis may take a very long time!\nContinue?
-218		Replaced %d item(s) in %d iteration(s).
+217		About to insert %s characters of text.\nThis may take a very long time!\nContinue?
+218		Replaced %s item(s) in %s iteration(s).
 219		Reinterpret the current text as %s?
 220		This text has mixed line endings.\nYou can normalize the line endings in the File > Format menu.
 221		Mixed line endings have been normalized.\nYou can change this function in the File > Format menu.
 222		Note that all files without a Byte-Order Mark will now be interpreted as %s!
 223		This codepage is not available on your system.
 224		Error converting to the selected codepage!\nThe data was instead saved as ANSI.
+225		Saving file...
+226		Normalize line endings now?
 441		Invalid code string length!
 442		Invalid code characters!
 490		Migration to INI completed.
-491		` Bytes: %d `
-492		` Selected %d:%d  ->  %d:%d  %s
-493		` Line: %d/%d
-494		` Col: %d
-495		` INS
-496		OVR
+491		` Bytes: %s `
+492		` Lines: %s `
+493		` Selected %s:%d  ->  %s:%d  %s  %s
+494		` Line: %s/%s
+495		` Col: %d
+498		` INS
+499		OVR
 756		> `
 757		yyyyMMdd-HHmmss `
 1001	OK
@@ -161,8 +165,8 @@
 2089	Unicode
 2090	Unicode BE
 2109	UTF-8
-2110	ANSI
-2111	Binary
+2111	ANSI
+2112	Binary
 2118	CP%d
 21210	&Enable quick exit (Esc key)
 21211	Save &window placement
@@ -189,6 +193,7 @@
 22458	Background color:
 22459	Font color:
 22466	Use def&ault toolbar style
+22467	Use digit &grouping
 22481	&Transparency %:
 24001	&Find Next
 24002	Close
@@ -335,7 +340,7 @@
 40204	Custom Format &1
 40205	Custom Format &2
 40206	Paste Mu&ltiple...
-40207	Insert Te&xt...
+40207	Insert Text...
 40208	&Copy As Hex
 40209	&Paste As Hex
 40210	Clear clipboard
@@ -356,6 +361,8 @@
 40226	Any 1+ Characters
 40227	0+ of Preceding Character
 40228	1+ of Preceding Character
+40229	Go To Selection
+40230	Go To Caret
 41110	&File
 41111	&Launch
 41112	F&ile Format
