@@ -746,6 +746,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					return FALSE;
 			}
 
+			i = 0;
 			switch (LOWORD(wParam)){
 				case 0x400:
 					if (!ReplaceAll(NULL, 1, 0, &szFindText, &szReplaceText, &pbFindTextSpec, &pbReplaceTextSpec, NULL, TRUE, bMatchCase, bWholeWord, 1, 0, FALSE, NULL, NULL)) {
@@ -753,7 +754,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 						if (!ReplaceAll(NULL, 1, 0, &szFindText, &szReplaceText, &pbFindTextSpec, &pbReplaceTextSpec, NULL, TRUE, bMatchCase, bWholeWord, 1, 0, FALSE, NULL, NULL)) break;
 					}				
 				case IDOK:
-					SearchFile(szFindText, bMatchCase, bDown || frDlgId != ID_FIND, bWholeWord, pbFindTextSpec);
+					i = SearchFile(szFindText, bMatchCase, bDown || frDlgId != ID_FIND, bWholeWord, pbFindTextSpec);
 					if (frDlgId == ID_FIND) {
 						bCloseAfterFind = (BST_CHECKED == SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_FIND, BM_GETCHECK, 0, 0));
 						if (bCloseAfterFind) PostMessage(hdlgFind, WM_CLOSE, 0, 0);
@@ -761,14 +762,14 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					break;
 				case 0x402:
 				case 0x401:
-					ReplaceAll(hdlgFind, 1, (LOWORD(wParam) == 0x402 ? 1 : 0), &szFindText, &szReplaceText, &pbFindTextSpec, &pbReplaceTextSpec, szTmp, bOkEna = (BST_CHECKED == SendDlgItemMessage(hdlgFind, IDC_RADIO_SELECTION, BM_GETCHECK, 0, 0)), bMatchCase, bWholeWord, 0, 0, FALSE, NULL, NULL);
+					i = ReplaceAll(hdlgFind, 1, (LOWORD(wParam) == 0x402 ? 1 : 0), &szFindText, &szReplaceText, &pbFindTextSpec, &pbReplaceTextSpec, szTmp, bOkEna = (BST_CHECKED == SendDlgItemMessage(hdlgFind, IDC_RADIO_SELECTION, BM_GETCHECK, 0, 0)), bMatchCase, bWholeWord, 0, 0, FALSE, NULL, NULL);
 					QueueUpdateStatus();
 					bCloseAfterReplace = (BST_CHECKED == SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_REPLACE, BM_GETCHECK, 0, 0));
 					if (bCloseAfterReplace) PostMessage(hdlgFind, WM_CLOSE, 0, 0);
 					if (!bOkEna) return FALSE;
 					break;
 			}
-			SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_SCROLLTO_SELA, 0);
+			if (i && !IsSelectionVisible()) SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_SCROLLTO_SELA, 0);
 			break;
 		case IDCANCEL:
 			if (HIWORD(wParam) != BN_CLICKED) break;
@@ -812,6 +813,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 				if (!(GetKeyState(VK_SHIFT) & 0x8000)) return FALSE;
 			case 'F':
 			case 'H':
+			case 'S':
 			case VK_TAB:
 				if (!(GetKeyState(VK_CONTROL) & 0x8000)) return FALSE;
 		}
@@ -819,6 +821,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			case 'V': SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_PASTE_MUL, 0); return TRUE;
 			case 'F': SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_FIND, 0); return TRUE;
 			case 'H': SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_REPLACE, 0); return TRUE;
+			case 'S': SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_MYFILE_SAVE, 0); return TRUE;
 			case 'Z': SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_MYEDIT_UNDO, 0); return TRUE;
 #ifdef USE_RICH_EDIT
 			case 'Y': SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_MYEDIT_REDO, 0); return TRUE;
@@ -3162,16 +3165,30 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 			case ID_REPLACE:
 			case ID_INSERT_TEXT:
 			case ID_PASTE_MUL:
+				l = 0;
 				abort = FALSE;
+				*szTmp = 0;
 				ZeroMemory(&wp, sizeof(WINDOWPLACEMENT));
 				if (hdlgFind) {
+					l = 1;
 					if (frDlgId == LOWORD(wParam) && frDlgId != ID_PASTE_MUL) {
 						SetFocus(hdlgFind);
 						break;
 					} else {
+						switch (frDlgId){
+							case ID_FIND:
+							case ID_REPLACE:
+								SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, WM_GETTEXT, MAXFIND, (LPARAM)szTmp);
+								break;
+							case ID_INSERT_TEXT:
+								SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, WM_GETTEXT, MAXINSERT, (LPARAM)szTmp);
+								break;
+						}
+						SSTRCPY(szFindText, szTmp);
 						wp.length = sizeof(WINDOWPLACEMENT);
 						GetWindowPlacement(hdlgFind, &wp);
 						SendMessage(hdlgFind, WM_CLOSE, 0, 0);
+						SSTRCPY(szInsert, szFindText);
 					}
 				}
 
@@ -3192,7 +3209,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					case ID_REPLACE:
 						SSTRCPY(szReplaceText, ReplaceArray[0]);
 					case ID_FIND:
-						SelectWord(&szFindText, TRUE, !options.bNoFindAutoSelect);
+						if (!l) SelectWord(&szFindText, TRUE, !options.bNoFindAutoSelect);
 						if (!SCNUL(szFindText)[0]) SSTRCPY(szFindText, FindArray[0]);
 						if (bWholeWord) gfr.Flags |= FR_WHOLEWORD;
 						if (bDown) gfr.Flags |= FR_DOWN;
@@ -3204,7 +3221,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						SSTRCPY(szInsert, szTmp);
 					case ID_INSERT_TEXT:
 						if (!szInsert){
-							SelectWord(&szInsert, TRUE, !options.bNoFindAutoSelect);
+							if (!l) SelectWord(&szInsert, TRUE, !options.bNoFindAutoSelect);
 							if (!SCNUL(szInsert)[0]) SSTRCPY(szInsert, InsertArray[0]);
 						}
 						break;

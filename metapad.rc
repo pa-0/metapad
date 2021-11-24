@@ -1,6 +1,7 @@
 //Microsoft Developer Studio generated resource script.
 //
 #include "include/resource.h"
+#include "include/consts.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -927,8 +928,8 @@ END
 
 
 VS_VERSION_INFO VERSIONINFO
-	FILEVERSION 3,7,1,0
-	PRODUCTVERSION 3,7,1,0
+	FILEVERSION VI_VERVI
+	PRODUCTVERSION VI_VERVI
 	FILEFLAGSMASK 0x3fL
 #ifdef DEBUG
 	FILEFLAGS 0x1L
@@ -943,18 +944,10 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "Fast, tiny and powerful Windows notepad replacement"
-#ifdef USE_RICH_EDIT
-			VALUE "ProductName", "metapad"
-#else
-			VALUE "ProductName", "metapad LE"
-#endif
-#ifdef UNICODE
-			VALUE "ProductVersion", "3.7.1"
-#else
-			VALUE "ProductVersion", "3.7.1-ANSI"
-#endif
-			VALUE "CompanyName", "SoBit Corp"
-			VALUE "LegalCopyright", "(c) 1999-2011 Alexander Davidson, 2013 Mario Rugiero, 2021 SoBiT Corp"
+			VALUE "ProductName", VI_FULLNAME
+			VALUE "ProductVersion", VI_VER
+			VALUE "CompanyName", VI_BUILDER
+			VALUE "LegalCopyright", VI_COPY
 
 		END
 	END

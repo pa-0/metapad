@@ -524,6 +524,12 @@ void UpdateSavedInfo() {
 
 
 
+__inline TCHAR CharLowerEx(TCHAR ch){
+	if (ch < _T('A')) return ch;
+	else if (ch <= _T('Z')) return ch | _T(' ');
+	else if (ch < 0x80) return ch;
+	return (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)ch);
+}
 
 CHARRANGE DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWholeWord, BOOL bCase, BOOL bFromTop, LPBYTE pbFindSpec) {
 	LONG lSize;
@@ -549,10 +555,10 @@ CHARRANGE DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWho
 
 	while( lpszStop != szBuffer && lpsz - (bDown? 0 : cf) < lpszStop && (!bDown || (bDown && lpszFound == NULL)) ) {
 		if ( m && ((pbFindSpec && (k = pbFindSpec[cf]) && (k < 4 || (cf && k < 6 && *lpsz == gc) || (k == 6 && !(RAND()%0x60)))) 
-			|| *lpsz == szText[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*lpsz) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szText[cf])) )) {
+			|| *lpsz == szText[cf] || (!bCase && CharLowerEx(*lpsz) == CharLowerEx(szText[cf])) )) {
 			if (pbFindSpec){
 				if (k && k < 6) {
-					if ((k == 2 || (lg && k == 3)) && cf+1 < nFindLen && (*lpsz == szText[cf+1] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*lpsz) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szText[cf+1])))) {
+					if ((k == 2 || (lg && k == 3)) && cf+1 < nFindLen && (*lpsz == szText[cf+1] || (!bCase && CharLowerEx(*lpsz) == CharLowerEx(szText[cf+1])))) {
 						cg = ++cf; continue;
 					} else if (k != 1) {
 						lg++;
@@ -580,7 +586,7 @@ CHARRANGE DoSearch(LPCTSTR szText, LONG lStart, LONG lEnd, BOOL bDown, BOOL bWho
 		} else if (lpfs) {
 			if (pbFindSpec){
 				m = 2;
-				if ((lg || k == 2 || k == 4) && cf+1 < nFindLen && (*lpsz == szText[cf+1] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*lpsz) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szText[cf+1]))))
+				if ((lg || k == 2 || k == 4) && cf+1 < nFindLen && (*lpsz == szText[cf+1] || (!bCase && CharLowerEx(*lpsz) == CharLowerEx(szText[cf+1]))))
 					cf++;
 				else if (cg) { cf = cg-1; lg=1; }
 				else if (!((k == 4 || (lg && k == 5)) && ++cf)) m = 1;
@@ -662,7 +668,7 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 	}
 	while (--ilen) {
 		if ( m && ((pbFindSpec && (k = pbFindSpec[cf]) && (k < 4 || (cf && k < 6 && *szIn == gc) || (k == 6 && !(RAND()%0x60))))
-			|| (*szIn == szFind[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szIn) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szFind[cf]))) )) {
+			|| (*szIn == szFind[cf] || (!bCase && (TCHAR)(DWORD_PTR)CharLowerEx(*szIn) == (TCHAR)(DWORD_PTR)CharLowerEx(szFind[cf]))) )) {
 			if (pbFindSpec) {
 				if (k && k < 6) {
 					if (gu && nglob[k] && cglob[k] <= nglob[k]) {
@@ -671,7 +677,7 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 						if (cglob[k] <= nglob[k]) 
 							globe[k][cglob[k]-1] = szIn + (k == 1 ? 1 : 0);
 					}
-					if ((k == 2 || (lg && k == 3)) && cf+1 < lf && (*szIn == szFind[cf+1] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szIn) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szFind[cf+1])))) {
+					if ((k == 2 || (lg && k == 3)) && cf+1 < lf && (*szIn == szFind[cf+1] || (!bCase && CharLowerEx(*szIn) == CharLowerEx(szFind[cf+1])))) {
 						cg = ++cf;
 						memcpy(sglob, cglob, sizeof(cglob));
 						ilen++;
@@ -743,7 +749,7 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 		} else if (pd) {
 			if (pbFindSpec){
 				m = 2;
-				if ((lg || k == 2 || k == 4) && cf+1 < lf && (*szIn == szFind[cf+1] || (!bCase && (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)*szIn) == (TCHAR)(DWORD_PTR)CharLower((LPTSTR)(DWORD_PTR)(BYTE)szFind[cf+1])))) {
+				if ((lg || k == 2 || k == 4) && cf+1 < lf && (*szIn == szFind[cf+1] || (!bCase && CharLowerEx(*szIn) == CharLowerEx(szFind[cf+1])))) {
 					cf++;
 					if (gu && nglob[k] && cglob[k] <= nglob[k])
 						globe[k][cglob[k]-1] = szIn;

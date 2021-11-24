@@ -46,7 +46,7 @@ static HINSTANCE hinstLang = NULL;
 
 
 static const CHAR strings[] = ""
-/*		1		IDS_VERSION_SYNCH				*/	"\0""3.7"
+/*		1		IDS_VERSION_SYNCH				*/	"\0" VI_VERSYNC
 /*		2		IDS_PLUGIN_LANGUAGE				*/	"\0"
 /*		3		IDS_PLUGIN_RELEASE				*/	"\0"
 /*		4		IDS_PLUGIN_TRANSLATOR			*/	"\0"
@@ -212,28 +212,16 @@ static const CHAR strings[] = ""
 #else
 "\0\0"
 #endif
-/*		500		STR_METAPAD						*/	"\0metapad"
-/*		501		STR_CAPTION_FILE				*/	"\0 - metapad "
-#ifdef UNICODE
-#ifdef USE_RICH_EDIT
-/*	!	502		STR_ABOUT						*/	"\0metapad 3.7"
-#else
-/*	!	502		STR_ABOUT						*/	"\0metapad LE 3.7"
-#endif
-#else
-#ifdef USE_RICH_EDIT
-/*	!	502		STR_ABOUT						*/	"\0metapad 3.7-ANSI"
-#else
-/*	!	502		STR_ABOUT						*/	"\0metapad LE 3.7-ANSI"
-#endif
-#endif
+/*		500		STR_METAPAD						*/	"\0" VI_NAME
+/*		501		STR_CAPTION_FILE				*/	"\0 - " VI_NAME " "
+/*	!	502		STR_ABOUT						*/	"\0" VI_FULLNAME " " VI_VER
 /*		506		STR_FAV_FILE					*/	"\0metafav.ini"
-/*		507		STR_INI_FILE					*/	"\0metapad.ini"
+/*		507		STR_INI_FILE					*/	"\0" VI_NAME ".ini"
 /*		508		STR_URL							*/	"\0http://liquidninja.com/metapad"
-/*		509		STR_REGKEY						*/	"\0SOFTWARE\\metapad"
+/*		509		STR_REGKEY						*/	"\0SOFTWARE\\" VI_NAME
 /*		510		STR_FAV_APPNAME					*/	"\0Favourites"
 /*		511		STR_OPTIONS						*/	"\0Options"
-/*		512		STR_COPYRIGHT					*/	"\0\xa9 1999-2011 Alexander Davidson\n\xa9 2013 Mario Rugiero\n\xa9 2021 SoBiT Corp"
+/*		512		STR_COPYRIGHT					*/	"\0" VI_COPY
 /*		513		IDS_PLUGIN_ERRFIND				*/	"\0Could not find the language plugin."
 /*		514		IDS_PLUGIN_ERR					*/	"\0Temporarily reverting language to Default (English)\n\nCheck the language plugin setting."
 /*		518		IDS_FILTER_EXEC					*/	"\0Executable Files (*.exe)|*.exe|All Files (*.*)|*.*|"
@@ -617,6 +605,7 @@ static WORD stringsidx[] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,
 
 static LPTSTR pstrings = NULL;
 static WORD *pstringsidx = NULL, *pstringsofs = NULL;
+
 
 
 
