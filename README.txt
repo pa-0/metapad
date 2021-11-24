@@ -1,76 +1,149 @@
 «§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»
 
-                              Metapad 3.6
+                              Metapad 3.7
 
                     The Ultimate Notepad Replacement
 
-                               May 2011
+                               Nov 2021
 
 «§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»
 
               (C) Copyright Alexander Davidson, 1999-2011
+              (C) Copyright Mario Rugiero,      2013
+              (C) Copyright SoBiT Corp,         2021
 
 Contents
 --------
 - What?
 - Why?
 - How?
+- Distribution
 - Installation
-- Changes
+- Changelog
 - Contact
 - Disclaimer
+- License
+
 
 What?
 =====
 If you are like me, one of the most useful programs for everyday use is
-Microsoft Notepad. I realized that Notepad was quite powerful and did 
-almost everything I wanted in a simple text editor. Yet I found the UI 
+Microsoft Notepad. I realized that Notepad was quite powerful and did
+almost everything I wanted in a simple text editor. Yet I found the UI
 to be unlike most 32-bit Windows applications and actually quite poor...
 
-Metapad is a small, fast (and completely free) text editor for Windows 
-9x and Windows NT (2000) with similar features to Microsoft Notepad but 
-with many extra (and rather useful) features. It was designed to 
-completely replace Notepad since it includes (just about) all of 
-Notepad's features and much, much more.
+Metapad is a small, fast (and completely free) text editor for all
+Windows versions 95 and up with similar features to Microsoft Notepad
+but with many extra features and enhancements. It was designed to
+completely replace Notepad since it includes all of Notepad's features
+and much, much more.
+
 
 Why?
 ====
 I created this program as a personal project. I was simply annoyed with
-the poor usability of Notepad and it was clear that Microsoft wasn't 
-ever going to improve it (although their latest versions now have some 
-minor improvements). I was pleased with the outcome of Metapad (I 
+the poor usability of Notepad and it was clear that Microsoft wasn't
+ever going to improve it (although their latest versions now have some
+minor improvements). I was pleased with the outcome of Metapad (I
 actually renamed notepad.exe to notepadx.exe and use Metapad instead of
 Notepad) so I decided to release it as freeware.
+
 
 How?
 ====
 Metapad was created (as was Notepad) in pure ANSI C with the Win32 API.
 It contained around 1200 lines of code as of version 1 and now has about
-7000 lines as of version 3.0. Thus, it is almost as small and just about
-as fast as Notepad is. Unlike some other so-called Notepad replacements,
-Metapad actually loads in an instant. (Those other programs tend to 
+7000 lines as of version 3. As of now, it is actually smaller and faster
+than Notepad is. Unlike some other so-called Notepad replacements,
+Metapad actually loads in an instant. (Those other programs tend to
 approach 1 or 2MB instead of being under 100KB and are written using C++
-with MFC or even, gasp!, Visual Basic.) 
+with MFC or even, gasp!, Visual Basic.)
+
+
+Distribution
+============
+Metapad is distributed in two flavors: regular and LE (Light Edition)
+The regular version uses a RichEdit control whereas LE uses the older
+but slightly speedier Edit control. LE may be slightly faster for some
+operations but it does not have the following features:
+ - Multiple undo/redo
+ - Show hyperlinks option
+ - Drag & drop text editing
+ - Insert/overwrite mode switching
+
+The full release archive contains the following:
+metapad/    - Contains the regular metapad executable
+metapadLE/  - Contains the LE (Light Edition) metapad executable
+ANSI/       - All of the above, but without full Unicode support
+                 (these builds are currently recommended for Win9x/Me)
+UPX/        - All of the above, but with even smaller filesizes
+unicows.dll - Required for running Unicode metapad builds on Win9x/Me
+README.txt  - You are reading it
+LICENSE.txt - GNU GPL v3
+
 
 Installation
 ============
 Metapad was designed to completely replace Notepad. To see how you can
-install Metapad to replace Notepad see the metaFAQ page on the Metapad 
+install Metapad to replace Notepad see the metaFAQ page on the Metapad
 web site (see contact information at the end of this document).
 
-Changes
-=======
+
+Changelog
+=========
 
 (+ indicates bug fix, - indicates new feature)
 
-3.6  - portability mode: store/load all settings from metapad.ini
+3.7  Nov 2021
+     - full Unicode and UTF-8 support (finally!)
+     - lightning-fast Find / Replace All (finally!)
+     - wildcards in Find/Replace/Insert dialogs
+     - Hex, Decimal, Octal, Binary, and Base-64 escape sequences in 
+          Find/Replace/Insert dialogs and Macros
+     - Copy/Paste text as Hex and Base-64
+     - edit binary files without losing NULLs (Win2k+ only)
+     - very long filename support (paths up to 4000 chars, WinXP+ only)
+     - separately select Encodings and Line Endings in any combination
+     - support for all 100+ codepages in Windows and ability
+          to load, save, and convert text between them
+     - Insert Text dialog and ability to auto-paste multiple times
+     - customizable timestamp insertion (F12 and Ctrl+F12)
+     - smart file changed indicator - only when file is actually dirty
+     - restore scroll position & selection after Reload/Replace/Undo/etc
+     - current selection information in status bar
+     - digit grouping option for all displayed numbers
+     - user-editable .lng translation plugins (.dlls still supported)
+     - full (recursive) Replace All until no search text is remaining     
+     - all ANSI C escape sequences in Find/Replace dialogs and Macros
+     - 'Close after replace all' option in Replace dialog
+     - important keyboard shortcuts work when Find/Replace dialog active
+          (use Ctrl+Shift+C/V to Undo/Redo in main window)
+     - Find/Replace dialogs repositioned to obscure results less
+     - prompt when trying to open very large files (perhaps by mistake)
+     - go to selection / caret (Ctrl+Home / Ctrl+End)
+     - clear clipboard
+     - transparent mode can be toggled with F11
+     - much faster Quote, Un/Tabify, Un/Indent, and Strip functions
+     - smaller executable file size through optimizations
+     + Find/Replace values no longer trimmed
+     + fixed pasting text not correctly inserting newlines
+     + fixed URL hitboxes at bottom of file
+     + fixed incorrect filesize calculation with some text formats
+     + fixed case-insensitive search not working with non-English texts
+     + fixed crash when calling Page Setup with no printer installed
+     + fixed various problems loading BOM-less UTF-8 and Unicode files
+     + fixed position calc. when text contains Unicode Surrogate Pairs
+     + minimized window flashing during text updates
+
+3.6  May 2011
+     - portability mode: store/load all settings from metapad.ini
      - new high resolution app icon
      - now remembers last open/save folder with option to disable
      - minor UI/usability updates
      - better defaults for general settings
      - UTF-8 file support (provided by David Millis)
      + fixed shift+enter bug (provided by Curtis Bright)
-     + fixed convert to title case bug with apostrophes 	
+     + fixed convert to title case bug with apostrophes
 
 3.51 + fixed "Can't open clipboard" random message bug
 3.5  - support for GUI language plugins (see web site)
@@ -93,11 +166,11 @@ Changes
      + Shift+Enter adds carriage return
      + fixed crash on loading BOM-less unicode files
      + fixed single character lines changing in WinXP bug
-     + fixed minor replace "\n" bug 
+     + fixed minor replace "\n" bug
      + fixed goto line 5 digit limitation
      + upper/lower case changes for intl characters
      + additional minor bug fixes
-     
+
 3.0  - basic Unicode text file support (ANSI code page only)
      - new favourites menu
      - freaky new transparent mode (requires Win2K)
@@ -134,7 +207,7 @@ Changes
      + fixed bottom scrollbar disappearing on load
      + paste is now deactivated when no text is on the clipboard
      + initial messageboxes caused no cursor in main window
-     + fixed display bug for block indent more than one screen of text 
+     + fixed display bug for block indent more than one screen of text
      + recent files list is now case insensitive
      + minor recent files menu display bug fixed
      + fixed .LOG scrolling bug (in LE only)
@@ -167,7 +240,7 @@ Changes
 
 1.42 + fixed bug concerning long UNC file names
      + fixed wordwrap bug for large binary files
-     + fixed minor edit menu bug when Recent on own and Read Only 
+     + fixed minor edit menu bug when Recent on own and Read Only
      + fixed minor status bar redraw bug
      + Replace All was unnecessarily scrolling main window
 1.41 - advanced setting controls the status bar width
@@ -194,9 +267,9 @@ Changes
      - hotkeys for UNIX<->DOS
      - UNIX<->DOS causes dirty file
      + goto line bug fixed (scrolls to cursor)
-     + short filename (TESTIN~1.TXT) sendto bug fixed 
+     + short filename (TESTIN~1.TXT) sendto bug fixed
      + various bugs fixed
-        
+
 1.3  - seamless UNIX text file support
      - block indent and unindent (Tab, Shift+Tab)
      - recent file list
@@ -223,16 +296,38 @@ Changes
 1.0a + Fixed Ctrl+A keyboard accelerator
 1.0  - Initial release
 
+
 Contact
 =======
 When submitting bugs or asking questions please make sure to check this
 document and the online FAQ beforehand.
 
-        http://liquidninja.com/metapad/
+        http://liquidninja.com/metapad/faq.html
+
+The latest releases are currently available on github:
+
+        https://github.com/sobitcorp/metapad/releases
+        
 
 Disclaimer
 ==========
-Metapad is freeware and is freely distributable in its unmodified zip 
-file. Use it at your own risk. The author, Alexander Davidson, cannot
-be held responsible for any problems encountered while using this 
+Metapad is freeware and is freely distributable in its unmodified zip
+file. Use it at your own risk. The authors and contributors cannot
+be held responsible for any problems encountered while using this
 software.
+
+
+License
+=======
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
