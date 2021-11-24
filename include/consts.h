@@ -25,6 +25,26 @@
 #ifndef CONSTS_H
 #define CONSTS_H
 
+#ifdef USE_RICH_EDIT
+#define VI_KIND		""
+#else
+#define VI_KIND		" LE"
+#endif
+#ifdef UNICODE
+#define VI_BUILD	""
+#else
+#define VI_BUILD	"-ANSI"
+#endif
+#define VI_NAME		"metapad"
+#define VI_FULLNAME	VI_NAME VI_KIND
+#define VI_VER		"3.71" VI_BUILD
+#define VI_VERSYNC	"3.7"
+#define VI_VERVI	3,7,1,0
+#define VI_COPY		"\xa9 1999-2011 Alexander Davidson\n\xa9 2013 Mario Rugiero\n\xa9 2021 SoBiT Corp"
+#define VI_BUILDER	"SoBiT Corp"
+
+
+
 #define MAXFN 4096
 #define MAXFONT 32
 #define MAXARGS 4096
