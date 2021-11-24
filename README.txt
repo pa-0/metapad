@@ -117,7 +117,7 @@ Changelog
      - all ANSI C escape sequences in Find/Replace dialogs and Macros
      - 'Close after replace all' option in Replace dialog
      - important keyboard shortcuts work when Find/Replace dialog active
-          (use Ctrl+Shift+C/V to Undo/Redo in main window)
+          (use Ctrl+Shift+Z/Y to Undo/Redo in main window)
      - Find/Replace dialogs repositioned to obscure results less
      - prompt when trying to open very large files (perhaps by mistake)
      - go to selection / caret (Ctrl+Home / Ctrl+End)
@@ -128,6 +128,7 @@ Changelog
      + Find/Replace values no longer trimmed
      + fixed pasting text not correctly inserting newlines
      + fixed URL hitboxes at bottom of file
+     + fixed raster font rendering
      + fixed incorrect filesize calculation with some text formats
      + fixed case-insensitive search not working with non-English texts
      + fixed crash when calling Page Setup with no printer installed
