@@ -24,6 +24,11 @@
 #ifndef METAPAD_H
 #define METAPAD_H
 
+#define WIN32_LEAN_AND_MEAN
+#define _WIN32_WINNT 0x0400
+
+#include <windows.h>
+#include <tchar.h>
 #ifdef _DEBUG
 #include <stdio.h>
 #endif
@@ -46,7 +51,11 @@ extern int _ttoi(const TCHAR*);
 #endif
 
 #include "consts.h"
+#include "globals.h"
 #include "resource.h"
+#include "macros.h"
+#include "utils.h"
+#include "encoding.h"
 
 
 ///// Typedefs /////
@@ -75,69 +84,6 @@ typedef struct _charrange
 } CHARRANGE;
 #endif
 
-typedef BOOL (WINAPI *SLWA)(HWND hwnd, COLORREF crKey, BYTE bAlpha, DWORD dwFlags);
-typedef BOOL (WINAPI *SWT)(HWND hwnd, LPTSTR textSubAppName, LPTSTR textSubIdList);
-
-typedef struct tag_options {
-	BOOL bQuickExit;
-	BOOL bSaveWindowPlacement;
-	BOOL bSaveMenuSettings;
-	BOOL bSaveDirectory;
-	BOOL bLaunchClose;
-	int nTabStops;
-	int nPrimaryFont;
-	int nSecondaryFont;
-	int nLaunchSave;
-	RECT rMargins;
-	LOGFONT PrimaryFont, SecondaryFont;
-	LPTSTR szBrowser;
-	LPTSTR szArgs;
-	LPTSTR szBrowser2;
-	LPTSTR szArgs2;
-	LPTSTR szQuote;
-	BOOL bFindAutoWrap;
-	BOOL bAutoIndent;
-	BOOL bInsertSpaces;
-	BOOL bNoCaptionDir;
-	BOOL bHideGotoOffset;
-	BOOL bRecentOnOwn;
-	BOOL bDontInsertTime;
-	BOOL bNoWarningPrompt;
-	BOOL bUnFlatToolbar;
-	BOOL bStickyWindow;
-	BOOL bReadOnlyMenu;
-//	UINT nStatusFontWidth;
-	UINT nSelectionMarginWidth;
-	UINT nMaxMRU;
-	DWORD nFormat;
-	UINT nTransparentPct;
-	BOOL bSystemColours;
-	BOOL bSystemColours2;
-	COLORREF BackColour, FontColour;
-	COLORREF BackColour2, FontColour2;
-	BOOL bNoSmartHome;
-	BOOL bNoAutoSaveExt;
-	BOOL bContextCursor;
-	BOOL bCurrentFindFont;
-#ifndef USE_RICH_EDIT
-	BOOL bDefaultPrintFont;
-	BOOL bAlwaysLaunch;
-#else
-	BOOL bSuppressUndoBufferPrompt;
-	BOOL bLinkDoubleClick;
-	BOOL bHideScrollbars;
-#endif
-	BOOL bNoFaves;
-	BOOL bPrintWithSecondaryFont;
-	BOOL bNoSaveHistory;
-	BOOL bNoFindAutoSelect;
-	BOOL bDigitGrp;
-	LPTSTR szLangPlugin;
-	LPTSTR MacroArray[10];
-	LPTSTR szFavDir;
-	LPTSTR szCustomDate;
-	LPTSTR szCustomDate2;
-} option_struct;
 
 
 
@@ -170,9 +116,6 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 BOOL CALLBACK ViewPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam);
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow);
-
-
-// language_plugin.c //
 
 
 

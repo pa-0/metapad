@@ -21,37 +21,45 @@
 /*                                                                          */
 /****************************************************************************/
 
-#ifndef MACROS_H
-#define MACROS_H
+#ifndef UTILS_H
+#define UTILS_H
 
-#define CRITOUT(x) MessageBox(NULL, x, GetString(STR_METAPAD), MB_OK | MB_ICONSTOP)
-#define ERROROUT(x) MessageBox(hwnd, x, GetString(STR_METAPAD), MB_OK | MB_ICONEXCLAMATION)
-#define MSGOUT(x) MessageBox(hwnd, x, GetString(STR_METAPAD), MB_OK | MB_ICONINFORMATION)
-#define DBGOUT(x, y) MessageBox(hwnd, x, y, MB_OK | MB_ICONEXCLAMATION)
+#define WIN32_LEAN_AND_MEAN
+#define _WIN32_WINNT 0x0400
 
-#define MAX(x,y)		((x)>(y)?(x):(y))
-#define MIN(x,y)		((x)<(y)?(x):(y))
-#define WIDTH(x)		(x.right - x.left + 1)
-#define HEIGHT(x)		(x.bottom - x.top + 1)
-#define ARRLEN(x)		(sizeof(x)/sizeof(*(x)))
-
-#define SCNUL(x)		SCNULD(x, kemptyStr)
-#define SCNUL8(x)		SCNULD(x, _T("        "))
-#define SCNULD(x, def)	(x ? x : def)
-
-#define RAND() ((randVal = randVal * 214013L + 2531011L) >> 16)
-
-
+#include <windows.h>
+#include <tchar.h>
+#ifdef UNICODE
+#include <wchar.h>
+#endif
 #ifdef _DEBUG
+#include <stdio.h>
+#endif
+#include "globals.h"
+#include "macros.h"
+#include "resource.h"
 
-#define DUMP(o, l, f) {\
-	DWORD d;\
-	HANDLE hFile = (HANDLE)CreateFile((f)?(f):(_T("__DUMP")), GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);\
-	WriteFile(hFile, o, l, &d, NULL);\
-	SetEndOfFile(hFile);\
-	CloseHandle(hFile);\
-	}
+LPCTSTR kemptyStr;
+
+LPVOID kallocex(DWORD len, BOOL zeroMem);
+BOOL kfree(LPVOID* mem);
+LPTSTR kstrdupex(LPTSTR* tgt, LPCTSTR src, INT add, INT tgtOfs, BOOL emptyAsNull);
+BOOL kgrowbuf(LPVOID* buf, DWORD width, DWORD len, DWORD* alen, LPVOID* bpos, DWORD pad);
+INT kbinsearch(LPVOID list[], LPVOID tgt, DWORD width, DWORD l, DWORD r, BOOL insert);
+VOID kdebuglog(INT id, LPVOID* data);
+
+#define kalloc(len) kallocex(len, FALSE)
+#define kallocz(len) kallocex(len, TRUE)
+#define kallocs(chars) (LPTSTR)kallocex((chars) * sizeof(TCHAR), FALSE)
+#define kallocsz(chars) (LPTSTR)kallocex((chars) * sizeof(TCHAR), TRUE)
+#define kstrdup(tgt, src) kstrdupex(tgt, src, 1, 0, FALSE)
+#define kstrdupa(tgt, src, add) kstrdupex(tgt, src, add, 0, FALSE)
+#define kstrdupo(tgt, src, tgtOfs) kstrdupex(tgt, src, 1, tgtOfs, FALSE)
+#define kstrdupao(tgt, src, add, tgtOfs) kstrdupex(tgt, src, add, tgtOfs, FALSE)
+#define kstrdupnul(tgt, src) kstrdupex(tgt, src, 1, 0, TRUE)
+
+
+LPCTSTR GetString(WORD uID);
 
 #endif
 
-#endif
