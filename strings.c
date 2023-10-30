@@ -22,21 +22,11 @@
 /****************************************************************************/
 
 
-#define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0400
-
-#include <windows.h>
+#include "include/metapad.h"
 #include <commctrl.h>
-#include <tchar.h>
-
 #ifdef UNICODE
 #include <wchar.h>
 #endif
-
-#include "include/resource.h"
-#include "include/globals.h"
-#include "include/macros.h"
-#include "include/encoding.h"
 
 
 #define WS_EX_LAYOUTRTL	0x00400000L
@@ -198,6 +188,7 @@ static const CHAR strings[] = ""
 /*		224		IDS_ENC_FAILED					*/	"\0Error converting to the selected codepage!\nThe data was instead saved as ANSI."
 /*		225		IDS_FILE_SAVING					*/	"\0Saving file..."
 /*		226		IDS_LFMT_NORMALIZE				*/	"\0Normalize line endings now?"
+/*		430		IDS_UTILS_NOMEM					*/	"\0Out of memory!"
 /*		441		IDS_DECODEBASE_BADLEN			*/	"\0Invalid code string length!"
 /*		442		IDS_DECODEBASE_BADCHAR			*/	"\0Invalid code characters!"
 /*		490		IDS_MIGRATED					*/	"\0Migration to INI completed."
@@ -227,6 +218,8 @@ static const CHAR strings[] = ""
 /*		518		IDS_FILTER_EXEC					*/	"\0Executable Files (*.exe)|*.exe|All Files (*.*)|*.*|"
 /*		519		IDS_FILTER_PLUGIN				*/	"\0metapad language plugins (*.lng, *.dll)|*.lng;*.dll|All Files (*.*)|*.*|"
 /*		520		IDS_LOADLNG_ERROR				*/	"\0Error loading language plugin on line %s: ID number missing or out of range or invalid escape sequence"
+/*		590		STR_DEBUG_PATH					*/	"\0R:\\TEMP\\metapadd.log"
+/*		591		STR_DEBUG_BADFREE				*/	"\0BAD FREE%d %08X:%08X:"
 /*		600		IDSS_WSTATE						*/	"\0w_WindowState"
 /*		601		IDSS_WLEFT						*/	"\0w_Left"
 /*		602		IDSS_WTOP						*/	"\0w_Top"
@@ -322,6 +315,7 @@ static const CHAR strings[] = ""
 /*		680		IDSS_INSERTARRAY				*/	"\0szInsertArray%d"
 /*		681		IDSS_LASTDIRECTORY				*/	"\0szLastDirectory"
 /*		682		IDSS_DIGITGRP					*/	"\0bDigitGrp"
+/*		699		IDSS_DEBUG						*/	"\0bDebug"
 /*		756		IDSD_QUOTE						*/	"\0> "
 /*		757		IDSD_CUSTOMDATE					*/	"\0yyyyMMdd-HHmmss "
 /*		1001	IDC_OK							*/	"\0OK"
@@ -601,7 +595,7 @@ static const CHAR strings[] = ""
 	Import:	\n->\n/*\t		(~A->\t~A)		~A\t->		~B\t->\t\t\t*\/\t"\\0		\n->"\n		`->		(*\/->\t*\/)	(\t*\/->*\/)
 	Export:
 */
-static WORD stringsidx[] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,7,1,9,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,214,0,47,0,0,0,0,0,2,0,0,0,0,3,0,0,0,0,0,0,0,0,3,0,0,79,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,73,0,243,0,10,1,21,2,0,1,1,0,29,1,7,0,0,0,0,0,0,447,0,4,0,1,0,0,0,486,0,7,0,39,0,18,1,0,5,19091,0,4,13,0,0,0,0,0,0,1,2,1176,0,0,0,1,0,25,2,2,0,0,0,6,0,13,1519,0,53,0,14,28,0,21,0,0,475,0,0,0,69,60,4,0,0,0,0,0,0,0,0,9,0,6,0,0,0,0,0,0,0,0,0,0,0,322,0,6105,1,1,2,1,2,1,78,98,999,8,8,0,1689,790,20,4,0,1,71,1,1,1,92,2,1,4896,0,0,4,1,0,0,3,2,0,1,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,4,0,1,0,0,0,0,1,0,0,2,0,0,0,1,3,0,0,0,0,2,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,0,5,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,879,0,0,0,6,0,0,0,0,5,9,9,60,0,2987};
+static WORD stringsidx[] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,7,1,9,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,203,10,0,47,0,0,0,0,0,2,0,0,0,0,3,0,0,0,0,0,0,0,0,3,0,0,69,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16,56,0,243,0,10,1,21,2,0,1,1,0,29,1,7,0,0,0,0,0,0,447,0,4,0,1,0,0,0,486,0,7,0,39,0,18,1,0,5,19091,0,4,13,0,0,0,0,0,0,1,2,1176,0,0,0,1,0,25,2,2,0,0,0,6,0,13,1519,0,53,0,14,28,0,21,0,0,475,0,0,0,69,60,4,0,0,0,0,0,0,0,0,9,0,6,0,0,0,0,0,0,0,0,0,0,0,322,0,6105,1,1,2,1,2,1,78,98,999,8,8,0,1689,790,20,4,0,1,71,1,1,1,92,2,1,4896,0,0,4,1,0,0,3,2,0,1,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,4,0,1,0,0,0,0,1,0,0,2,0,0,0,1,3,0,0,0,0,2,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,0,5,0,84,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,879,0,0,0,6,0,0,0,0,5,9,9,60,0,2987};
 
 static LPTSTR pstrings = NULL;
 static WORD *pstringsidx = NULL, *pstringsofs = NULL;
@@ -650,7 +644,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
 #endif
 
 	if (!SCNUL(buf)[0]) return TRUE;
-	if (specials) FREE(*specials);
+	kfree(specials);
 	for (bout = buf; *buf; buf++, base = uni = expl = spi = 0, p++) {
 		if (*buf == _T('\\')) {
 			switch(*++buf){
@@ -677,7 +671,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
 			case _T('+'): if (!spi) spi = 5;
 			case _T('$'): if (!spi) spi = 6;
 				if (specials) {
-					if (!*specials) *specials = (LPBYTE)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, lstrlen(op)+1);
+					if (!*specials) *specials = (LPBYTE)kallocz(lstrlen(op)+1);
 					(*specials)[p] = spi;
 				}
 				if (spi == 6){
@@ -714,7 +708,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
 				if (uni == 1) mul *= 2;
 				if (sizeof(TCHAR) >= 2 && uni != 1) {
 					if (!dbufalloc) {
-						dbuf = (LPTSTR)HeapAlloc(globalHeap, 0, (MAXFIND + 2) * sizeof(TCHAR));
+						dbuf = kallocs(MAXFIND + 2);
 						dbufalloc = 1;
 					}
 				} else
@@ -757,7 +751,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
 				}
 				if (l == 0 && !expl) break;
 				if (!errContext) return FALSE;
-				szErr2 = (LPTSTR)HeapAlloc(globalHeap, 0, (MAXSTRING * 2 + 32) * sizeof(TCHAR));
+				szErr2 = kallocs(MAXSTRING * 2 + 32);
 				szErr3 = szErr2 + MAXSTRING * 2;
 				lstrcpy(szErr3, errContext);
 				switch(l) {
@@ -778,8 +772,8 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
 				lstrcat(szErr, szErr3);
 				lstrcat(szErr, _T("'"));
 				ERROROUT(szErr);
-				FREE(szErr2);
-				if (dbufalloc) FREE(dbuf);
+				kfree(&szErr2);
+				if (dbufalloc) kfree(&dbuf);
 				return FALSE;
 			}
 		}
@@ -787,7 +781,7 @@ BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
 		else		*buf--;
 	}
 	*bout = _T('\0');
-	if (dbufalloc) FREE(dbuf);
+	if (dbufalloc) kfree(&dbuf);
 	return TRUE;
 	// abcdefghijklmnopqrstuvwxyz _?*-+$
 	// xM Mxx       XM  XMxMxMM  M123456
@@ -802,12 +796,12 @@ BOOL LoadLng(LPTSTR filename, LPTSTR* str, WORD** stridx, WORD** strofs){
 	LPTSTR os, ds, np;
 	TCHAR c, pc = _T(' '), err[MAXSTRING];
 	LONG st, l, ct=0, smax=ARRLEN(stringsidx), lin=1;
-	FREE(*str);
-	FREE(*stridx);
-	FREE(*strofs);
+	kfree(str);
+	kfree(stridx);
+	kfree(strofs);
 	if (!LoadFile(filename, FALSE, FALSE, FALSE, 0, str) || !*str || !**str) return FALSE;
-	*stridx = (WORD*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, smax * sizeof(WORD));
-	*strofs = (WORD*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, smax * sizeof(WORD));
+	*stridx = (WORD*)kallocz(smax * sizeof(WORD));
+	*strofs = (WORD*)kallocz(smax * sizeof(WORD));
 	for (st=0, os=ds=*str; *os && ct < smax; os++, pc=c) {
 		if (st == 9) {
 			wsprintf(err, GetString(IDS_LOADLNG_ERROR), FormatNumber(lin, options.bDigitGrp, 0, 0));
@@ -819,7 +813,7 @@ BOOL LoadLng(LPTSTR filename, LPTSTR* str, WORD** stridx, WORD** strofs){
 			if (st == 4) {
 				*ds++ = 0;
 				ct++;
-				if (!ParseForEscapeSeqs(np, NULL, _T(""))) { st = 9; continue; }
+				if (!ParseForEscapeSeqs(np, NULL, kemptyStr)) { st = 9; continue; }
 				ds = np+lstrlen(np)+1;
 				//if ((*stridx)[ct++] == upto) break;
 			}
@@ -865,9 +859,9 @@ BOOL HaveLanguagePlugin(){
 	return pstringsidx || (hinstLang && hinstThis != hinstLang);
 }
 void UnloadLanguagePlugin(){
-	FREE(pstrings);
-	FREE(pstringsidx);
-	FREE(pstringsofs);
+	kfree(&pstrings);
+	kfree(&pstringsidx);
+	kfree(&pstringsofs);
 	if (hinstLang && hinstLang != hinstThis)
 		FreeLibrary(hinstLang);
 	hinstLang = NULL;
@@ -888,7 +882,7 @@ BOOL LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin, BOOL checkver, HINSTANCE* hin
 	else
 		*hinstTemp = (HINSTANCE)LoadLng((LPTSTR)szPlugin, &pstr, &pstridx, &pstrofs);
 	if (!*hinstTemp) {
-		if (!dll) { FREE(pstr); FREE(pstridx); }
+		if (!dll) { kfree(&pstr); kfree(&pstridx); }
 		ERROROUT(GetString(IDS_INVALID_PLUGIN_ERROR));
 		return FALSE;
 	}
@@ -897,7 +891,7 @@ BOOL LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin, BOOL checkver, HINSTANCE* hin
 	else
 		pplugVer = GetStringEx(IDS_VERSION_SYNCH, dlen, NULL, pstridx, pstrofs, pstr, &dlen, NULL);
 	if (!pplugVer || !*pplugVer) {
-		if (!dll) { FREE(pstr); FREE(pstridx); }
+		if (!dll) { kfree(&pstr); kfree(&pstridx); }
 		else FreeLibrary(*hinstTemp);
 		ERROROUT(GetString(IDS_BAD_STRING_PLUGIN_ERROR));
 		return FALSE;
@@ -981,14 +975,8 @@ LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, WORD* dictidx, WORD*
 	LPTSTR cp;
 	if (dictidx[0]>=dictidx[1])
 		ExpandDifMap(dictidx, sizeof(*dictidx), total);
-	for (i=0, j=total, idx=total/2; i<j; idx = ((j-i)/2)+i){
-		if (dictidx[idx] > uID)
-			j = idx; 
-		else if (dictidx[idx] < uID)
-			i = idx+1;
-		else break;
-	}
-	if (i >= j) return def;
+	if (0 > (SHORT)(idx = kbinsearch((LPVOID*)dictidx, (LPVOID)uID, sizeof(uID), 0, total, FALSE)))
+		return def;
 	while(1) {
 		for (i = *ofspop, j = dictofs[i], sp = dict+j, cp = dictcache+j; i <= idx; i++) {
 			for (j=1; *sp; j++)
@@ -1011,16 +999,16 @@ LPCTSTR GetString(WORD uID) {
 	static LPTSTR szRsrc = NULL;
 	LPTSTR sz = NULL;
 	if (hinstLang && hinstThis != hinstLang && uID > IDS_VERSION_SYNCH && (uID < NONLOCALIZED_BASE || uID > NONLOCALIZED_END) && LoadString(hinstLang, uID, (LPTSTR)&sz, 0)) {
-		if (!szRsrc) szRsrc = (LPTSTR)HeapAlloc(globalHeap, 0, MAXSTRING * sizeof(TCHAR));
+		if (!szRsrc) szRsrc = kallocs(MAXSTRING);
 		LoadString(hinstLang, uID, szRsrc, MAXSTRING);
 		return szRsrc;
 	}
 	if (pstringsidx && uID > IDS_VERSION_SYNCH && (uID < NONLOCALIZED_BASE || uID > NONLOCALIZED_END) && (sz = (LPTSTR)GetStringEx(uID, l, NULL, pstringsidx, pstringsofs, pstrings, &l, NULL)) && *sz) {
 		if (uID < IDC_BASE) return sz;
-		if (!szRsrc) szRsrc = (LPTSTR)HeapAlloc(globalHeap, 0, MAXSTRING * sizeof(TCHAR));
-		return AlterMenuAccelText(sz, GetStringEx(uID, l, (LPSTR)strings, stringsidx, ofs, strcache, &ofspop, _T("")), szRsrc);
+		if (!szRsrc) szRsrc = kallocs(MAXSTRING);
+		return AlterMenuAccelText(sz, GetStringEx(uID, l, (LPSTR)strings, stringsidx, ofs, strcache, &ofspop, kemptyStr), szRsrc);
 	}
-	return GetStringEx(uID, l, (LPSTR)strings, stringsidx, ofs, strcache, &ofspop, _T(""));
+	return GetStringEx(uID, l, (LPSTR)strings, stringsidx, ofs, strcache, &ofspop, kemptyStr);
 }
 
 
@@ -1034,8 +1022,8 @@ void LocalizeMenuItems(HMENU m, HMENU pm, WORD pos, WORD depth, LPTSTR tpbuf){
 	BOOL popup = FALSE;
 	mio.cbSize = sizeof(MENUITEMINFO);
 	if (pm && IsMenu(pm) && (pct = GetMenuItemCount(pm)) > 0) {
-		psub = (LPVOID*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, pct * sizeof(LPVOID));
-		pgpos = (WORD*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, pct * sizeof(WORD));
+		psub = (LPVOID*)kallocz(pct * sizeof(LPVOID));
+		pgpos = (WORD*)kallocz(pct * sizeof(WORD));
 		for (j=0, gpos=0; j<pct; j++) {
 			mio.fMask = MIIM_TYPE | MIIM_ID | MIIM_SUBMENU;
 			mio.fType = MFT_STRING;
@@ -1074,7 +1062,7 @@ void LocalizeMenuItems(HMENU m, HMENU pm, WORD pos, WORD depth, LPTSTR tpbuf){
 			gpos++;
 		}
 		if (!mio.dwTypeData || *mio.dwTypeData < _T(' ')) {
-			if (cmd) ts = GetString(cmd);
+			if (cmd && cmd < 0xffff) ts = GetString(cmd);
 			if (j<pct) {
 				mio.fMask = MIIM_TYPE;
 				mio.fType = MFT_STRING;
@@ -1097,8 +1085,8 @@ void LocalizeMenuItems(HMENU m, HMENU pm, WORD pos, WORD depth, LPTSTR tpbuf){
 			}
 		}
 	}
-	FREE(psub);
-	FREE(pgpos);
+	kfree(&(LPVOID)psub);
+	kfree(&pgpos);
 }
 
 HMENU LocalizeMenu(WORD mID) {
@@ -1108,11 +1096,11 @@ HMENU LocalizeMenu(WORD mID) {
 		return menu;
 	if (hinstLang && hinstThis != hinstLang) {
 		pmenu = LoadMenu(hinstLang, MAKEINTRESOURCE(mID));
-		pbuf = (LPTSTR)HeapAlloc(globalHeap, 0, MAXSTRING * sizeof(TCHAR));
+		pbuf = kallocs(MAXSTRING);
 	}
 	LocalizeMenuItems(menu, pmenu, IDM_BASE+(mID-IDR_BASE)*100+10, 10, pbuf);
 	if (pmenu) {
-		FREE(pbuf);
+		kfree(&pbuf);
 		DestroyMenu(pmenu);
 	}
 	return menu;
@@ -1219,7 +1207,7 @@ void LocalizeDialog(WORD dID, HWND dlg) {
 	if (dID == IDD_PROPPAGE_A1) dID = IDD_PROPPAGE_A1_LE;
 #endif
 	if (hinstLang && hinstLang != hinstThis && (pdlg = CreateDialog(hinstLang, MAKEINTRESOURCE(dID), dlg, NULL))) {
-		state.plist = (LDCList*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, sizeof(LDCList));
+		state.plist = (LDCList*)kallocz(sizeof(LDCList));
 		state.plist->parent = pdlg;
 		EnumChildWindows(pdlg, LocalizeDialogGather, (LPARAM)state.plist);
 		state.plist->gpos = 0;
@@ -1233,6 +1221,6 @@ void LocalizeDialog(WORD dID, HWND dlg) {
 	}
 	EnumChildWindows(dlg, LocalizeDialogItems, (LPARAM)&state);
 	EnumChildWindows(dlg, LDSetFont, (LPARAM)GetStockObject(DEFAULT_GUI_FONT));
-	FREE(state.plist);
+	kfree(&state.plist);
 	if (pdlg) DestroyWindow(pdlg);
 }

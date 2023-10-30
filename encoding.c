@@ -2,7 +2,7 @@
 /*                                                                          */
 /*   metapad 3.6+                                                           */
 /*                                                                          */
-/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2021-2024 SoBiT Corp                                     */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
@@ -35,6 +35,7 @@
 #include "include/globals.h"
 #include "include/resource.h"
 #include "include/macros.h"
+#include "include/utils.h"
 
 extern HWND hwnd;
 extern HANDLE globalHeap;
@@ -407,7 +408,7 @@ void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DW
 	if (lfmt != FC_LFMT_MIXED || !sz || !*sz || !(nLF + nSub)) return;
 	len = (chars && *chars) ? *chars : lstrlen(*sz);
 	osz = *sz;
-	odst = dst = (LPTSTR)HeapAlloc(globalHeap, 0, (len+nLF+nSub+1) * sizeof(TCHAR));
+	odst = dst = kallocs(len+nLF+nSub+1);
 	for ( ; len--; (*sz)++) {
 		if (**sz == _T('\n') || **sz == _T('\x14'))
 			*dst++ = _T('\x14');
@@ -416,7 +417,7 @@ void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DW
 	*dst = _T('\0');
 	if (chars) *chars = dst - odst;
 	if (bufDirty) {
-		if (*bufDirty) FREE(osz)
+		if (*bufDirty) kfree(&osz);
 		*bufDirty = TRUE;
 	}
 	*sz = odst;
@@ -435,7 +436,7 @@ void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDi
 		}
 		osz = *sz;
 	}
-	if (lfmt == FC_LFMT_DOS && lines) odst = dst = (LPTSTR)HeapAlloc(globalHeap, 0, (len+lines+1) * sizeof(TCHAR));
+	if (lfmt == FC_LFMT_DOS && lines) odst = dst = kallocs(len+lines+1);
 	for ( ; len--; (*sz)++, *dst++) {
 		*dst = **sz;
 		if (lfmt == FC_LFMT_MIXED && **sz == _T('\x14')) {
@@ -450,7 +451,7 @@ void ExportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD lines, BOOL* bufDi
 	if (chars) *chars = dst - odst;
 	if (odst != osz) {
 		if (bufDirty) {
-			if (*bufDirty) FREE(osz)
+			if (*bufDirty) kfree(&osz);
 			*bufDirty = TRUE;
 		}
 		*sz = odst;
@@ -484,7 +485,7 @@ void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DW
 	if (lfmt == FC_LFMT_MIXED || !sz || !*sz || !nStrays) return;
 	len = (chars && *chars) ? *chars : lstrlen(*sz);
 	osz = *sz;
-	odst = dst = (LPTSTR)HeapAlloc(globalHeap, 0, (len+nStrays+1) * sizeof(TCHAR));
+	odst = dst = kallocs(len+nStrays+1);
 	for ( ; len--; cp = cc) {
 		if ((cc = *(*sz)++) == _T('\r') && **sz != _T('\n')) {
 			*dst++ = _T('\r'); *dst++ = _T('\n');
@@ -496,7 +497,7 @@ void ImportLineFmt(LPTSTR* sz, DWORD* chars, WORD lfmt, DWORD nCR, DWORD nLF, DW
 	*dst = _T('\0');
 	if (chars) *chars = dst - odst;
 	if (bufDirty) {
-		if (*bufDirty) FREE(osz)
+		if (*bufDirty) kfree(&osz);
 		*bufDirty = TRUE;
 	}
 	*sz = odst;
@@ -554,10 +555,9 @@ DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty) {
 #ifndef UNICODE
 		if (sizeof(TCHAR) < 2) {
 			bytes = WideCharToMultiByte(cp, 0, (LPCWSTR)*buf, chars, NULL, 0, NULL, NULL);
-			if (!(newbuf = (LPBYTE)HeapAlloc(globalHeap, 0, bytes+1))) {
-				ReportLastError();
+			if (!(newbuf = (LPBYTE)kalloc(bytes+1)))
 				return 0;
-			} else if (!WideCharToMultiByte(cp, 0, (LPCWSTR)*buf, chars, (LPSTR)newbuf, bytes, NULL, &bUsedDefault)) {
+			else if (!WideCharToMultiByte(cp, 0, (LPCWSTR)*buf, chars, (LPSTR)newbuf, bytes, NULL, &bUsedDefault)) {
 				ReportLastError();
 				ERROROUT(GetString(IDS_UNICODE_CONVERT_ERROR));
 				bytes = 0;
@@ -570,12 +570,11 @@ DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty) {
 		if (enc == FC_ENC_UTF8)
 			cp = CP_UTF8;
 		do {
-			FREE(newbuf);
+			kfree(&newbuf);
 			bytes = MultiByteToWideChar(cp, 0, *buf, chars, NULL, 0)*sizeof(TCHAR);
-			if (!(newbuf = (LPBYTE)HeapAlloc(globalHeap, 0, bytes+sizeof(TCHAR)))) {
-				ReportLastError();
+			if (!(newbuf = (LPBYTE)kalloc(bytes+sizeof(TCHAR))))
 				return 0;
-			} else if (!MultiByteToWideChar(cp, CanCPHaveInvalidCodes(cp) ? MB_ERR_INVALID_CHARS : 0, *buf, chars, (LPWSTR)newbuf, bytes)){
+			else if (!MultiByteToWideChar(cp, CanCPHaveInvalidCodes(cp) ? MB_ERR_INVALID_CHARS : 0, *buf, chars, (LPWSTR)newbuf, bytes)){
 				if (!MultiByteToWideChar(cp, 0, *buf, chars, (LPWSTR)newbuf, bytes)){
 					if (enc == FC_ENC_CODEPAGE) {
 						cp = CP_ACP;
@@ -594,7 +593,7 @@ DWORD DecodeText(LPBYTE* buf, DWORD bytes, DWORD* format, BOOL* bufDirty) {
 	}
 	if (newbuf) {
 		if (bufDirty) {
-			if (*bufDirty) FREE(*buf)
+			if (*bufDirty) kfree(buf);
 			*bufDirty = TRUE;
 		}
 		*buf = newbuf;
@@ -616,10 +615,9 @@ DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* t
 #ifndef UNICODE
 		if (sizeof(TCHAR) < 2) {
 			bytes = 2 * MultiByteToWideChar(cp, 0, (LPCSTR)*buf, chars, NULL, 0);
-			if (!(newbuf = (LPBYTE)HeapAlloc(globalHeap, 0, bytes+1))) {
-				ReportLastError();
+			if (!(newbuf = (LPBYTE)kalloc(bytes+1)))
 				return 0;
-			} else if (!MultiByteToWideChar(cp, 0, (LPCSTR)*buf, chars, (LPWSTR)newbuf, bytes)) {
+			else if (!MultiByteToWideChar(cp, 0, (LPCSTR)*buf, chars, (LPWSTR)newbuf, bytes)) {
 				ReportLastError();
 				ERROROUT(GetString(IDS_UNICODE_STRING_ERROR));
 				bytes = 0;
@@ -631,12 +629,11 @@ DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* t
 		if (enc == FC_ENC_UTF8)
 			cp = CP_UTF8;
 		do {
-			FREE(newbuf)
+			kfree(&newbuf);
 			bytes = WideCharToMultiByte(cp, 0, (LPTSTR)*buf, chars, NULL, 0, NULL, NULL);
-			if (!(newbuf = (LPBYTE)HeapAlloc(globalHeap, 0, bytes+1))) {
-				ReportLastError();
+			if (!(newbuf = (LPBYTE)kalloc(bytes+1)))
 				return 0;
-			} else if (!WideCharToMultiByte(cp, 0, (LPTSTR)*buf, chars, (LPSTR)newbuf, bytes, NULL, (cp != CP_UTF8 && CanCPHaveInvalidCodes(cp) && truncated ? truncated : NULL))) {
+			else if (!WideCharToMultiByte(cp, 0, (LPTSTR)*buf, chars, (LPSTR)newbuf, bytes, NULL, (cp != CP_UTF8 && CanCPHaveInvalidCodes(cp) && truncated ? truncated : NULL))) {
 				if (enc == FC_ENC_CODEPAGE) {
 					cp = CP_ACP;
 					ERROROUT(GetString(IDS_ENC_FAILED));
@@ -651,7 +648,7 @@ DWORD EncodeText(LPBYTE* buf, DWORD chars, DWORD format, BOOL* bufDirty, BOOL* t
 	}
 	if (newbuf) {
 		if (bufDirty) {
-			if (*bufDirty) FREE(*buf)
+			if (*bufDirty) kfree(buf);
 			*bufDirty = TRUE;
 		}
 		*buf = newbuf;

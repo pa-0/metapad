@@ -119,6 +119,7 @@
 224		Error converting to the selected codepage!\nThe data was instead saved as ANSI.
 225		Saving file...
 226		Normalize line endings now?
+430		Out of memory!
 441		Invalid code string length!
 442		Invalid code characters!
 490		Migration to INI completed.

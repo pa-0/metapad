@@ -26,21 +26,11 @@
  * @brief Settings saving functions.
  */
 
-#define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0400
-
-#include <windows.h>
-#include <tchar.h>
-
+#include "include/metapad.h"
 #ifdef UNICODE
 #include <wchar.h>
 #endif
 
-#include "include/consts.h"
-#include "include/globals.h"
-#include "include/macros.h"
-#include "include/metapad.h"
-#include "include/encoding.h"
 
 /**
  * Save an option.
@@ -81,10 +71,10 @@ BOOL SaveOption(HKEY hKey, LPCTSTR name, DWORD dwType, CONST LPBYTE lpData, DWOR
 				writeSucceeded = WritePrivateProfileString(GetString(STR_OPTIONS), name, (LPTSTR)szData, SCNUL(szMetapadIni));
 				break;
 			case REG_BINARY: {
-				TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, 0, 2 * (cbData + 1) * sizeof(TCHAR));
+				TCHAR *szBuffer = kallocs(2 * (cbData + 1));
 				EncodeBase(64, lpData, szBuffer, cbData, NULL );
 				writeSucceeded = WritePrivateProfileString(GetString(STR_OPTIONS), name, (TCHAR*)szBuffer, SCNUL(szMetapadIni));
-				HeapFree(globalHeap, 0, szBuffer);
+				kfree(&szBuffer);
 				break;
 			}
 		}

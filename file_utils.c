@@ -21,17 +21,7 @@
 /*                                                                          */
 /****************************************************************************/
 
-#define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0400
-
-#include <windows.h>
-#include <tchar.h>
-
-#include "include/consts.h"
-#include "include/globals.h"
-#include "include/macros.h"
 #include "include/metapad.h"
-#include "include/encoding.h"
 
 
 
@@ -106,7 +96,7 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 				UpdateSavedInfo();
 		}
 		if (bufDirty)
-			FREE(buf);
+			kfree(&buf);
 
 		nFormat = format;
 	} else {
@@ -132,10 +122,10 @@ void SetFileFormat(DWORD format, WORD reinterp) {
 
 void MakeNewFile(void) {
 	bLoading = TRUE;
-	SetWindowText(client, _T(""));
+	SetWindowText(client, kemptyStr);
 	SwitchReadOnly(FALSE);
-	FREE(szFile);
-	FREE(szCaptionFile);
+	kfree(&szFile);
+	kfree(&szCaptionFile);
 	SetFileFormat(options.nFormat, 0);
 	bLoading = FALSE;
 	UpdateSavedInfo();
@@ -198,7 +188,7 @@ BOOL FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt) {
 		while (*++pdst) ;
 		FindClose(hHandle);
 	}
-	if (!*szTgt) *szTgt = (LPTSTR)HeapAlloc(globalHeap, 0, (pdst-dst+9) * sizeof(TCHAR));
+	if (!*szTgt) *szTgt = kallocs(pdst-dst+9);
 	lstrcpy(*szTgt, dst);
 	return bOK;
 }
@@ -213,7 +203,7 @@ BOOL GetReadableFilename(LPCTSTR lfn, LPTSTR* dst){
 		}
 	}
 	if (!*dst) {
-		SSTRCPY(*dst, lfn);
+		kstrdup(dst, lfn);
 	} else
 		*dst = (LPTSTR)lfn;
 	if (unc) **dst = _T('\\');
@@ -233,7 +223,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* lin
 	CHARRANGE lcr = {0};
 	if (len) *len = 0;
 	if (linecr) *linecr = lcr;
-	if (max <= min && max >= 0) return _T("");
+	if (max <= min && max >= 0) return kemptyStr;
 	if (bLoading) return szShadow;
 	if (bDirtyShadow || !szShadow || !shadowLen || shadowLine >= 0) {
 #ifdef USE_RICH_EDIT
@@ -241,19 +231,16 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* lin
 #else
 		l = shadowLen = GetWindowTextLength(client);
 #endif
-		if (l < 1) return _T("");
+		if (l < 1) return kemptyStr;
 		if (l+10 > shadowAlloc || (shadowAlloc / 4 > l+10)) {
 			//printf("\nA%d!", l);
 			shadowAlloc = ((l+10) / 2) * 3;
 			if (szShadow) {
 				szShadow -= 8;
-				FREE(szShadow);
+				kfree(&szShadow);
 			}
-			szShadow = (LPTSTR)HeapAlloc(globalHeap, 0, shadowAlloc * sizeof(TCHAR));
-			if (!szShadow) {
-				ReportLastError();
-				return _T("");
-			}
+			if (!(szShadow = kallocs(shadowAlloc)))
+				return kemptyStr;
 			szShadow += 8;	//The extra leading bytes are used in: EditProc() -> case WM_CHAR (autoindent newline insertion)
 		}
 		if (line < 0 && min <= max && max >= 0) {
@@ -272,7 +259,7 @@ LPCTSTR GetShadowRange(LONG min, LONG max, LONG line, DWORD* len, CHARRANGE* lin
 			if (linecr) *linecr = lcr;
 			if (max < min) { min = lcr.cpMin; max = lcr.cpMax; }
 		}
-		if (l < 1) return _T("");
+		if (l < 1) return kemptyStr;
 		if (line >= 0) {
 			if (bDirtyShadow || shadowLine != line) {
 				//printf("l%d:%d-%d-",line,lcr.cpMin, l);
@@ -633,7 +620,6 @@ BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE 
 
 
 
-
 DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPCTSTR szRepl, LPBYTE pbFindSpec, LPBYTE pbReplSpec, BOOL bCase, BOOL bWholeWord, DWORD maxMatch, DWORD maxLen, BOOL matchLen){
 	//0123456
 	// _?*-+$
@@ -645,7 +631,7 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 	if (!szIn || !szFind || !*szFind) return ct;
 	ilen = (len = alen = (bufLen && *bufLen >= 0 ? *bufLen : lstrlen(szIn))) + 1;
 	if (len < 1) return ct;
-	dst = odst = (LPTSTR)HeapAlloc(globalHeap, 0, (alen+1) * sizeof(TCHAR));
+	dst = odst = kallocs(alen+1);
 	szRepl = SCNUL(szRepl);
 	lf = lstrlen(szFind);
 	lr = lstrlen(szRepl);
@@ -655,8 +641,8 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 		for (k = 0; ++k < 6; ) {
 			globs[k] = globe[k] = NULL;
 			if (nglob[k] = MIN(nglob[k], cglob[k])) {
-				globs[k] = (LPCTSTR*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nglob[k] * sizeof(LPCTSTR*));
-				globe[k] = (LPCTSTR*)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, nglob[k] * sizeof(LPCTSTR*));
+				globs[k] = (LPCTSTR*)kallocz(nglob[k] * sizeof(LPCTSTR*));
+				globe[k] = (LPCTSTR*)kallocz(nglob[k] * sizeof(LPCTSTR*));
 				gu = 1;
 			}
 		}
@@ -695,7 +681,7 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 			if (++cf == lf || (matchLen && maxLen && (DWORD)(dst-pd+1) >= maxLen)) {
 				if ((!maxLen || (DWORD)(dst-pd) < maxLen) && (!bWholeWord || ( (pd == odst || !(_istalnum(*(pd-1)) || *(pd-1) == _T('_'))) && !(*(szIn+1) && (_istalnum(*(szIn+1)) || *(szIn+1) == _T('_'))) ))) {
 					len += (pd - dst) + lr - 1;
-					GROWBUF(odst, dst, len, alen, pd, LPTSTR, TCHAR);
+					if (len > alen) kgrowbuf(&odst, sizeof(TCHAR), len, &alen, &pd, 1);
 					if (pbReplSpec) {
 						if (gu) memset(cglob, 0, sizeof(cglob));
 						for(cf = 0, lg = 0, dst = pd; cf < lr; cf++, lg++){
@@ -703,10 +689,10 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 								if (globs[k][cglob[k]%nglob[k]])
 									lg += (cg = (globe[k][cglob[k]%nglob[k]] - globs[k][cglob[k]%nglob[k]])) - 1;
 								else {
-									globs[k][cglob[k]%nglob[k]] = _T("");
+									globs[k][cglob[k]%nglob[k]] = kemptyStr;
 									lg--; cg = 0;
 								}
-								GROWBUF(odst, dst, (len + lg), alen, pd, LPTSTR, TCHAR);
+								if (len > alen) kgrowbuf(&odst, sizeof(TCHAR), len, &alen, &pd, 1);
 								lstrcpyn(pd, globs[k][cglob[k]++%nglob[k]], cg + 1);
 								pd += cg;
 							} else if (pbReplSpec[cf] == 6) {
@@ -792,13 +778,13 @@ DWORD StrReplace(LPCTSTR szIn, LPTSTR* szOut, DWORD* bufLen, LPCTSTR szFind, LPC
 	*dst = _T('\0');
 	if (bufLen) *bufLen = len;
 	if (szOut) {
-		FREE(*szOut);
+		kfree(szOut);
 		*szOut = odst;
 	}
 	if (gu)
 		for (k = 0; ++k < 6; ) {
-			FREE(globs[k]);
-			FREE(globe[k]);
+			kfree(&(LPTSTR)globs[k]);
+			kfree(&(LPTSTR)globe[k]);
 		}
 	return ct;
 }
@@ -823,7 +809,7 @@ DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* 
 	} else
 		szIn = GetShadowBuffer(&l);
 	if (lh || lf) {
-		szTmp = (LPTSTR)HeapAlloc(globalHeap, 0, (l + lh + lf + 1) * sizeof(TCHAR));
+		szTmp = kallocs(l + lh + lf + 1);
 		if (lh) lstrcpy(szTmp, header);
 		lstrcpy(szTmp + lh, szIn);
 		if (lf) lstrcpy(szTmp+lh+l, footer);
@@ -855,8 +841,8 @@ DWORD ReplaceAll(HWND owner, DWORD nOps, DWORD recur, LPCTSTR* szFind, LPCTSTR* 
 			SetSelection(cr);
 		}
 	}
-	FREE(szTmp);
-	FREE(szBuf);
+	kfree(&szTmp);
+	kfree(&szBuf);
 	SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
 	InvalidateRect(client, NULL, TRUE);
 	SetCursor(hCur);

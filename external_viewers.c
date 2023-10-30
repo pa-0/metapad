@@ -26,16 +26,8 @@
  * @brief External viewers functions.
  */
 
-#define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0400
-
-#include <windows.h>
-#include <tchar.h>
-#include <shellapi.h>
-
-#include "include/globals.h"
-#include "include/macros.h"
 #include "include/metapad.h"
+#include <shellapi.h>
 
 /**
  * Try to execute a third party program.
@@ -46,17 +38,11 @@
  */
 BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine) {
 	LPTSTR lpFormat;
-	LPTSTR szCmdLine = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(lpExecutable)+lstrlen(lpCommandLine)+5) * sizeof(TCHAR));
-
-	if (lpExecutable[0] == _T('"') && lpExecutable[lstrlen(lpExecutable) - 1] == _T('"')) {
-		// quotes already present
-		lpFormat = _T("%s %s");
-	}
-	else {
-		// executable file must be quoted to conform to Win32 file name specs.
-		lpFormat = _T("\"%s\" %s");
-	}
-
+	LPTSTR szCmdLine = kallocsz(lstrlen(lpExecutable)+lstrlen(lpCommandLine)+5);
+	if (lpExecutable[0] == _T('"') && lpExecutable[lstrlen(lpExecutable) - 1] == _T('"'))
+		lpFormat = _T("%s %s");			// quotes already present
+	else
+		lpFormat = _T("\"%s\" %s");		// executable file must be quoted to conform to Win32 file name specs.
 	wsprintf(szCmdLine, lpFormat, lpExecutable, lpCommandLine);
 
 	if (lstrcmpi(lpExecutable + (lstrlen(lpExecutable) - 4), _T(".exe")) != 0) {
@@ -72,17 +58,14 @@ BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine) {
 		si.cb = sizeof(STARTUPINFO);
 		si.wShowWindow = SW_SHOWNORMAL;
 		si.dwFlags = STARTF_USESHOWWINDOW;
-
-		if (!CreateProcess(lpExecutable, szCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+		if (!CreateProcess(lpExecutable, szCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
 			return FALSE;
-		}
-		else {
-			// We don't use the handles so close them now
+		else {	// We don't use the handles so close them now
 			CloseHandle(pi.hProcess);
 			CloseHandle(pi.hThread);
 		}
 	}
-	HeapFree(globalHeap, 0, szCmdLine);
+	kfree(&szCmdLine);
 	return TRUE;
 }
 

@@ -26,20 +26,11 @@
  * @brief Settings loading functions.
  */
 
-#define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0400
-
-#include <windows.h>
-#include <tchar.h>
+#include "include/metapad.h"
 #ifdef UNICODE
 #include <wchar.h>
 #endif
 
-#include "include/consts.h"
-#include "include/globals.h"
-#include "include/macros.h"
-#include "include/metapad.h"
-#include "include/encoding.h"
 
 /**
  * Load a binary option.
@@ -57,11 +48,11 @@ static void LoadOptionBinary(HKEY hKey, LPCTSTR name, LPBYTE lpData, DWORD cbDat
 	}
 	else {
 		UINT l = (cbData + 1) * sizeof(TCHAR) * 2;
-		TCHAR *szBuffer = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, l);
+		TCHAR *szBuffer = (LPTSTR)kallocz(l);
 		EncodeBase(64, lpData, szBuffer, cbData, NULL );
 		if (GetPrivateProfileString(GetString(STR_OPTIONS), name, szBuffer, szBuffer, l, SCNUL(szMetapadIni)) > 0)
 			DecodeBase(64, szBuffer, lpData, -1, 0, 1, TRUE, NULL );
-		HeapFree(globalHeap, 0, szBuffer);
+		kfree(&szBuffer);
 	}
 }
 
@@ -74,45 +65,21 @@ void LoadOptions(void) {
 	TCHAR keyname[20];
 	int i;
 
+	ZeroMemory(&options, sizeof(options));
 	options.nTabStops = 4;
 	options.rMargins.top = options.rMargins.bottom = options.rMargins.left = options.rMargins.right = 500;
 	options.nLaunchSave = options.nPrimaryFont = options.nSecondaryFont = 0;
 	options.bNoCaptionDir = options.bFindAutoWrap = options.bSaveWindowPlacement = options.bLaunchClose = options.bQuickExit = TRUE;
 	options.bAutoIndent = TRUE;
-	options.bInsertSpaces = FALSE;
 	options.bSystemColours = TRUE;
 	options.bSystemColours2 = TRUE;
 	options.bSaveMenuSettings = TRUE;
 	options.bSaveDirectory = TRUE;
-	options.bNoSmartHome = FALSE;
-	options.bNoAutoSaveExt = FALSE;
-	options.bContextCursor = FALSE;
-	options.bCurrentFindFont = FALSE;
-	options.bPrintWithSecondaryFont = FALSE;
-	options.bNoSaveHistory = FALSE;
-	options.bNoFindAutoSelect = FALSE;
-	options.bNoFaves = FALSE;
-
 	ZeroMemory(&options.PrimaryFont, sizeof(LOGFONT));
 	ZeroMemory(&options.SecondaryFont, sizeof(LOGFONT));
 	ZeroMemory(&options.MacroArray, sizeof(options.MacroArray));
-	options.szFavDir = NULL;
-	options.szQuote = NULL;
-	options.szCustomDate = NULL;
-	options.szCustomDate2 = NULL;
-	options.szArgs = NULL;
-	options.szArgs2 = NULL;
-	options.szBrowser = NULL;
-	options.szBrowser2 = NULL;
-	options.szLangPlugin = NULL;
-	options.bHideGotoOffset = FALSE;
-	options.bRecentOnOwn = FALSE;
-	options.bDontInsertTime = FALSE;
-	options.bNoWarningPrompt = FALSE;
 	options.bUnFlatToolbar = TRUE;
 	options.bDigitGrp = TRUE;
-	options.bStickyWindow = FALSE;
-	options.bReadOnlyMenu = FALSE;
 	//options.nStatusFontWidth = 16;
 	options.nSelectionMarginWidth = 10;
 	options.nMaxMRU = 8;
@@ -122,14 +89,8 @@ void LoadOptions(void) {
 	options.FontColour = GetSysColor(COLOR_WINDOWTEXT);
 	options.BackColour2 = GetSysColor(COLOR_WINDOW);
 	options.FontColour2 = GetSysColor(COLOR_WINDOWTEXT);
-
-#ifndef USE_RICH_EDIT
-	options.bDefaultPrintFont = FALSE;
-	options.bAlwaysLaunch = FALSE;
-#else
-	options.bHideScrollbars = FALSE;
-	options.bLinkDoubleClick = FALSE;
-	options.bSuppressUndoBufferPrompt = FALSE;
+#ifdef _DEBUG
+	options.bDebug = TRUE;
 #endif
 
 	if (!g_bIniMode) {
@@ -141,6 +102,7 @@ void LoadOptions(void) {
 	}
 
 	dwBufferSize = sizeof(int);
+	LoadOptionNumeric(key, GetString(IDSS_DEBUG), (LPBYTE)&options.bDebug, dwBufferSize);
 	LoadOptionNumeric(key, GetString(IDSS_HIDEGOTOOFFSET), (LPBYTE)&options.bHideGotoOffset, dwBufferSize);
 	LoadOptionNumeric(key, GetString(IDSS_SYSTEMCOLOURS), (LPBYTE)&options.bSystemColours, dwBufferSize);
 	LoadOptionNumeric(key, GetString(IDSS_SYSTEMCOLOURS2), (LPBYTE)&options.bSystemColours2, dwBufferSize);
@@ -244,20 +206,20 @@ void LoadOptions(void) {
  */
 void LoadOptionString(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData) {
 	DWORD clen = cbData + 1, buflen = clen * sizeof(TCHAR);
-	LPTSTR buf = (LPTSTR)HeapAlloc(globalHeap, 0, buflen);
+	LPTSTR buf = (LPTSTR)kalloc(buflen);
 	if (buf) {
 		buf[0] = _T('\0');
 		if (hKey) {
-			if (RegQueryValueEx(hKey, name, NULL, NULL, (LPBYTE)buf, &buflen)) { FREE(buf); }
+			if (RegQueryValueEx(hKey, name, NULL, NULL, (LPBYTE)buf, &buflen)) kfree(&buf);
 		} else GetPrivateProfileString(GetString(STR_OPTIONS), name, buf, buf, clen, SCNUL(szMetapadIni));
-		SSTRCPYA(*lpData, buf, 2);
-		FREE(buf);
+		kstrdupa(lpData, buf, 2);
+		kfree(&buf);
 	}
 }
 void LoadOptionStringDefault(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData, LPCTSTR defVal) {
 	LoadOptionString(hKey, name, lpData, cbData);
 	if (defVal && defVal[0] && (!*lpData || !*lpData[0])) {
-		SSTRCPYA(*lpData, defVal, 2);
+		kstrdupa(lpData, defVal, 2);
 	}
 }
 

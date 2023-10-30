@@ -25,18 +25,10 @@
  * @file file_save.c
  * @brief File saving functions.
  */
-#define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0400
 
-#include <windows.h>
-#include <commdlg.h>
-#include <tchar.h>
-
-#include "include/consts.h"
-#include "include/globals.h"
-#include "include/macros.h"
 #include "include/metapad.h"
-#include "include/encoding.h"
+#include <commdlg.h>
+
 
 
 
@@ -68,7 +60,7 @@ BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
 		if (enc == FC_ENC_BIN)
 			ExportBinary(szBuffer, nChars);
 		for ( ; 1; fail = FALSE) {
-			if (szEncd != szBuffer) FREE(szEncd);
+			if (szEncd != szBuffer) kfree(&szEncd);
 			szEncd = szBuffer;
 			nBytes = EncodeText((LPBYTE*)&szEncd, nChars, nFormat, NULL, &fail);
 			if (enc != FC_ENC_UTF8 && fail) {
@@ -83,7 +75,7 @@ BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
 			break;
 		}
 		if (szEncd != szBuffer) {
-			if (bufDirty) FREE(szBuffer);
+			if (bufDirty) kfree(&szBuffer);
 			bufDirty = TRUE;
 			szBuffer = szEncd;
 		}
@@ -112,15 +104,15 @@ BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
 			fail = TRUE;
 		}
 	}
-	if (bufDirty) FREE(szBuffer);
+	if (bufDirty) kfree(&szBuffer);
 	if (!fail){
 		if (szFile != szFilename){
-			SSTRCPY(szFile, szFilename);
-			SSTRCPY(szDir, szFilename);
+			kstrdup(&szFile, szFilename);
+			kstrdup(&szDir, szFilename);
 			szBuffer = lstrrchr(szDir, _T('\\'));
 			if (szBuffer) *szBuffer = _T('\0');
 		}
-		FREE(szCaptionFile);
+		kfree(&szCaptionFile);
 		if (bMRU){
 			GetReadableFilename(szFilename, (LPTSTR*)&szFilename);
 			SaveMRUInfo(szFilename);

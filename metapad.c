@@ -40,12 +40,12 @@
 #define TM_ENCODING TM_SINGLECODEPAGE
 #endif
 
-#include <windows.h>
+#include "include/metapad.h"
 #include <shellapi.h>
 #include <commdlg.h>
 #include <commctrl.h>
 #include <winuser.h>
-#include <tchar.h>
+
 
 #ifndef TBSTYLE_FLAT
 #define TBSTYLE_FLAT 0x0800
@@ -63,11 +63,8 @@
 
 //#pragma comment(linker, "/OPT:NOWIN98" )
 
-#include "include/consts.h"
-#include "include/globals.h"
-#include "include/macros.h"
-#include "include/metapad.h"
-#include "include/encoding.h"
+
+
 
 
 
@@ -77,7 +74,6 @@ HINSTANCE hinstThis = NULL;
 UINT_PTR tmrUpdate = 0;
 WNDPROC wpOrigFindProc = NULL;
 int _fltused = 0x9875; // see CMISCDAT.C for more info on this
-TCHAR gTmpBuf[MAX(MAX(MAXFN*2+MAXSTRING*2,MAXMACRO),MAX(MAXFIND,MAXINSERT))];
 
 
 
@@ -104,7 +100,7 @@ void CleanUp(void)
 	tmrUpdate = 0;
 	if (szShadow) {
 		szShadow -= 8;
-		FREE(szShadow);
+		kfree(&szShadow);
 	}
 	if (hrecentmenu) DestroyMenu(hrecentmenu);
 	if (hfontmain) DeleteObject(hfontmain);
@@ -210,22 +206,12 @@ void CreateToolbar(void)
 	}
 }
 
-void CreateStatusbar(void)
-{
+void CreateStatusbar(void) {
 	RECT rect;
 	int nPaneSizes[NUMSTATPANES] = {0};
-
-	status = CreateWindowEx(
-		WS_EX_DLGMODALFRAME,
-		STATUSCLASSNAME,
-		_T(""),
+	status = CreateWindowEx(WS_EX_DLGMODALFRAME, STATUSCLASSNAME, kemptyStr,
 		WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS | SBT_NOBORDERS | SBARS_SIZEGRIP,
-		0, 0, 0, 0,
-		hwnd,
-		(HMENU) ID_STATUSBAR,
-		hinstThis,
-		NULL);
-
+		0, 0, 0, 0, hwnd, (HMENU)ID_STATUSBAR, hinstThis, NULL);
 	SendMessage(status, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
 	GetWindowRect(status, &rect);
 	nStatusHeight = rect.bottom - rect.top - 5;
@@ -332,12 +318,12 @@ void UpdateCaption(void) {
 	if (!szCaptionFile) {
 		if (szFile && *szFile){
 			GetReadableFilename(szFile, &sz);
-			SSTRCPYAO(szCaptionFile, sz, 32, 8);
-			FREE(sz);
+			kstrdupao(&szCaptionFile, sz, 32, 8);
+			kfree(&sz);
 			if (options.bNoCaptionDir && (sz = lstrrchr(szCaptionFile+8, _T('\\'))))
 				lstrcpy(szCaptionFile+8, sz+1);
 		} else
-			SSTRCPYAO(szCaptionFile, GetString(IDS_NEW_FILE), 32, 8);
+			kstrdupao(&szCaptionFile, GetString(IDS_NEW_FILE), 32, 8);
 		szCaptionFile[5] = szCaptionFile[7] = _T(' ');
 		szCaptionFile[6] = _T('*');
 		u = (USHORT)lstrlen(szCaptionFile+8);
@@ -687,7 +673,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_INSERTSTRING, 0, (WPARAM)szTmp);
 					SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_SETCURSEL, (LPARAM)0, 0);
 					if (!bNoFindHidden && !ParseForEscapeSeqs(szTmp, &pbReplaceTextSpec, GetString(IDS_ESCAPE_CTX_REPLACE))) return FALSE;
-					SSTRCPY(szReplaceText, szTmp);
+					kstrdup(&szReplaceText, szTmp);
 				case ID_FIND:
 					SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, WM_GETTEXT, MAXFIND, (WPARAM)szTmp);
 					nPos = SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_FINDSTRINGEXACT, 0, (WPARAM)szTmp);
@@ -703,7 +689,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					bMatchCase = SendDlgItemMessage(hdlgFind, 0x411, BM_GETCHECK, 0, 0);
 					bDown = (frDlgId != ID_FIND || SendDlgItemMessage(hdlgFind, 0x421, BM_GETCHECK, 0, 0));
 					if (!bNoFindHidden && !ParseForEscapeSeqs(szTmp, &pbFindTextSpec, GetString(IDS_ESCAPE_CTX_FIND))) return FALSE;
-					SSTRCPY(szFindText, szTmp);
+					kstrdup(&szFindText, szTmp);
 					break;
 				case ID_INSERT_TEXT:
 				case ID_PASTE_MUL:
@@ -727,7 +713,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					if (!bNoFindHidden && !ParseForEscapeSeqs(szTmp, NULL, GetString(IDS_ESCAPE_CTX_INSERT))) return FALSE;
 					if (!(i = lstrlen(szTmp)))
 						return FALSE;
-					SSTRCPY(szInsert, szTmp);
+					kstrdup(&szInsert, szTmp);
 					if (!options.bNoWarningPrompt && (LONGLONG)i * j > LARGEPASTEWARN) {
 						wsprintf(szTmp, GetString(IDS_LARGE_PASTE_WARNING), FormatNumber((LONGLONG)i * j, options.bDigitGrp, 0, 0));
 						nPos = MessageBox(hdlgFind, szTmp, GetString(STR_METAPAD), MB_ICONQUESTION|MB_OKCANCEL);
@@ -737,18 +723,15 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					
 					//GetLineFmt(szInsert, l1, 0, &i, &j, &k, &nPos, NULL);
 					//ImportLineFmt(&szInsert, &l1, (nFormat >> 16) & 0xfff, i, j, k, nPos, &bOkEna);
-					szNew = (LPTSTR)HeapAlloc(globalHeap, 0, ((LONGLONG)i * j + 1) * sizeof(TCHAR));
-					if (!szNew) {
-						ReportLastError();
+					if (!(szNew = kallocs((LONGLONG)i * j + 1)))
 						return FALSE;
-					}
 					for (sz = szNew, i = lstrlen(szInsert); j; j--, sz += i)
 						lstrcpy(sz, szInsert);
 					*sz = _T('\0');
 					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szNew);
 					bCloseAfterInsert = (BST_CHECKED == SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_INSERT, BM_GETCHECK, 0, 0));
 					if (bCloseAfterInsert) PostMessage(hdlgFind, WM_CLOSE, 0, 0);
-					FREE(szNew);
+					kfree(&szNew);
 					QueueUpdateStatus();
 				default:
 					return FALSE;
@@ -785,12 +768,12 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 				case ID_REPLACE:
 					for (i = 0, j = MIN(NUMFINDS, SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_GETCOUNT, 0, 0)); i < j; i++) {
 						SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_GETLBTEXT, i, (WPARAM)szTmp);
-						SSTRCPY(ReplaceArray[i], szTmp);
+						kstrdup(&ReplaceArray[i], szTmp);
 					}
 				case ID_FIND:
 					for (i = 0, j = MIN(NUMFINDS, SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_GETCOUNT, 0, 0)); i < j; i++) {
 						SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_GETLBTEXT, i, (WPARAM)szTmp);
-						SSTRCPY(FindArray[i], szTmp);
+						kstrdup(&FindArray[i], szTmp);
 					}
 					bWholeWord = SendDlgItemMessage(hdlgFind, 0x410, BM_GETCHECK, 0, 0);
 					bMatchCase = SendDlgItemMessage(hdlgFind, 0x411, BM_GETCHECK, 0, 0);
@@ -799,7 +782,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 				case ID_INSERT_TEXT:
 					for (i = 0, j = MIN(NUMINSERTS, SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_GETCOUNT, 0, 0)); i < j; i++) {
 						SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_GETLBTEXT, i, (WPARAM)szTmp);
-						SSTRCPY(InsertArray[i], szTmp);
+						kstrdup(&InsertArray[i], szTmp);
 					}
 					break;
 			}
@@ -807,7 +790,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			if (wpOrigFindProc) SetWindowLongPtr(hdlgFind, GWLP_WNDPROC, (LONG_PTR)wpOrigFindProc);
 			hdlgFind = NULL;
 			frDlgId = -1;
-			FREE(szInsert);
+			kfree(&szInsert);
 			break;
 		}
 		break;
@@ -1487,8 +1470,8 @@ void SaveMRUInfo(LPCTSTR szFullPath)
 	if (key)
 		RegCloseKey(key);
 	PopulateMRUList();
-	FREE(szBuffer);
-	FREE(szTopVal);
+	kfree(&szBuffer);
+	kfree(&szTopVal);
 }
 
 void PopulateFavourites(void) {
@@ -1504,7 +1487,7 @@ void PopulateFavourites(void) {
 		DeleteMenu(hsub, 4, MF_BYPOSITION);
 	mio.cbSize = sizeof(MENUITEMINFO);
 	mio.fMask = MIIM_TYPE | MIIM_ID;
-	szBuffer = (LPTSTR)HeapAlloc(globalHeap, 0, 0xffff*sizeof(TCHAR));
+	szBuffer = kallocs(0xffff);
 
 	if (GetPrivateProfileString(GetString(STR_FAV_APPNAME), NULL, NULL, szBuffer, 0xffff, SCNUL(szFav))) {
 		bHasFaves = TRUE;
@@ -1531,7 +1514,7 @@ void PopulateFavourites(void) {
 			if (szBuffer[i] == 0 && szBuffer[i+1] == 0) break;
 		}
 	}
-	FREE(szBuffer);
+	kfree(&szBuffer);
 }
 
 void PopulateMRUList(void)
@@ -1600,7 +1583,7 @@ void PopulateMRUList(void)
 	if (key != NULL) {
 		RegCloseKey(key);
 	}
-	FREE(szBuff2);
+	kfree(&szBuff2);
 }
 
 void CenterWindow(HWND hwndCenter)
@@ -1662,8 +1645,8 @@ void SelectWord(LPTSTR* target, BOOL bSmart, BOOL bAutoSelect)
 		if (bAutoSelect || cr.cpMin != cr.cpMax) {
 			if (target) {
 				lLineLen = MIN(cr.cpMax - cr.cpMin, MAXFIND);
-				FREE(*target);
-				*target = (LPTSTR)HeapAlloc(globalHeap, 0, (lLineLen+1) * sizeof(TCHAR));
+				kfree(target);
+				*target = kallocs(lLineLen+1);
 				lstrcpyn(*target, szBuf + cr.cpMin, lLineLen+1);
 				(*target)[lLineLen] = _T('\0');
 			}
@@ -1833,10 +1816,10 @@ void SetTabStops(void) {
 		pf.rgxTabs[ct] = (ct+1) * nTmp;
 
 	ts = GetShadowBuffer(NULL);
-	SendMessage(client, WM_SETTEXT, 0, (LPARAM)_T(""));
+	SendMessage(client, WM_SETTEXT, 0, (LPARAM)kemptyStr);
 	if (!SendMessage(client, EM_SETPARAFORMAT, 0, (LPARAM)(PARAFORMAT FAR *)&pf))
 		ERROROUT(GetString(IDS_PARA_FORMAT_ERROR));
-	SendMessage(client, WM_SETTEXT, 0, (LPARAM)_T(""));
+	SendMessage(client, WM_SETTEXT, 0, (LPARAM)kemptyStr);
 	SendMessage(client, WM_SETTEXT, 0, (LPARAM)ts);
 
 	SendMessage(client, EM_EXSETSEL, 0, (LPARAM)&cr);
@@ -1960,13 +1943,13 @@ BOOL CreateMainMenu(HWND hwnd) {
 		if (SCNUL(options.szFavDir)[0] == _T('\0') || (handle = FindFirstFile(options.szFavDir, &FindFileData)) == INVALID_HANDLE_VALUE) {
 			TCHAR* pch;
 			GetModuleFileName(hinstThis, bufFn, MAXFN);
-			SSTRCPYA(szFav, bufFn, lstrlen(GetString(STR_FAV_FILE))+4);
+			kstrdupa(&szFav, bufFn, lstrlen(GetString(STR_FAV_FILE))+4);
 			pch = lstrrchr(szFav, _T('\\'));
 			++pch;
 			*pch = _T('\0');
 		} else {
 			FindClose(handle);
-			SSTRCPYA(szFav, options.szFavDir, lstrlen(GetString(STR_FAV_FILE))+4);
+			kstrdupa(&szFav, options.szFavDir, lstrlen(GetString(STR_FAV_FILE))+4);
 			lstrcat(szFav, _T("\\"));
 		}
 		lstrcat(szFav, GetString(STR_FAV_FILE));
@@ -2140,7 +2123,7 @@ BOOL CALLBACK CPDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 				case IDOK:
 					GetDlgItemText(hwndDlg, IDC_DATA, buf, 16);
 					i = _ttol(buf);
-					if ((!i && (*buf < _T('0') || *buf > _T('9'))) || i < 0 || i > 0xffff || !MultiByteToWideChar(i, 0, (LPCSTR)_T(""), 1, NULL, 0)) {
+					if ((!i && (*buf < _T('0') || *buf > _T('9'))) || i < 0 || i > 0xffff || !MultiByteToWideChar(i, 0, (LPCSTR)kemptyStr, 1, NULL, 0)) {
 						ERROROUT(GetString(IDS_ENC_BAD));
 						SetFocus(hwndDlg);
 						break;
@@ -2202,7 +2185,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		wsprintf(szInt, _T("%d"), options.nMaxMRU);
 		SetDlgItemText(hwndDlg, IDC_EDIT_MAX_MRU, szInt);
 
-		if (SetWindowTheme) SetWindowTheme(GetDlgItem(hwndDlg, IDC_BUTTON_FORMAT),_T(""),_T(""));
+		if (SetWindowTheme) SetWindowTheme(GetDlgItem(hwndDlg, IDC_BUTTON_FORMAT),(LPTSTR)kemptyStr,(LPTSTR)kemptyStr);
 		SendDlgItemMessage(hwndDlg, IDC_BUTTON_FORMAT, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)CreateMappedBitmap(hinstThis, IDB_DROP_ARROW, 0, NULL, 0));
 		newFormat = options.nFormat;
 		LocalizeDialog(IDD_PROPPAGE_A1, hwndDlg);
@@ -2275,16 +2258,16 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		case IDC_BUTTON_CLEAR_FIND:
 			if (MessageBox(hwndDlg, GetString(IDS_CLEAR_FIND_WARNING), GetString(STR_METAPAD), MB_ICONEXCLAMATION | MB_OKCANCEL) == IDOK) {
 				for (i = 0; i < NUMFINDS; i++)
-					FREE(FindArray[i]);
+					kfree(&FindArray[i]);
 				for (i = 0; i < NUMFINDS; i++)
-					FREE(ReplaceArray[i]);
+					kfree(&ReplaceArray[i]);
 				for (i = 0; i < NUMINSERTS; i++)
-					FREE(InsertArray[i]);
+					kfree(&InsertArray[i]);
 				ZeroMemory(FindArray, sizeof(FindArray));
 				ZeroMemory(ReplaceArray, sizeof(ReplaceArray));
 				ZeroMemory(InsertArray, sizeof(InsertArray));
-				FREE(szFindText);
-				FREE(szReplaceText);
+				kfree(&szFindText);
+				kfree(&szReplaceText);
 			}
 			break;
 		case IDC_BUTTON_CLEAR_RECENT:
@@ -2399,13 +2382,13 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 			return TRUE;
 		case PSN_APPLY:
 			for (i = 0; i < 10; i++) {
-				GetDlgItemText(hwndDlg, IDC_MACRO_1+i, buf, MAXMACRO);	SSTRCPYNUL(options.MacroArray[i], buf);
+				GetDlgItemText(hwndDlg, IDC_MACRO_1+i, buf, MAXMACRO);	kstrdupnul(&options.MacroArray[i], buf);
 			}
-			GetDlgItemText(hwndDlg, IDC_CUSTOMDATE, buf, MAXDATEFORMAT);	SSTRCPYNUL(options.szCustomDate, buf);
-			GetDlgItemText(hwndDlg, IDC_CUSTOMDATE2, buf, MAXDATEFORMAT);	SSTRCPYNUL(options.szCustomDate2, buf);
+			GetDlgItemText(hwndDlg, IDC_CUSTOMDATE, buf, MAXDATEFORMAT);	kstrdupnul(&options.szCustomDate, buf);
+			GetDlgItemText(hwndDlg, IDC_CUSTOMDATE2, buf, MAXDATEFORMAT);	kstrdupnul(&options.szCustomDate2, buf);
 			GetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, buf, MAXFN);
 			if (BST_CHECKED != SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_PLUGIN, BM_GETCHECK, 0, 0)) *buf = 0;
-			SSTRCPYNUL(options.szLangPlugin, buf);
+			kstrdupnul(&options.szLangPlugin, buf);
 			break;
 		}
 		break;
@@ -2434,7 +2417,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 					}
 				}
 			}
-			FREE(sz);
+			kfree(&sz);
 		}
 		break;
 	default:
@@ -2819,11 +2802,11 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 			nTmp = _ttoi(szInt);
 			options.nTabStops = nTmp;
 
-			GetDlgItemText(hwndDlg, IDC_EDIT_BROWSER, buf, MAXFN);		SSTRCPYNUL(options.szBrowser, buf);
-			GetDlgItemText(hwndDlg, IDC_EDIT_ARGS, buf, MAXARGS);		SSTRCPYNUL(options.szArgs, buf);
-			GetDlgItemText(hwndDlg, IDC_EDIT_BROWSER2, buf, MAXFN);		SSTRCPYNUL(options.szBrowser2, buf);
-			GetDlgItemText(hwndDlg, IDC_EDIT_ARGS2, buf, MAXARGS);		SSTRCPYNUL(options.szArgs2, buf);
-			GetDlgItemText(hwndDlg, IDC_EDIT_QUOTE, buf, MAXQUOTE);		SSTRCPYNUL(options.szQuote, buf);
+			GetDlgItemText(hwndDlg, IDC_EDIT_BROWSER, buf, MAXFN);		kstrdupnul(&options.szBrowser, buf);
+			GetDlgItemText(hwndDlg, IDC_EDIT_ARGS, buf, MAXARGS);		kstrdupnul(&options.szArgs, buf);
+			GetDlgItemText(hwndDlg, IDC_EDIT_BROWSER2, buf, MAXFN);		kstrdupnul(&options.szBrowser2, buf);
+			GetDlgItemText(hwndDlg, IDC_EDIT_ARGS2, buf, MAXARGS);		kstrdupnul(&options.szArgs2, buf);
+			GetDlgItemText(hwndDlg, IDC_EDIT_QUOTE, buf, MAXQUOTE);		kstrdupnul(&options.szQuote, buf);
 
 			if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_LAUNCH_SAVE0, BM_GETCHECK, 0, 0))
 				options.nLaunchSave = 0;
@@ -2850,7 +2833,7 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case IDC_BUTTON_BROWSE2:
 			if (BrowseFile(hwndDlg, _T("exe"), NULL, FixFilterString((LPTSTR)GetString(IDS_FILTER_EXEC)), FALSE, FALSE, FALSE, &sz))
 				SetDlgItemText(hwndDlg, LOWORD(wParam) == IDC_BUTTON_BROWSE ? IDC_EDIT_BROWSER : IDC_EDIT_BROWSER2, sz);
-			FREE(sz);
+			kfree(&sz);
 		}
 		break;
 	default:
@@ -3075,11 +3058,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						if (abort) break;
 						tr.chrg.cpMin = pLink->chrg.cpMin;
 						tr.chrg.cpMax = pLink->chrg.cpMax;
-						tr.lpstrText = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (pLink->chrg.cpMax - pLink->chrg.cpMin + 1) * sizeof(TCHAR));
+						tr.lpstrText = kallocsz(pLink->chrg.cpMax - pLink->chrg.cpMin + 1);
 
 						SendMessage(client, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
 						ShellExecute(NULL, NULL, tr.lpstrText, NULL, NULL, SW_SHOWNORMAL);
-						HeapFree(globalHeap, 0, (HGLOBAL)tr.lpstrText);
+						kfree(&tr.lpstrText);
 						break;
 				}
 			case EN_SELCHANGE:
@@ -3116,7 +3099,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 								if (!SCNUL(options.szBrowser)[0]) {
 									MessageBox(hwnd, GetString(IDS_VIEWER_MISSING), GetString(STR_METAPAD), MB_OK|MB_ICONEXCLAMATION);
 									SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(ID_VIEW_OPTIONS, 0), 0);
-									FREE(szFile);
+									kfree(&szFile);
 									break;
 								}
 								LaunchExternalViewer(0, NULL);
@@ -3190,11 +3173,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 								SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, WM_GETTEXT, MAXINSERT, (LPARAM)szTmp);
 								break;
 						}
-						SSTRCPYNUL(szFindText, szTmp);
+						kstrdupnul(&szFindText, szTmp);
 						wp.length = sizeof(WINDOWPLACEMENT);
 						GetWindowPlacement(hdlgFind, &wp);
 						SendMessage(hdlgFind, WM_CLOSE, 0, 0);
-						SSTRCPYNUL(szInsert, szFindText);
+						kstrdupnul(&szInsert, szFindText);
 					}
 				}
 
@@ -3213,10 +3196,10 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				hb = CreateMappedBitmap(hinstThis, IDB_DROP_ARROW, 0, NULL, 0);
 				switch (LOWORD(wParam)) {
 					case ID_REPLACE:
-						SSTRCPY(szReplaceText, ReplaceArray[0]);
+						kstrdup(&szReplaceText, ReplaceArray[0]);
 					case ID_FIND:
 						if (!l) SelectWord(&szFindText, TRUE, !options.bNoFindAutoSelect);
-						if (!SCNUL(szFindText)[0]) SSTRCPYNUL(szFindText, FindArray[0]);
+						if (!SCNUL(szFindText)[0]) kstrdupnul(&szFindText, FindArray[0]);
 						if (bWholeWord) gfr.Flags |= FR_WHOLEWORD;
 						if (bDown) gfr.Flags |= FR_DOWN;
 						if (bMatchCase) gfr.Flags |= FR_MATCHCASE;
@@ -3224,11 +3207,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						break;
 					case ID_PASTE_MUL:
 						SendMessage(hwnd, WM_COMMAND, ID_INT_GETCLIPBOARD, 0);
-						SSTRCPYNUL(szInsert, szTmp);
+						kstrdupnul(&szInsert, szTmp);
 					case ID_INSERT_TEXT:
 						if (!szInsert){
 							if (!l) SelectWord(&szInsert, TRUE, !options.bNoFindAutoSelect);
-							if (!SCNUL(szInsert)[0]) SSTRCPYNUL(szInsert, InsertArray[0]);
+							if (!SCNUL(szInsert)[0]) kstrdupnul(&szInsert, InsertArray[0]);
 						}
 						break;
 				}
@@ -3255,7 +3238,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					case ID_REPLACE:
 						gfr.lpTemplateName = MAKEINTRESOURCE(IDD_REPLACE);
 						hdlgFind = ReplaceText(&gfr);
-						if (SetWindowTheme) SetWindowTheme(GetDlgItem(hdlgFind, IDC_ESCAPE2),_T(""),_T(""));
+						if (SetWindowTheme) SetWindowTheme(GetDlgItem(hdlgFind, IDC_ESCAPE2),(LPTSTR)kemptyStr,(LPTSTR)kemptyStr);
 						SendDlgItemMessage(hdlgFind, IDC_ESCAPE2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
 						SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_LIMITTEXT, (WPARAM)MAXFIND, 0);
 						for (i = 0; i < NUMFINDS; ++i)
@@ -3283,7 +3266,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						break;
 				}
 				
-				if (SetWindowTheme) SetWindowTheme(GetDlgItem(hdlgFind, IDC_ESCAPE),_T(""),_T(""));
+				if (SetWindowTheme) SetWindowTheme(GetDlgItem(hdlgFind, IDC_ESCAPE),(LPTSTR)kemptyStr,(LPTSTR)kemptyStr);
 				SendDlgItemMessage(hdlgFind, IDC_ESCAPE, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
 				switch (LOWORD(wParam)) {
 					case ID_REPLACE:
@@ -3421,7 +3404,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 							}
 #endif
 						}
-						if (b) FREE(sz);
+						if (b) kfree(&sz);
 					}
 				}
 				CloseClipboard();
@@ -3446,10 +3429,10 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						switch(LOWORD(wParam)){
 							case ID_PASTE_B64: if (!base) { base = 64; szNew = uni ? _T("\\W") : _T("\\S"); }
 							case ID_PASTE_HEX: if (!base) { base = 16; szNew = uni ? _T("\\U") : _T("\\X"); }
-								sz = (LPTSTR)HeapAlloc(globalHeap, 0, (l+3) * sizeof(TCHAR));
+								sz = kallocs(l+3);
 								lstrcpy(sz, szNew);
 								lstrcat(sz, szOld);
-								if (!ParseForEscapeSeqs(sz, NULL, GetString(IDS_ESCAPE_CTX_CLIPBRD))) { FREE(sz); }
+								if (!ParseForEscapeSeqs(sz, NULL, GetString(IDS_ESCAPE_CTX_CLIPBRD))) { kfree(&sz); }
 								else {
 									b = TRUE;
 									ExportBinary(sz, l=lstrlen(sz));
@@ -3468,7 +3451,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 								SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)sz);
 						}
 						GlobalUnlock(hMem);
-						if (b) FREE(sz);
+						if (b) kfree(&sz);
 					}
 				}
 				CloseClipboard();
@@ -3692,7 +3675,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						}
 
 					if (SCNUL(szFile)[0]) {
-						FREE(szCaptionFile);
+						kfree(&szCaptionFile);
 						UpdateCaption();
 					}
 					SendMessage(client, EM_SETMARGINS, (WPARAM)EC_LEFTMARGIN, MAKELPARAM(options.nSelectionMarginWidth, 0));
@@ -3706,7 +3689,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					if (tmpOptions.bNoFaves != options.bNoFaves || lstrcmp(SCNUL(tmpOptions.szLangPlugin), SCNUL(options.szLangPlugin))) {
 						FindAndLoadLanguagePlugin();
 						CreateMainMenu(hwnd);
-						FREE(szCaptionFile);
+						kfree(&szCaptionFile);
 					}
 					PopulateMRUList();
 					UpdateStatus(TRUE);
@@ -4055,7 +4038,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					break;
 				}
 				k = (LONG)l + 1;
-				szNew = (LPTSTR) HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, k * sizeof(TCHAR));
+				szNew = kallocsz(k);
 				switch (LOWORD(wParam)) {
 				case ID_STRIP_CR_SPACE:
 				case ID_STRIP_CR:
@@ -4207,13 +4190,13 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 #ifdef USE_RICH_EDIT
 				InvalidateRect(client, NULL, TRUE);
 #endif
-				FREE(szNew);
+				kfree(&szNew);
 				SetCursor(hCur);
 				break;
 			case ID_NEW_INSTANCE:
 				GetModuleFileName(hinstThis, szTmp, MAXFN);
 				//ShellExecute(NULL, NULL, szTmp, NULL, SCNUL(szDir), SW_SHOWNORMAL);
-				ExecuteProgram(szTmp, _T(""));
+				ExecuteProgram(szTmp, kemptyStr);
 				break;
 			case ID_LAUNCH_ASSOCIATED_VIEWER:
 				LaunchInViewer(FALSE, FALSE);
@@ -4290,7 +4273,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					ERROROUT(GetString(IDS_MACRO_LENGTH_ERROR));
 					break;
 				}
-				SSTRCPYNUL(options.MacroArray[i], szTmp);
+				kstrdupnul(&options.MacroArray[i], szTmp);
 				wsprintf(szTmp, GetString(IDSS_MACROARRAY), i);
 				if (!g_bIniMode)
 					RegCreateKeyEx(HKEY_CURRENT_USER, GetString(STR_REGKEY), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL);
@@ -4323,7 +4306,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					hCur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 					l = GetWindowTextLength(client);
 					nPos = SendMessage(client, EM_GETLINECOUNT, 0, 0);
-					sz = szNew = (LPTSTR) HeapAlloc(globalHeap, 0, (l + nPos + 1) * sizeof(TCHAR));
+					sz = szNew = kallocs(l + nPos + 1);
 					for (i = 0; i < nPos; i++) {
 						szOld = GetShadowLine(i, -1, &sl, NULL, NULL);
 						lstrcpyn(sz, szOld, sl+1);
@@ -4342,7 +4325,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					SendMessage(client, WM_SETREDRAW, (WPARAM)FALSE, 0);
 					SetSelection(cr);
 					SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)szNew);
-					FREE(szNew);
+					kfree(&szNew);
 					cr.cpMax = 0;
 					SetSelection(cr);
 					SendMessage(client, WM_SETREDRAW, (WPARAM)TRUE, 0);
@@ -4497,7 +4480,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR szCmdL
 	randVal = GetTickCount();
 
 	GetModuleFileName(hinstThis, bufFn, MAXFN);
-	SSTRCPYA(szMetapadIni, bufFn, 12);
+	kstrdupa(&szMetapadIni, bufFn, 12);
 
 	pch = lstrrchr(szMetapadIni, _T('\\'));
 	++pch;
@@ -4552,7 +4535,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR szCmdL
 		}
 	}
 	GetCurrentDirectory(MAXFN, bufFn);
-	SSTRCPY(szDir, bufFn);
+	kstrdup(&szDir, bufFn);
 	LoadOptions();
 	
 //	options.nStatusFontWidth = LOWORD(GetDialogBaseUnits());
@@ -4632,8 +4615,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR szCmdL
 	InitCommonControls();
 	MakeNewFile();
 	if (szCmdLine && *szCmdLine) {
-		FREE(szFile);
-		szFile = (LPTSTR)HeapAlloc(globalHeap, 0, (nCmdLen+1) * sizeof(TCHAR));
+		kfree(&szFile);
+		szFile = kallocs(nCmdLen+1);
 		while(szCmdLine[0] == _T(' ')) { szCmdLine++; nCmdLen--; }
 		while(szCmdLine[nCmdLen - 1] == _T(' ')) nCmdLen--;
 		if (nCmdLen > 1 && szCmdLine[0] == _T('/')) {
@@ -4699,7 +4682,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR szCmdL
 		bufFn[0] = _T('\0');
 		GetFullPathName(szFile, MAXFN, bufFn, NULL);
 		if (bufFn[0])
-			SSTRCPY(szFile, bufFn);
+			kstrdup(&szFile, bufFn);
 		
 #ifdef USE_RICH_EDIT
 		{

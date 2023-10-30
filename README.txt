@@ -20,6 +20,7 @@ Contents
 - How?
 - Distribution
 - Installation
+- Building
 - Changelog
 - Contact
 - Disclaimer
@@ -54,10 +55,10 @@ How?
 ====
 Metapad was created (as was Notepad) in pure ANSI C with the Win32 API.
 It contained around 1200 lines of code as of version 1 and now has about
-7000 lines as of version 3. As of now, it is actually smaller and faster
+9000 lines as of v3.7. As of 2021, it is actually smaller and faster
 than Notepad is. Unlike some other so-called Notepad replacements,
 Metapad actually loads in an instant. (Those other programs tend to
-approach 1 or 2MB instead of being under 100KB and are written using C++
+approach 1 or 2MB instead of being under 200KB and are written using C++
 with MFC or even, gasp!, Visual Basic.)
 
 
@@ -88,6 +89,36 @@ Installation
 Metapad was designed to completely replace Notepad. To see how you can
 install Metapad to replace Notepad see the metaFAQ page on the Metapad
 web site (see contact information at the end of this document).
+
+Metapad can also be used as a portable application. In this case,
+no installation is required - the executable is ready for action!
+
+
+Building
+========
+To build metapad from source, you need Microsoft Visual Studio 2010.
+(It may be possible to build with future versions but this is untested.)
+Build steps:
+ - Install Visual Studio 2010 and its included library and header files
+ - Download the latest source code from `github.com/sobitcorp/metapad`
+ - Open the solution file `metapad-master.sln`
+ - Choose a build configuration and run `Build Solution`
+ - The resulting executable file is ready to use on Windows 2000 and up!
+
+For compatibility with Windows 95 and up, the executable file above must
+be further hex-edited as there is currently no automation for this.
+(This can be done in metapad with `Edit > Replace` ;)
+ - Change the PE subsystem version 5.0 -> 4.0:
+      `\X001000000002000004000000000000000500000000000000\`  to
+      `\X001000000002000004000000000000000400000000000000\`
+ - Change a DLL reference:
+      `MSVCR100.dll`                                         to
+      `MSVCRT.DLL\0\0`
+
+Note that the source also includes the following directories:
+ - `old/` - Contains obsolete instructions of historical interest only.
+ - `unix/` - Contains makefiles for building with mingw by a previous
+      maintainer. These are untested. Feel free to contribute :)
 
 
 Changelog
