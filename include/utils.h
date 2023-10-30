@@ -52,6 +52,8 @@ VOID kdebuglog(INT id, LPVOID* data);
 #define kallocz(len) kallocex(len, TRUE)
 #define kallocs(chars) (LPTSTR)kallocex((chars) * sizeof(TCHAR), FALSE)
 #define kallocsz(chars) (LPTSTR)kallocex((chars) * sizeof(TCHAR), TRUE)
+#define kcalloc(len, width) kallocex(len * width, FALSE)
+#define kcallocz(len, width) kallocex(len * width, TRUE)
 #define kstrdup(tgt, src) kstrdupex(tgt, src, 1, 0, FALSE)
 #define kstrdupa(tgt, src, add) kstrdupex(tgt, src, add, 0, FALSE)
 #define kstrdupo(tgt, src, tgtOfs) kstrdupex(tgt, src, 1, tgtOfs, FALSE)

@@ -61,8 +61,7 @@ extern int _ttoi(const TCHAR*);
 ///// Typedefs /////
 
 #include <pshpack1.h>
-typedef struct DLGTEMPLATEEX
-{
+typedef struct DLGTEMPLATEEX {
 	WORD dlgVer;
 	WORD signature;
 	DWORD helpID;
@@ -77,12 +76,13 @@ typedef struct DLGTEMPLATEEX
 #include <poppack.h>
 
 #ifndef USE_RICH_EDIT
-typedef struct _charrange
-{
+typedef struct _charrange {
 	LONG	cpMin;
 	LONG	cpMax;
 } CHARRANGE;
 #endif
+
+
 
 
 
@@ -190,8 +190,9 @@ BOOL LoadAndVerifyLanguagePlugin(LPCTSTR szPlugin, BOOL checkver, HINSTANCE* hin
 void FindAndLoadLanguagePlugin(void);
 
 LPCTSTR GetString(WORD uID);
-LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, WORD* dictidx, WORD* dictofs, LPTSTR dictcache, WORD* ofspop, LPCTSTR def);
-LPTSTR AlterMenuAccelText(LPCTSTR src, LPCTSTR tgt, LPTSTR buf);
+LPCTSTR GetStringEx(WORD uID, WORD total, LPCSTR dict, WORD* dictidx, WORD* dictofs, LPTSTR dictcache, WORD* ofspop, LPCTSTR def);
+BOOL ParseAccels(HACCEL);
+BOOL AddMenuAccelStr(WORD uID, LPCTSTR* str, LPTSTR buf, LPTSTR vkbuf, BOOL rename);
 HMENU LocalizeMenu(WORD mID);
 void LocalizeDialog(WORD dID, HWND dlg);
 

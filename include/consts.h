@@ -49,14 +49,16 @@
 #define MAXFONT 32
 #define MAXARGS 4096
 #define MAXQUOTE 1024
-#define MAXFIND 32767
-#define MAXINSERT 32767
+#define MAXFIND 32761	//more than this causes corruption in the windows control holding the find/replace/insert string
 #define MAXSTRING 500
+#define MAXACCELSTR 32
+#define MAXACCELKEYS 0x30
 //#define MAXFAVES 16
-#define MAXMACRO 32767
+#define MAXMACRO 32761
 #define MAXDATEFORMAT 255
 #define LARGEFILESIZEWARN 0x1000000
 #define LARGEPASTEWARN 0x400000
+#define MAXGBUF MAX(MAX(MAXFN*2+MAXSTRING*2,MAXMACRO),MAXFIND)+7
 
 #define NUMCUSTOMBITMAPS 6
 #ifdef USE_RICH_EDIT
