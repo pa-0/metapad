@@ -2,7 +2,7 @@
 /*                                                                          */
 /*   metapad 3.6+                                                           */
 /*                                                                          */
-/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2021-2024 SoBiT Corp                                     */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
@@ -54,7 +54,7 @@
 #if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
  #define PROPSHEETHEADER_V1_SIZE 40
 #elif !defined(__MINGW32__)
- #include "include/w32crt.h"
+// #include "include/w32crt.h"
 #endif
 
 #ifdef _MSC_VER
@@ -670,6 +670,14 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 				case ID_REPLACE:
 					SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, WM_GETTEXT, MAXFIND, (WPARAM)szTmp);
 					nPos = SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_FINDSTRINGEXACT, 0, (WPARAM)szTmp);
+					if (nPos == CB_ERR && !szTmp[0]) {
+						for (i = 0, j = MIN(NUMFINDS, SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_GETCOUNT, 0, 0)); i < j; i++) {
+							if (!SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_GETLBTEXTLEN, i, 0)) {
+								nPos = i;
+								break;
+							}
+						}
+					}
 					if (nPos == CB_ERR) {
 						if (SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_GETCOUNT, 0, 0) >= NUMFINDS)
 							SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_DELETESTRING, (LPARAM)NUMFINDS-1, 0);
@@ -775,12 +783,12 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			if (HIWORD(wParam) != BN_CLICKED) break;
 			switch (frDlgId){
 				case ID_REPLACE:
-					for (i = 0; i < NUMFINDS; i++) {
+					for (i = 0, j = MIN(NUMFINDS, SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_GETCOUNT, 0, 0)); i < j; i++) {
 						SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_GETLBTEXT, i, (WPARAM)szTmp);
 						SSTRCPY(ReplaceArray[i], szTmp);
 					}
 				case ID_FIND:
-					for (i = 0; i < NUMFINDS; i++) {
+					for (i = 0, j = MIN(NUMFINDS, SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_GETCOUNT, 0, 0)); i < j; i++) {
 						SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_GETLBTEXT, i, (WPARAM)szTmp);
 						SSTRCPY(FindArray[i], szTmp);
 					}
@@ -789,7 +797,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					bDown = (frDlgId != ID_FIND || SendDlgItemMessage(hdlgFind, 0x421, BM_GETCHECK, 0, 0));
 					break;
 				case ID_INSERT_TEXT:
-					for (i = 0; i < NUMINSERTS; i++) {
+					for (i = 0, j = MIN(NUMINSERTS, SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_GETCOUNT, 0, 0)); i < j; i++) {
 						SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_GETLBTEXT, i, (WPARAM)szTmp);
 						SSTRCPY(InsertArray[i], szTmp);
 					}
@@ -827,8 +835,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 			case 'Y': SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_MYEDIT_REDO, 0); return TRUE;
 #endif
 			case VK_F3: SendMessage(hwnd, WM_COMMAND, (WPARAM)(GetKeyState(VK_SHIFT) & 0x8000 ? ID_FIND_PREV : ID_FIND_NEXT), 0); return TRUE;
-			case SC_KEYMENU:
-			case VK_F10: SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_INSERT_TEXT, 0); return TRUE;
+			case VK_F2: SendMessage(hwnd, WM_COMMAND, (WPARAM)ID_INSERT_TEXT, 0); return TRUE;
 			case VK_F12: SendMessage(hdlgFind, WM_COMMAND, MAKEWPARAM(IDC_ESCAPE, BN_CLICKED), 0); return TRUE;
 			case VK_F1:
 			case VK_TAB: SendMessage(hwnd, WM_ACTIVATE, 0, 0); return TRUE;
@@ -2276,6 +2283,8 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 				ZeroMemory(FindArray, sizeof(FindArray));
 				ZeroMemory(ReplaceArray, sizeof(ReplaceArray));
 				ZeroMemory(InsertArray, sizeof(InsertArray));
+				FREE(szFindText);
+				FREE(szReplaceText);
 			}
 			break;
 		case IDC_BUTTON_CLEAR_RECENT:
@@ -2390,16 +2399,13 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 			return TRUE;
 		case PSN_APPLY:
 			for (i = 0; i < 10; i++) {
-				GetDlgItemText(hwndDlg, IDC_MACRO_1+i, buf, MAXMACRO);	SSTRCPY(options.MacroArray[i], buf);
+				GetDlgItemText(hwndDlg, IDC_MACRO_1+i, buf, MAXMACRO);	SSTRCPYNUL(options.MacroArray[i], buf);
 			}
-			GetDlgItemText(hwndDlg, IDC_CUSTOMDATE, buf, MAXDATEFORMAT);	SSTRCPY(options.szCustomDate, buf);
-			GetDlgItemText(hwndDlg, IDC_CUSTOMDATE2, buf, MAXDATEFORMAT);	SSTRCPY(options.szCustomDate2, buf);
-
-			if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_DEFAULT, BM_GETCHECK, 0, 0)) {
-				FREE(options.szLangPlugin);
-			} else if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_PLUGIN, BM_GETCHECK, 0, 0)) {
-				GetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, buf, MAXFN);		SSTRCPY(options.szLangPlugin, buf);
-			}
+			GetDlgItemText(hwndDlg, IDC_CUSTOMDATE, buf, MAXDATEFORMAT);	SSTRCPYNUL(options.szCustomDate, buf);
+			GetDlgItemText(hwndDlg, IDC_CUSTOMDATE2, buf, MAXDATEFORMAT);	SSTRCPYNUL(options.szCustomDate2, buf);
+			GetDlgItemText(hwndDlg, IDC_EDIT_LANG_PLUGIN, buf, MAXFN);
+			if (BST_CHECKED != SendDlgItemMessage(hwndDlg, IDC_RADIO_LANG_PLUGIN, BM_GETCHECK, 0, 0)) *buf = 0;
+			SSTRCPYNUL(options.szLangPlugin, buf);
 			break;
 		}
 		break;
@@ -2813,11 +2819,11 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 			nTmp = _ttoi(szInt);
 			options.nTabStops = nTmp;
 
-			GetDlgItemText(hwndDlg, IDC_EDIT_BROWSER, buf, MAXFN);		SSTRCPY(options.szBrowser, buf);
-			GetDlgItemText(hwndDlg, IDC_EDIT_ARGS, buf, MAXARGS);		SSTRCPY(options.szArgs, buf);
-			GetDlgItemText(hwndDlg, IDC_EDIT_BROWSER2, buf, MAXFN);		SSTRCPY(options.szBrowser2, buf);
-			GetDlgItemText(hwndDlg, IDC_EDIT_ARGS2, buf, MAXARGS);		SSTRCPY(options.szArgs2, buf);
-			GetDlgItemText(hwndDlg, IDC_EDIT_QUOTE, buf, MAXQUOTE);		SSTRCPY(options.szQuote, buf);
+			GetDlgItemText(hwndDlg, IDC_EDIT_BROWSER, buf, MAXFN);		SSTRCPYNUL(options.szBrowser, buf);
+			GetDlgItemText(hwndDlg, IDC_EDIT_ARGS, buf, MAXARGS);		SSTRCPYNUL(options.szArgs, buf);
+			GetDlgItemText(hwndDlg, IDC_EDIT_BROWSER2, buf, MAXFN);		SSTRCPYNUL(options.szBrowser2, buf);
+			GetDlgItemText(hwndDlg, IDC_EDIT_ARGS2, buf, MAXARGS);		SSTRCPYNUL(options.szArgs2, buf);
+			GetDlgItemText(hwndDlg, IDC_EDIT_QUOTE, buf, MAXQUOTE);		SSTRCPYNUL(options.szQuote, buf);
 
 			if (BST_CHECKED == SendDlgItemMessage(hwndDlg, IDC_LAUNCH_SAVE0, BM_GETCHECK, 0, 0))
 				options.nLaunchSave = 0;
@@ -3113,7 +3119,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 									FREE(szFile);
 									break;
 								}
-								LaunchExternalViewer(0);
+								LaunchExternalViewer(0, NULL);
 							}
 							if (!IsWindowVisible(hwnd))
 								bQuit = TRUE;
@@ -3184,11 +3190,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 								SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, WM_GETTEXT, MAXINSERT, (LPARAM)szTmp);
 								break;
 						}
-						SSTRCPY(szFindText, szTmp);
+						SSTRCPYNUL(szFindText, szTmp);
 						wp.length = sizeof(WINDOWPLACEMENT);
 						GetWindowPlacement(hdlgFind, &wp);
 						SendMessage(hdlgFind, WM_CLOSE, 0, 0);
-						SSTRCPY(szInsert, szFindText);
+						SSTRCPYNUL(szInsert, szFindText);
 					}
 				}
 
@@ -3210,7 +3216,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						SSTRCPY(szReplaceText, ReplaceArray[0]);
 					case ID_FIND:
 						if (!l) SelectWord(&szFindText, TRUE, !options.bNoFindAutoSelect);
-						if (!SCNUL(szFindText)[0]) SSTRCPY(szFindText, FindArray[0]);
+						if (!SCNUL(szFindText)[0]) SSTRCPYNUL(szFindText, FindArray[0]);
 						if (bWholeWord) gfr.Flags |= FR_WHOLEWORD;
 						if (bDown) gfr.Flags |= FR_DOWN;
 						if (bMatchCase) gfr.Flags |= FR_MATCHCASE;
@@ -3218,11 +3224,11 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						break;
 					case ID_PASTE_MUL:
 						SendMessage(hwnd, WM_COMMAND, ID_INT_GETCLIPBOARD, 0);
-						SSTRCPY(szInsert, szTmp);
+						SSTRCPYNUL(szInsert, szTmp);
 					case ID_INSERT_TEXT:
 						if (!szInsert){
 							if (!l) SelectWord(&szInsert, TRUE, !options.bNoFindAutoSelect);
-							if (!SCNUL(szInsert)[0]) SSTRCPY(szInsert, InsertArray[0]);
+							if (!SCNUL(szInsert)[0]) SSTRCPYNUL(szInsert, InsertArray[0]);
 						}
 						break;
 				}
@@ -3253,7 +3259,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						SendDlgItemMessage(hdlgFind, IDC_ESCAPE2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
 						SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_LIMITTEXT, (WPARAM)MAXFIND, 0);
 						for (i = 0; i < NUMFINDS; ++i)
-							if (SCNUL(ReplaceArray[i])[0])
+							if (ReplaceArray[i])
 								SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_ADDSTRING, 0, (LPARAM)ReplaceArray[i]);
 						if (options.bCurrentFindFont) SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, WM_SETFONT, (WPARAM)hfontfind, 0);
 #ifdef USE_RICH_EDIT
@@ -3366,11 +3372,9 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					default:
 						SendMessage(client, WM_COPY, 0, 0); break;
 				}
-				if (!OpenClipboard(NULL)) {
-					//This happens if another program has the clipboard open. [https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-openclipboard]
-					ERROROUT(GetString(IDS_CLIPBOARD_OPEN_ERROR));
-					break;
-				}
+				//OpenClipboard() fails if another program has the clipboard open. [https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-openclipboard]
+				//Since we just copied stuff above, a program hooked into clipboard updates could be reading the clipboard right now, so just keep trying to get our turn
+				while (!OpenClipboard(NULL));
 				if ( hMem = GetClipboardData(_CF_TEXT) ) {
 					if (!(szOld = (LPCTSTR)GlobalLock(hMem)))
 						ERROROUT(GetString(IDS_GLOBALLOCK_ERROR));
@@ -4286,7 +4290,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					ERROROUT(GetString(IDS_MACRO_LENGTH_ERROR));
 					break;
 				}
-				SSTRCPY(options.MacroArray[i], szTmp);
+				SSTRCPYNUL(options.MacroArray[i], szTmp);
 				wsprintf(szTmp, GetString(IDSS_MACROARRAY), i);
 				if (!g_bIniMode)
 					RegCreateKeyEx(HKEY_CURRENT_USER, GetString(STR_REGKEY), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL);

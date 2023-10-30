@@ -2,7 +2,7 @@
 /*                                                                          */
 /*   metapad 3.6+                                                           */
 /*                                                                          */
-/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2021-2024 SoBiT Corp                                     */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
@@ -152,13 +152,8 @@ void SaveOptions(void)
 	writeSucceeded &= SaveOption(key, GetString(IDSS_TABSTOPS), REG_DWORD, (LPBYTE)&options.nTabStops, sizeof(int));
 	writeSucceeded &= SaveOption(key, GetString(IDSS_NPRIMARYFONT), REG_DWORD, (LPBYTE)&options.nPrimaryFont, sizeof(int));
 	writeSucceeded &= SaveOption(key, GetString(IDSS_NSECONDARYFONT), REG_DWORD, (LPBYTE)&options.nSecondaryFont, sizeof(int));
-#ifdef UNICODE
 	writeSucceeded &= SaveOption(key, GetString(IDSS_PRIMARYFONT), REG_BINARY, (LPBYTE)&options.PrimaryFont, sizeof(LOGFONT));
 	writeSucceeded &= SaveOption(key, GetString(IDSS_SECONDARYFONT), REG_BINARY, (LPBYTE)&options.SecondaryFont, sizeof(LOGFONT));
-#else
-	writeSucceeded &= SaveOption(key, GetString(IDSS_PRIMARYFONT), REG_BINARY, (LPBYTE)&options.PrimaryFont, sizeof(LOGFONT));
-	writeSucceeded &= SaveOption(key, GetString(IDSS_SECONDARYFONT), REG_BINARY, (LPBYTE)&options.SecondaryFont, sizeof(LOGFONT));
-#endif
 	writeSucceeded &= SaveOption(key, GetString(IDSS_BROWSER), REG_SZ, (LPBYTE)options.szBrowser, MAXFN);
 	writeSucceeded &= SaveOption(key, GetString(IDSS_BROWSER2), REG_SZ, (LPBYTE)options.szBrowser2, MAXFN);
 	writeSucceeded &= SaveOption(key, GetString(IDSS_LANGPLUGIN), REG_SZ, (LPBYTE)options.szLangPlugin, MAXFN);
@@ -277,17 +272,12 @@ void SaveMenusAndData(void)
 
 	if (!options.bNoSaveHistory) {
 		for (i = 0; i < NUMFINDS; ++i) {
-			if (!FindArray[i]) continue;
 			wsprintf(keyname, GetString(IDSS_FINDARRAY), i);
 			SaveOption(key, keyname, REG_SZ, (LPBYTE)FindArray[i], MAXFIND);
-		}
-		for (i = 0; i < NUMFINDS; ++i) {
-			if (!ReplaceArray[i]) continue;
 			wsprintf(keyname, GetString(IDSS_REPLACEARRAY), i);
 			SaveOption(key, keyname, REG_SZ, (LPBYTE)ReplaceArray[i], MAXFIND);
 		}
 		for (i = 0; i < NUMINSERTS; ++i) {
-			if (!InsertArray[i]) continue;
 			wsprintf(keyname, GetString(IDSS_INSERTARRAY), i);
 			SaveOption(key, keyname, REG_SZ, (LPBYTE)InsertArray[i], MAXINSERT);
 		}

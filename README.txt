@@ -8,9 +8,10 @@
 
 «§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»«§»
 
-              (C) Copyright Alexander Davidson, 1999-2011
+              (C) Copyright SoBiT Corp,         2021-2024
               (C) Copyright Mario Rugiero,      2013
-              (C) Copyright SoBiT Corp,         2021
+              (C) Copyright Alexander Davidson, 1999-2011
+
 
 Contents
 --------
@@ -120,7 +121,7 @@ Changelog
           (use Ctrl+Shift+Z/Y to Undo/Redo in main window)
      - Find/Replace dialogs repositioned to obscure results less
      - prompt when trying to open very large files (perhaps by mistake)
-     - go to selection / caret (Ctrl+Home / Ctrl+End)
+     - go to selection / caret (Ctrl+Alt+Home / Ctrl+Alt+End)
      - clear clipboard
      - transparent mode can be toggled with F11
      - much faster Quote, Un/Tabify, Un/Indent, and Strip functions

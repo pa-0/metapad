@@ -2,7 +2,7 @@
 /*                                                                          */
 /*   metapad 3.6+                                                           */
 /*                                                                          */
-/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2021-2024 SoBiT Corp                                     */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
@@ -166,10 +166,9 @@ BOOL FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt) {
 	HANDLE hHandle;
 	TCHAR dst[MAXFN], ssto;
 	LPTSTR pdst = dst, psrc;
-	BOOL bOK = TRUE, alloc = FALSE;
+	BOOL bOK = TRUE;
 
 	if (!szSrc || !szTgt) return FALSE;
-	if (szSrc != *szTgt) alloc = TRUE;
 	if (gbNT && szSrc[0] && szSrc[1] && szSrc[2] != _T('?')) {
 		lstrcpy(pdst, _T("\\\\?\\"));
 		pdst+=4;
@@ -199,17 +198,13 @@ BOOL FixShortFilename(LPCTSTR szSrc, LPTSTR* szTgt) {
 		while (*++pdst) ;
 		FindClose(hHandle);
 	}
-	if (alloc) {
-		FREE(*szTgt);
-		*szTgt = (LPTSTR)HeapAlloc(globalHeap, 0, (pdst-dst+9) * sizeof(TCHAR));
-	}
+	if (!*szTgt) *szTgt = (LPTSTR)HeapAlloc(globalHeap, 0, (pdst-dst+9) * sizeof(TCHAR));
 	lstrcpy(*szTgt, dst);
 	return bOK;
 }
 BOOL GetReadableFilename(LPCTSTR lfn, LPTSTR* dst){
-	BOOL alloc = FALSE, unc = FALSE;
+	BOOL unc = FALSE;
 	if (!lfn || !dst) return FALSE;
-	if (lfn != *dst) alloc = TRUE;
 	if (lfn[0] && lfn[1] && lfn[2] == _T('?')) {
 		lfn += 4;
 		if (lfn[0] == _T('U') && lfn[1] == _T('N')) {
@@ -217,7 +212,7 @@ BOOL GetReadableFilename(LPCTSTR lfn, LPTSTR* dst){
 			lfn += 2;
 		}
 	}
-	if (alloc) {
+	if (!*dst) {
 		SSTRCPY(*dst, lfn);
 	} else
 		*dst = (LPTSTR)lfn;
@@ -612,6 +607,7 @@ BOOL SearchFile(LPCTSTR szText, BOOL bCase, BOOL bDown, BOOL bWholeWord, LPBYTE 
 	CHARRANGE f1, f2;
 	HCURSOR hcur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 	CHARRANGE cr = GetSelection();
+	if (!SCNUL(szText)[0]) return FALSE;
 	f1 = DoSearch(szText, cr.cpMin, cr.cpMax, bDown, bWholeWord, bCase, FALSE, pbFindSpec);
 	if (f1.cpMin < 0) {
 		f2 = DoSearch(szText, cr.cpMin, cr.cpMax, bDown, bWholeWord, bCase, TRUE, pbFindSpec);

@@ -2,7 +2,7 @@
 /*                                                                          */
 /*   metapad 3.6+                                                           */
 /*                                                                          */
-/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2021-2024 SoBiT Corp                                     */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
@@ -44,8 +44,7 @@
  * @param lpCommandLine Command line arguments to pass to program.
  * @return TRUE if successful, FALSE otherwise.
  */
-BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
-{
+BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine) {
 	LPTSTR lpFormat;
 	LPTSTR szCmdLine = (LPTSTR)HeapAlloc(globalHeap, HEAP_ZERO_MEMORY, (lstrlen(lpExecutable)+lstrlen(lpCommandLine)+5) * sizeof(TCHAR));
 
@@ -90,16 +89,15 @@ BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine)
 /**
  * Launch the primary external viewer.
  */
-void LaunchExternalViewer(int id)
-{
+void LaunchExternalViewer(int id, LPCTSTR fn) {
 	TCHAR szLaunch[MAXFN+MAXARGS+8] = {_T('\0')};
 	LPTSTR args = id ? options.szArgs2 : options.szArgs;
 	lstrcat(szLaunch, SCNUL(args));
 	lstrcat(szLaunch, _T(" \""));
-	lstrcat(szLaunch, SCNUL(szFile));
+	lstrcat(szLaunch, SCNULD(fn, SCNUL(szFile)));
 	lstrcat(szLaunch, _T("\""));
 	if (!ExecuteProgram(SCNUL(id ? options.szBrowser2 : options.szBrowser), szLaunch))
-	ERROROUT(GetString(IDS_VIEWER_ERROR));
+		ERROROUT(GetString(IDS_VIEWER_ERROR));
 }
 
 /**
@@ -108,9 +106,10 @@ void LaunchExternalViewer(int id)
  * @param bCustom TRUE to use one of the custom viewers, FALSE to use associated program.
  * @param bSecondary TRUE to use secondary viewer, FALSE to use primary viewer. Ignored if the bCustom is FALSE.
  */
-void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
-{
-	LPTSTR prg = bSecondary ? options.szBrowser2 : options.szBrowser;
+void LaunchInViewer(BOOL bCustom, BOOL bSecondary) {
+	TCHAR fnbuf[MAXFN];
+	LPTSTR fn = fnbuf, prg = bSecondary ? options.szBrowser2 : options.szBrowser;
+	
 	if (bCustom)
 		if (!SCNUL(prg)[0]) {
 			MessageBox(hwnd, GetString(IDS_VIEWER_MISSING), GetString(STR_METAPAD), MB_OK|MB_ICONEXCLAMATION);
@@ -133,10 +132,15 @@ void LaunchInViewer(BOOL bCustom, BOOL bSecondary)
 		}
 	}
 	if (SCNUL(szFile)[0] != _T('\0')) {
+		lstrcpy(fn, szFile);
+		if (lstrlen(fn) > MAX_PATH+2) { 
+			if (!(GetShortPathName(fn, fn, MAXFN))) lstrcpy(fn, szFile);
+			else if (lstrlen(fn) <= MAX_PATH+2) GetReadableFilename(fn, &fn);
+		} else GetReadableFilename(fn, &fn);
 		if (bCustom)
-			LaunchExternalViewer((int)bSecondary);
+			LaunchExternalViewer((int)bSecondary, fn);
 		else {
-			INT_PTR ret = (INT_PTR)ShellExecute(NULL, _T("open"), szFile, NULL, SCNUL(szDir), SW_SHOW);
+			INT_PTR ret = (INT_PTR)ShellExecute(NULL, _T("open"), fn, NULL, SCNUL(szDir), SW_SHOW);
 			if (ret <= 32) {
 				switch (ret) {
 				case SE_ERR_NOASSOC:

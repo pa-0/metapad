@@ -75,9 +75,6 @@
     <ClInclude Include="include\globals.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\w32crt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\macros.h">
       <Filter>Header Files</Filter>
     </ClInclude>

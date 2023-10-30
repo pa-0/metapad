@@ -2,7 +2,7 @@
 /*                                                                          */
 /*   metapad 3.6+                                                           */
 /*                                                                          */
-/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2021-2024 SoBiT Corp                                     */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
@@ -94,6 +94,7 @@ BOOL SaveFile(LPCTSTR szFilename, BOOL bMRU) {
 			SetCursor(hcur);
 			ReportLastError();
 			bLoading = FALSE;
+			UpdateStatus(TRUE);
 			return FALSE;
 		}
 		nChars = GetBOM(&bom, enc);

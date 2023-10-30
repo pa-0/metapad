@@ -418,7 +418,6 @@
     <ClInclude Include="include\macros.h" />
     <ClInclude Include="include\metapad.h" />
     <ClInclude Include="include\resource.h" />
-    <ClInclude Include="include\w32crt.h" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="metapad.manifest" />

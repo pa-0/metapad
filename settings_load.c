@@ -2,7 +2,7 @@
 /*                                                                          */
 /*   metapad 3.6+                                                           */
 /*                                                                          */
-/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2021-2024 SoBiT Corp                                     */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
@@ -242,20 +242,19 @@ void LoadOptions(void) {
  * @param cbData The size of lpData, in bytes.
  * @return TRUE if the value was loaded successfully, FALSE otherwise.
  */
-void LoadOptionString(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData)
-{
+void LoadOptionString(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData) {
 	DWORD clen = cbData + 1, buflen = clen * sizeof(TCHAR);
 	LPTSTR buf = (LPTSTR)HeapAlloc(globalHeap, 0, buflen);
 	if (buf) {
 		buf[0] = _T('\0');
-		if (hKey) RegQueryValueEx(hKey, name, NULL, NULL, (LPBYTE)buf, &buflen);
-		else GetPrivateProfileString(GetString(STR_OPTIONS), name, buf, buf, clen, SCNUL(szMetapadIni));
+		if (hKey) {
+			if (RegQueryValueEx(hKey, name, NULL, NULL, (LPBYTE)buf, &buflen)) { FREE(buf); }
+		} else GetPrivateProfileString(GetString(STR_OPTIONS), name, buf, buf, clen, SCNUL(szMetapadIni));
 		SSTRCPYA(*lpData, buf, 2);
-		HeapFree(globalHeap, 0, (HGLOBAL)buf);
+		FREE(buf);
 	}
 }
-void LoadOptionStringDefault(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData, LPCTSTR defVal)
-{
+void LoadOptionStringDefault(HKEY hKey, LPCTSTR name, LPTSTR* lpData, DWORD cbData, LPCTSTR defVal) {
 	LoadOptionString(hKey, name, lpData, cbData);
 	if (defVal && defVal[0] && (!*lpData || !*lpData[0])) {
 		SSTRCPYA(*lpData, defVal, 2);
@@ -360,11 +359,8 @@ void LoadMenusAndData(void) {
 		for (i = 0; i < NUMFINDS; ++i) {
 			wsprintf(keyname, GetString(IDSS_FINDARRAY), i);
 			LoadOptionString(key, keyname, &FindArray[i], MAXFIND);
-		}
-		for (i = 0; i < NUMFINDS; ++i) {
 			wsprintf(keyname, GetString(IDSS_REPLACEARRAY), i);
 			LoadOptionString(key, keyname, &ReplaceArray[i], MAXFIND);
-			if (i == 0) LoadOptionString(key, keyname, &szReplaceText, MAXFIND);
 		}
 		for (i = 0; i < NUMINSERTS; ++i) {
 			wsprintf(keyname, GetString(IDSS_INSERTARRAY), i);

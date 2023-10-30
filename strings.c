@@ -2,7 +2,7 @@
 /*                                                                          */
 /*   metapad 3.6+                                                           */
 /*                                                                          */
-/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2021-2024 SoBiT Corp                                     */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
@@ -558,7 +558,7 @@ static const CHAR strings[] = ""
 /*		40204	ID_DATE_TIME_CUSTOM				*/	"\0Custom Format &1\tF12"
 /*		40205	ID_DATE_TIME_CUSTOM2			*/	"\0Custom Format &2\tCtrl+F12"
 /*		40206	ID_PASTE_MUL					*/	"\0Paste Mu&ltiple...\tCtrl+Shift+V"
-/*		40207	ID_INSERT_TEXT					*/	"\0Insert Text...\tF10"
+/*		40207	ID_INSERT_TEXT					*/	"\0Insert Text...\tF2"
 /*		40208	ID_COPY_HEX						*/	"\0&Copy As Hex\tCtrl+Alt+C"
 /*		40209	ID_PASTE_HEX					*/	"\0&Paste As Hex\tCtrl+Alt+V"
 /*		40210	ID_CLEAR_CLIPBRD				*/	"\0Clear clipboard"
@@ -579,8 +579,8 @@ static const CHAR strings[] = ""
 /*		40226	ID_ESCAPE_WILD1					*/	"\0Any 1+ Characters"
 /*		40227	ID_ESCAPE_REP0					*/	"\0""0+ of Preceding Character"
 /*		40228	ID_ESCAPE_REP1					*/	"\0""1+ of Preceding Character"
-/*		40229	ID_SCROLLTO_SELA				*/	"\0Go To Selection\tCtrl+Home"
-/*		40230	ID_SCROLLTO_SELE				*/	"\0Go To Caret\tCtrl+End"
+/*		40229	ID_SCROLLTO_SELA				*/	"\0Go To Selection\tCtrl+Alt+Home"
+/*		40230	ID_SCROLLTO_SELE				*/	"\0Go To Caret\tCtrl+Alt+End"
 /*		41110	IDM_MENU_BASE+10				*/	"\0&File"
 /*		41111	IDM_MENU_BASE+11				*/	"\0&Launch"
 /*		41112	IDM_MENU_BASE+12				*/	"\0F&ile Format"
