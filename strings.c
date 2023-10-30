@@ -322,7 +322,7 @@ static const CHAR strings[] = ""
 /*		1002	IDC_CANCEL						*/	"\0Cancel"
 /*		1013	IDC_BUTTON_BROWSE				*/	"\0\1"
 /*		1015	IDC_BUTTON_BROWSE2				*/	"\0..."
-/*		1037	ID_SMARTSELECT					*/	"\0S&mart Select\tCtrl+M"
+/*		1037	ID_SMARTSELECT					*/	"\0S&mart Select"
 /*		1040	IDC_FIND_MATCH_WORD				*/	"\0Match &whole word only"
 /*		1041	IDC_FIND_MATCH_CASE				*/	"\0Match &case"
 /*		1043	IDC_OFFSET_TEXT					*/	"\0&Offset:"
@@ -467,94 +467,94 @@ static const CHAR strings[] = ""
 /*		35103	IDDP_INSERT_BASE+3				*/	"\0&Repeat:"
 /*		35105	IDDP_INSERT_BASE+5				*/	"\0time(s)"
 /*		40002	ID_HELP_ABOUT					*/	"\0&About..."
-/*		40003	ID_MYFILE_OPEN					*/	"\0&Open...\tCtrl+O"
-/*		40004	ID_MYFILE_EXIT					*/	"\0E&xit\tAlt+F4"
-/*		40009	ID_MYFILE_SAVEAS				*/	"\0Save &As...\tCtrl+F2"
-/*		40011	ID_EDIT_WORDWRAP				*/	"\0&Word Wrap\tCtrl+W"
-/*		40012	ID_MYFILE_NEW					*/	"\0&New\tCtrl+N"
-/*		40013	ID_MYFILE_SAVE					*/	"\0&Save\tCtrl+S"
-/*		40017	ID_FILE_LAUNCHVIEWER			*/	"\0&Primary Viewer\tCtrl+L"
-/*		40020	ID_VIEW_OPTIONS					*/	"\0&Settings...\tAlt+Enter"
-/*		40021	ID_DATE_TIME					*/	"\0&Short Format\tF6"
-/*		40023	ID_FONT_PRIMARY					*/	"\0&Primary Font\tCtrl+R"
-/*		40026	ID_FIND							*/	"\0&Find...\tCtrl+F"
-/*		40027	ID_REPLACE						*/	"\0R&eplace...\tCtrl+H"
-/*		40028	ID_FIND_NEXT					*/	"\0Find Ne&xt\tF3"
-/*		40029	ID_MYEDIT_UNDO					*/	"\0&Undo\tCtrl+Z"
-/*		40030	ID_MYEDIT_CUT					*/	"\0Cu&t\tCtrl+X"
-/*		40031	ID_MYEDIT_COPY					*/	"\0&Copy\tCtrl+C"
-/*		40032	ID_MYEDIT_PASTE					*/	"\0&Paste\tCtrl+V"
-/*		40033	ID_MYEDIT_SELECTALL				*/	"\0Select &All\tCtrl+A"
-/*		40035	ID_PRINT						*/	"\0&Print...\tCtrl+P"
-/*		40036	ID_EDIT_SELECTWORD				*/	"\0&Select Word\tCtrl+Space"
-/*		40037	ID_GOTOLINE						*/	"\0&Go To Line...\tCtrl+G"
-/*		40038	ID_FIND_PREV					*/	"\0Find Pre&vious\tShift+F3"
-/*		40039	ID_LFMT_DOS						*/	"\0&DOS (CR+LF)\tCtrl+1"
-/*		40040	ID_LFMT_UNIX					*/	"\0&Unix (LF)\tCtrl+2"
-/*		40041	ID_INDENT						*/	"\0&Indent\tTab"
-/*		40043	ID_UNINDENT						*/	"\0&Unindent\tShift+Tab"
+/*		40003	ID_MYFILE_OPEN					*/	"\0&Open..."
+/*		40004	ID_MYFILE_EXIT					*/	"\0E&xit"
+/*		40009	ID_MYFILE_SAVEAS				*/	"\0Save &As..."
+/*		40011	ID_EDIT_WORDWRAP				*/	"\0&Word Wrap"
+/*		40012	ID_MYFILE_NEW					*/	"\0&New"
+/*		40013	ID_MYFILE_SAVE					*/	"\0&Save"
+/*		40017	ID_FILE_LAUNCHVIEWER			*/	"\0&Primary Viewer"
+/*		40020	ID_VIEW_OPTIONS					*/	"\0&Settings..."
+/*		40021	ID_DATE_TIME					*/	"\0&Short Format"
+/*		40023	ID_FONT_PRIMARY					*/	"\0&Primary Font"
+/*		40026	ID_FIND							*/	"\0&Find..."
+/*		40027	ID_REPLACE						*/	"\0R&eplace..."
+/*		40028	ID_FIND_NEXT					*/	"\0Find Ne&xt"
+/*		40029	ID_MYEDIT_UNDO					*/	"\0&Undo"
+/*		40030	ID_MYEDIT_CUT					*/	"\0Cu&t"
+/*		40031	ID_MYEDIT_COPY					*/	"\0&Copy"
+/*		40032	ID_MYEDIT_PASTE					*/	"\0&Paste"
+/*		40033	ID_MYEDIT_SELECTALL				*/	"\0Select &All"
+/*		40035	ID_PRINT						*/	"\0&Print..."
+/*		40036	ID_EDIT_SELECTWORD				*/	"\0&Select Word"
+/*		40037	ID_GOTOLINE						*/	"\0&Go To Line..."
+/*		40038	ID_FIND_PREV					*/	"\0Find Pre&vious"
+/*		40039	ID_LFMT_DOS						*/	"\0&DOS (CR+LF)"
+/*		40040	ID_LFMT_UNIX					*/	"\0&Unix (LF)"
+/*		40041	ID_INDENT						*/	"\0&Indent"
+/*		40043	ID_UNINDENT						*/	"\0&Unindent"
 /*		40048	ID_LFMT_MAC						*/	"\0Old &Mac (CR)"
-/*		40049	ID_LFMT_MIXED					*/	"\0Unmana&ged\tCtrl+0"
+/*		40049	ID_LFMT_MIXED					*/	"\0Unmana&ged"
 /*		40051	ID_LFMT_UNKNOWN					*/	"\0Line Endings:"
 /*		40052	ID_ENC_UNKNOWN					*/	"\0Text Encoding:"
-/*		40053	ID_RELOAD_CURRENT				*/	"\0&Refresh/Revert\tF5"
+/*		40053	ID_RELOAD_CURRENT				*/	"\0&Refresh/Revert"
 #ifdef USE_RICH_EDIT
-/*	R	40054	ID_MYEDIT_REDO					*/	"\0&Redo\tCtrl+Y"
+/*	R	40054	ID_MYEDIT_REDO					*/	"\0&Redo"
 #else
 "\0"
 #endif
-/*		40055	ID_READONLY						*/	"\0R&ead Only\tCtrl+E"
-/*		40057	ID_SHOWSTATUS					*/	"\0Show Status &Bar\tCtrl+B"
-/*		40058	ID_DATE_TIME_LONG				*/	"\0&Long Format\tF7"
-/*		40059	ID_FIND_NEXT_WORD				*/	"\0Find Next &Word\tCtrl+F3"
-/*		40062	ID_STRIPCHAR					*/	"\0S&trip First Character\tAlt+Z"
-/*		40063	ID_MAKE_OEM						*/	"\0&OEM/DOS Encoding\tShift+F11"
-/*		40064	ID_MAKE_ANSI					*/	"\0&ANSI/Windows Encoding\tCtrl+F11"
-/*		40065	ID_COMMIT_WORDWRAP				*/	"\0Co&mmit Word Wrap\tCtrl+F9"
+/*		40055	ID_READONLY						*/	"\0R&ead Only"
+/*		40057	ID_SHOWSTATUS					*/	"\0Show Status &Bar"
+/*		40058	ID_DATE_TIME_LONG				*/	"\0&Long Format"
+/*		40059	ID_FIND_NEXT_WORD				*/	"\0Find Next &Word"
+/*		40062	ID_STRIPCHAR					*/	"\0S&trip First Character"
+/*		40063	ID_MAKE_OEM						*/	"\0&OEM/DOS Encoding"
+/*		40064	ID_MAKE_ANSI					*/	"\0&ANSI/Windows Encoding"
+/*		40065	ID_COMMIT_WORDWRAP				*/	"\0Co&mmit Word Wrap"
 #ifdef USE_RICH_EDIT
-/*	R	40067	ID_SHOWHYPERLINKS				*/	"\0Show Hyperlin&ks\tCtrl+K"
+/*	R	40067	ID_SHOWHYPERLINKS				*/	"\0Show Hyperlin&ks"
 #else
 "\0"
 #endif
 /*		40071	ID_PAGESETUP					*/	"\0Page Se&tup..."
-/*		40072	ID_MAKE_UPPER					*/	"\0&Uppercase\tAlt+U"
-/*		40073	ID_MAKE_LOWER					*/	"\0&Lowercase\tAlt+L"
-/*		40074	ID_STRIP_CR						*/	"\0Un&wrap Lines\tF9"
-/*		40075	ID_SHOWTOOLBAR					*/	"\0Show &Toolbar\tCtrl+T"
-/*		40078	ID_TABIFY						*/	"\0Ta&bified\tF8"
-/*		40079	ID_UNTABIFY						*/	"\0U&ntabified\tCtrl+F8"
-/*		40081	ID_NEW_INSTANCE					*/	"\0New W&indow\tCtrl+I"
-/*		40082	ID_ALWAYSONTOP					*/	"\0&Always On Top\tAlt+Home"
-/*		40084	ID_STRIP_CR_SPACE				*/	"\0Unwrap Lines (w/ S&pace)\tAlt+F9"
-/*		40087	ID_LAUNCH_ASSOCIATED_VIEWER		*/	"\0&Default Viewer\tCtrl+D"
-/*		40088	ID_STRIP_TRAILING_WS			*/	"\0&Strip Trailing Whitespace\tAlt+W"
-/*		40089	ID_ENC_UTF16					*/	"\0Un&icode\tCtrl+3"
-/*		40090	ID_ENC_UTF16BE					*/	"\0Unicode (&Big Endian)\tCtrl+4"
+/*		40072	ID_MAKE_UPPER					*/	"\0&Uppercase"
+/*		40073	ID_MAKE_LOWER					*/	"\0&Lowercase"
+/*		40074	ID_STRIP_CR						*/	"\0Un&wrap Lines"
+/*		40075	ID_SHOWTOOLBAR					*/	"\0Show &Toolbar"
+/*		40078	ID_TABIFY						*/	"\0Ta&bified"
+/*		40079	ID_UNTABIFY						*/	"\0U&ntabified"
+/*		40081	ID_NEW_INSTANCE					*/	"\0New W&indow"
+/*		40082	ID_ALWAYSONTOP					*/	"\0&Always On Top"
+/*		40084	ID_STRIP_CR_SPACE				*/	"\0Unwrap Lines (w/ S&pace)"
+/*		40087	ID_LAUNCH_ASSOCIATED_VIEWER		*/	"\0&Default Viewer"
+/*		40088	ID_STRIP_TRAILING_WS			*/	"\0&Strip Trailing Whitespace"
+/*		40089	ID_ENC_UTF16					*/	"\0Un&icode"
+/*		40090	ID_ENC_UTF16BE					*/	"\0Unicode (&Big Endian)"
 /*		40091	ID_MYEDIT_DELETE				*/	"\0&Delete"
 /*		40092	ID_FAV_ADD						*/	"\0&Add to Favorites..."
 /*		40093	ID_FAV_EDIT						*/	"\0&Edit Favorites"
 /*		40094	ID_FAV_RELOAD					*/	"\0&Reload Favorites"
-/*		40095	ID_QUOTE						*/	"\0&Quote\tAlt+Q"
-/*		40096	ID_MAKE_INVERSE					*/	"\0&Inverted Case\tAlt+I"
-/*		40097	ID_MAKE_SENTENCE				*/	"\0&Sentence Case\tAlt+S"
-/*		40098	ID_MAKE_TITLE					*/	"\0&Title Case\tAlt+T"
+/*		40095	ID_QUOTE						*/	"\0&Quote"
+/*		40096	ID_MAKE_INVERSE					*/	"\0&Inverted Case"
+/*		40097	ID_MAKE_SENTENCE				*/	"\0&Sentence Case"
+/*		40098	ID_MAKE_TITLE					*/	"\0&Title Case"
 /*		40099	ID_ESCAPE_NEWLINE				*/	"\0Newline"
-/*		40100	ID_INSERT_FILE					*/	"\0&Insert File...\tAlt+D"
+/*		40100	ID_INSERT_FILE					*/	"\0&Insert File..."
 /*		40101	ID_ESCAPE_BACKSLASH				*/	"\0Backslash"
 /*		40102	ID_ESCAPE_DISABLE				*/	"\0Disabled"
-/*		40105	ID_LAUNCH_SECONDARY_VIEWER		*/	"\0&Secondary Viewer\tCtrl+J"
-/*		40109	ID_ENC_UTF8						*/	"\0UTF-&8\tCtrl+8"
+/*		40105	ID_LAUNCH_SECONDARY_VIEWER		*/	"\0&Secondary Viewer"
+/*		40109	ID_ENC_UTF8						*/	"\0UTF-&8"
 /*		40110	ID_ESCAPE_TAB					*/	"\0Tab"
-/*		40111	ID_ENC_ANSI						*/	"\0&ANSI\tCtrl+7"
-/*		40112	ID_ENC_BIN						*/	"\0Bi&nary (Preserve NULLs)\tCtrl+5"
+/*		40111	ID_ENC_ANSI						*/	"\0&ANSI"
+/*		40112	ID_ENC_BIN						*/	"\0Bi&nary (Preserve NULLs)"
 /*		40118	ID_ENC_CODEPAGE					*/	"\0Codepage %d"
-/*		40119	ID_ENC_CUSTOM					*/	"\0Enter &Codepage...\tCtrl+9"
-/*		40204	ID_DATE_TIME_CUSTOM				*/	"\0Custom Format &1\tF12"
-/*		40205	ID_DATE_TIME_CUSTOM2			*/	"\0Custom Format &2\tCtrl+F12"
-/*		40206	ID_PASTE_MUL					*/	"\0Paste Mu&ltiple...\tCtrl+Shift+V"
-/*		40207	ID_INSERT_TEXT					*/	"\0Insert Text...\tF2"
-/*		40208	ID_COPY_HEX						*/	"\0&Copy As Hex\tCtrl+Alt+C"
-/*		40209	ID_PASTE_HEX					*/	"\0&Paste As Hex\tCtrl+Alt+V"
+/*		40119	ID_ENC_CUSTOM					*/	"\0Enter &Codepage..."
+/*		40204	ID_DATE_TIME_CUSTOM				*/	"\0Custom Format &1"
+/*		40205	ID_DATE_TIME_CUSTOM2			*/	"\0Custom Format &2"
+/*		40206	ID_PASTE_MUL					*/	"\0Paste Mu&ltiple..."
+/*		40207	ID_INSERT_TEXT					*/	"\0Insert Text..."
+/*		40208	ID_COPY_HEX						*/	"\0&Copy As Hex"
+/*		40209	ID_PASTE_HEX					*/	"\0&Paste As Hex"
 /*		40210	ID_CLEAR_CLIPBRD				*/	"\0Clear clipboard"
 /*		40211	ID_ESCAPE_HEX					*/	"\0Hex Value"
 /*		40212	ID_ESCAPE_DEC					*/	"\0Decimal Value"
@@ -565,16 +565,16 @@ static const CHAR strings[] = ""
 /*		40217	ID_ESCAPE_HEXSU					*/	"\0Hex String (Unicode)"
 /*		40218	ID_ESCAPE_B64S					*/	"\0Base-64 String"
 /*		40219	ID_ESCAPE_B64SU					*/	"\0Base-64 String (Unicode)"
-/*		40220	ID_COPY_B64						*/	"\0Copy As B&ase-64\tCtrl+Alt+Shift+C"
-/*		40221	ID_PASTE_B64					*/	"\0Paste As &Base-64\tCtrl+Alt+Shift+V"
+/*		40220	ID_COPY_B64						*/	"\0Copy As B&ase-64"
+/*		40221	ID_PASTE_B64					*/	"\0Paste As &Base-64"
 /*		40223	ID_ESCAPE_ANY					*/	"\0Any 1 Character"
 /*		40224	ID_ESCAPE_RAND					*/	"\0Random Character"
 /*		40225	ID_ESCAPE_WILD0					*/	"\0Any 0+ Characters"
 /*		40226	ID_ESCAPE_WILD1					*/	"\0Any 1+ Characters"
 /*		40227	ID_ESCAPE_REP0					*/	"\0""0+ of Preceding Character"
 /*		40228	ID_ESCAPE_REP1					*/	"\0""1+ of Preceding Character"
-/*		40229	ID_SCROLLTO_SELA				*/	"\0Go To Selection\tCtrl+Alt+Home"
-/*		40230	ID_SCROLLTO_SELE				*/	"\0Go To Caret\tCtrl+Alt+End"
+/*		40229	ID_SCROLLTO_SELA				*/	"\0Go To Selection"
+/*		40230	ID_SCROLLTO_SELE				*/	"\0Go To Caret"
 /*		41110	IDM_MENU_BASE+10				*/	"\0&File"
 /*		41111	IDM_MENU_BASE+11				*/	"\0&Launch"
 /*		41112	IDM_MENU_BASE+12				*/	"\0F&ile Format"
@@ -589,7 +589,7 @@ static const CHAR strings[] = ""
 /*		41150	IDM_MENU_BASE+50				*/	"\0&Help"
 /*		41211	IDM_POPUP_BASE+11				*/	"\0&Make"
 /*		41212	IDM_POPUP_BASE+12				*/	"\0&Insert Date"
-/*		44200	ID_TRANSPARENT					*/	"\0T&ransparent Mode\tCtrl+U"
+/*		44200	ID_TRANSPARENT					*/	"\0T&ransparent Mode"
 "";
 /* Excel:
 	Import:	\n->\n/*\t		(~A->\t~A)		~A\t->		~B\t->\t\t\t*\/\t"\\0		\n->"\n		`->		(*\/->\t*\/)	(\t*\/->*\/)
@@ -599,12 +599,14 @@ static WORD stringsidx[] = {0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,2,
 
 static LPTSTR pstrings = NULL;
 static WORD *pstringsidx = NULL, *pstringsofs = NULL;
+static WORD *accCmds = NULL, *accKeys = NULL, accNum = 0;
 
 
 
 
+//Currently only used by ID_SET_MACRO_x
 BOOL EncodeWithEscapeSeqs(TCHAR* szText) {                     
-	TCHAR szStore[MAX(MAXMACRO,MAXSTRING)];
+	TCHAR szStore[MAXMACRO];
 	INT i,j;
 	for (i = 0, j = 0; i < MAXMACRO && szText[i]; ++i) {
 		switch (szText[i]) {
@@ -635,13 +637,13 @@ BOOL EncodeWithEscapeSeqs(TCHAR* szText) {
 }
 
 BOOL ParseForEscapeSeqs(LPTSTR buf, LPBYTE* specials, LPCTSTR errContext) {
+#ifdef UNICODE
+	static const TCHAR spsub[] = {_T('\x332'), _T('\xFFFD'), _T('\xD7'), _T('\x2014'), _T('\x2026'), _T('\xFFFC')};
+#endif
 	LPTSTR op = buf, bout, end, szErr, szErr2, szErr3, dbuf;
 	INT l, m, base = 0, mul = 3, uni = 0, str, expl = 0, dbufalloc = 0, spi = 0;
 	DWORD p = 0;
 	WORD enc = (nFormat >> 31 ? FC_ENC_CODEPAGE : (WORD)nFormat);
-#ifdef UNICODE
-	const TCHAR spsub[] = {_T('\x332'), _T('\xFFFD'), _T('\xD7'), _T('\x2014'), _T('\x2026'), _T('\xFFFC')};
-#endif
 
 	if (!SCNUL(buf)[0]) return TRUE;
 	kfree(specials);
@@ -941,42 +943,94 @@ badplugin:
 
 
 
-#ifdef _DEBUG
-/*void _printids(){
-	LPTSTR buf=NULL;
-	TCHAR s[16];
-	LONG i, l;
-	SSTRCPYA(buf, _T(" "), 1024*1024);
-	for (i=l=0; i <   ; i++){
-		wsprintf(s, _T("\n%d"),  );
-		lstrcpy(buf+l, s);
-		l += lstrlen(s);
-	}
-	DUMP(buf, 1024*1024, NULL);
-}*/
-#endif
 
-LPTSTR AlterMenuAccelText(LPCTSTR src, LPCTSTR tgt, LPTSTR buf){
-	BOOL dif=FALSE;
+
+BOOL ParseAccels(HACCEL acc) {
+	INT i, j, n, p;
+	LPACCEL acm;
+	if (!acc) return FALSE;
+	if (0 >= (n = CopyAcceleratorTable(acc, NULL, 0))) return FALSE;
+	if (!(acm = kcalloc(n, sizeof(ACCEL)))) return FALSE;
+	if (n > CopyAcceleratorTable(acc, acm, n)) return FALSE;
+	if (!(accKeys = kcallocz(n, sizeof(WORD)))) return FALSE;
+	if (!(accCmds = kcallocz(n, sizeof(WORD)))) return FALSE;
+	for (i=0; i<n; i++) {
+		p = kbinsearch((LPVOID*)accCmds, (LPVOID)acm[i].cmd, sizeof(WORD), 0, i, TRUE);
+		for (j=i; j>p; j--) {
+			accCmds[j] = accCmds[j-1];
+			accKeys[j] = accKeys[j-1];
+		}
+		accCmds[p] = acm[i].cmd;
+		accKeys[p] = (acm[i].fVirt << 8) | (acm[i].key & 0xff);
+	}
+	accNum = n;
+	kfree(&acm);
+	return TRUE;
+}
+
+BOOL GetAccelStr(WORD uID, LPTSTR buf){
+	static const CHAR vkstr[] = "\0\0Shift\0Ctrl\0Alt\0\0\0\0Bksp\0Tab\0\0\0\0Enter\0\0\0\0\0\0Pause\0CapsLock\0\0\0\0\0\0\0Esc\0\0\0\0\0Space\0PgUp\0PgDn\0End\0Home\0Left\0Up\0Right\0Down\0\0\0\0\0Ins\0Del\0";
+	static const BYTE vkmodord[] = {3,4,2};
+	static TCHAR vkcache[sizeof(vkstr)];
+	static WORD *vkstrofs = NULL, vkstrofspop = 0;
+	INT i;
+	WORD key;
+	LPCTSTR sz;
+	if (!accCmds || !accKeys || !buf) return FALSE;
+	if (!vkstrofs && !(vkstrofs = kcallocz(MAXACCELKEYS, sizeof(WORD)))) return FALSE;
+	if (0 > (i = kbinsearch((LPVOID*)accCmds, (LPVOID)uID, sizeof(WORD), 0, accNum, FALSE))) return FALSE;
+	key = accKeys[i];
+	*buf = '\0';
+	for (i=0; i < ARRLEN(vkmodord); i++){
+		if (((key >> (8+vkmodord[i])) & 1) && (sz = GetStringEx(vkmodord[i], MAXACCELKEYS, vkstr, NULL, vkstrofs, vkcache, &vkstrofspop, NULL)) && *sz) {
+			lstrcat(buf, sz);
+			buf += lstrlen(buf);
+			*buf++ = '+';
+			*buf = 0;
+		}
+	}
+	if ((key &= 0xff) < MAXACCELKEYS) {
+		if (!(sz = GetStringEx(key, MAXACCELKEYS, vkstr, NULL, vkstrofs, vkcache, &vkstrofspop, NULL)) || !*sz) return FALSE;
+		lstrcat(buf, sz);
+		return TRUE;
+	} else if (key >= VK_F1 && key <= VK_F24) {
+		key -= VK_F1-1;
+		*buf++ = 'F';
+		if (key / 10 > 0) *buf++ = '0'+key/10;
+		*buf++ = '0'+key%10;
+	} else
+		*buf++ = key;
+	*buf = 0;
+	return TRUE;
+}
+
+BOOL AddMenuAccelStr(WORD uID, LPCTSTR* str, LPTSTR buf, LPTSTR vkbuf, BOOL rename){
 	LPTSTR pch;
-	if (src != buf) lstrcpy(buf, src);
-	pch = lstrchr(buf, _T('\t'));
-	if (pch) { *pch = '\0'; dif = TRUE; }
-	if (tgt && *tgt) pch = lstrchr(tgt, _T('\t'));
-	if (pch) { lstrcat(buf, pch); dif = TRUE; }
-	if (dif) return buf;
-	return (LPTSTR)src;
+	if (!str) str = &buf;
+	if (!*str || (uID && !GetAccelStr(uID, vkbuf)) || (vkbuf && !*vkbuf)) return FALSE;
+	if (*str != buf) lstrcpy(buf, *str);
+	if (rename && (pch = lstrchr(buf, _T('\t')))) pch++;
+	else if (uID) {
+		pch = buf + lstrlen(buf);
+		*pch++ = _T('\t');
+	} else return FALSE;
+	*pch = 0;
+	if (uID) lstrcat(pch, vkbuf);
+	*str = buf;
+	return TRUE;
 }
 
 
-LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, WORD* dictidx, WORD* dictofs, LPTSTR dictcache, WORD* ofspop, LPCTSTR def){
+LPCTSTR GetStringEx(WORD uID, WORD total, LPCSTR dict, WORD* dictidx, WORD* dictofs, LPTSTR dictcache, WORD* ofspop, LPCTSTR def){
 	WORD i, j, idx;
-	LPSTR sp;
+	LPCSTR sp;
 	LPTSTR cp;
-	if (dictidx[0]>=dictidx[1])
-		ExpandDifMap(dictidx, sizeof(*dictidx), total);
-	if (0 > (SHORT)(idx = kbinsearch((LPVOID*)dictidx, (LPVOID)uID, sizeof(uID), 0, total, FALSE)))
-		return def;
+	if (dictidx) {
+		if (dictidx[0]>=dictidx[1])
+			ExpandDifMap(dictidx, sizeof(*dictidx), total);
+		if (0 > (SHORT)(idx = kbinsearch((LPVOID*)dictidx, (LPVOID)uID, sizeof(uID), 0, total, FALSE)))
+			return def;
+	} else idx = uID;
 	while(1) {
 		for (i = *ofspop, j = dictofs[i], sp = dict+j, cp = dictcache+j; i <= idx; i++) {
 			for (j=1; *sp; j++)
@@ -996,23 +1050,29 @@ LPCTSTR GetStringEx(WORD uID, WORD total, const LPSTR dict, WORD* dictidx, WORD*
 LPCTSTR GetString(WORD uID) {
 	static WORD l = ARRLEN(stringsidx), ofs[ARRLEN(stringsidx)] = {0}, ofspop = 0;
 	static TCHAR strcache[sizeof(strings)];
-	static LPTSTR szRsrc = NULL;
-	LPTSTR sz = NULL;
+	static LPTSTR szRsrc = NULL, szAcc = NULL;
+	LPCTSTR sz = NULL;
 	if (hinstLang && hinstThis != hinstLang && uID > IDS_VERSION_SYNCH && (uID < NONLOCALIZED_BASE || uID > NONLOCALIZED_END) && LoadString(hinstLang, uID, (LPTSTR)&sz, 0)) {
 		if (!szRsrc) szRsrc = kallocs(MAXSTRING);
 		LoadString(hinstLang, uID, szRsrc, MAXSTRING);
 		return szRsrc;
 	}
-	if (pstringsidx && uID > IDS_VERSION_SYNCH && (uID < NONLOCALIZED_BASE || uID > NONLOCALIZED_END) && (sz = (LPTSTR)GetStringEx(uID, l, NULL, pstringsidx, pstringsofs, pstrings, &l, NULL)) && *sz) {
-		if (uID < IDC_BASE) return sz;
-		if (!szRsrc) szRsrc = kallocs(MAXSTRING);
-		return AlterMenuAccelText(sz, GetStringEx(uID, l, (LPSTR)strings, stringsidx, ofs, strcache, &ofspop, kemptyStr), szRsrc);
+	if (pstringsidx && uID > IDS_VERSION_SYNCH && (uID < NONLOCALIZED_BASE || uID > NONLOCALIZED_END))
+		sz = GetStringEx(uID, l, NULL, pstringsidx, pstringsofs, pstrings, &l, NULL);
+	if (!sz || !*sz)
+		sz = GetStringEx(uID, l, (LPSTR)strings, stringsidx, ofs, strcache, &ofspop, kemptyStr);
+	if (uID < IDC_BASE) return sz;
+	if (!szRsrc) {
+		if (!(szRsrc = kallocs(MAXSTRING))) return sz;
+		szAcc = szRsrc + MAXSTRING - MAXACCELSTR;
 	}
-	return GetStringEx(uID, l, (LPSTR)strings, stringsidx, ofs, strcache, &ofspop, kemptyStr);
+	AddMenuAccelStr(uID, &sz, szRsrc, szAcc, FALSE);
+	return sz;
 }
 
 
-void LocalizeMenuItems(HMENU m, HMENU pm, WORD pos, WORD depth, LPTSTR tpbuf){
+
+void LocalizeMenuItems(HMENU m, HMENU pm, WORD pos, WORD depth, LPTSTR tpbuf, LPTSTR tabuf){
 	MENUITEMINFO mio;
 	LPCTSTR ts = NULL, pts = NULL;
 	TCHAR tbuf[2];
@@ -1057,26 +1117,23 @@ void LocalizeMenuItems(HMENU m, HMENU pm, WORD pos, WORD depth, LPTSTR tpbuf){
 					break;
 		} else j = pct;
 		if (popup) {
-			LocalizeMenuItems(mio.hSubMenu, j<pct ? psub[j] : NULL, pos+depth/10, depth/10, tpbuf);
+			LocalizeMenuItems(mio.hSubMenu, j<pct ? psub[j] : NULL, pos+depth/10, depth/10, tpbuf, tabuf);
 			pos += depth;
 			gpos++;
 		}
+		if (cmd < IDC_BASE || cmd >= 0xffff) continue;
 		if (!mio.dwTypeData || *mio.dwTypeData < _T(' ')) {
-			if (cmd && cmd < 0xffff) ts = GetString(cmd);
-			if (j<pct) {
+			if (j < pct) {
 				mio.fMask = MIIM_TYPE;
 				mio.fType = MFT_STRING;
 				mio.cch = MAXSTRING;
 				mio.dwTypeData = tpbuf;
 				GetMenuItemInfo(pm, j, TRUE, &mio);
-				if (mio.dwTypeData && *mio.dwTypeData)
-					pts = mio.dwTypeData;
+				if (mio.dwTypeData && *mio.dwTypeData) pts = ts = mio.dwTypeData;
 			}
+			if (ts && *ts) AddMenuAccelStr(cmd, &ts, tpbuf, tabuf, TRUE);
+			else ts = GetString(cmd);
 			if (ts && *ts) {
-				if (pts) {
-					AlterMenuAccelText(pts, ts, tpbuf);
-					ts = pts;
-				}
 				mio.fMask = MIIM_TYPE | MIIM_STATE;
 				mio.fType = MFT_STRING;
 				mio.fState = (mio.dwTypeData && *mio.dwTypeData < _T(' ') ? *mio.dwTypeData : MFS_ENABLED);
@@ -1091,14 +1148,15 @@ void LocalizeMenuItems(HMENU m, HMENU pm, WORD pos, WORD depth, LPTSTR tpbuf){
 
 HMENU LocalizeMenu(WORD mID) {
 	HMENU menu, pmenu = NULL;
-	LPTSTR pbuf = NULL;
+	LPTSTR pbuf = NULL, abuf = NULL;
 	if (!(menu = LoadMenu(hinstThis, MAKEINTRESOURCE(mID))))
 		return menu;
 	if (hinstLang && hinstThis != hinstLang) {
 		pmenu = LoadMenu(hinstLang, MAKEINTRESOURCE(mID));
 		pbuf = kallocs(MAXSTRING);
+		abuf = pbuf + MAXSTRING - MAXACCELSTR;
 	}
-	LocalizeMenuItems(menu, pmenu, IDM_BASE+(mID-IDR_BASE)*100+10, 10, pbuf);
+	LocalizeMenuItems(menu, pmenu, IDM_BASE+(mID-IDR_BASE)*100+10, 10, pbuf, abuf);
 	if (pmenu) {
 		kfree(&pbuf);
 		DestroyMenu(pmenu);

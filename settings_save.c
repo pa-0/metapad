@@ -269,7 +269,7 @@ void SaveMenusAndData(void)
 		}
 		for (i = 0; i < NUMINSERTS; ++i) {
 			wsprintf(keyname, GetString(IDSS_INSERTARRAY), i);
-			SaveOption(key, keyname, REG_SZ, (LPBYTE)InsertArray[i], MAXINSERT);
+			SaveOption(key, keyname, REG_SZ, (LPBYTE)InsertArray[i], MAXFIND);
 		}
 	}
 

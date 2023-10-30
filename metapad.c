@@ -696,7 +696,7 @@ LRESULT APIENTRY FindProc(HWND hwndFind, UINT uMsg, WPARAM wParam, LPARAM lParam
 					SendDlgItemMessage(hdlgFind, IDC_NUM, WM_GETTEXT, 16, (WPARAM)szTmp);
 					j = _ttol(szTmp);
 					if (!j) return FALSE;
-					SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, WM_GETTEXT, MAXINSERT, (WPARAM)szTmp);
+					SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, WM_GETTEXT, MAXFIND, (WPARAM)szTmp);
 					if (frDlgId == ID_PASTE_MUL && lstrcmp(szTmp, SCNUL(szInsert)) != 0)
 						frDlgId = ID_INSERT_TEXT;
 					if (frDlgId == ID_INSERT_TEXT) {
@@ -1644,7 +1644,7 @@ void SelectWord(LPTSTR* target, BOOL bSmart, BOOL bAutoSelect)
 		}
 		if (bAutoSelect || cr.cpMin != cr.cpMax) {
 			if (target) {
-				lLineLen = MIN(cr.cpMax - cr.cpMin, MAXFIND);
+				lLineLen = MIN(cr.cpMax - cr.cpMin, MAXFIND-1);
 				kfree(target);
 				*target = kallocs(lLineLen+1);
 				lstrcpyn(*target, szBuf + cr.cpMin, lLineLen+1);
@@ -2304,7 +2304,7 @@ BOOL CALLBACK AdvancedPageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 				mio.cch = sizeof(szInt)/sizeof(TCHAR);
 				mio.dwTypeData = szInt;
 				GetMenuItemInfo(hsub, u, TRUE, &mio);
-				AlterMenuAccelText(szInt, NULL, szInt);
+				AddMenuAccelStr(0, NULL, szInt, NULL, TRUE);
 				SetMenuItemInfo(hsub, u, TRUE, &mio);
 			}
 			if (enc == FC_ENC_CODEPAGE){
@@ -2352,7 +2352,7 @@ BOOL CALLBACK Advanced2PageProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 		SetDlgItemText(hwndDlg, IDC_CUSTOMDATE, SCNUL(options.szCustomDate));
 		SetDlgItemText(hwndDlg, IDC_CUSTOMDATE2, SCNUL(options.szCustomDate2));
 		for (i = 0; i < 10; i++) {
-			SendDlgItemMessage(hwndDlg, IDC_MACRO_1+i, EM_LIMITTEXT, (WPARAM)MAXMACRO-1, 0);
+			SendDlgItemMessage(hwndDlg, IDC_MACRO_1+i, EM_LIMITTEXT, (WPARAM)(MAXMACRO-1), 0);
 			SetDlgItemText(hwndDlg, IDC_MACRO_1+i, SCNUL(options.MacroArray[i]));
 			wsprintf(buf, GetString(IDC_TEXT_MACRO), (i+1)%10);
 			SetDlgItemText(hwndDlg, IDC_TEXT_MACRO+i, buf);
@@ -3170,7 +3170,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 								SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, WM_GETTEXT, MAXFIND, (LPARAM)szTmp);
 								break;
 							case ID_INSERT_TEXT:
-								SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, WM_GETTEXT, MAXINSERT, (LPARAM)szTmp);
+								SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, WM_GETTEXT, MAXFIND, (LPARAM)szTmp);
 								break;
 						}
 						kstrdupnul(&szFindText, szTmp);
@@ -3222,7 +3222,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 					case ID_PASTE_MUL:
 						gfr.lpTemplateName = MAKEINTRESOURCE(IDD_INSERT);
 						hdlgFind = FindText(&gfr);
-						SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_LIMITTEXT, (WPARAM)MAXINSERT, 0);
+						SendDlgItemMessage(hdlgFind, IDC_DROP_INSERT, CB_LIMITTEXT, (WPARAM)(MAXFIND-1), 0);
 						SendDlgItemMessage(hdlgFind, IDC_NUM, EM_LIMITTEXT, (WPARAM)9, 0);
 						SendDlgItemMessage(hdlgFind, IDC_CLOSE_AFTER_INSERT, BM_SETCHECK, (WPARAM) bCloseAfterInsert, 0);
 						for (i = 0; i < NUMINSERTS; ++i)
@@ -3240,7 +3240,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 						hdlgFind = ReplaceText(&gfr);
 						if (SetWindowTheme) SetWindowTheme(GetDlgItem(hdlgFind, IDC_ESCAPE2),(LPTSTR)kemptyStr,(LPTSTR)kemptyStr);
 						SendDlgItemMessage(hdlgFind, IDC_ESCAPE2, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)(HANDLE)hb);
-						SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_LIMITTEXT, (WPARAM)MAXFIND, 0);
+						SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_LIMITTEXT, (WPARAM)(MAXFIND-1), 0);
 						for (i = 0; i < NUMFINDS; ++i)
 							if (ReplaceArray[i])
 								SendDlgItemMessage(hdlgFind, IDC_DROP_REPLACE, CB_ADDSTRING, 0, (LPARAM)ReplaceArray[i]);
@@ -3271,7 +3271,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 				switch (LOWORD(wParam)) {
 					case ID_REPLACE:
 					case ID_FIND:
-						SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_LIMITTEXT, (WPARAM)MAXFIND, 0);
+						SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_LIMITTEXT, (WPARAM)(MAXFIND-1), 0);
 						for (i = 0; i < NUMFINDS; ++i)
 							if (SCNUL(FindArray[i])[0])
 								SendDlgItemMessage(hdlgFind, IDC_DROP_FIND, CB_ADDSTRING, 0, (WPARAM)FindArray[i]);
@@ -3446,7 +3446,7 @@ LRESULT WINAPI MainWndProc(HWND hwndMain, UINT Msg, WPARAM wParam, LPARAM lParam
 							if (uni) ImportBinary(sz, l);
 							ImportLineFmt(&sz, &l, (nFormat >> 16) & 0xfff, i, j, k, nPos, &b);
 							if (LOWORD(wParam) == ID_INT_GETCLIPBOARD)
-								lstrcpyn(szTmp, sz, MAXINSERT);
+								lstrcpyn(szTmp, sz, MAXFIND);
 							else
 								SendMessage(client, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)sz);
 						}
@@ -4424,7 +4424,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR szCmdL
 	HACCEL accel = NULL;
 	int left, top, width, height;
 	int nCmdLen;
-	HMODULE hmod;
 	CHARRANGE crLineCol = {-1, -1};
 	BOOL bSkipLanguagePlugin = FALSE;
 	TCHAR *bufFn = gTmpBuf, *pch;
@@ -4565,34 +4564,21 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR szCmdL
 		nCmdShow = SW_SHOWNORMAL;
 	}
 	
-	if (!(hwnd = CreateWindowEx(
-		WS_EX_ACCEPTFILES,
-		GetString(STR_METAPAD),
-		GetString(STR_CAPTION_FILE),
-		WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
-		left, top, width, height,
-		NULL,
-		NULL,
-		hInstance,
-		NULL))) {
+	if (!(hwnd = CreateWindowEx( WS_EX_ACCEPTFILES, GetString(STR_METAPAD), GetString(STR_CAPTION_FILE), WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
+		left, top, width, height, NULL, NULL, hInstance, NULL))) {
 		ReportLastError();
 		return FALSE;
 	}
-	hmod = GetModuleHandleA("user32.dll");
-	SetLWA = (SLWA)(GetProcAddress(hmod, "SetLayeredWindowAttributes"));
-	if (SetLWA)
+	if (SetLWA = (SLWA)(GetProcAddress(GetModuleHandleA("user32.dll"), "SetLayeredWindowAttributes")))
 		SetLWA(hwnd, 0, 255, LWA_ALPHA);
-	hmod = GetModuleHandleA("uxtheme.dll");
-	SetWindowTheme = (SWT)(GetProcAddress(hmod, "SetWindowTheme"));
-	accel = LoadAccelerators(hinstThis, MAKEINTRESOURCE(IDR_ACCELERATOR));
-	if (!accel) {
+	SetWindowTheme = (SWT)(GetProcAddress(GetModuleHandleA("uxtheme.dll"), "SetWindowTheme"));
+	if (!(accel = LoadAccelerators(hinstThis, MAKEINTRESOURCE(IDR_ACCELERATOR)))) {
 		ReportLastError();
 		return FALSE;
 	}
-	if (!bSkipLanguagePlugin)
-		FindAndLoadLanguagePlugin();
-	if (!CreateMainMenu(hwnd))
-		return FALSE;
+	if (!ParseAccels(accel)) ReportLastError();
+	if (!bSkipLanguagePlugin) FindAndLoadLanguagePlugin();
+	if (!CreateMainMenu(hwnd)) return FALSE;
 
 #ifdef USE_RICH_EDIT
 	if (LoadLibraryA(STR_RICHDLL) == NULL) {
@@ -4608,10 +4594,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR szCmdL
 	}
 	SetClientFont(bPrimaryFont);
 	//uFindReplaceMsg = RegisterWindowMessage(FINDMSGSTRING);
-	if (bShowStatus)
-		CreateStatusbar();
-	if (bShowToolbar)
-		CreateToolbar();
+	if (bShowStatus) CreateStatusbar();
+	if (bShowToolbar) CreateToolbar();
 	InitCommonControls();
 	MakeNewFile();
 	if (szCmdLine && *szCmdLine) {
@@ -4671,12 +4655,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR szCmdL
 		}
 		else {
 			//ERROROUT(szCmdLine);
-			if (szCmdLine[0] == _T('\"')) {
-				lstrcpyn(szFile, szCmdLine + 1, lstrchr(szCmdLine+1, _T('\"')) - szCmdLine);
-			}
-			else {
-				lstrcpyn(szFile, szCmdLine, nCmdLen + 1);
-			}
+			if (szCmdLine[0] == _T('\"')) lstrcpyn(szFile, szCmdLine + 1, lstrchr(szCmdLine+1, _T('\"')) - szCmdLine);
+			else lstrcpyn(szFile, szCmdLine, nCmdLen + 1);
 		}
 
 		bufFn[0] = _T('\0');

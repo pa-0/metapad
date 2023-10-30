@@ -1,6 +1,7 @@
-#Sample translation file for metapad 3.7.
+﻿#Sample translation file for metapad 3.7.
 #Please take care not to modify or reorder the ID numbers to the left of the texts.
 #Deleting unwanted lines is OK.
+#Max string length = 480 chars.
 1		3.7
 2		English (Plugin Template)
 3		1

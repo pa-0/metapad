@@ -326,7 +326,7 @@ void LoadMenusAndData(void) {
 		}
 		for (i = 0; i < NUMINSERTS; ++i) {
 			wsprintf(keyname, GetString(IDSS_INSERTARRAY), i);
-			LoadOptionString(key, keyname, &InsertArray[i], MAXINSERT);
+			LoadOptionString(key, keyname, &InsertArray[i], MAXFIND);
 		}
 	}
 
