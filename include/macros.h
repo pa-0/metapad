@@ -2,7 +2,7 @@
 /*                                                                          */
 /*   metapad 3.6+                                                           */
 /*                                                                          */
-/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2021-2024 SoBiT Corp                                     */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
@@ -52,10 +52,13 @@
 #define SSTRCPYO(tgt, src, ofs) SSTRCPYAO(tgt, src, 1, ofs)
 #define SSTRCPYAO(tgt, src, add, ofs) {\
 	if (tgt) HeapFree(globalHeap, 0, (HGLOBAL)tgt);\
-	if (src && *src) {\
+	if (src) {\
 		tgt = (LPTSTR)HeapAlloc(globalHeap, 0, (lstrlen(src)+add+ofs) * sizeof(TCHAR));\
 		lstrcpy(tgt+ofs, src);\
 	} else tgt = NULL; }
+#define SSTRCPYNUL(tgt, src) {\
+	if (src && *src) { SSTRCPY(tgt, src);}\
+	else { FREE(tgt); } }
 #define SCNUL(x)		SCNULD(x, _T(""))
 #define SCNUL8(x)		SCNULD(x, _T("        "))
 #define SCNULD(x, def)	(x ? x : def)

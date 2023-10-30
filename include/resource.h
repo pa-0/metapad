@@ -36,7 +36,7 @@ ID mapping:
 						Matched by (IDC_ command/control id modulo 100) plus IDC_BASE	(e.g. last 2 digits of the IDC_ id)
 
 	 1100- 1399		 (unused - rsvd)
-	 1400- 1499		IDC_ - non-textual or unintialized dialog controls (remapped in 3.7)
+	 1400- 1499		IDC_ - non-textual or uninitialized dialog controls (remapped in 3.7)
 *s	 1540- 1599		IDD_ - dialog titles
 *s			 1540- 1550		3.6- existing
  s			 1551- 1559		3.7+ new
@@ -427,38 +427,38 @@ ID mapping:
 #define IDC_NO_FAVES					1077	//IDDC_PROPPAGE_A1_BASE
 #define IDC_NO_FIND_SELECT				1078	//IDDC_PROPPAGE_A1_BASE
 
-/* IDC_ non-textual or unintialized dialog controls (remapped in 3.7) */
+/* IDC_ non-textual or uninitialized dialog controls (remapped in 3.7) */
 #define IDC_DLGICON						1400	//3.7: moved from 1009. non-textual
-#define IDC_NUM							1401	//3.7: moved from 1088. unintialized
-#define IDC_DATA						1402	//3.7: moved from 1077. unintialized
-#define IDC_STATICX						1405	//3.7: moved from 1005. unintialized
-#define IDC_EDIT_URL					1407	//3.7: moved from 1007. unintialized
-#define IDC_EDIT_PLUGIN_RELEASE			1408	//3.7: moved from 1008. unintialized
-#define IDC_EDIT_PLUGIN_EMAIL			1409	//3.7: moved from 1009. unintialized
-#define IDC_EDIT_PLUGIN_TRANSLATOR		1410	//3.7: moved from 1010. unintialized
-#define IDC_EDIT_PLUGIN_LANG			1411	//3.7: moved from 1083. unintialized
-#define IDC_EDIT_BROWSER				1412	//3.7: moved from 1012. unintialized
-#define IDC_EDIT_BROWSER2				1414	//3.7: moved from 1014. unintialized
-#define IDC_TAB_STOP					1425	//3.7: moved from 1025. unintialized
-#define IDC_LINE						1435	//3.7: moved from 1035. unintialized
-#define IDC_EDIT_ARGS					1439	//3.7: moved from 1039. unintialized
-#define IDC_EDIT_ARGS2					1440	//3.7: moved from 1040. unintialized
-#define IDC_OFFSET						1444	//3.7: moved from 1044. unintialized
-#define IDC_EDIT_MAX_MRU				1450	//3.7: moved from 1050. unintialized
-#define IDC_MACRO_1						1461	//3.7: moved from 1070. unintialized
+#define IDC_NUM							1401	//3.7: moved from 1088. uninitialized
+#define IDC_DATA						1402	//3.7: moved from 1077. uninitialized
+#define IDC_STATICX						1405	//3.7: moved from 1005. uninitialized
+#define IDC_EDIT_URL					1407	//3.7: moved from 1007. uninitialized
+#define IDC_EDIT_PLUGIN_RELEASE			1408	//3.7: moved from 1008. uninitialized
+#define IDC_EDIT_PLUGIN_EMAIL			1409	//3.7: moved from 1009. uninitialized
+#define IDC_EDIT_PLUGIN_TRANSLATOR		1410	//3.7: moved from 1010. uninitialized
+#define IDC_EDIT_PLUGIN_LANG			1411	//3.7: moved from 1083. uninitialized
+#define IDC_EDIT_BROWSER				1412	//3.7: moved from 1012. uninitialized
+#define IDC_EDIT_BROWSER2				1414	//3.7: moved from 1014. uninitialized
+#define IDC_TAB_STOP					1425	//3.7: moved from 1025. uninitialized
+#define IDC_LINE						1435	//3.7: moved from 1035. uninitialized
+#define IDC_EDIT_ARGS					1439	//3.7: moved from 1039. uninitialized
+#define IDC_EDIT_ARGS2					1440	//3.7: moved from 1040. uninitialized
+#define IDC_OFFSET						1444	//3.7: moved from 1044. uninitialized
+#define IDC_EDIT_MAX_MRU				1450	//3.7: moved from 1050. uninitialized
+#define IDC_MACRO_1						1461	//3.7: moved from 1070. uninitialized
 //(1461-1470 rsvd for IDC_MACRO_x)		1470
-#define IDC_EDIT_SM_WIDTH				1471	//3.7: moved from 1071. unintialized
-#define IDC_EDIT_TRANSPARENT			1472	//3.7: moved from 1072. unintialized
-#define IDC_EDIT_QUOTE					1479	//3.7: moved from 1079. unintialized
+#define IDC_EDIT_SM_WIDTH				1471	//3.7: moved from 1071. uninitialized
+#define IDC_EDIT_TRANSPARENT			1472	//3.7: moved from 1072. uninitialized
+#define IDC_EDIT_QUOTE					1479	//3.7: moved from 1079. uninitialized
 #define IDC_ESCAPE						1080	//3.7: moved from 1080. non-textual
 #define IDC_ESCAPE2						1081	//3.7: moved from 1081. non-textual
-#define IDC_EDIT_LANG_PLUGIN			1482	//3.7: moved from 1082. unintialized
-#define IDC_STATIC_COPYRIGHT			1484	//3.7: moved from 1084. unintialized
-#define IDC_STATIC_COPYRIGHT2			1485	//3.7: moved from 1085. unintialized
-#define IDC_CUSTOMDATE					1486	//3.7: moved from 1086. unintialized
-#define IDC_CUSTOMDATE2					1487	//3.7: moved from 1087. unintialized
-#define IDC_DROP_FIND					1491	//3.7: moved from 1154. unintialized
-#define IDC_DROP_REPLACE				1492	//3.7: moved from 1153. unintialized
+#define IDC_EDIT_LANG_PLUGIN			1482	//3.7: moved from 1082. uninitialized
+#define IDC_STATIC_COPYRIGHT			1484	//3.7: moved from 1084. uninitialized
+#define IDC_STATIC_COPYRIGHT2			1485	//3.7: moved from 1085. uninitialized
+#define IDC_CUSTOMDATE					1486	//3.7: moved from 1086. uninitialized
+#define IDC_CUSTOMDATE2					1487	//3.7: moved from 1087. uninitialized
+#define IDC_DROP_FIND					1491	//3.7: moved from 1154. uninitialized
+#define IDC_DROP_REPLACE				1492	//3.7: moved from 1153. uninitialized
 #define IDC_DROP_INSERT					1493
 #define IDC_COLOUR_BACK					1496	//3.7: moved from 1048. non-textual
 #define IDC_COLOUR_FONT					1497	//3.7: moved from 1049. non-textual

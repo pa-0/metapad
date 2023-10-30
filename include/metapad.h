@@ -2,7 +2,7 @@
 /*                                                                          */
 /*   metapad 3.6+                                                           */
 /*                                                                          */
-/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2021-2024 SoBiT Corp                                     */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
@@ -179,7 +179,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 // external_viewers.c //
 BOOL ExecuteProgram(LPCTSTR lpExecutable, LPCTSTR lpCommandLine);
 void LaunchInViewer(BOOL bCustom, BOOL bSecondary);
-void LaunchExternalViewer(int);
+void LaunchExternalViewer(int, LPCTSTR);
 
 
 // file_load.c //
@@ -254,4 +254,5 @@ void LocalizeDialog(WORD dID, HWND dlg);
 
 
 #endif
+
 

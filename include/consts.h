@@ -2,7 +2,7 @@
 /*                                                                          */
 /*   metapad 3.6+                                                           */
 /*                                                                          */
-/*   Copyright (C) 2021 SoBiT Corp                                          */
+/*   Copyright (C) 2021-2024 SoBiT Corp                                     */
 /*   Copyright (C) 2013 Mario Rugiero                                       */
 /*   Copyright (C) 1999-2011 Alexander Davidson                             */
 /*                                                                          */
@@ -40,7 +40,7 @@
 #define VI_VER		"3.71" VI_BUILD
 #define VI_VERSYNC	"3.7"
 #define VI_VERVI	3,7,1,0
-#define VI_COPY		"\xa9 1999-2011 Alexander Davidson\n\xa9 2013 Mario Rugiero\n\xa9 2021 SoBiT Corp"
+#define VI_COPY		"\xa9 2021-2024 SoBiT Corp\n\xa9 2013 Mario Rugiero\n\xa9 1999-2011 Alexander Davidson"
 #define VI_BUILDER	"SoBiT Corp"
 
 
